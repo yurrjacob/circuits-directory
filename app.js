@@ -123,11 +123,14 @@ function initJoin(){
   const badgePreview = document.getElementById('badge-preview');
   const DEFAULT_TEXT = 'Featured';
   const DEFAULT_COLOR = '#1f9d55';
+  let curBadgeText = DEFAULT_TEXT, curBadgeColor = DEFAULT_COLOR;
   function selectText(text){
+    curBadgeText = text;
     if(badgePreview) badgePreview.textContent = text;
     if(badgeOpts) badgeOpts.querySelectorAll('.opt-btn').forEach(b=>b.classList.toggle('selected', b.dataset.text===text));
   }
   function selectColor(color){
+    curBadgeColor = color;
     if(badgePreview) badgePreview.style.background = color;
     if(swatches) swatches.querySelectorAll('.swatch').forEach(s=>s.classList.toggle('selected', s.dataset.color===color));
   }
@@ -162,6 +165,22 @@ function initJoin(){
   const form = document.getElementById('join-form');
   if(form) form.addEventListener('submit', e=>{
     e.preventDefault();
+    // Save the application to the shared store (syncs to admin + spreadsheet)
+    if(window.addApplication){
+      const v = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+      addApplication({
+        date: new Date().toISOString().slice(0,10),
+        company: v('f-company'), contact: v('f-contact'), email: v('f-email'),
+        phone: v('f-phone'), website: v('f-website'),
+        logo: (logoInput && logoInput.files && logoInput.files[0]) ? logoInput.files[0].name : '',
+        keywords: keywords.slice(),
+        banner: !!(document.getElementById('promo-check') && document.getElementById('promo-check').checked),
+        badge: { text: curBadgeText, color: curBadgeColor },
+        message: msg ? msg.value.trim() : '',
+        terms: !!(document.getElementById('f-terms') && document.getElementById('f-terms').checked),
+        status: 'Pending'
+      });
+    }
     const ok = document.getElementById('success');
     ok.classList.add('show');
     form.reset();

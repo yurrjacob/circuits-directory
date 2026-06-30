@@ -134,6 +134,7 @@
   </div>
 </footer>
 
+<script src="store.js"></script>
 <script>
 /* ---- in-memory demo state (front-end only) ---- */
 let listings = [
@@ -153,10 +154,8 @@ let badges = [
   {company:'Apex Semiconductor Supply', text:'Verified', color:'#1f9d55'},
   {company:'Vertex Electronics', text:'Authorized', color:'#6d28d9'}
 ];
-let pending = [
-  {company:'Brightline Parts', contact:'Owen Patel', email:'owen@brightlineparts.com', cats:5},
-  {company:'Granite State Semi', contact:'Karen Doyle', email:'sales@gssemi.com', cats:3}
-];
+/* Pending applications come from the shared store (store.js) so they stay
+   in sync with the Join form and the applications spreadsheet. */
 
 const $ = id => document.getElementById(id);
 const esc = s => (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -166,7 +165,7 @@ function renderStats(){
   $('s-listings').textContent = listings.length;
   $('s-companies').textContent = companies().length;
   $('s-sponsored').textContent = sponsored.length;
-  $('s-pending').textContent = pending.length;
+  $('s-pending').textContent = getApplications().filter(a=>a.status==='Pending').length;
 }
 
 function renderCompanySelects(){
@@ -214,18 +213,22 @@ function renderBadges(){
 }
 
 function renderPending(){
-  $('pending-body').innerHTML = pending.map((p,i)=>`
-    <tr>
-      <td>${esc(p.company)}</td>
-      <td>${esc(p.contact)}</td>
-      <td>${esc(p.email)}</td>
-      <td>${p.cats} keywords</td>
+  const ps = getApplications().filter(a=>a.status==='Pending');
+  $('pending-body').innerHTML = ps.map(p=>{
+    const n = (p.keywords && p.keywords.length) || 0;
+    return `<tr>
+      <td>${esc(p.company)||'—'}</td>
+      <td>${esc(p.contact)||'—'}</td>
+      <td>${esc(p.email)||'—'}</td>
+      <td>${n} keyword${n===1?'':'s'}</td>
       <td class="row-actions">
-        <button class="mini-btn green" onclick="approve(${i})">Approve</button>
-        <button class="mini-btn danger" onclick="reject(${i})">Reject</button>
+        <button class="mini-btn green" onclick="approveApp('${p.id}')">Approve</button>
+        <button class="mini-btn danger" onclick="rejectApp('${p.id}')">Reject</button>
+        <a class="mini-btn" href="applications.html">View all →</a>
       </td>
-    </tr>`).join('');
-  $('pending-empty').style.display = pending.length ? 'none' : 'block';
+    </tr>`;
+  }).join('');
+  $('pending-empty').style.display = ps.length ? 'none' : 'block';
 }
 
 function renderAll(){ renderStats(); renderCompanySelects(); renderListings(); renderSponsored(); renderBadges(); renderPending(); }
@@ -258,13 +261,8 @@ function removeBadge(i){ badges.splice(i,1); renderBadges(); }
 
 function toggleStatus(i){ listings[i].status = listings[i].status==='Live'?'Pending':'Live'; renderListings(); }
 function removeListing(i){ listings.splice(i,1); renderAll(); }
-function approve(i){
-  const p = pending[i];
-  listings.push({company:p.company, keyword:'new listing', status:'Live', views:0});
-  pending.splice(i,1);
-  renderAll();
-}
-function reject(i){ pending.splice(i,1); renderStats(); renderPending(); }
+function approveApp(id){ updateAppStatus(id,'Approved'); renderStats(); renderPending(); }
+function rejectApp(id){ updateAppStatus(id,'Denied'); renderStats(); renderPending(); }
 
 $('sp-add').addEventListener('click', addSponsored);
 $('bd-add').addEventListener('click', addBadge);

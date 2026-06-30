@@ -40,23 +40,23 @@
       <div class="grid2">
         <div class="field">
           <label>Company name <span class="req">*</span></label>
-          <input type="text" required placeholder="Acme Electronics, Inc.">
+          <input id="f-company" type="text" required placeholder="Acme Electronics, Inc.">
         </div>
         <div class="field">
           <label>Contact person <span class="req">*</span></label>
-          <input type="text" required placeholder="Jane Doe, VP Sales">
+          <input id="f-contact" type="text" required placeholder="Jane Doe, VP Sales">
         </div>
         <div class="field">
           <label>Email <span class="req">*</span></label>
-          <input type="email" required placeholder="sales@company.com">
+          <input id="f-email" type="email" required placeholder="sales@company.com">
         </div>
         <div class="field">
           <label>Phone <span class="req">*</span></label>
-          <input type="tel" required placeholder="(555) 123-4567">
+          <input id="f-phone" type="tel" required placeholder="(555) 123-4567">
         </div>
         <div class="field" style="grid-column:1 / -1">
           <label>Website</label>
-          <input type="url" placeholder="https://www.company.com">
+          <input id="f-website" type="url" placeholder="https://www.company.com">
         </div>
         <div class="field" style="grid-column:1 / -1">
           <label>Company logo <span class="cell-muted" style="font-weight:400">(optional)</span></label>
@@ -168,7 +168,7 @@
         <div class="charcount" id="msg-count">0 / 600</div>
       </div>
       <label class="terms">
-        <input type="checkbox" required>
+        <input id="f-terms" type="checkbox" required>
         <span>I have authority to list this company and accept the <a href="#">Listing Terms</a> and <a href="#">Acceptable Use Policy</a>.</span>
       </label>
     </section>
@@ -196,6 +196,7 @@
   </div>
 </footer>
 
+<script src="store.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
 <script>initJoin();</script>
