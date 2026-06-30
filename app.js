@@ -19,67 +19,72 @@ function initHome(){
 function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function initials(name){return name.split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
 
-function initResults(){
+async function initResults(){
   const params = new URLSearchParams(location.search);
   const q = params.get('q') || '';
-  const data = lookupKeyword(q);
+  const COLORS = ['#76c000','#0f6fff','#ff7a00','#9b51e0','#e02d5b','#00a8a8','#444b54','#c9a400'];
 
-  // mini search prefilled
   const mini = document.getElementById('mini-search');
   const miniForm = document.getElementById('mini-form');
   if(mini) mini.value = q;
   if(miniForm) miniForm.addEventListener('submit', e=>{ e.preventDefault(); gotoSearch(mini.value); });
+  document.querySelectorAll('[data-term]').forEach(el=> el.textContent = q || '—');
 
-  const termEls = document.querySelectorAll('[data-term]');
-  termEls.forEach(el=> el.textContent = q || '—');
+  const body = document.getElementById('results-body');
 
-  if(!q || !data){
-    document.getElementById('results-body').innerHTML =
-      `<div class="empty"><div class="big">Type a keyword to see suppliers</div>
-       <p>Try <a href="results.html?q=circuits">circuits</a>, <a href="results.html?q=microcontrollers">microcontrollers</a>, or <a href="results.html?q=sensors">sensors</a>.</p></div>`;
+  if(!q){
+    body.innerHTML = `<div class="empty"><div class="big">Type a keyword to see suppliers</div>
+      <p>Try <a href="results.html?q=circuits">circuits</a>, <a href="results.html?q=microcontrollers">microcontrollers</a>, or <a href="results.html?q=sensors">sensors</a>.</p></div>`;
     return;
   }
 
-  const count = data.companies.length + 1;
+  body.innerHTML = `<div class="empty"><div class="big">Searching…</div></div>`;
+
+  let listings = [];
+  try { listings = await fetchApprovedByKeyword(q); } catch(e){ listings = []; }
+
   const countEl = document.getElementById('result-count');
-  if(countEl) countEl.textContent = count;
+  if(countEl) countEl.textContent = listings.length;
 
-  // Premium banner
-  const p = data.premium;
-  const premiumHtml = `
-    <div class="premium">
-      <div class="premium-card">
-        <span class="premium-badge">Premium &middot; Sponsored</span>
-        <div class="premium-logo">${initials(p.name)}</div>
-        <div class="premium-body">
-          <h3><a href="${escapeHtml(p.url)}" target="_blank" rel="noopener">${escapeHtml(p.name)}</a></h3>
-          <p>${escapeHtml(p.blurb)}</p>
-        </div>
-        <div class="premium-contact">
-          ${escapeHtml(p.contact)}<br>
-          <a href="tel:${escapeHtml(p.phone)}">${escapeHtml(p.phone)}</a><br>
-          <a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a>
-        </div>
+  if(!listings.length){
+    body.innerHTML = `<div class="empty"><div class="big">No suppliers listed for &ldquo;${escapeHtml(q)}&rdquo; yet</div>
+      <p>Be the first — <a href="join.html">list your company</a> under this keyword.</p></div>`;
+    return;
+  }
+
+  const featured = listings.find(l => l.banner);
+  let html = '';
+  if(featured){
+    html += `<div class="premium"><div class="premium-card">
+      <span class="premium-badge">Premium &middot; Sponsored</span>
+      <div class="premium-logo">${initials(featured.company)}</div>
+      <div class="premium-body">
+        <h3><a href="${escapeHtml(featured.website||'#')}" target="_blank" rel="noopener">${escapeHtml(featured.company)}</a></h3>
+        <p>${escapeHtml(featured.message||'')}</p>
       </div>
-    </div>`;
+      <div class="premium-contact">
+        ${escapeHtml(featured.contact||'')}<br>
+        <a href="tel:${escapeHtml(featured.phone||'')}">${escapeHtml(featured.phone||'')}</a><br>
+        <a href="mailto:${escapeHtml(featured.email||'')}">${escapeHtml(featured.email||'')}</a>
+      </div>
+    </div></div>`;
+  }
 
-  // Table rows
-  const BADGE_CLASS = {Verified:'lb-verified',Trusted:'lb-trusted',Authorized:'lb-authorized','Top Rated':'lb-toprated',Certified:'lb-certified','Premier Partner':'lb-premier','Official Supplier':'lb-official','Preferred Vendor':'lb-preferred','Elite Seller':'lb-elite',Established:'lb-established'};
-  const rows = data.companies.map(c=>`
+  const rows = listings.map((c,i)=>`
     <tr>
       <td>
         <div class="co">
-          <span class="co-logo" style="background:${c.color}">${initials(c.name)}</span>
-          <a href="${escapeHtml(c.url)}" target="_blank" rel="noopener">${escapeHtml(c.name)}</a>
-          ${c.badge ? `<span class="lb ${BADGE_CLASS[c.badge]||''}">${escapeHtml(c.badge)}</span>` : ''}
+          <span class="co-logo" style="background:${COLORS[i%COLORS.length]}">${initials(c.company)}</span>
+          <a href="${escapeHtml(c.website||'#')}" target="_blank" rel="noopener">${escapeHtml(c.company)}</a>
+          ${c.badge ? `<span class="lb" style="background:${escapeHtml(c.badge.color)}">${escapeHtml(c.badge.text)}</span>` : ''}
         </div>
       </td>
-      <td class="cell-muted">${escapeHtml(c.contact)}</td>
-      <td class="cell-muted"><a href="tel:${escapeHtml(c.phone)}">${escapeHtml(c.phone)}</a></td>
-      <td class="cell-muted"><a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a></td>
+      <td class="cell-muted">${escapeHtml(c.contact||'—')}</td>
+      <td class="cell-muted"><a href="tel:${escapeHtml(c.phone||'')}">${escapeHtml(c.phone||'—')}</a></td>
+      <td class="cell-muted"><a href="mailto:${escapeHtml(c.email||'')}">${escapeHtml(c.email||'—')}</a></td>
     </tr>`).join('');
 
-  document.getElementById('results-body').innerHTML = premiumHtml + `
+  body.innerHTML = html + `
     <div class="listings">
       <div class="table-wrap">
         <table class="listings-table">
@@ -163,24 +168,30 @@ function initJoin(){
   if(msg) msg.addEventListener('input', ()=>{ msgCount.textContent = `${msg.value.length} / 600`; });
 
   const form = document.getElementById('join-form');
-  if(form) form.addEventListener('submit', e=>{
+  if(form) form.addEventListener('submit', async e=>{
     e.preventDefault();
-    // Save the application to the shared store (syncs to admin + spreadsheet)
-    if(window.addApplication){
-      const v = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
-      addApplication({
-        date: new Date().toISOString().slice(0,10),
-        company: v('f-company'), contact: v('f-contact'), email: v('f-email'),
-        phone: v('f-phone'), website: v('f-website'),
-        logo: (logoInput && logoInput.files && logoInput.files[0]) ? logoInput.files[0].name : '',
-        keywords: keywords.slice(),
-        banner: !!(document.getElementById('promo-check') && document.getElementById('promo-check').checked),
-        badge: { text: curBadgeText, color: curBadgeColor },
-        message: msg ? msg.value.trim() : '',
-        terms: !!(document.getElementById('f-terms') && document.getElementById('f-terms').checked),
-        status: 'Pending'
-      });
+    const submitBtn = form.querySelector('.submit');
+    const v = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    const application = {
+      company: v('f-company'), contact: v('f-contact'), email: v('f-email'),
+      phone: v('f-phone'), website: v('f-website'),
+      logo: (logoInput && logoInput.files && logoInput.files[0]) ? logoInput.files[0].name : '',
+      keywords: keywords.slice(),
+      banner: !!(document.getElementById('promo-check') && document.getElementById('promo-check').checked),
+      badge: { text: curBadgeText, color: curBadgeColor },
+      message: msg ? msg.value.trim() : '',
+      terms: !!(document.getElementById('f-terms') && document.getElementById('f-terms').checked),
+      status: 'Pending'
+    };
+    try {
+      if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
+      if(window.addApplication) await addApplication(application);
+    } catch(err) {
+      if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
+      alert('Sorry — we couldn’t submit your application right now. Please try again.');
+      return;
     }
+    if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
     const ok = document.getElementById('success');
     ok.classList.add('show');
     form.reset();

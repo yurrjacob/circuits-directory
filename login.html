@@ -23,26 +23,27 @@
 
 <div class="auth-wrap">
   <div class="auth-card">
-    <h1>Employee Login</h1>
-    <p class="sub">Circuits.com staff access only. Sign in to manage the site.</p>
+    <h1 id="auth-title">Employee Login</h1>
+    <p class="sub">Circuits.com staff access only. Sign in to manage listings and applications.</p>
 
     <form id="login-form" autocomplete="off">
       <div class="auth-field">
-        <label>Circuits.com email</label>
+        <label>Email</label>
         <input id="email" type="email" required placeholder="you@circuits.com">
       </div>
       <div class="auth-field">
         <label>Password</label>
         <input id="password" type="password" required placeholder="••••••••">
       </div>
-      <button class="submit" type="submit">Sign in to admin console →</button>
+      <div id="auth-msg" style="display:none;font-size:.85rem;margin-bottom:12px"></div>
+      <button class="submit" type="submit" id="submit-btn">Sign in →</button>
     </form>
 
     <div class="auth-foot">
-      Trouble signing in? <a href="contact.html">Contact IT</a>
+      <a href="#" id="mode-toggle">Need an account? Create one</a>
     </div>
     <div class="auth-note">
-      Demo: enter any email and password to open the admin console.
+      Access is limited to approved staff emails. New staff: create an account, then an admin adds you to the staff list.
     </div>
   </div>
 </div>
@@ -63,10 +64,64 @@
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="store.js"></script>
 <script>
-document.getElementById('login-form').addEventListener('submit', e => {
+const form = document.getElementById('login-form');
+const emailEl = document.getElementById('email');
+const passEl = document.getElementById('password');
+const msgEl = document.getElementById('auth-msg');
+const submitBtn = document.getElementById('submit-btn');
+const toggle = document.getElementById('mode-toggle');
+const title = document.getElementById('auth-title');
+let mode = 'signin';
+
+function setMsg(text, ok){
+  msgEl.textContent = text || '';
+  msgEl.style.color = ok ? '#3f6300' : '#b3261e';
+  msgEl.style.display = text ? 'block' : 'none';
+}
+
+toggle.addEventListener('click', e=>{
   e.preventDefault();
-  window.location.href = 'admin.html';
+  mode = (mode === 'signin') ? 'signup' : 'signin';
+  title.textContent = (mode === 'signin') ? 'Employee Login' : 'Create Staff Account';
+  submitBtn.textContent = (mode === 'signin') ? 'Sign in →' : 'Create account →';
+  toggle.textContent = (mode === 'signin') ? 'Need an account? Create one' : 'Have an account? Sign in';
+  setMsg('', true);
+});
+
+// Already signed in as staff? Go straight to the console.
+(async () => {
+  try { const u = await currentUser(); if(u && await checkStaff()) location.href = 'admin.html'; } catch(e){}
+})();
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const email = emailEl.value.trim(), password = passEl.value;
+  if(!email || !password) return;
+  submitBtn.disabled = true; setMsg('', true);
+  try {
+    if(mode === 'signin'){
+      const { error } = await signIn(email, password);
+      if(error){ setMsg(error.message, false); submitBtn.disabled = false; return; }
+      if(!(await checkStaff())){ setMsg('Signed in, but this email isn’t on the staff list.', false); await signOut(); submitBtn.disabled = false; return; }
+      location.href = 'admin.html';
+    } else {
+      const { data, error } = await signUp(email, password);
+      if(error){ setMsg(error.message, false); submitBtn.disabled = false; return; }
+      if(data && data.session){
+        if(await checkStaff()){ location.href = 'admin.html'; return; }
+        setMsg('Account created, but this email isn’t on the staff list yet.', false);
+        submitBtn.disabled = false;
+      } else {
+        setMsg('Account created. Check your email to confirm, then sign in.', true);
+        mode = 'signin'; title.textContent = 'Employee Login'; submitBtn.textContent = 'Sign in →';
+        toggle.textContent = 'Need an account? Create one';
+        submitBtn.disabled = false;
+      }
+    }
+  } catch(err){ setMsg('Something went wrong. Please try again.', false); submitBtn.disabled = false; }
 });
 </script>
 </body>

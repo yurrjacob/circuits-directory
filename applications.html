@@ -15,7 +15,7 @@
       <a href="index.html"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a>
       <span class="brand-text"><span class="brand-title">Admin Console</span><span class="portal-tag">Circuits.com staff</span></span>
     </div>
-    <a class="signout" href="login.html">Sign out</a>
+    <a class="signout" href="#" id="signout">Sign out</a>
   </div>
 </header>
 
@@ -23,7 +23,7 @@
   <div class="console-head">
     <div>
       <h1>Join Form Applications</h1>
-      <p>Every submission from the Sponsor a Keyword form — live and synced. Approve or deny, and the status saves automatically.</p>
+      <p>Every submission from the Sponsor a Keyword form — live from the database. Approve or deny and it saves for everyone.</p>
     </div>
     <a class="mini-btn green" href="admin.html">← Back To Dashboard</a>
   </div>
@@ -44,7 +44,7 @@
           <th>Trust Badge</th><th>Message</th><th>Terms</th><th>Price</th><th>Status</th><th>Actions</th>
         </tr>
       </thead>
-      <tbody id="apps-body"></tbody>
+      <tbody id="apps-body"><tr><td colspan="15" style="padding:20px;text-align:center;color:#5f6368">Loading…</td></tr></tbody>
     </table>
   </div>
 </main>
@@ -63,22 +63,25 @@
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="store.js"></script>
 <script>
 const esc = s => (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let filter = 'all';
+let apps = [];
+
+document.getElementById('signout').addEventListener('click', async e=>{ e.preventDefault(); await signOut(); location.href='login.html'; });
 
 function statusBadge(s){
   const cls = s==='Approved' ? 'accepted' : (s==='Denied' ? 'denied' : 'pending');
   return `<span class="badge ${cls}">${s}</span>`;
 }
 
-function render(){
-  const apps = getApplications();
+function draw(){
   const rows = apps.filter(a => filter==='all' || a.status===filter);
   document.getElementById('apps-body').innerHTML = rows.map(a=>`
     <tr>
-      <td>${esc(a.date)}</td>
+      <td>${esc((a.created_at||'').slice(0,10))}</td>
       <td><b>${esc(a.company)||'—'}</b></td>
       <td>${esc(a.contact)||'—'}</td>
       <td>${a.email ? `<a href="mailto:${esc(a.email)}">${esc(a.email)}</a>` : '—'}</td>
@@ -104,20 +107,17 @@ function render(){
   document.getElementById('c-den').textContent = apps.filter(a=>a.status==='Denied').length;
 }
 
-function setStatus(id, status){ updateAppStatus(id, status); render(); }
+async function reload(){ apps = await fetchApplications(); draw(); }
+async function setStatus(id, status){ await updateAppStatus(id, status); await reload(); }
 
 document.getElementById('filters').addEventListener('click', e=>{
   const b = e.target.closest('button'); if(!b) return;
   filter = b.dataset.f;
   document.querySelectorAll('#filters .mini-btn').forEach(x=>x.classList.toggle('active', x===b));
-  render();
+  draw();
 });
 
-// Stay in sync if a new application is submitted in another tab.
-window.addEventListener('storage', e=>{ if(e.key === APP_KEY) render(); });
-window.addEventListener('focus', render);
-
-render();
+(async ()=>{ if(await requireStaff()) reload(); })();
 </script>
 </body>
 </html>

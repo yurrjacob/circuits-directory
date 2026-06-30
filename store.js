@@ -1,60 +1,86 @@
-/* ===== Circuits.com — shared application store =====
-   Persists Join-form applications in the browser (localStorage) so the
-   Join form, admin console, and applications spreadsheet stay in sync.
-   Front-end only: data is shared across pages/tabs in the same browser. */
+/* ===== Circuits.com — Supabase-backed data store =====
+   Real persistence shared across all clients and devices.
+   Requires the Supabase JS client (loaded from CDN) before this file.
+   The URL and publishable key below are PUBLIC by design (safe to embed);
+   all access is enforced server-side by Row Level Security. */
 
-const APP_KEY = 'circuits_applications_v1';
+const SUPABASE_URL = 'https://ghpruernzhjwsgsezdyn.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_zmOQinynNkuWdHUeHrFdDA_y6UnLyL4';
 
-/* Pricing — what we charge per listing, per month. */
-const BASE_FEE = 49;    // standard listing
-const BANNER_FEE = 99;  // premium sponsored banner
-const BADGE_FEE = 29;   // sponsor trust badge
+const sb = (window.supabase && window.supabase.createClient)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
 
-function appPrice(a){
-  let p = BASE_FEE;
-  if(a && a.banner) p += BANNER_FEE;
-  if(a && a.badge)  p += BADGE_FEE;
-  return p;
+/* ---- pricing ---- */
+const BASE_FEE = 49, BANNER_FEE = 99, BADGE_FEE = 29;
+function appPrice(a){ let p = BASE_FEE; if(a && a.banner) p += BANNER_FEE; if(a && a.badge) p += BADGE_FEE; return p; }
+function appPriceLabel(a){ return (a && a.fee) ? a.fee : ('$' + appPrice(a) + '/mo'); }
+
+/* ---- read ---- */
+async function fetchApplications(){
+  if(!sb) return [];
+  const { data, error } = await sb.from('applications').select('*').order('created_at', { ascending:false });
+  if(error){ console.error('fetchApplications', error); return []; }
+  return data || [];
 }
-function appPriceLabel(a){ return '$' + appPrice(a) + '/mo'; }
+async function fetchApproved(){
+  if(!sb) return [];
+  const { data, error } = await sb.from('applications').select('*').eq('status','Approved').order('created_at', { ascending:false });
+  if(error){ console.error('fetchApproved', error); return []; }
+  return data || [];
+}
+function normKw(s){ return (s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+async function fetchApprovedByKeyword(keyword){
+  const all = await fetchApproved();
+  const k = normKw(keyword);
+  if(!k) return all;
+  return all.filter(a => (a.keywords||[]).some(kw => {
+    const n = normKw(kw);
+    return n === k || n.includes(k) || k.includes(n);
+  }));
+}
 
-/* Seed demo applications (used the first time, before any real submissions). */
-const SEED_APPS = [
-  {id:'seed-1', date:'2026-06-28', company:'Northbridge Components', contact:'Maria Vance', email:'sales@northbridge.com', phone:'(415) 555-0142', website:'https://www.northbridgecomponents.com', logo:'northbridge-logo.png', keywords:['circuits','analog ics'], banner:true, badge:{text:'Verified', color:'#1f9d55'}, message:'2M+ parts in stock, same-day shipping. Want the circuits banner.', terms:true, status:'Approved'},
-  {id:'seed-2', date:'2026-06-27', company:'Apex Semiconductor Supply', contact:'David Cho', email:'orders@apexsemi.com', phone:'(408) 555-0178', website:'https://www.apexsemi.com', logo:'apex-logo.png', keywords:['semiconductors'], banner:false, badge:{text:'Top Rated', color:'#f59e0b'}, message:'Authorized distributor, lifetime buy support.', terms:true, status:'Approved'},
-  {id:'seed-3', date:'2026-06-27', company:'VoltWise Power', contact:'Greg Salinas', email:'power@voltwise.com', phone:'(480) 555-0301', website:'https://www.voltwisepower.com', logo:'', keywords:['pmic','power management'], banner:true, badge:null, message:'PMICs and battery management. Reference designs included.', terms:true, status:'Approved'},
-  {id:'seed-4', date:'2026-06-26', company:'Brightline Parts', contact:'Owen Patel', email:'owen@brightlineparts.com', phone:'(919) 555-0144', website:'https://www.brightlineparts.com', logo:'', keywords:['interface ics','logic ics'], banner:true, badge:{text:'Featured', color:'#2563eb'}, message:'Looking to feature interface ICs and logic ICs.', terms:true, status:'Pending'},
-  {id:'seed-5', date:'2026-06-26', company:'Lumen Circuit Co.', contact:'Priya Nair', email:'sales@lumencircuit.com', phone:'(512) 555-0193', website:'https://www.lumencircuit.com', logo:'lumen-logo.png', keywords:['analog ics'], banner:false, badge:{text:'Preferred', color:'#6d28d9'}, message:'', terms:true, status:'Pending'},
-  {id:'seed-6', date:'2026-06-25', company:'ShadyParts LLC', contact:'John Doe', email:'john@shadyparts.biz', phone:'(000) 000-0000', website:'', logo:'', keywords:['counterfeit chips'], banner:false, badge:null, message:'Bulk ICs, no questions asked.', terms:false, status:'Denied'},
-  {id:'seed-7', date:'2026-06-24', company:'Granite State Semi', contact:'Karen Doyle', email:'sales@gssemi.com', phone:'(603) 555-0171', website:'https://www.granitestatesemi.com', logo:'', keywords:['memory ics'], banner:false, badge:null, message:'Could not verify business registration.', terms:true, status:'Denied'}
-];
+/* ---- write ---- */
+async function addApplication(app){
+  if(!sb) throw new Error('No connection');
+  app.status = app.status || 'Pending';
+  const { data, error } = await sb.from('applications').insert(app).select().single();
+  if(error){ console.error('addApplication', error); throw error; }
+  return data;
+}
+async function updateAppStatus(id, status){
+  if(!sb) return;
+  const { error } = await sb.from('applications').update({ status }).eq('id', id);
+  if(error) console.error('updateAppStatus', error);
+}
+async function updateApplication(id, fields){
+  if(!sb) return;
+  const { error } = await sb.from('applications').update(fields).eq('id', id);
+  if(error) console.error('updateApplication', error);
+}
+async function deleteApplication(id){
+  if(!sb) return;
+  const { error } = await sb.from('applications').delete().eq('id', id);
+  if(error) console.error('deleteApplication', error);
+}
 
-function getApplications(){
-  let raw = null;
-  try { raw = localStorage.getItem(APP_KEY); } catch(e){ raw = null; }
-  if(raw === null){
-    try { localStorage.setItem(APP_KEY, JSON.stringify(SEED_APPS)); } catch(e){}
-    return SEED_APPS.slice();
+/* ---- auth (staff) ---- */
+async function currentUser(){ if(!sb) return null; const { data } = await sb.auth.getUser(); return data ? data.user : null; }
+async function checkStaff(){ if(!sb) return false; const { data, error } = await sb.rpc('is_staff'); if(error){ console.error('is_staff', error); return false; } return !!data; }
+async function signIn(email, password){ return sb.auth.signInWithPassword({ email, password }); }
+async function signUp(email, password){ return sb.auth.signUp({ email, password }); }
+async function signOut(){ if(sb) await sb.auth.signOut(); }
+
+/* Redirect to login unless the visitor is a signed-in staff member. */
+async function requireStaff(){
+  const user = await currentUser();
+  if(!user){ location.href = 'login.html'; return false; }
+  const staff = await checkStaff();
+  if(!staff){
+    document.body.innerHTML = '<div style="max-width:520px;margin:80px auto;font-family:Arial,sans-serif;text-align:center;color:#1a1a1a">'
+      + '<h2>Not authorized</h2><p style="color:#5f6368">This account isn’t on the Circuits.com staff list. '
+      + 'Sign in with an approved staff email.</p><p><a href="login.html" style="color:#5f9b00;font-weight:600">Back to sign in</a></p></div>';
+    return false;
   }
-  try { return JSON.parse(raw) || []; } catch(e){ return SEED_APPS.slice(); }
-}
-
-function saveApplications(arr){
-  try { localStorage.setItem(APP_KEY, JSON.stringify(arr)); } catch(e){}
-}
-
-function addApplication(app){
-  const arr = getApplications();
-  app.id = 'app-' + Date.now();
-  if(!app.status) app.status = 'Pending';
-  arr.unshift(app);
-  saveApplications(arr);
-  return app;
-}
-
-function updateAppStatus(id, status){
-  const arr = getApplications();
-  const i = arr.findIndex(a => a.id === id);
-  if(i > -1){ arr[i].status = status; saveApplications(arr); }
-  return arr;
+  return true;
 }
