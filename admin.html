@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Console — Circuits.com</title>
+<link rel="icon" href="assets/favicon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="inner">
+    <div class="brand">
+      <a href="index.html"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a>
+      <span class="brand-text"><span class="brand-title">Admin Console</span><span class="portal-tag">Circuits.com staff</span></span>
+    </div>
+    <a class="signout" href="login.html">Sign out</a>
+  </div>
+</header>
+
+<main class="console">
+  <div class="console-head">
+    <div>
+      <h1>Circuits.com Dashboard</h1>
+      <p>Manage Every Listing, Keyword And Sponsored Banner Across Circuits.com.</p>
+    </div>
+    <a class="mini-btn green" href="applications.html">View Join Form Applications →</a>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat"><div class="num" id="s-listings">0</div><div class="lbl">Total Listings</div></div>
+    <div class="stat"><div class="num" id="s-companies">0</div><div class="lbl">Companies</div></div>
+    <div class="stat"><div class="num" id="s-sponsored">0</div><div class="lbl">Sponsored Keywords</div></div>
+    <div class="stat"><div class="num" id="s-pending">0</div><div class="lbl">Pending Applications</div></div>
+  </div>
+
+  <!-- 1. All listings -->
+  <div class="panel">
+    <div class="panel-head"><h2>All Listings</h2><span class="hint">Live Listings — Edit Status, Fee Or Remove</span></div>
+    <table class="dash-table">
+      <thead><tr><th>Company</th><th>Keyword</th><th>Status</th><th>Fee</th><th>Views (30d)</th><th>Actions</th></tr></thead>
+      <tbody id="listings-body"></tbody>
+    </table>
+  </div>
+
+  <!-- 2. Sponsored banners -->
+  <div class="panel">
+    <div class="panel-head"><h2>Sponsored Banners</h2><span class="hint">Assign A Company To The Premium Banner For A Keyword</span></div>
+    <div class="panel-body">
+      <div class="form-row" style="margin-bottom:18px">
+        <div class="auth-field">
+          <label>Keyword</label>
+          <input id="sp-keyword" type="text" placeholder="e.g. semiconductors" list="kw-list">
+          <datalist id="kw-list">
+            <option value="circuits"><option value="semiconductors"><option value="microcontrollers">
+            <option value="pmic"><option value="sensors"><option value="analog ics"><option value="memory ics">
+          </datalist>
+        </div>
+        <div class="auth-field">
+          <label>Company</label>
+          <select id="sp-company"></select>
+        </div>
+        <button class="mini-btn green" id="sp-add" type="button" style="height:42px">Add Sponsor Banner</button>
+      </div>
+      <table class="dash-table">
+        <thead><tr><th>Keyword</th><th>Sponsor</th><th>Banner</th><th></th></tr></thead>
+        <tbody id="sponsored-body"></tbody>
+      </table>
+      <div id="sponsored-empty" class="empty-line" style="display:none">No Sponsored Banners Yet. Add One Above.</div>
+    </div>
+  </div>
+
+  <!-- 3. Sponsored badges -->
+  <div class="panel">
+    <div class="panel-head"><h2>Sponsored Badges</h2><span class="hint">Custom Badges Shown Next To A Company Name</span></div>
+    <div class="panel-body">
+      <div class="form-row" style="margin-bottom:18px">
+        <div class="auth-field">
+          <label>Company</label>
+          <select id="bd-company"></select>
+        </div>
+        <div class="auth-field">
+          <label>Badge text</label>
+          <input id="bd-text" type="text" maxlength="18" placeholder="e.g. Verified">
+        </div>
+        <div class="auth-field">
+          <label>Color</label>
+          <select id="bd-color">
+            <option value="#1f9d55">Green</option>
+            <option value="#2563eb">Blue</option>
+            <option value="#6d28d9">Purple</option>
+            <option value="#f59e0b">Amber</option>
+            <option value="#0d9488">Teal</option>
+            <option value="#be123c">Rose</option>
+            <option value="#334155">Slate</option>
+            <option value="#db2777">Pink</option>
+            <option value="#111827">Black</option>
+            <option value="#92400e">Bronze</option>
+          </select>
+        </div>
+        <button class="mini-btn green" id="bd-add" type="button" style="height:42px">Add Sponsor Badge</button>
+      </div>
+      <table class="dash-table">
+        <thead><tr><th>Company</th><th>Badge</th><th></th></tr></thead>
+        <tbody id="badges-body"></tbody>
+      </table>
+      <div id="badges-empty" class="empty-line" style="display:none">No Sponsored Badges Yet. Add One Above.</div>
+    </div>
+  </div>
+
+  <!-- 4. Pending applications -->
+  <div class="panel">
+    <div class="panel-head"><h2>Pending Applications</h2><span class="hint">New Companies Awaiting Review</span></div>
+    <table class="dash-table">
+      <thead><tr><th>Company</th><th>Contact</th><th>Email</th><th>Keywords</th><th>Actions</th></tr></thead>
+      <tbody id="pending-body"></tbody>
+    </table>
+    <div id="pending-empty" class="empty-line" style="display:none;padding:14px 18px">No Applications Pending. All Caught Up.</div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="inner">
+    <div class="flinks">
+      <a href="admin.html">Admin</a>
+      <a href="index.html">View site</a>
+      <a href="contact.html">Support</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span>© 2026 Circuits.com</span>
+      <span class="avatar">A</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ---- in-memory demo state (front-end only) ---- */
+let listings = [
+  {company:'Northbridge Components', keyword:'circuits', status:'Live', views:6210, fee:'$99/mo'},
+  {company:'Apex Semiconductor Supply', keyword:'semiconductors', status:'Live', views:4820, fee:'$49/mo'},
+  {company:'CoreLogic Devices', keyword:'microcontrollers', status:'Live', views:3990, fee:'$99/mo'},
+  {company:'VoltWise Power', keyword:'pmic', status:'Live', views:3540, fee:'$99/mo'},
+  {company:'SenseGrid Technologies', keyword:'sensors', status:'Live', views:2870, fee:'$49/mo'},
+  {company:'Lumen Circuit Co.', keyword:'analog ics', status:'Live', views:1280, fee:'$49/mo'},
+  {company:'Vertex Electronics', keyword:'memory ics', status:'Live', views:1620, fee:'$49/mo'}
+];
+let sponsored = [
+  {keyword:'circuits', company:'Northbridge Components'},
+  {keyword:'pmic', company:'VoltWise Power'}
+];
+let badges = [
+  {company:'Apex Semiconductor Supply', text:'Verified', color:'#1f9d55'},
+  {company:'Vertex Electronics', text:'Authorized', color:'#6d28d9'}
+];
+let pending = [
+  {company:'Brightline Parts', contact:'Owen Patel', email:'owen@brightlineparts.com', cats:5},
+  {company:'Granite State Semi', contact:'Karen Doyle', email:'sales@gssemi.com', cats:3}
+];
+
+const $ = id => document.getElementById(id);
+const esc = s => (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const companies = () => [...new Set(listings.map(l=>l.company))].sort();
+
+function renderStats(){
+  $('s-listings').textContent = listings.length;
+  $('s-companies').textContent = companies().length;
+  $('s-sponsored').textContent = sponsored.length;
+  $('s-pending').textContent = pending.length;
+}
+
+function renderCompanySelects(){
+  const opts = companies().map(c=>`<option>${esc(c)}</option>`).join('');
+  $('sp-company').innerHTML = opts;
+  $('bd-company').innerHTML = opts;
+}
+
+function renderListings(){
+  $('listings-body').innerHTML = listings
+    .map((l,i)=>({l,i}))
+    .filter(x=>x.l.status==='Live')
+    .map(({l,i})=>`<tr>
+      <td>${esc(l.company)}</td>
+      <td class="kw">${esc(l.keyword)}</td>
+      <td><span class="badge live">${l.status}</span></td>
+      <td>${esc(l.fee)}</td>
+      <td>${l.views.toLocaleString()}</td>
+      <td class="row-actions">
+        <button class="mini-btn" onclick="toggleStatus(${i})">Unpublish</button>
+        <button class="mini-btn danger" onclick="removeListing(${i})">Remove</button>
+      </td>
+    </tr>`).join('');
+}
+
+function renderSponsored(){
+  $('sponsored-body').innerHTML = sponsored.map((s,i)=>`
+    <tr>
+      <td class="kw">${esc(s.keyword)}</td>
+      <td>${esc(s.company)}</td>
+      <td><span class="badge sponsored">Premium banner</span></td>
+      <td class="row-actions"><button class="mini-btn danger" onclick="removeSponsored(${i})">Remove</button></td>
+    </tr>`).join('');
+  $('sponsored-empty').style.display = sponsored.length ? 'none' : 'block';
+}
+
+function renderBadges(){
+  $('badges-body').innerHTML = badges.map((b,i)=>`
+    <tr>
+      <td>${esc(b.company)}</td>
+      <td><span class="lb" style="background:${esc(b.color)}">${esc(b.text)}</span></td>
+      <td class="row-actions"><button class="mini-btn danger" onclick="removeBadge(${i})">Remove</button></td>
+    </tr>`).join('');
+  $('badges-empty').style.display = badges.length ? 'none' : 'block';
+}
+
+function renderPending(){
+  $('pending-body').innerHTML = pending.map((p,i)=>`
+    <tr>
+      <td>${esc(p.company)}</td>
+      <td>${esc(p.contact)}</td>
+      <td>${esc(p.email)}</td>
+      <td>${p.cats} keywords</td>
+      <td class="row-actions">
+        <button class="mini-btn green" onclick="approve(${i})">Approve</button>
+        <button class="mini-btn danger" onclick="reject(${i})">Reject</button>
+      </td>
+    </tr>`).join('');
+  $('pending-empty').style.display = pending.length ? 'none' : 'block';
+}
+
+function renderAll(){ renderStats(); renderCompanySelects(); renderListings(); renderSponsored(); renderBadges(); renderPending(); }
+
+/* ---- actions ---- */
+function addSponsored(){
+  const kw = $('sp-keyword').value.trim().toLowerCase();
+  const co = $('sp-company').value;
+  if(!kw){ $('sp-keyword').focus(); return; }
+  const existing = sponsored.findIndex(s=>s.keyword===kw);
+  if(existing>-1) sponsored[existing].company = co;
+  else sponsored.push({keyword:kw, company:co});
+  $('sp-keyword').value='';
+  renderStats(); renderSponsored();
+}
+function removeSponsored(i){ sponsored.splice(i,1); renderStats(); renderSponsored(); }
+
+function addBadge(){
+  const co = $('bd-company').value;
+  const text = $('bd-text').value.trim();
+  const color = $('bd-color').value;
+  if(!text){ $('bd-text').focus(); return; }
+  const existing = badges.findIndex(b=>b.company===co);
+  if(existing>-1){ badges[existing].text=text; badges[existing].color=color; }
+  else badges.push({company:co, text, color});
+  $('bd-text').value='';
+  renderBadges();
+}
+function removeBadge(i){ badges.splice(i,1); renderBadges(); }
+
+function toggleStatus(i){ listings[i].status = listings[i].status==='Live'?'Pending':'Live'; renderListings(); }
+function removeListing(i){ listings.splice(i,1); renderAll(); }
+function approve(i){
+  const p = pending[i];
+  listings.push({company:p.company, keyword:'new listing', status:'Live', views:0});
+  pending.splice(i,1);
+  renderAll();
+}
+function reject(i){ pending.splice(i,1); renderStats(); renderPending(); }
+
+$('sp-add').addEventListener('click', addSponsored);
+$('bd-add').addEventListener('click', addBadge);
+renderAll();
+</script>
+</body>
+</html>

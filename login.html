@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Employee Login — Circuits.com</title>
+<link rel="icon" href="assets/favicon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="inner">
+    <div class="brand"><a href="index.html"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-title">The Integrated Circuits Directory</span></div>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a class="cta" href="join.html">Sponsor a Keyword</a>
+    </nav>
+  </div>
+</header>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h1>Employee Login</h1>
+    <p class="sub">Circuits.com staff access only. Sign in to manage the site.</p>
+
+    <form id="login-form" autocomplete="off">
+      <div class="auth-field">
+        <label>Circuits.com email</label>
+        <input id="email" type="email" required placeholder="you@circuits.com">
+      </div>
+      <div class="auth-field">
+        <label>Password</label>
+        <input id="password" type="password" required placeholder="••••••••">
+      </div>
+      <button class="submit" type="submit">Sign in to admin console →</button>
+    </form>
+
+    <div class="auth-foot">
+      Trouble signing in? <a href="contact.html">Contact IT</a>
+    </div>
+    <div class="auth-note">
+      Demo: enter any email and password to open the admin console.
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="inner">
+    <div class="flinks">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="join.html">Sponsor a Keyword</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html">Employee login</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span>© 2026 Circuits.com</span>
+      <img class="footer-mark" src="assets/favicon.png" alt="Circuits.com">
+    </div>
+  </div>
+</footer>
+
+<script>
+document.getElementById('login-form').addEventListener('submit', e => {
+  e.preventDefault();
+  window.location.href = 'admin.html';
+});
+</script>
+</body>
+</html>

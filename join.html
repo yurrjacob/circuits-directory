@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sponsor a Keyword — Circuits.com</title>
+<link rel="icon" href="assets/favicon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="inner">
+    <div class="brand"><a href="index.html"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-title">The Integrated Circuits Directory</span></div>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a class="active" href="join.html">Sponsor a Keyword</a>
+    </nav>
+  </div>
+</header>
+
+<div class="form-wrap">
+  <h1>List Your Company</h1>
+  <p class="lede">Get found by buyers searching for the parts you supply. Pick your keywords, and sponsor a keyword to appear in the premium banner above the list.</p>
+
+  <div id="success" class="success">
+    <b>Application received.</b> Thanks — our team will review your listing and reach out within one business day.
+  </div>
+
+  <form id="join-form" autocomplete="off" novalidate>
+
+    <!-- Step 1 -->
+    <section class="step">
+      <div class="step-head">
+        <span class="step-num">01</span>
+        <div><h2>Company</h2></div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>Company name <span class="req">*</span></label>
+          <input type="text" required placeholder="Acme Electronics, Inc.">
+        </div>
+        <div class="field">
+          <label>Contact person <span class="req">*</span></label>
+          <input type="text" required placeholder="Jane Doe, VP Sales">
+        </div>
+        <div class="field">
+          <label>Email <span class="req">*</span></label>
+          <input type="email" required placeholder="sales@company.com">
+        </div>
+        <div class="field">
+          <label>Phone <span class="req">*</span></label>
+          <input type="tel" required placeholder="(555) 123-4567">
+        </div>
+        <div class="field" style="grid-column:1 / -1">
+          <label>Website</label>
+          <input type="url" placeholder="https://www.company.com">
+        </div>
+        <div class="field" style="grid-column:1 / -1">
+          <label>Company logo <span class="cell-muted" style="font-weight:400">(optional)</span></label>
+          <input id="logo-input" type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp">
+          <div id="logo-preview" class="logo-preview" style="display:none">
+            <img id="logo-preview-img" alt="Logo preview">
+            <span id="logo-name"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 2 -->
+    <section class="step">
+      <div class="step-head">
+        <span class="step-num">02</span>
+        <div>
+          <h2>Your Keywords</h2>
+          <p>Tell us which keywords you’d like to be listed under.</p>
+        </div>
+      </div>
+      <div class="kw-input-row">
+        <input id="kw-input" type="text" placeholder="e.g. semiconductors" maxlength="40">
+        <button type="button" class="mini-btn green" id="kw-add">Add</button>
+      </div>
+      <div class="kw-tags" id="kw-tags"></div>
+      <div class="cat-count" id="kw-count"><b>0</b> keywords</div>
+    </section>
+
+    <!-- Step 3: Premium banner -->
+    <section class="step">
+      <div class="step-head">
+        <span class="step-num">03</span>
+        <div>
+          <h2>Premium Sponsored Banner</h2>
+          <p>Optional. Get featured above every other listing for the keywords you choose.</p>
+        </div>
+      </div>
+      <label class="promo">
+        <input type="checkbox" id="promo-check">
+        <div class="promo-body">
+          <div class="promo-title">Yes, Feature My Company In The Premium Sponsored Banner <span class="promo-badge">Premium</span></div>
+          <p class="promo-sub">Get Featured for Your Keyword</p>
+          <ul class="promo-benefits">
+            <li>Top Banner Placement, Above Every Standard Listing.</li>
+            <li>Prominent Logo, Profile Description, And Direct Contact Details.</li>
+            <li>Up To 8× More Visibility And Click-Throughs</li>
+            <li>The <span class="badge-premium">Premium &middot; Sponsored</span> Trust Badge On Your Banner</li>
+          </ul>
+        </div>
+      </label>
+    </section>
+
+    <!-- Step 4: Premium sponsor badge -->
+    <section class="step">
+      <div class="step-head">
+        <span class="step-num">04</span>
+        <div>
+          <h2>Premium Sponsor Badge</h2>
+          <p>Optional. Create your own badge to display next to your company name in every listing. Choose your text and color.</p>
+        </div>
+      </div>
+      <ul class="promo-benefits" style="margin:0 0 20px">
+        <li>Builds Instant Trust With Buyers Scanning The List</li>
+        <li>Makes Your Company Stand Out From Competitors</li>
+        <li>Highlights Your Status At A Glance</li>
+        <li>Appears On Every Keyword You're Listed Under</li>
+      </ul>
+      <div class="badge-builder">
+        <div class="badge-build-controls">
+          <div class="field">
+            <label>Badge text</label>
+            <input id="badge-text" type="text" maxlength="18" placeholder="e.g. Verified Supplier">
+          </div>
+          <span class="field-label">Badge color</span>
+          <div class="swatches" id="swatches">
+            <button type="button" class="swatch" data-color="#1f9d55" style="background:#1f9d55" aria-label="green"></button>
+            <button type="button" class="swatch" data-color="#2563eb" style="background:#2563eb" aria-label="blue"></button>
+            <button type="button" class="swatch" data-color="#6d28d9" style="background:#6d28d9" aria-label="purple"></button>
+            <button type="button" class="swatch" data-color="#f59e0b" style="background:#f59e0b" aria-label="amber"></button>
+            <button type="button" class="swatch" data-color="#0d9488" style="background:#0d9488" aria-label="teal"></button>
+            <button type="button" class="swatch" data-color="#be123c" style="background:#be123c" aria-label="rose"></button>
+            <button type="button" class="swatch" data-color="#334155" style="background:#334155" aria-label="slate"></button>
+            <button type="button" class="swatch" data-color="#db2777" style="background:#db2777" aria-label="pink"></button>
+            <button type="button" class="swatch" data-color="#111827" style="background:#111827" aria-label="black"></button>
+            <button type="button" class="swatch" data-color="#92400e" style="background:#92400e" aria-label="bronze"></button>
+          </div>
+        </div>
+        <div class="badge-preview-box">
+          <span class="preview-label">Live preview</span>
+          <div class="preview-stage">
+            <span class="co-logo" style="background:#76c000">AC</span>
+            <span class="preview-name">Acme Electronics</span>
+            <span class="lb" id="badge-preview" style="background:#1f9d55">Your Badge</span>
+          </div>
+          <p class="preview-hint">This is how your badge appears beside your company name in search results.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 5 -->
+    <section class="step">
+      <div class="step-head">
+        <span class="step-num">05</span>
+        <div><h2>Have any Ideas? Tell Us What You Are Thinking:</h2></div>
+      </div>
+      <div class="field">
+        <label>Message (optional)</label>
+        <textarea id="msg" maxlength="600" placeholder="Tell us about your stock depth, lead times, or any specific keywords you'd like to feature."></textarea>
+        <div class="charcount" id="msg-count">0 / 600</div>
+      </div>
+      <label class="terms">
+        <input type="checkbox" required>
+        <span>I have authority to list this company and accept the <a href="#">Listing Terms</a> and <a href="#">Acceptable Use Policy</a>.</span>
+      </label>
+    </section>
+
+    <div class="form-foot">
+      <span class="help">Have questions? <a href="contact.html">Contact us</a></span>
+      <button class="submit" type="submit">Submit Application →</button>
+    </div>
+  </form>
+</div>
+
+<footer class="footer">
+  <div class="inner">
+    <div class="flinks">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="join.html">Sponsor a Keyword</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html">Employee login</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span>© 2026 Circuits.com</span>
+      <img class="footer-mark" src="assets/favicon.png" alt="Circuits.com">
+    </div>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>initJoin();</script>
+</body>
+</html>

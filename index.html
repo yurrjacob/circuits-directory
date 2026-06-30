@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Circuits.com — Find circuit suppliers</title>
+<link rel="icon" href="assets/favicon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="home">
+
+  <header class="topbar">
+    <div class="inner">
+      <div class="brand"><a href="index.html"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-title">The Integrated Circuits Directory</span></div>
+      <nav class="nav">
+        <a class="active" href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a class="cta" href="join.html">Sponsor a Keyword</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="home-main">
+    <a href="index.html"><img class="logo-hero" src="assets/logo-home.png" alt="Circuits.com"></a>
+    <p class="tagline">All Circuits All The Time</p>
+
+    <form id="home-form" class="searchbox" autocomplete="off">
+      <div class="search-pill">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="home-search" type="text" placeholder="Search any part, supplier, distributor, or keyword..." aria-label="Search">
+      </div>
+      <div class="search-actions">
+        <button class="btn btn-primary" type="submit">Search</button>
+        <a class="btn" href="join.html">Sponsor a Keyword</a>
+      </div>
+    </form>
+
+    <div class="popular">
+      Popular:
+      <a href="results.html?q=semi-conductors">Semi-conductors</a>·
+      <a href="results.html?q=microcontrollers">Microcontrollers</a>·
+      <a href="results.html?q=pmic">PMIC</a>·
+      <a href="results.html?q=sensors">Sensors</a>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="inner">
+      <div class="flinks">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="join.html">Sponsor a Keyword</a>
+        <a href="contact.html">Contact</a>
+        <a href="login.html">Employee login</a>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <span>© 2026 Circuits.com</span>
+        <img class="footer-mark" src="assets/favicon.png" alt="Circuits.com">
+      </div>
+    </div>
+  </footer>
+
+</div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>initHome();</script>
+</body>
+</html>
