@@ -91,14 +91,14 @@
       <div class="step-head">
         <span class="step-num">03</span>
         <div>
-          <h2>Premium Sponsored Banner</h2>
+          <h2>Premium Sponsor Banner</h2>
           <p>Optional. Get featured above every other listing for the keywords you choose.</p>
         </div>
       </div>
       <label class="promo">
         <input type="checkbox" id="promo-check">
         <div class="promo-body">
-          <div class="promo-title">Yes, Feature My Company In The Premium Sponsored Banner <span class="promo-badge">Premium</span></div>
+          <div class="promo-title">Yes, Feature My Company In The Premium Sponsor Banner <span class="promo-badge">Premium</span></div>
           <p class="promo-sub">Get Featured for Your Keyword</p>
           <ul class="promo-benefits">
             <li>Top Banner Placement, Above Every Standard Listing.</li>
@@ -115,8 +115,8 @@
       <div class="step-head">
         <span class="step-num">04</span>
         <div>
-          <h2>Premium Sponsor Badge</h2>
-          <p>Optional. Create your own badge to display next to your company name in every listing. Choose your text and color.</p>
+          <h2>Sponsor Trust Badge</h2>
+          <p>Optional. Choose a badge and a color to display next to your company name in every listing.</p>
         </div>
       </div>
       <ul class="promo-benefits" style="margin:0 0 20px">
@@ -127,9 +127,13 @@
       </ul>
       <div class="badge-builder">
         <div class="badge-build-controls">
-          <div class="field">
-            <label>Badge text</label>
-            <input id="badge-text" type="text" maxlength="18" placeholder="e.g. Verified Supplier">
+          <span class="field-label">Badge</span>
+          <div class="opt-row" id="badge-opts">
+            <button type="button" class="opt-btn" data-text="Featured">Featured</button>
+            <button type="button" class="opt-btn" data-text="Preferred">Preferred</button>
+            <button type="button" class="opt-btn" data-text="Verified">Verified</button>
+            <button type="button" class="opt-btn" data-text="Top Rated">Top Rated</button>
+            <button type="button" class="opt-btn" data-text="Recommended">Recommended</button>
           </div>
           <span class="field-label">Badge color</span>
           <div class="swatches" id="swatches">
@@ -137,12 +141,7 @@
             <button type="button" class="swatch" data-color="#2563eb" style="background:#2563eb" aria-label="blue"></button>
             <button type="button" class="swatch" data-color="#6d28d9" style="background:#6d28d9" aria-label="purple"></button>
             <button type="button" class="swatch" data-color="#f59e0b" style="background:#f59e0b" aria-label="amber"></button>
-            <button type="button" class="swatch" data-color="#0d9488" style="background:#0d9488" aria-label="teal"></button>
             <button type="button" class="swatch" data-color="#be123c" style="background:#be123c" aria-label="rose"></button>
-            <button type="button" class="swatch" data-color="#334155" style="background:#334155" aria-label="slate"></button>
-            <button type="button" class="swatch" data-color="#db2777" style="background:#db2777" aria-label="pink"></button>
-            <button type="button" class="swatch" data-color="#111827" style="background:#111827" aria-label="black"></button>
-            <button type="button" class="swatch" data-color="#92400e" style="background:#92400e" aria-label="bronze"></button>
           </div>
         </div>
         <div class="badge-preview-box">
@@ -150,9 +149,9 @@
           <div class="preview-stage">
             <span class="co-logo" style="background:#76c000">AC</span>
             <span class="preview-name">Acme Electronics</span>
-            <span class="lb" id="badge-preview" style="background:#1f9d55">Your Badge</span>
+            <span class="lb" id="badge-preview" style="background:#1f9d55">Featured</span>
           </div>
-          <p class="preview-hint">This is how your badge appears beside your company name in search results.</p>
+          <p class="preview-hint">See How Your Trusted Badge Would Look Live!</p>
         </div>
       </div>
     </section>

@@ -233,9 +233,15 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.92rem}
 .badge-preview-box{flex:1 1 280px;min-width:260px;border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--bg-soft);display:flex;flex-direction:column}
 .preview-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
 .preview-stage{display:flex;align-items:center;gap:12px;margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;flex:1}
-.preview-name{font-weight:700;color:var(--ink)}
+.preview-name{font-weight:700;color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .preview-hint{margin-top:12px;font-size:.78rem;color:var(--muted)}
-#badge-preview{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+#badge-preview{flex:0 0 auto;white-space:nowrap}
+
+/* trust badge option buttons */
+.opt-row{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:4px}
+.opt-btn{border:1px solid var(--line);background:#fff;border-radius:24px;padding:8px 16px;font-family:inherit;font-size:.88rem;font-weight:600;color:#3c4043;cursor:pointer;transition:.15s}
+.opt-btn:hover{border-color:#c9ccd0}
+.opt-btn.selected{background:var(--ink);color:#fff;border-color:var(--ink)}
 
 .terms{display:flex;align-items:flex-start;gap:10px;margin-top:6px;font-size:.88rem;color:#3c4043}
 .terms input{margin-top:3px;accent-color:var(--green)}

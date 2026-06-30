@@ -117,25 +117,30 @@ function initJoin(){
   });
   renderKw();
 
-  // Custom badge builder (text + color, live preview)
-  const badgeText = document.getElementById('badge-text');
+  // Trust badge builder (option + color, live preview)
+  const badgeOpts = document.getElementById('badge-opts');
   const swatches = document.getElementById('swatches');
   const badgePreview = document.getElementById('badge-preview');
+  const DEFAULT_TEXT = 'Featured';
   const DEFAULT_COLOR = '#1f9d55';
-  function updatePreview(){
-    if(badgePreview) badgePreview.textContent = (badgeText && badgeText.value.trim()) || 'Your Badge';
+  function selectText(text){
+    if(badgePreview) badgePreview.textContent = text;
+    if(badgeOpts) badgeOpts.querySelectorAll('.opt-btn').forEach(b=>b.classList.toggle('selected', b.dataset.text===text));
   }
   function selectColor(color){
     if(badgePreview) badgePreview.style.background = color;
     if(swatches) swatches.querySelectorAll('.swatch').forEach(s=>s.classList.toggle('selected', s.dataset.color===color));
   }
-  if(badgeText) badgeText.addEventListener('input', updatePreview);
+  if(badgeOpts) badgeOpts.addEventListener('click', e=>{
+    const b = e.target.closest('.opt-btn'); if(!b) return;
+    selectText(b.dataset.text);
+  });
   if(swatches) swatches.addEventListener('click', e=>{
     const s = e.target.closest('.swatch'); if(!s) return;
     selectColor(s.dataset.color);
   });
-  selectColor(DEFAULT_COLOR); updatePreview();
-  function resetBadge(){ if(badgeText) badgeText.value=''; selectColor(DEFAULT_COLOR); updatePreview(); }
+  selectText(DEFAULT_TEXT); selectColor(DEFAULT_COLOR);
+  function resetBadge(){ selectText(DEFAULT_TEXT); selectColor(DEFAULT_COLOR); }
 
   // Logo upload preview
   const logoInput = document.getElementById('logo-input');
