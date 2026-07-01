@@ -19,7 +19,7 @@
   </div>
 </header>
 
-<main class="console">
+<main class="console console-wide">
   <div class="console-head">
     <div>
       <h1>Circuits.com Dashboard</h1>
@@ -35,58 +35,92 @@
     <div class="stat"><div class="num" id="s-pending">0</div><div class="lbl">Pending Applications</div></div>
   </div>
 
-  <!-- Keyword Listings: the live directory, fully editable -->
+  <!-- Keyword Listings: the live directory, one row per keyword -->
   <div class="panel">
-    <div class="panel-head"><h2>Keyword Listings</h2><button class="mini-btn green" id="l-add-toggle" type="button">+ Add Listing</button></div>
+    <div class="panel-head">
+      <h2>Keyword Listings</h2>
+      <div class="add-listing">
+        <select id="add-company"><option value="">Add a company&rsquo;s keywords&hellip;</option></select>
+        <button class="mini-btn green" id="add-go" type="button">Add To Directory</button>
+      </div>
+    </div>
     <div class="panel-body">
-      <div id="l-form" class="listing-form" style="display:none">
-      <div class="form-row" style="margin-bottom:14px">
-        <div class="auth-field"><label>Company</label><input id="l-company" type="text" placeholder="Acme Electronics"></div>
-        <div class="auth-field"><label>Keywords (comma-separated)</label><input id="l-keywords" type="text" placeholder="circuits, analog ics"></div>
-        <div class="auth-field"><label>Contact</label><input id="l-contact" type="text" placeholder="Jane Doe"></div>
-        <div class="auth-field"><label>Phone</label><input id="l-phone" type="text" placeholder="(555) 123-4567"></div>
-      </div>
-      <div class="form-row" style="margin-bottom:14px">
-        <div class="auth-field"><label>Email</label><input id="l-email" type="email" placeholder="sales@acme.com"></div>
-        <div class="auth-field"><label>Website</label><input id="l-website" type="url" placeholder="https://www.acme.com"></div>
-        <div class="auth-field"><label>Fee</label><input id="l-fee" type="text" placeholder="$49/mo"></div>
-        <div class="auth-field"><label>Status</label>
-          <select id="l-status"><option>Approved</option><option>Pending</option><option>Denied</option></select>
+      <div id="edit-form" class="listing-form" style="display:none">
+        <div class="form-row" style="margin-bottom:12px">
+          <div class="auth-field"><label>Company</label><input id="e-company" type="text" disabled></div>
+          <div class="auth-field"><label>Keyword</label><input id="e-keyword" type="text"></div>
+          <div class="auth-field"><label>Fee</label><input id="e-fee" type="text" placeholder="$49/mo"></div>
+          <div class="auth-field"><label>Status</label>
+            <select id="e-status"><option>Approved</option><option>Pending</option><option>Denied</option></select>
+          </div>
+        </div>
+        <div class="form-row" style="align-items:center">
+          <div class="auth-field"><label>Badge</label>
+            <select id="e-badge"><option value="">None</option><option>Featured</option><option>Preferred</option><option>Verified</option><option>Top Rated</option><option>Recommended</option></select>
+          </div>
+          <div class="auth-field"><label>Badge color</label>
+            <select id="e-color">
+              <option value="#1f9d55">Green</option><option value="#2563eb">Blue</option>
+              <option value="#6d28d9">Purple</option><option value="#f59e0b">Amber</option><option value="#be123c">Rose</option>
+            </select>
+          </div>
+          <label class="terms" style="margin:0;align-self:center"><input id="e-banner" type="checkbox"> <span>Sponsor banner</span></label>
+          <div style="display:flex;gap:8px;align-self:flex-end">
+            <button class="mini-btn green" id="e-save" type="button" style="height:42px">Save Changes</button>
+            <button class="mini-btn" id="e-cancel" type="button" style="height:42px">Cancel</button>
+          </div>
         </div>
       </div>
-      <div class="form-row" style="margin-bottom:14px;align-items:center">
-        <div class="auth-field"><label>Badge</label>
-          <select id="l-badge"><option value="">None</option><option>Featured</option><option>Preferred</option><option>Verified</option><option>Top Rated</option><option>Recommended</option></select>
-        </div>
-        <div class="auth-field"><label>Badge color</label>
-          <select id="l-color">
-            <option value="#1f9d55">Green</option><option value="#2563eb">Blue</option>
-            <option value="#6d28d9">Purple</option><option value="#f59e0b">Amber</option><option value="#be123c">Rose</option>
-          </select>
-        </div>
-        <label class="terms" style="margin:0;align-self:center"><input id="l-banner" type="checkbox"> <span>Premium sponsored banner</span></label>
-        <div style="display:flex;gap:8px;align-self:flex-end">
-          <button class="mini-btn green" id="l-save" type="button" style="height:42px">Add Listing</button>
-          <button class="mini-btn" id="l-cancel" type="button" style="height:42px">Cancel</button>
-        </div>
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Keyword</th><th>Fee</th><th>Banner</th><th>Badge</th><th>Actions</th></tr></thead>
+          <tbody id="listings-body"></tbody>
+        </table>
       </div>
-      </div>
-      <table class="dash-table">
-        <thead><tr><th>Company</th><th>Keywords</th><th>Contact</th><th>Phone</th><th>Email</th><th>Fee</th><th>Banner</th><th>Badge</th><th>Actions</th></tr></thead>
-        <tbody id="listings-body"></tbody>
-      </table>
-      <div id="listings-empty" class="empty-line" style="display:none">No keyword listings yet. Add one above.</div>
+      <div id="listings-empty" class="empty-line" style="display:none">No keyword listings yet. Add a company above.</div>
     </div>
   </div>
 
-  <!-- Pending applications -->
+  <!-- Keywords carrying a sponsor banner -->
   <div class="panel">
-    <div class="panel-head"><h2>Pending Applications</h2><span class="hint">New Companies Awaiting Review</span></div>
-    <table class="dash-table">
-      <thead><tr><th>Company</th><th>Contact</th><th>Email</th><th>Keywords</th><th>Actions</th></tr></thead>
-      <tbody id="pending-body"></tbody>
-    </table>
-    <div id="pending-empty" class="empty-line" style="display:none;padding:14px 18px">No Applications Pending. All Caught Up.</div>
+    <div class="panel-head"><h2>Keywords With Banners</h2><span class="hint">Live Keywords Running A Sponsor Banner</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Keyword</th><th>Fee</th><th>Badge</th></tr></thead>
+          <tbody id="banners-body"></tbody>
+        </table>
+      </div>
+      <div id="banners-empty" class="empty-line" style="display:none">No keywords are running a banner.</div>
+    </div>
+  </div>
+
+  <!-- Keywords carrying a trust badge -->
+  <div class="panel">
+    <div class="panel-head"><h2>Keywords With Badges</h2><span class="hint">Live Keywords Showing A Trust Badge</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Keyword</th><th>Badge</th></tr></thead>
+          <tbody id="badges-body"></tbody>
+        </table>
+      </div>
+      <div id="badges-empty" class="empty-line" style="display:none">No keywords are showing a badge.</div>
+    </div>
+  </div>
+
+  <!-- Pending applications: one row per keyword -->
+  <div class="panel">
+    <div class="panel-head"><h2>Pending Applications</h2><span class="hint">Each Keyword Awaiting Review</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Keyword</th><th>Email</th><th>Banner</th><th>Badge</th><th>Actions</th></tr></thead>
+          <tbody id="pending-body"></tbody>
+        </table>
+      </div>
+      <div id="pending-empty" class="empty-line" style="display:none">No Applications Pending. All Caught Up.</div>
+    </div>
   </div>
 </main>
 
@@ -114,104 +148,125 @@ let editId = null;
 
 $('signout').addEventListener('click', async e=>{ e.preventDefault(); await signOut(); location.href='login.html'; });
 
-function approved(){ return allApps.filter(a=>a.status==='Approved'); }
-function pending(){ return allApps.filter(a=>a.status==='Pending'); }
+const approved = () => allApps.filter(a=>a.status==='Approved');
+const pending  = () => allApps.filter(a=>a.status==='Pending');
+const badgeTag = b => b ? `<span class="lb" style="background:${esc(b.color)}">${esc(b.text)}</span>` : '—';
 
 function renderStats(){
   const ap = approved();
-  $('s-listings').textContent = ap.length;
+  $('s-listings').textContent  = ap.length;
   $('s-companies').textContent = new Set(ap.map(a=>a.company)).size;
   $('s-sponsored').textContent = ap.filter(a=>a.banner).length;
-  $('s-pending').textContent = pending().length;
+  $('s-pending').textContent   = pending().length;
+}
+
+function renderCompanyPicker(){
+  const names = [...new Set(allApps.map(a=>a.company))].sort((a,b)=>a.localeCompare(b));
+  const sel = $('add-company');
+  sel.innerHTML = '<option value="">Add a company&rsquo;s keywords&hellip;</option>'
+    + names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
 }
 
 function renderListings(){
   const ap = approved();
   $('listings-body').innerHTML = ap.map(l=>`
-    <tr>
+    <tr class="${l.paused?'row-paused':''}">
       <td>${esc(l.company)}</td>
-      <td class="kw">${(l.keywords||[]).map(esc).join(', ')||'—'}</td>
-      <td>${esc(l.contact)||'—'}</td>
-      <td>${esc(l.phone)||'—'}</td>
-      <td>${esc(l.email)||'—'}</td>
+      <td class="kw">${esc(l.keyword)||'—'}</td>
       <td>${esc(appPriceLabel(l))}</td>
       <td>${l.banner ? '<span class="badge sponsored">Yes</span>' : 'No'}</td>
-      <td>${l.badge ? `<span class="lb" style="background:${esc(l.badge.color)}">${esc(l.badge.text)}</span>` : '—'}</td>
+      <td>${badgeTag(l.badge)}</td>
       <td class="row-actions">
         <button class="mini-btn" onclick="editListing('${l.id}')">Edit</button>
         <button class="mini-btn danger" onclick="removeListing('${l.id}')">Remove</button>
+        <button class="mini-btn" onclick="togglePause('${l.id}')">${l.paused?'Unpause':'Pause'}</button>
       </td>
     </tr>`).join('');
   $('listings-empty').style.display = ap.length ? 'none' : 'block';
 }
 
+function renderBanners(){
+  const rows = approved().filter(a=>a.banner);
+  $('banners-body').innerHTML = rows.map(l=>`
+    <tr class="${l.paused?'row-paused':''}">
+      <td>${esc(l.company)}</td><td class="kw">${esc(l.keyword)||'—'}</td>
+      <td>${esc(appPriceLabel(l))}</td><td>${badgeTag(l.badge)}</td>
+    </tr>`).join('');
+  $('banners-empty').style.display = rows.length ? 'none' : 'block';
+}
+
+function renderBadges(){
+  const rows = approved().filter(a=>a.badge);
+  $('badges-body').innerHTML = rows.map(l=>`
+    <tr class="${l.paused?'row-paused':''}">
+      <td>${esc(l.company)}</td><td class="kw">${esc(l.keyword)||'—'}</td><td>${badgeTag(l.badge)}</td>
+    </tr>`).join('');
+  $('badges-empty').style.display = rows.length ? 'none' : 'block';
+}
+
 function renderPending(){
   const ps = pending();
-  $('pending-body').innerHTML = ps.map(p=>{
-    const n = (p.keywords && p.keywords.length) || 0;
-    return `<tr>
+  $('pending-body').innerHTML = ps.map(p=>`
+    <tr>
       <td>${esc(p.company)||'—'}</td>
-      <td>${esc(p.contact)||'—'}</td>
+      <td class="kw">${esc(p.keyword)||'—'}</td>
       <td>${esc(p.email)||'—'}</td>
-      <td>${n} keyword${n===1?'':'s'}</td>
+      <td>${p.banner ? '<span class="badge sponsored">Yes</span>' : 'No'}</td>
+      <td>${badgeTag(p.badge)}</td>
       <td class="row-actions">
         <button class="mini-btn green" onclick="approveApp('${p.id}')">Approve</button>
         <button class="mini-btn danger" onclick="rejectApp('${p.id}')">Reject</button>
       </td>
-    </tr>`;
-  }).join('');
+    </tr>`).join('');
   $('pending-empty').style.display = ps.length ? 'none' : 'block';
 }
 
-async function reload(){ allApps = await fetchApplications(); renderStats(); renderListings(); renderPending(); }
+function renderAll(){ renderStats(); renderCompanyPicker(); renderListings(); renderBanners(); renderBadges(); renderPending(); }
+async function reload(){ allApps = await fetchApplications(); renderAll(); }
 
-/* ---- listing form (add + edit) ---- */
-function readForm(){
-  const kw = $('l-keywords').value.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
-  const badgeText = $('l-badge').value;
-  return {
-    company: $('l-company').value.trim(),
-    keywords: kw,
-    contact: $('l-contact').value.trim(),
-    phone: $('l-phone').value.trim(),
-    email: $('l-email').value.trim(),
-    website: $('l-website').value.trim(),
-    fee: $('l-fee').value.trim() || null,
-    status: $('l-status').value,
-    banner: $('l-banner').checked,
-    badge: badgeText ? { text: badgeText, color: $('l-color').value } : null
-  };
-}
-function clearForm(){
-  ['l-company','l-keywords','l-contact','l-phone','l-email','l-website','l-fee'].forEach(id=>$(id).value='');
-  $('l-status').value='Approved'; $('l-badge').value=''; $('l-color').value='#1f9d55'; $('l-banner').checked=false;
-  editId=null; $('l-save').textContent='Add Listing';
-  $('l-form').style.display='none';
-}
+/* ---- Add: approve a whole company's keywords ---- */
+$('add-go').addEventListener('click', async ()=>{
+  const company = $('add-company').value;
+  if(!company) return;
+  $('add-go').disabled = true;
+  try { await approveCompany(company); } catch(e){ alert('Could not add. Make sure you are signed in as staff.'); }
+  $('add-go').disabled = false; $('add-company').value=''; await reload();
+});
+
+/* ---- Edit a single keyword row ---- */
 function editListing(id){
   const l = allApps.find(a=>a.id===id); if(!l) return;
-  $('l-company').value=l.company||''; $('l-keywords').value=(l.keywords||[]).join(', ');
-  $('l-contact').value=l.contact||''; $('l-phone').value=l.phone||''; $('l-email').value=l.email||'';
-  $('l-website').value=l.website||''; $('l-fee').value=l.fee||''; $('l-status').value=l.status||'Approved';
-  $('l-badge').value=l.badge?l.badge.text:''; $('l-color').value=l.badge?l.badge.color:'#1f9d55'; $('l-banner').checked=!!l.banner;
-  editId=id; $('l-save').textContent='Save Changes';
-  $('l-form').style.display='block';
-  window.scrollTo({top:0,behavior:'smooth'});
+  editId = id;
+  $('e-company').value = l.company||'';
+  $('e-keyword').value = l.keyword||'';
+  $('e-fee').value = l.fee||'';
+  $('e-status').value = l.status||'Approved';
+  $('e-badge').value = l.badge ? l.badge.text : '';
+  $('e-color').value = l.badge ? l.badge.color : '#1f9d55';
+  $('e-banner').checked = !!l.banner;
+  $('edit-form').style.display = 'block';
+  $('edit-form').scrollIntoView({behavior:'smooth', block:'center'});
 }
-$('l-cancel').addEventListener('click', clearForm);
-$('l-add-toggle').addEventListener('click', ()=>{ clearForm(); $('l-form').style.display='block'; });
-$('l-save').addEventListener('click', async ()=>{
-  const f = readForm();
-  if(!f.company){ $('l-company').focus(); return; }
-  $('l-save').disabled=true;
-  try {
-    if(editId) await updateApplication(editId, f);
-    else await addApplication(Object.assign({ message:'', logo:'', terms:true }, f));
-  } catch(e){ alert('Could not save the listing. Make sure you are signed in as staff.'); }
-  $('l-save').disabled=false;
-  clearForm(); await reload();
+function closeEdit(){ editId=null; $('edit-form').style.display='none'; }
+$('e-cancel').addEventListener('click', closeEdit);
+$('e-save').addEventListener('click', async ()=>{
+  if(!editId) return;
+  const badgeText = $('e-badge').value;
+  const patch = {
+    keyword: $('e-keyword').value.trim().toLowerCase(),
+    fee: $('e-fee').value.trim() || null,
+    status: $('e-status').value,
+    banner: $('e-banner').checked,
+    badge: badgeText ? { text: badgeText, color: $('e-color').value } : null
+  };
+  $('e-save').disabled = true;
+  try { await updateApplication(editId, patch); } catch(e){ alert('Could not save. Are you signed in as staff?'); }
+  $('e-save').disabled = false;
+  closeEdit(); await reload();
 });
-async function removeListing(id){ if(!confirm('Remove this listing?')) return; await deleteApplication(id); await reload(); }
+
+async function removeListing(id){ if(!confirm('Remove this keyword listing?')) return; await deleteApplication(id); await reload(); }
+async function togglePause(id){ const l = allApps.find(a=>a.id===id); if(!l) return; await setPaused(id, !l.paused); await reload(); }
 async function approveApp(id){ await updateAppStatus(id,'Approved'); await reload(); }
 async function rejectApp(id){ await updateAppStatus(id,'Denied'); await reload(); }
 

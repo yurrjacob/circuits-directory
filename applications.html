@@ -35,12 +35,25 @@
     <button type="button" class="mini-btn" data-f="Denied">Denied (<span id="c-den">0</span>)</button>
   </div>
 
+  <div class="sheet-controls">
+    <label>Company
+      <select id="company-filter"><option value="">All companies</option></select>
+    </label>
+    <label>Sort
+      <select id="sort-by">
+        <option value="date-desc">Newest first</option>
+        <option value="date-asc">Oldest first</option>
+        <option value="company">Company A–Z</option>
+      </select>
+    </label>
+  </div>
+
   <div class="sheet-wrap">
     <table class="sheet-table">
       <thead>
         <tr>
           <th>Date</th><th>Company</th><th>Contact</th><th>Email</th><th>Phone</th>
-          <th>Website</th><th>Logo</th><th>Keywords</th><th>Premium Banner</th>
+          <th>Website</th><th>Logo</th><th>Keyword</th><th>Premium Banner</th>
           <th>Trust Badge</th><th>Message</th><th>Terms</th><th>Price</th><th>Status</th><th>Actions</th>
         </tr>
       </thead>
@@ -68,6 +81,8 @@
 <script>
 const esc = s => (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let filter = 'all';
+let companyFilter = '';
+let sortBy = 'date-desc';
 let apps = [];
 
 document.getElementById('signout').addEventListener('click', async e=>{ e.preventDefault(); await signOut(); location.href='login.html'; });
@@ -77,8 +92,21 @@ function statusBadge(s){
   return `<span class="badge ${cls}">${s}</span>`;
 }
 
+function populateCompanies(){
+  const names = [...new Set(apps.map(a=>a.company))].sort((a,b)=>a.localeCompare(b));
+  const sel = document.getElementById('company-filter');
+  sel.innerHTML = '<option value="">All companies</option>'
+    + names.map(n=>`<option value="${esc(n)}"${n===companyFilter?' selected':''}>${esc(n)}</option>`).join('');
+}
+
 function draw(){
-  const rows = apps.filter(a => filter==='all' || a.status===filter);
+  let rows = apps.filter(a => filter==='all' || a.status===filter);
+  if(companyFilter) rows = rows.filter(a => a.company===companyFilter);
+  rows = rows.slice().sort((a,b)=>{
+    if(sortBy==='company') return (a.company||'').localeCompare(b.company||'') || (a.created_at<b.created_at?1:-1);
+    if(sortBy==='date-asc') return (a.created_at||'') < (b.created_at||'') ? -1 : 1;
+    return (a.created_at||'') > (b.created_at||'') ? -1 : 1; // date-desc
+  });
   document.getElementById('apps-body').innerHTML = rows.map(a=>`
     <tr>
       <td>${esc((a.created_at||'').slice(0,10))}</td>
@@ -88,7 +116,7 @@ function draw(){
       <td>${esc(a.phone)||'—'}</td>
       <td>${a.website ? `<a href="${esc(a.website)}" target="_blank" rel="noopener">${esc(a.website.replace(/^https?:\/\//,''))}</a>` : '—'}</td>
       <td>${a.logo ? esc(a.logo) : '—'}</td>
-      <td>${(a.keywords&&a.keywords.length) ? a.keywords.map(esc).join(', ') : '—'}</td>
+      <td class="kw">${esc(a.keyword)||'—'}</td>
       <td>${a.banner ? '<span class="badge sponsored">Yes</span>' : 'No'}</td>
       <td>${a.badge ? `<span class="lb" style="background:${esc(a.badge.color)}">${esc(a.badge.text)}</span>` : '—'}</td>
       <td class="msg-cell">${a.message ? esc(a.message) : '—'}</td>
@@ -107,7 +135,7 @@ function draw(){
   document.getElementById('c-den').textContent = apps.filter(a=>a.status==='Denied').length;
 }
 
-async function reload(){ apps = await fetchApplications(); draw(); }
+async function reload(){ apps = await fetchApplications(); populateCompanies(); draw(); }
 async function setStatus(id, status){ await updateAppStatus(id, status); await reload(); }
 
 document.getElementById('filters').addEventListener('click', e=>{
@@ -116,6 +144,9 @@ document.getElementById('filters').addEventListener('click', e=>{
   document.querySelectorAll('#filters .mini-btn').forEach(x=>x.classList.toggle('active', x===b));
   draw();
 });
+
+document.getElementById('company-filter').addEventListener('change', e=>{ companyFilter = e.target.value; draw(); });
+document.getElementById('sort-by').addEventListener('change', e=>{ sortBy = e.target.value; draw(); });
 
 (async ()=>{ if(await requireStaff()) reload(); })();
 </script>

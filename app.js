@@ -172,11 +172,10 @@ function initJoin(){
     e.preventDefault();
     const submitBtn = form.querySelector('.submit');
     const v = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
-    const application = {
+    const base = {
       company: v('f-company'), contact: v('f-contact'), email: v('f-email'),
       phone: v('f-phone'), website: v('f-website'),
       logo: (logoInput && logoInput.files && logoInput.files[0]) ? logoInput.files[0].name : '',
-      keywords: keywords.slice(),
       banner: !!(document.getElementById('promo-check') && document.getElementById('promo-check').checked),
       badge: { text: curBadgeText, color: curBadgeColor },
       message: msg ? msg.value.trim() : '',
@@ -185,7 +184,7 @@ function initJoin(){
     };
     try {
       if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
-      if(window.addApplication) await addApplication(application);
+      await addApplicationKeywords(base, keywords);
     } catch(err) {
       if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
       alert('Sorry — we couldn’t submit your application right now. Please try again.');

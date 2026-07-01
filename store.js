@@ -30,22 +30,29 @@ async function fetchApproved(){
   return data || [];
 }
 function normKw(s){ return (s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+/* One live listing per company for a searched keyword (skips paused ones). */
 async function fetchApprovedByKeyword(keyword){
-  const all = await fetchApproved();
+  const all = (await fetchApproved()).filter(a => !a.paused);
   const k = normKw(keyword);
-  if(!k) return all;
-  return all.filter(a => (a.keywords||[]).some(kw => {
-    const n = normKw(kw);
+  const match = k ? all.filter(a => {
+    const n = normKw(a.keyword);
     return n === k || n.includes(k) || k.includes(n);
-  }));
+  }) : all;
+  const seen = new Set(), out = [];
+  for(const a of match){ if(seen.has(a.company)) continue; seen.add(a.company); out.push(a); }
+  return out;
 }
 
 /* ---- write ---- */
-async function addApplication(app){
+/* Join form: one submission becomes one row per keyword. */
+async function addApplicationKeywords(base, keywords){
   if(!sb) throw new Error('No connection');
-  app.status = app.status || 'Pending';
-  const { data, error } = await sb.from('applications').insert(app).select().single();
-  if(error){ console.error('addApplication', error); throw error; }
+  const list = (keywords && keywords.length) ? keywords : [''];
+  const rows = list.map(kw => Object.assign({}, base, {
+    keyword: kw, keywords: kw ? [kw] : [], status: base.status || 'Pending'
+  }));
+  const { data, error } = await sb.from('applications').insert(rows).select();
+  if(error){ console.error('addApplicationKeywords', error); throw error; }
   return data;
 }
 async function updateAppStatus(id, status){
@@ -53,8 +60,20 @@ async function updateAppStatus(id, status){
   const { error } = await sb.from('applications').update({ status }).eq('id', id);
   if(error) console.error('updateAppStatus', error);
 }
+/* Approve every keyword row for a company (Add Listing dropdown). */
+async function approveCompany(company){
+  if(!sb) return;
+  const { error } = await sb.from('applications').update({ status:'Approved', paused:false }).eq('company', company);
+  if(error) console.error('approveCompany', error);
+}
+async function setPaused(id, paused){
+  if(!sb) return;
+  const { error } = await sb.from('applications').update({ paused }).eq('id', id);
+  if(error) console.error('setPaused', error);
+}
 async function updateApplication(id, fields){
   if(!sb) return;
+  if('keyword' in fields) fields.keywords = fields.keyword ? [fields.keyword] : [];
   const { error } = await sb.from('applications').update(fields).eq('id', id);
   if(error) console.error('updateApplication', error);
 }

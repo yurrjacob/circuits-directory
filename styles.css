@@ -271,6 +271,10 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.92rem}
 .dash-table tr:last-child td{border-bottom:0}
 .dash-table tr:hover td{background:#fcfdfb}
 .kw{font-weight:600}
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.add-listing{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.add-listing select{height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font-size:.85rem;background:#fff;min-width:220px}
+tr.row-paused td{opacity:.45}
 
 .badge{display:inline-block;font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
 .badge.live{background:#e9f7d0;color:#3f6300}
@@ -280,6 +284,9 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.92rem}
 .badge.denied{background:#fde2e1;color:#b3261e}
 
 /* applications spreadsheet (admin) */
+.sheet-controls{display:flex;gap:18px;flex-wrap:wrap;margin:0 0 14px}
+.sheet-controls label{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted);font-weight:600}
+.sheet-controls select{height:36px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font-size:.85rem;background:#fff;color:var(--ink,#1a1a1a);min-width:180px}
 .sheet-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
 .sheet-table{width:100%;border-collapse:collapse;font-size:.8rem;white-space:nowrap}
 .sheet-table th{background:var(--bg-soft);text-align:left;font-size:.66rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line)}
