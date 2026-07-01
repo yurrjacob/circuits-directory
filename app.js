@@ -126,7 +126,7 @@ function initJoin(){
   const badgeOpts = document.getElementById('badge-opts');
   const swatches = document.getElementById('swatches');
   const badgePreview = document.getElementById('badge-preview');
-  const DEFAULT_TEXT = 'Featured';
+  const DEFAULT_TEXT = 'Authorized';
   const DEFAULT_COLOR = '#1f9d55';
   let curBadgeText = DEFAULT_TEXT, curBadgeColor = DEFAULT_COLOR;
   function selectText(text){

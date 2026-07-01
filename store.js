@@ -19,13 +19,16 @@ function appPriceLabel(a){ return (a && a.fee) ? a.fee : ('$' + appPrice(a) + '/
 /* ---- read ---- */
 async function fetchApplications(){
   if(!sb) return [];
-  const { data, error } = await sb.from('applications').select('*').order('created_at', { ascending:false });
+  // secondary sort by id keeps rows from jumping when timestamps tie
+  const { data, error } = await sb.from('applications').select('*')
+    .order('created_at', { ascending:false }).order('id', { ascending:true });
   if(error){ console.error('fetchApplications', error); return []; }
   return data || [];
 }
 async function fetchApproved(){
   if(!sb) return [];
-  const { data, error } = await sb.from('applications').select('*').eq('status','Approved').order('created_at', { ascending:false });
+  const { data, error } = await sb.from('applications').select('*').eq('status','Approved')
+    .order('created_at', { ascending:false }).order('id', { ascending:true });
   if(error){ console.error('fetchApproved', error); return []; }
   return data || [];
 }
@@ -56,9 +59,10 @@ async function addApplicationKeywords(base, keywords){
   return data;
 }
 async function updateAppStatus(id, status){
-  if(!sb) return;
+  if(!sb) return null;
   const { error } = await sb.from('applications').update({ status }).eq('id', id);
   if(error) console.error('updateAppStatus', error);
+  return error || null;
 }
 /* Approve every keyword row for a company (Add Listing dropdown). */
 async function approveCompany(company){
@@ -67,15 +71,17 @@ async function approveCompany(company){
   if(error) console.error('approveCompany', error);
 }
 async function setPaused(id, paused){
-  if(!sb) return;
+  if(!sb) return null;
   const { error } = await sb.from('applications').update({ paused }).eq('id', id);
   if(error) console.error('setPaused', error);
+  return error || null;
 }
 async function updateApplication(id, fields){
-  if(!sb) return;
+  if(!sb) return null;
   if('keyword' in fields) fields.keywords = fields.keyword ? [fields.keyword] : [];
   const { error } = await sb.from('applications').update(fields).eq('id', id);
   if(error) console.error('updateApplication', error);
+  return error || null;
 }
 async function deleteApplication(id){
   if(!sb) return;

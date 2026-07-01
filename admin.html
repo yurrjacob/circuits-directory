@@ -25,7 +25,7 @@
       <h1>Circuits.com Dashboard</h1>
       <p>Manage Every Keyword Listing, Banner And Application Across Circuits.com.</p>
     </div>
-    <a class="mini-btn green" href="applications.html">View Join Form Applications →</a>
+    <a class="mini-btn green" href="applications.html">View Website Applications →</a>
   </div>
 
   <div class="stat-grid">
@@ -35,15 +35,9 @@
     <div class="stat"><div class="num" id="s-pending">0</div><div class="lbl">Pending Applications</div></div>
   </div>
 
-  <!-- Keyword Listings: the live directory, one row per keyword -->
+  <!-- Keyword Listings -->
   <div class="panel">
-    <div class="panel-head">
-      <h2>Keyword Listings</h2>
-      <div class="add-listing">
-        <select id="add-company"><option value="">Add a company&rsquo;s keywords&hellip;</option></select>
-        <button class="mini-btn green" id="add-go" type="button">Add To Directory</button>
-      </div>
-    </div>
+    <div class="panel-head"><h2>Keyword Listings</h2><span class="hint">Live Keywords List</span></div>
     <div class="panel-body">
       <div id="edit-form" class="listing-form" style="display:none">
         <div class="form-row" style="margin-bottom:12px">
@@ -56,20 +50,28 @@
         </div>
         <div class="form-row" style="align-items:center">
           <div class="auth-field"><label>Badge</label>
-            <select id="e-badge"><option value="">None</option><option>Featured</option><option>Preferred</option><option>Verified</option><option>Top Rated</option><option>Recommended</option></select>
+            <select id="e-badge"><option value="">None</option><option>Authorized</option><option>Trusted</option><option>Validated</option><option>Verified</option><option>Recommended</option></select>
           </div>
-          <div class="auth-field"><label>Badge color</label>
+          <div class="auth-field"><label>Badge Color</label>
             <select id="e-color">
               <option value="#1f9d55">Green</option><option value="#2563eb">Blue</option>
-              <option value="#6d28d9">Purple</option><option value="#f59e0b">Amber</option><option value="#be123c">Rose</option>
+              <option value="#6d28d9">Purple</option><option value="#eab308">Yellow</option><option value="#be123c">Rose</option>
             </select>
           </div>
-          <label class="terms" style="margin:0;align-self:center"><input id="e-banner" type="checkbox"> <span>Sponsor banner</span></label>
+          <label class="terms" style="margin:0;align-self:center"><input id="e-banner" type="checkbox"> <span>Premium Sponsored Banner</span></label>
           <div style="display:flex;gap:8px;align-self:flex-end">
             <button class="mini-btn green" id="e-save" type="button" style="height:42px">Save Changes</button>
             <button class="mini-btn" id="e-cancel" type="button" style="height:42px">Cancel</button>
           </div>
         </div>
+      </div>
+      <div class="list-controls" data-panel="listings">
+        <span class="lc-label">Sort</span>
+        <button type="button" class="mini-btn sort-btn active" data-sort="company">Company</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="keyword">Keyword</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="fee">Fee</button>
+        <span class="lc-label">Show</span>
+        <input class="lc-limit" type="number" min="1" max="500" value="50">
       </div>
       <div class="table-scroll">
         <table class="dash-table">
@@ -77,17 +79,25 @@
           <tbody id="listings-body"></tbody>
         </table>
       </div>
-      <div id="listings-empty" class="empty-line" style="display:none">No keyword listings yet. Add a company above.</div>
+      <div id="listings-empty" class="empty-line" style="display:none">No keyword listings yet.</div>
     </div>
   </div>
 
-  <!-- Keywords carrying a sponsor banner -->
+  <!-- Keywords With Banners -->
   <div class="panel">
     <div class="panel-head"><h2>Keywords With Banners</h2><span class="hint">Live Keywords Running A Sponsor Banner</span></div>
     <div class="panel-body">
+      <div class="list-controls" data-panel="banners">
+        <span class="lc-label">Sort</span>
+        <button type="button" class="mini-btn sort-btn active" data-sort="company">Company</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="keyword">Keyword</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="fee">Fee</button>
+        <span class="lc-label">Show</span>
+        <input class="lc-limit" type="number" min="1" max="500" value="50">
+      </div>
       <div class="table-scroll">
         <table class="dash-table">
-          <thead><tr><th>Company</th><th>Keyword</th><th>Fee</th><th>Badge</th></tr></thead>
+          <thead><tr><th>Company</th><th>Keyword</th><th>Fee</th><th>Actions</th></tr></thead>
           <tbody id="banners-body"></tbody>
         </table>
       </div>
@@ -95,13 +105,21 @@
     </div>
   </div>
 
-  <!-- Keywords carrying a trust badge -->
+  <!-- Keywords With Badges -->
   <div class="panel">
     <div class="panel-head"><h2>Keywords With Badges</h2><span class="hint">Live Keywords Showing A Trust Badge</span></div>
     <div class="panel-body">
+      <div class="list-controls" data-panel="badges">
+        <span class="lc-label">Sort</span>
+        <button type="button" class="mini-btn sort-btn active" data-sort="company">Company</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="keyword">Keyword</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="fee">Fee</button>
+        <span class="lc-label">Show</span>
+        <input class="lc-limit" type="number" min="1" max="500" value="50">
+      </div>
       <div class="table-scroll">
         <table class="dash-table">
-          <thead><tr><th>Company</th><th>Keyword</th><th>Badge</th></tr></thead>
+          <thead><tr><th>Company</th><th>Keyword</th><th>Fee</th><th>Badge</th><th>Actions</th></tr></thead>
           <tbody id="badges-body"></tbody>
         </table>
       </div>
@@ -109,10 +127,18 @@
     </div>
   </div>
 
-  <!-- Pending applications: one row per keyword -->
+  <!-- Pending applications -->
   <div class="panel">
     <div class="panel-head"><h2>Pending Applications</h2><span class="hint">Each Keyword Awaiting Review</span></div>
     <div class="panel-body">
+      <div class="list-controls" data-panel="pending">
+        <span class="lc-label">Sort</span>
+        <button type="button" class="mini-btn sort-btn active" data-sort="company">Company</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="keyword">Keyword</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="fee">Fee</button>
+        <span class="lc-label">Show</span>
+        <input class="lc-limit" type="number" min="1" max="500" value="50">
+      </div>
       <div class="table-scroll">
         <table class="dash-table">
           <thead><tr><th>Company</th><th>Keyword</th><th>Email</th><th>Banner</th><th>Badge</th><th>Actions</th></tr></thead>
@@ -145,12 +171,35 @@ const $ = id => document.getElementById(id);
 const esc = s => (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let allApps = [];
 let editId = null;
+const panels = {
+  listings: { sort:'company', limit:50 },
+  banners:  { sort:'company', limit:50 },
+  badges:   { sort:'company', limit:50 },
+  pending:  { sort:'company', limit:50 }
+};
 
 $('signout').addEventListener('click', async e=>{ e.preventDefault(); await signOut(); location.href='login.html'; });
 
 const approved = () => allApps.filter(a=>a.status==='Approved');
 const pending  = () => allApps.filter(a=>a.status==='Pending');
 const badgeTag = b => b ? `<span class="lb" style="background:${esc(b.color)}">${esc(b.text)}</span>` : '—';
+
+function sortRows(rows, key){
+  const r = rows.slice();
+  if(key==='keyword')    r.sort((a,b)=>(a.keyword||'').localeCompare(b.keyword||'') || (a.company||'').localeCompare(b.company||''));
+  else if(key==='fee')   r.sort((a,b)=>appPrice(a)-appPrice(b) || (a.company||'').localeCompare(b.company||''));
+  else                   r.sort((a,b)=>(a.company||'').localeCompare(b.company||'') || (a.keyword||'').localeCompare(b.keyword||''));
+  return r;
+}
+const view = (rows, panel) => sortRows(rows, panels[panel].sort).slice(0, panels[panel].limit);
+
+function actionsCell(l){
+  return `<td class="row-actions">
+    <button class="mini-btn" onclick="editListing('${l.id}')">Edit</button>
+    <button class="mini-btn danger" onclick="removeListing('${l.id}')">Remove</button>
+    <button class="mini-btn" onclick="togglePause('${l.id}')">${l.paused?'Unpause':'Pause'}</button>
+  </td>`;
+}
 
 function renderStats(){
   const ap = approved();
@@ -160,53 +209,43 @@ function renderStats(){
   $('s-pending').textContent   = pending().length;
 }
 
-function renderCompanyPicker(){
-  const names = [...new Set(allApps.map(a=>a.company))].sort((a,b)=>a.localeCompare(b));
-  const sel = $('add-company');
-  sel.innerHTML = '<option value="">Add a company&rsquo;s keywords&hellip;</option>'
-    + names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
-}
-
 function renderListings(){
-  const ap = approved();
-  $('listings-body').innerHTML = ap.map(l=>`
+  const rows = view(approved(), 'listings');
+  $('listings-body').innerHTML = rows.map(l=>`
     <tr class="${l.paused?'row-paused':''}">
       <td>${esc(l.company)}</td>
       <td class="kw">${esc(l.keyword)||'—'}</td>
       <td>${esc(appPriceLabel(l))}</td>
       <td>${l.banner ? '<span class="badge sponsored">Yes</span>' : 'No'}</td>
       <td>${badgeTag(l.badge)}</td>
-      <td class="row-actions">
-        <button class="mini-btn" onclick="editListing('${l.id}')">Edit</button>
-        <button class="mini-btn danger" onclick="removeListing('${l.id}')">Remove</button>
-        <button class="mini-btn" onclick="togglePause('${l.id}')">${l.paused?'Unpause':'Pause'}</button>
-      </td>
+      ${actionsCell(l)}
     </tr>`).join('');
-  $('listings-empty').style.display = ap.length ? 'none' : 'block';
+  $('listings-empty').style.display = approved().length ? 'none' : 'block';
 }
 
 function renderBanners(){
-  const rows = approved().filter(a=>a.banner);
+  const rows = view(approved().filter(a=>a.banner), 'banners');
   $('banners-body').innerHTML = rows.map(l=>`
     <tr class="${l.paused?'row-paused':''}">
       <td>${esc(l.company)}</td><td class="kw">${esc(l.keyword)||'—'}</td>
-      <td>${esc(appPriceLabel(l))}</td><td>${badgeTag(l.badge)}</td>
+      <td>${esc(appPriceLabel(l))}</td>${actionsCell(l)}
     </tr>`).join('');
-  $('banners-empty').style.display = rows.length ? 'none' : 'block';
+  $('banners-empty').style.display = approved().filter(a=>a.banner).length ? 'none' : 'block';
 }
 
 function renderBadges(){
-  const rows = approved().filter(a=>a.badge);
+  const rows = view(approved().filter(a=>a.badge), 'badges');
   $('badges-body').innerHTML = rows.map(l=>`
     <tr class="${l.paused?'row-paused':''}">
-      <td>${esc(l.company)}</td><td class="kw">${esc(l.keyword)||'—'}</td><td>${badgeTag(l.badge)}</td>
+      <td>${esc(l.company)}</td><td class="kw">${esc(l.keyword)||'—'}</td>
+      <td>${esc(appPriceLabel(l))}</td><td>${badgeTag(l.badge)}</td>${actionsCell(l)}
     </tr>`).join('');
-  $('badges-empty').style.display = rows.length ? 'none' : 'block';
+  $('badges-empty').style.display = approved().filter(a=>a.badge).length ? 'none' : 'block';
 }
 
 function renderPending(){
-  const ps = pending();
-  $('pending-body').innerHTML = ps.map(p=>`
+  const rows = view(pending(), 'pending');
+  $('pending-body').innerHTML = rows.map(p=>`
     <tr>
       <td>${esc(p.company)||'—'}</td>
       <td class="kw">${esc(p.keyword)||'—'}</td>
@@ -218,19 +257,25 @@ function renderPending(){
         <button class="mini-btn danger" onclick="rejectApp('${p.id}')">Reject</button>
       </td>
     </tr>`).join('');
-  $('pending-empty').style.display = ps.length ? 'none' : 'block';
+  $('pending-empty').style.display = pending().length ? 'none' : 'block';
 }
 
-function renderAll(){ renderStats(); renderCompanyPicker(); renderListings(); renderBanners(); renderBadges(); renderPending(); }
+function renderAll(){ renderStats(); renderListings(); renderBanners(); renderBadges(); renderPending(); }
+function renderPanel(panel){ ({listings:renderListings,banners:renderBanners,badges:renderBadges,pending:renderPending}[panel])(); }
 async function reload(){ allApps = await fetchApplications(); renderAll(); }
 
-/* ---- Add: approve a whole company's keywords ---- */
-$('add-go').addEventListener('click', async ()=>{
-  const company = $('add-company').value;
-  if(!company) return;
-  $('add-go').disabled = true;
-  try { await approveCompany(company); } catch(e){ alert('Could not add. Make sure you are signed in as staff.'); }
-  $('add-go').disabled = false; $('add-company').value=''; await reload();
+/* per-panel sort + limit controls */
+document.querySelectorAll('.list-controls').forEach(bar=>{
+  const panel = bar.dataset.panel;
+  bar.querySelectorAll('.sort-btn').forEach(btn=>btn.addEventListener('click', ()=>{
+    panels[panel].sort = btn.dataset.sort;
+    bar.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active', b===btn));
+    renderPanel(panel);
+  }));
+  bar.querySelector('.lc-limit').addEventListener('change', e=>{
+    let n = parseInt(e.target.value,10); if(isNaN(n)||n<1) n=1; if(n>500) n=500;
+    e.target.value = n; panels[panel].limit = n; renderPanel(panel);
+  });
 });
 
 /* ---- Edit a single keyword row ---- */
@@ -260,14 +305,21 @@ $('e-save').addEventListener('click', async ()=>{
     badge: badgeText ? { text: badgeText, color: $('e-color').value } : null
   };
   $('e-save').disabled = true;
-  try { await updateApplication(editId, patch); } catch(e){ alert('Could not save. Are you signed in as staff?'); }
+  const err = await updateApplication(editId, patch);
   $('e-save').disabled = false;
+  if(err){ alert(bannerError(err)); return; }
   closeEdit(); await reload();
 });
 
+function bannerError(err){
+  if(err && (err.code==='23505' || /duplicate|unique/i.test(err.message||'')))
+    return 'That keyword already has a premium banner. Only one premium banner is allowed per keyword.';
+  return 'Could not save. Make sure you are signed in as staff.';
+}
+
 async function removeListing(id){ if(!confirm('Remove this keyword listing?')) return; await deleteApplication(id); await reload(); }
 async function togglePause(id){ const l = allApps.find(a=>a.id===id); if(!l) return; await setPaused(id, !l.paused); await reload(); }
-async function approveApp(id){ await updateAppStatus(id,'Approved'); await reload(); }
+async function approveApp(id){ const err = await updateAppStatus(id,'Approved'); if(err){ alert(bannerError(err)); return; } await reload(); }
 async function rejectApp(id){ await updateAppStatus(id,'Denied'); await reload(); }
 
 (async ()=>{ if(await requireStaff()) reload(); })();

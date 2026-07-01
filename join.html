@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sponsor a Keyword — Circuits.com</title>
+<title>List Your Company — Circuits.com</title>
 <link rel="icon" href="assets/favicon.png">
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -16,14 +16,14 @@
       <a href="index.html">Home</a>
       <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
-      <a class="active" href="join.html">Sponsor a Keyword</a>
+      <a class="active cta" href="join.html">List Your Company</a>
     </nav>
   </div>
 </header>
 
 <div class="form-wrap">
   <h1>List Your Company</h1>
-  <p class="lede">Get found by buyers searching for the parts you supply. Pick your keywords, and sponsor a keyword to appear in the premium banner above the list.</p>
+  <p class="lede">Get found by buyers searching for the parts you supply. Pick your keywords and feature your company in the premium banner above the list.</p>
 
   <div id="success" class="success">
     <b>Application received.</b> Thanks — our team will review your listing and reach out within one business day.
@@ -35,15 +35,15 @@
     <section class="step">
       <div class="step-head">
         <span class="step-num">01</span>
-        <div><h2>Company</h2></div>
+        <div><h2>List Your Company</h2></div>
       </div>
       <div class="grid2">
         <div class="field">
-          <label>Company name <span class="req">*</span></label>
+          <label>Company Name <span class="req">*</span></label>
           <input id="f-company" type="text" required placeholder="Acme Electronics, Inc.">
         </div>
         <div class="field">
-          <label>Contact person <span class="req">*</span></label>
+          <label>Contact Person <span class="req">*</span></label>
           <input id="f-contact" type="text" required placeholder="Jane Doe, VP Sales">
         </div>
         <div class="field">
@@ -59,7 +59,7 @@
           <input id="f-website" type="url" placeholder="https://www.company.com">
         </div>
         <div class="field" style="grid-column:1 / -1">
-          <label>Company logo <span class="cell-muted" style="font-weight:400">(optional)</span></label>
+          <label>Company Logo <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
           <input id="logo-input" type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp">
           <div id="logo-preview" class="logo-preview" style="display:none">
             <img id="logo-preview-img" alt="Logo preview">
@@ -74,7 +74,7 @@
       <div class="step-head">
         <span class="step-num">02</span>
         <div>
-          <h2>Your Keywords</h2>
+          <h2>Your Keyword List</h2>
           <p>Tell us which keywords you’d like to be listed under.</p>
         </div>
       </div>
@@ -91,65 +91,65 @@
       <div class="step-head">
         <span class="step-num">03</span>
         <div>
-          <h2>Premium Sponsor Banner</h2>
-          <p>Optional. Get featured above every other listing for the keywords you choose.</p>
+          <h2>Premium Sponsored Banner</h2>
+          <p>Optional. Get featured above every keyword list you choose.</p>
         </div>
       </div>
-      <label class="promo">
+      <label class="promo promo-gold">
         <input type="checkbox" id="promo-check">
         <div class="promo-body">
-          <div class="promo-title">Yes, Feature My Company In The Premium Sponsor Banner <span class="promo-badge">Premium</span></div>
-          <p class="promo-sub">Get Featured for Your Keyword</p>
+          <div class="promo-title">Yes, Feature My Company In The Premium Sponsored Banner <span class="promo-badge">Premium</span></div>
+          <p class="benefits-h">Benefits</p>
           <ul class="promo-benefits">
-            <li>Top Banner Placement, Above Every Standard Listing.</li>
-            <li>Prominent Logo, Profile Description, And Direct Contact Details.</li>
-            <li>Up To 8× More Visibility And Click-Throughs</li>
-            <li>The <span class="badge-premium">Premium &middot; Sponsored</span> Trust Badge On Your Banner</li>
+            <li>Top Banner Placement, Above Every Standard Listing You Choose</li>
+            <li>Prominent Logo, Profile Description, And Direct Contact Details</li>
+            <li><span class="badge-premium">Premium &middot; Sponsored</span> Trust Badge On Your Banner</li>
           </ul>
         </div>
       </label>
     </section>
 
-    <!-- Step 4: Premium sponsor badge -->
+    <!-- Step 4: Supplier trust badge -->
     <section class="step">
       <div class="step-head">
         <span class="step-num">04</span>
         <div>
-          <h2>Sponsor Trust Badge</h2>
-          <p>Optional. Choose a badge and a color to display next to your company name in every listing.</p>
+          <h2>Supplier Trust Badge</h2>
+          <p>Optional. Choose a badge and a color to display next to your company name in every keyword listing.</p>
         </div>
       </div>
+      <p class="benefits-h">Benefits</p>
       <ul class="promo-benefits" style="margin:0 0 20px">
-        <li>Builds Instant Trust With Buyers Scanning The List</li>
-        <li>Makes Your Company Stand Out From Competitors</li>
-        <li>Highlights Your Status At A Glance</li>
-        <li>Appears On Every Keyword You're Listed Under</li>
+        <li>Build Instant Trust With Buyers Scanning The List</li>
+        <li>Make Your Company Stand Out From Competitors</li>
+        <li>Highlight Your Status At A Glance</li>
+        <li>Assign A Trust Badge To Every Keyword You're Listed Under</li>
       </ul>
       <div class="badge-builder">
         <div class="badge-build-controls">
           <span class="field-label">Badge</span>
           <div class="opt-row" id="badge-opts">
-            <button type="button" class="opt-btn" data-text="Featured">Featured</button>
-            <button type="button" class="opt-btn" data-text="Preferred">Preferred</button>
+            <button type="button" class="opt-btn" data-text="Authorized">Authorized</button>
+            <button type="button" class="opt-btn" data-text="Trusted">Trusted</button>
+            <button type="button" class="opt-btn" data-text="Validated">Validated</button>
             <button type="button" class="opt-btn" data-text="Verified">Verified</button>
-            <button type="button" class="opt-btn" data-text="Top Rated">Top Rated</button>
             <button type="button" class="opt-btn" data-text="Recommended">Recommended</button>
           </div>
-          <span class="field-label">Badge color</span>
+          <span class="field-label">Badge Color</span>
           <div class="swatches" id="swatches">
             <button type="button" class="swatch" data-color="#1f9d55" style="background:#1f9d55" aria-label="green"></button>
             <button type="button" class="swatch" data-color="#2563eb" style="background:#2563eb" aria-label="blue"></button>
             <button type="button" class="swatch" data-color="#6d28d9" style="background:#6d28d9" aria-label="purple"></button>
-            <button type="button" class="swatch" data-color="#f59e0b" style="background:#f59e0b" aria-label="amber"></button>
+            <button type="button" class="swatch" data-color="#eab308" style="background:#eab308" aria-label="yellow"></button>
             <button type="button" class="swatch" data-color="#be123c" style="background:#be123c" aria-label="rose"></button>
           </div>
         </div>
         <div class="badge-preview-box">
-          <span class="preview-label">Live preview</span>
+          <span class="preview-label">Live Preview</span>
           <div class="preview-stage">
             <span class="co-logo" style="background:#76c000">AC</span>
             <span class="preview-name">Acme Electronics</span>
-            <span class="lb" id="badge-preview" style="background:#1f9d55">Featured</span>
+            <span class="lb" id="badge-preview" style="background:#1f9d55">Authorized</span>
           </div>
           <p class="preview-hint">See How Your Trusted Badge Would Look Live!</p>
         </div>
@@ -160,11 +160,11 @@
     <section class="step">
       <div class="step-head">
         <span class="step-num">05</span>
-        <div><h2>Have any Ideas? Tell Us What You Are Thinking:</h2></div>
+        <div><h2>Have Any Ideas? Tell Us What You're Thinking</h2></div>
       </div>
       <div class="field">
-        <label>Message (optional)</label>
-        <textarea id="msg" maxlength="600" placeholder="Tell us about your stock depth, lead times, or any specific keywords you'd like to feature."></textarea>
+        <label>Message (Optional)</label>
+        <textarea id="msg" maxlength="600" placeholder="Tell us about your needs to reach buyers or any other questions."></textarea>
         <div class="charcount" id="msg-count">0 / 600</div>
       </div>
       <label class="terms">
@@ -185,7 +185,7 @@
     <div class="flinks">
       <a href="index.html">Home</a>
       <a href="about.html">About</a>
-      <a href="join.html">Sponsor a Keyword</a>
+      <a href="join.html">List Your Company</a>
       <a href="contact.html">Contact</a>
       <a href="login.html">Login</a>
     </div>
