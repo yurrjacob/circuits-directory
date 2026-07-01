@@ -37,8 +37,9 @@
 
   <!-- Keyword Listings: the live directory, fully editable -->
   <div class="panel">
-    <div class="panel-head"><h2>Keyword Listings</h2><span class="hint" id="kl-mode-hint">Add, Edit Or Remove Live Directory Listings</span></div>
+    <div class="panel-head"><h2>Keyword Listings</h2><button class="mini-btn green" id="l-add-toggle" type="button">+ Add Listing</button></div>
     <div class="panel-body">
+      <div id="l-form" class="listing-form" style="display:none">
       <div class="form-row" style="margin-bottom:14px">
         <div class="auth-field"><label>Company</label><input id="l-company" type="text" placeholder="Acme Electronics"></div>
         <div class="auth-field"><label>Keywords (comma-separated)</label><input id="l-keywords" type="text" placeholder="circuits, analog ics"></div>
@@ -66,8 +67,9 @@
         <label class="terms" style="margin:0;align-self:center"><input id="l-banner" type="checkbox"> <span>Premium sponsored banner</span></label>
         <div style="display:flex;gap:8px;align-self:flex-end">
           <button class="mini-btn green" id="l-save" type="button" style="height:42px">Add Listing</button>
-          <button class="mini-btn" id="l-cancel" type="button" style="height:42px;display:none">Cancel</button>
+          <button class="mini-btn" id="l-cancel" type="button" style="height:42px">Cancel</button>
         </div>
+      </div>
       </div>
       <table class="dash-table">
         <thead><tr><th>Company</th><th>Keywords</th><th>Contact</th><th>Phone</th><th>Email</th><th>Fee</th><th>Banner</th><th>Badge</th><th>Actions</th></tr></thead>
@@ -183,8 +185,8 @@ function readForm(){
 function clearForm(){
   ['l-company','l-keywords','l-contact','l-phone','l-email','l-website','l-fee'].forEach(id=>$(id).value='');
   $('l-status').value='Approved'; $('l-badge').value=''; $('l-color').value='#1f9d55'; $('l-banner').checked=false;
-  editId=null; $('l-save').textContent='Add Listing'; $('l-cancel').style.display='none';
-  $('kl-mode-hint').textContent='Add, Edit Or Remove Live Directory Listings';
+  editId=null; $('l-save').textContent='Add Listing';
+  $('l-form').style.display='none';
 }
 function editListing(id){
   const l = allApps.find(a=>a.id===id); if(!l) return;
@@ -192,11 +194,12 @@ function editListing(id){
   $('l-contact').value=l.contact||''; $('l-phone').value=l.phone||''; $('l-email').value=l.email||'';
   $('l-website').value=l.website||''; $('l-fee').value=l.fee||''; $('l-status').value=l.status||'Approved';
   $('l-badge').value=l.badge?l.badge.text:''; $('l-color').value=l.badge?l.badge.color:'#1f9d55'; $('l-banner').checked=!!l.banner;
-  editId=id; $('l-save').textContent='Save Changes'; $('l-cancel').style.display='inline-block';
-  $('kl-mode-hint').textContent='Editing: '+(l.company||'listing');
+  editId=id; $('l-save').textContent='Save Changes';
+  $('l-form').style.display='block';
   window.scrollTo({top:0,behavior:'smooth'});
 }
 $('l-cancel').addEventListener('click', clearForm);
+$('l-add-toggle').addEventListener('click', ()=>{ clearForm(); $('l-form').style.display='block'; });
 $('l-save').addEventListener('click', async ()=>{
   const f = readForm();
   if(!f.company){ $('l-company').focus(); return; }
