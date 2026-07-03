@@ -54,9 +54,9 @@ async function addApplicationKeywords(base, keywords){
   const rows = list.map(kw => Object.assign({}, base, {
     keyword: kw, keywords: kw ? [kw] : [], status: base.status || 'Pending'
   }));
-  const { data, error } = await sb.from('applications').insert(rows).select();
+  const { error } = await sb.from('applications').insert(rows);
   if(error){ console.error('addApplicationKeywords', error); throw error; }
-  return data;
+  return rows;
 }
 async function updateAppStatus(id, status){
   if(!sb) return null;
