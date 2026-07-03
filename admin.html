@@ -270,11 +270,11 @@ document.querySelectorAll('.list-controls').forEach(bar=>{
   bar.querySelectorAll('.sort-btn').forEach(btn=>btn.addEventListener('click', ()=>{
     panels[panel].sort = btn.dataset.sort;
     bar.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active', b===btn));
-    renderPanel(panel);
+    renderPanel(panel); savePrefs('admin', panels);
   }));
   bar.querySelector('.lc-limit').addEventListener('change', e=>{
     let n = parseInt(e.target.value,10); if(isNaN(n)||n<1) n=1; if(n>500) n=500;
-    e.target.value = n; panels[panel].limit = n; renderPanel(panel);
+    e.target.value = n; panels[panel].limit = n; renderPanel(panel); savePrefs('admin', panels);
   });
 });
 
@@ -322,7 +322,7 @@ async function togglePause(id){ const l = allApps.find(a=>a.id===id); if(!l) ret
 async function approveApp(id){ const err = await updateAppStatus(id,'Approved'); if(err){ alert(bannerError(err)); return; } await reload(); }
 async function rejectApp(id){ await updateAppStatus(id,'Denied'); await reload(); }
 
-(async ()=>{ if(await requireStaff()) reload(); })();
+function syncControls(){ document.querySelectorAll('.list-controls').forEach(bar=>{ const p = panels[bar.dataset.panel]; bar.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active', b.dataset.sort===p.sort)); bar.querySelector('.lc-limit').value = p.limit; }); } (async ()=>{ if(!(await requireStaff())) return; const saved = await loadPrefs('admin'); if(saved) for(const k in panels){ if(saved[k] && saved[k].sort) panels[k].sort = saved[k].sort; if(saved[k] && saved[k].limit) panels[k].limit = saved[k].limit; } syncControls(); reload(); })();
 </script>
 </body>
 </html>
