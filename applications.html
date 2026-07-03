@@ -221,18 +221,18 @@ body.addEventListener('click', async e=>{
 /* ---------- filters / sort / limit ---------- */
 $('filters').addEventListener('click', e=>{
   const b = e.target.closest('button'); if(!b) return;
-  filter = b.dataset.f;
+  filter = b.dataset.f; saveView();
   document.querySelectorAll('#filters .mini-btn').forEach(x=>x.classList.toggle('active', x===b));
   draw();
 });
-$('company-filter').addEventListener('change', e=>{ companyFilter = e.target.value; draw(); });
-$('sort-by').addEventListener('change', e=>{ sortBy = e.target.value; draw(); });
+$('company-filter').addEventListener('change', e=>{ companyFilter = e.target.value; draw(); saveView(); });
+$('sort-by').addEventListener('change', e=>{ sortBy = e.target.value; draw(); saveView(); });
 $('row-limit').addEventListener('change', e=>{
   let n = parseInt(e.target.value,10); if(isNaN(n)||n<1) n=1; if(n>500) n=500;
-  e.target.value = n; rowLimit = n; draw();
+  e.target.value = n; rowLimit = n; draw(); saveView();
 });
 
-(async ()=>{ if(await requireStaff()) reload(); })();
+function saveView(){ savePrefs('applications', { filter, companyFilter, sortBy, rowLimit }); } (async ()=>{ if(!(await requireStaff())) return; const saved = await loadPrefs('applications'); if(saved){ filter = saved.filter || filter; companyFilter = saved.companyFilter || ''; sortBy = saved.sortBy || sortBy; rowLimit = saved.rowLimit || rowLimit; document.querySelectorAll('#filters .mini-btn').forEach(x=>x.classList.toggle('active', x.dataset.f===filter)); $('sort-by').value = sortBy; $('row-limit').value = rowLimit; } reload(); })();
 </script>
 </body>
 </html>
