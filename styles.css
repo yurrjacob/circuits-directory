@@ -187,14 +187,14 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.92rem}
 .lb{display:inline-block;font-size:.68rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:20px;color:#fff;white-space:nowrap;vertical-align:middle}
 
 /* custom badge builder (Join form) */
-.badge-builder{display:flex;gap:24px;flex-wrap:wrap;align-items:stretch}
+.badge-builder{display:block}
 .badge-build-controls{flex:1 1 280px;min-width:260px}
 .field-label{display:block;font-size:.82rem;font-weight:600;color:#3c4043;margin:16px 0 9px}
 .swatches{display:flex;flex-wrap:wrap;gap:11px}
 .swatch{width:32px;height:32px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;outline:none;box-shadow:0 0 0 1px rgba(0,0,0,.10);transition:transform .12s}
 .swatch:hover{transform:scale(1.12)}
 .swatch.selected{border-color:#fff;box-shadow:0 0 0 2px var(--ink)}
-.badge-preview-box{flex:1 1 280px;min-width:260px;border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--bg-soft);display:flex;flex-direction:column}
+.badge-preview-box{margin-top:22px;border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--bg-soft);display:flex;flex-direction:column}
 .preview-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
 .preview-stage{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;flex:1}
 .preview-name{font-weight:700;color:var(--ink);flex:1;min-width:0;overflow-wrap:anywhere}
