@@ -196,8 +196,8 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.92rem}
 .swatch.selected{border-color:#fff;box-shadow:0 0 0 2px var(--ink)}
 .badge-preview-box{flex:1 1 280px;min-width:260px;border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--bg-soft);display:flex;flex-direction:column}
 .preview-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
-.preview-stage{display:flex;align-items:center;gap:12px;margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;flex:1}
-.preview-name{font-weight:700;color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preview-stage{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;flex:1}
+.preview-name{font-weight:700;color:var(--ink);flex:1;min-width:0;overflow-wrap:anywhere}
 .preview-hint{margin-top:12px;font-size:.78rem;color:var(--muted)}
 #badge-preview{flex:0 0 auto;white-space:nowrap}
 
@@ -352,3 +352,10 @@ tr.row-paused td{opacity:.45}
 .founder-line:hover svg{color:var(--green-dark)}
 .resp-line{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.86rem;margin-top:14px;padding-top:16px;border-top:1px dashed var(--line)}
 .resp-line .dot-live{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(118,192,0,.18);flex:0 0 auto}
+
+
+/* banner live preview (Join form) */
+.banner-preview{display:block;margin-top:18px}
+.banner-preview .premium-card{margin-top:12px}
+.banner-preview .premium-contact{white-space:normal}
+@media(max-width:680px){.banner-preview .premium-card{flex-wrap:wrap}}
