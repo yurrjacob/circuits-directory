@@ -163,7 +163,36 @@ function initJoin(){
     logoPrev.style.display = 'flex';
   });
 
-  const msg = document.getElementById('msg');
+  // Live previews (badge + banner) pull from the form fields
+const pvName = document.getElementById('preview-name');
+const pvLogo = document.getElementById('preview-logo');
+const bpLogo = document.getElementById('bp-logo');
+const bpCompany = document.getElementById('bp-company');
+const bpMessage = document.getElementById('bp-message');
+const bpContact = document.getElementById('bp-contact');
+const bpPhone = document.getElementById('bp-phone');
+const bpEmail = document.getElementById('bp-email');
+function fieldVal(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function updatePreviews(){
+const company = fieldVal('f-company');
+if(pvName) pvName.textContent = company || 'Acme Electronics';
+if(bpCompany) bpCompany.textContent = company || 'Acme Electronics, Inc.';
+const ini = initials(company || 'Acme Electronics');
+if(pvLogo) pvLogo.textContent = ini;
+if(bpLogo) bpLogo.textContent = ini;
+if(bpContact) bpContact.textContent = fieldVal('f-contact') || 'Jane Doe, VP Sales';
+if(bpPhone) bpPhone.textContent = fieldVal('f-phone') || '(555) 123-4567';
+if(bpEmail) bpEmail.textContent = fieldVal('f-email') || 'sales@company.com';
+const m = document.getElementById('msg');
+if(bpMessage) bpMessage.textContent = (m && m.value.trim()) || 'Prominent profile description shown to every buyer.';
+}
+['f-company','f-contact','f-phone','f-email','msg'].forEach(function(id){
+const el = document.getElementById(id);
+if(el) el.addEventListener('input', updatePreviews);
+});
+updatePreviews();
+
+const msg = document.getElementById('msg');
   const msgCount = document.getElementById('msg-count');
   if(msg) msg.addEventListener('input', ()=>{ msgCount.textContent = `${msg.value.length} / 600`; });
 
@@ -196,6 +225,7 @@ function initJoin(){
     form.reset();
     keywords = []; renderKw();
     resetBadge();
+updatePreviews();
     if(logoPrev) logoPrev.style.display='none';
     if(msgCount) msgCount.textContent='0 / 600';
     window.scrollTo({top:0,behavior:'smooth'});
