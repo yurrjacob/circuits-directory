@@ -13,7 +13,15 @@ const sb = (window.supabase && window.supabase.createClient)
 
 /* ---- pricing ---- */
 const BASE_FEE = 49, BANNER_FEE = 99, BADGE_FEE = 29;
-function appPrice(a){ let p = BASE_FEE; if(a && a.banner) p += BANNER_FEE; if(a && a.badge) p += BADGE_FEE; return p; }
+function effPrice(v, fallback){
+  return (v==null || v==='' || isNaN(Number(v))) ? fallback : Number(v);
+}
+function appPrice(a){
+  let p = effPrice(a && a.listing_price, BASE_FEE);
+  if(a && a.banner) p += effPrice(a.banner_price, BANNER_FEE);
+  if(a && a.badge)  p += effPrice(a.badge_price, BADGE_FEE);
+  return p;
+}
 function appPriceLabel(a){ return (a && a.fee) ? a.fee : ('$' + appPrice(a) + '/mo'); }
 
 /* ---- read ---- */

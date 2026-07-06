@@ -88,7 +88,8 @@ let filter = 'all', companyFilter = '', sortBy = 'date-desc', rowLimit = 100;
 let apps = [];
 
 const body = $('apps-body');
-const totalPrice = a => BASE_FEE + (a.banner?BANNER_FEE:0) + (a.badge?BADGE_FEE:0);
+const totalPrice = a => appPrice(a); // uses hand-entered prices when set, defaults otherwise
+const money = n => '$' + (Number(n)%1 ? Number(n).toFixed(2) : Number(n));
 
 $('signout').addEventListener('click', async e=>{ e.preventDefault(); await signOut(); location.href='login.html'; });
 
@@ -132,15 +133,15 @@ function rowHtml(a){
     <td><span class="ce" contenteditable data-field="email" data-ph="—">${esc(a.email)}</span></td>
     <td><span class="ce" contenteditable data-field="phone" data-ph="—">${esc(a.phone)}</span></td>
     <td class="kw"><span class="ce" contenteditable data-field="keyword" data-ph="—">${esc(a.keyword)}</span></td>
-    <td class="nowrap"><label class="cbx"><input type="checkbox" data-field="banner" ${a.banner?'checked':''}> Yes</label> <span class="price" data-cell="bannerprice">${a.banner?('$'+BANNER_FEE):''}</span></td>
+    <td class="nowrap"><label class="cbx"><input type="checkbox" data-field="banner" ${a.banner?'checked':''}> Yes</label> <span class="ce price" contenteditable data-price="banner_price" data-cell="bannerprice" data-ph="${a.banner?money(BANNER_FEE):''}">${a.banner?money(effPrice(a.banner_price,BANNER_FEE)):''}</span></td>
     <td class="nowrap badge-cell">
       <span class="ce" contenteditable data-badge="text" data-ph="none">${a.badge?esc(a.badge.text):''}</span>
-      <input type="color" class="badge-color" data-badge="color" value="${a.badge?esc(a.badge.color):'#1f9d55'}">
-      <span class="price" data-cell="badgeprice">${a.badge?('$'+BADGE_FEE):''}</span>
+      <input type="color" class="badge-color" data-badge="color" value="${a.badge?esc(a.badge.color):'#c9a227'}">
+      <span class="ce price" contenteditable data-price="badge_price" data-cell="badgeprice" data-ph="${a.badge?money(BADGE_FEE):''}">${a.badge?money(effPrice(a.badge_price,BADGE_FEE)):''}</span>
     </td>
     <td class="msg-cell"><span class="ce" contenteditable data-field="message" data-ph="—">${esc(a.message)}</span></td>
     <td class="nowrap"><label class="cbx"><input type="checkbox" data-field="terms" ${a.terms?'checked':''}> Accepted</label></td>
-    <td class="nowrap">$${BASE_FEE}</td>
+    <td class="nowrap"><span class="ce price" contenteditable data-price="listing_price" data-ph="${money(BASE_FEE)}">${money(effPrice(a.listing_price,BASE_FEE))}</span></td>
     <td class="nowrap" data-cell="total"><b>$${totalPrice(a)}/mo</b></td>
     <td class="nowrap">${statusBadge(a.status)}</td>
     <td class="row-actions nowrap">
@@ -182,14 +183,34 @@ async function saveBadge(tr){
   const err = await updateApplication(id, { badge });
   if(err){ alert(errMsg(err)); return; }
   a.badge = badge;
-  tr.querySelector('[data-cell="badgeprice"]').textContent = badge?('$'+BADGE_FEE):'';
+  redrawPriceCells(tr, a);
+}
+
+/* hand-entered prices: "$120", "120", "99.50" all work; blank = back to default */
+async function savePrice(tr, el){
+  const id = tr.dataset.id, a = apps.find(x=>x.id===id); if(!a) return;
+  const raw = el.textContent.replace(/[^0-9.]/g,'');
+  const val = raw==='' ? null : Number(raw);
+  if(raw!=='' && isNaN(val)){ redrawPriceCells(tr, a); return; }
+  const field = el.dataset.price;
+  const err = await updateApplication(id, { [field]: val });
+  if(err){ alert(errMsg(err)); redrawPriceCells(tr, a); return; }
+  a[field] = val;
+  redrawPriceCells(tr, a);
+}
+function redrawPriceCells(tr, a){
+  const set = (sel, txt)=>{ const el = tr.querySelector(sel); if(el) el.textContent = txt; };
+  set('[data-price="listing_price"]', money(effPrice(a.listing_price, BASE_FEE)));
+  set('[data-price="banner_price"]', a.banner ? money(effPrice(a.banner_price, BANNER_FEE)) : '');
+  set('[data-price="badge_price"]', a.badge ? money(effPrice(a.badge_price, BADGE_FEE)) : '');
   updateTotalCell(tr, a);
 }
 
 body.addEventListener('focusout', async e=>{
   const el = e.target.closest('[contenteditable]'); if(!el) return;
   const tr = el.closest('tr'); if(!tr) return;
-  if(el.dataset.field) await saveField(tr.dataset.id, el.dataset.field, el.textContent.trim());
+  if(el.dataset.price) await savePrice(tr, el);
+  else if(el.dataset.field) await saveField(tr.dataset.id, el.dataset.field, el.textContent.trim());
   else if(el.dataset.badge==='text') await saveBadge(tr);
 });
 
@@ -201,8 +222,7 @@ body.addEventListener('change', async e=>{
     const err = await updateApplication(id, { banner: want });
     if(err){ el.checked = !want; alert(errMsg(err)); return; }
     a.banner = want;
-    tr.querySelector('[data-cell="bannerprice"]').textContent = want?('$'+BANNER_FEE):'';
-    updateTotalCell(tr, a);
+    redrawPriceCells(tr, a);
   } else if(el.matches('input[data-field="terms"]')){
     await saveField(id, 'terms', el.checked); a.terms = el.checked;
   } else if(el.matches('input[data-badge="color"]')){

@@ -50,15 +50,15 @@
         </div>
         <div class="form-row" style="align-items:center">
           <div class="auth-field"><label>Badge</label>
-            <select id="e-badge"><option value="">None</option><option>Authorized</option><option>Trusted</option><option>Validated</option><option>Verified</option><option>Recommended</option></select>
+            <select id="e-badge"><option value="">None</option><option>Authorized</option><option>Validated</option><option>Verified</option></select>
           </div>
           <div class="auth-field"><label>Badge Color</label>
             <select id="e-color">
-              <option value="#1f9d55">Green</option><option value="#2563eb">Blue</option>
-              <option value="#6d28d9">Purple</option><option value="#eab308">Yellow</option><option value="#be123c">Rose</option>
+              <option value="#c9a227">Gold</option><option value="#8e9aa4">Silver</option>
+              <option value="#7a828e">Platinum</option><option value="#b06c22">Bronze</option><option value="#5d6a7e">Steel</option>
             </select>
           </div>
-          <label class="terms" style="margin:0;align-self:center"><input id="e-banner" type="checkbox"> <span>Premium Sponsored Banner</span></label>
+          <label class="terms" style="margin:0;align-self:center"><input id="e-banner" type="checkbox"> <span>Premium Sponsor Banner</span></label>
           <div style="display:flex;gap:8px;align-self:flex-end">
             <button class="mini-btn green" id="e-save" type="button" style="height:42px">Save Changes</button>
             <button class="mini-btn" id="e-cancel" type="button" style="height:42px">Cancel</button>
@@ -287,7 +287,7 @@ function editListing(id){
   $('e-fee').value = l.fee||'';
   $('e-status').value = l.status||'Approved';
   $('e-badge').value = l.badge ? l.badge.text : '';
-  $('e-color').value = l.badge ? l.badge.color : '#1f9d55';
+  $('e-color').value = l.badge ? l.badge.color : '#c9a227';
   $('e-banner').checked = !!l.banner;
   $('edit-form').style.display = 'block';
   $('edit-form').scrollIntoView({behavior:'smooth', block:'center'});

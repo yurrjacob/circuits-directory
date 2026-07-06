@@ -15,6 +15,33 @@ function initHome(){
   }
 }
 
+/* ---- validators (shared) ---- */
+function isValidEmail(s){ return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test((s||'').trim()); }
+function isValidPhone(s){ const d=(s||'').replace(/\D/g,''); return d.length>=10 && d.length<=15; }
+function isValidWebsite(s){ return /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}([\/?#]\S*)?$/i.test((s||'').trim()); }
+
+/* ---- email notifications to the founders (via FormSubmit) ----
+   Note: the first submission triggers a one-time activation email to
+   mike@circuits.com — click the link inside it once and delivery is live. */
+const FOUNDER_EMAIL = 'mike@circuits.com';
+const FOUNDER_CC    = 'john@circuits.com';
+async function sendFounderEmail(subject, fields, autoresponse){
+  const payload = Object.assign({
+    _subject: subject,
+    _cc: FOUNDER_CC,
+    _template: 'table',
+    _captcha: 'false'
+  }, fields);
+  if(autoresponse) payload._autoresponse = autoresponse;
+  try{
+    await fetch('https://formsubmit.co/ajax/' + FOUNDER_EMAIL, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Accept':'application/json' },
+      body: JSON.stringify(payload)
+    });
+  }catch(err){ console.warn('Email notification failed:', err); }
+}
+
 /* Results page rendering */
 function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function initials(name){return name.split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
@@ -47,8 +74,43 @@ async function initResults(){
   if(countEl) countEl.textContent = listings.length;
 
   if(!listings.length){
-    body.innerHTML = `<div class="empty"><div class="big">No suppliers listed for &ldquo;${escapeHtml(q)}&rdquo; yet</div>
-      <p>Be the first — <a href="join.html">list your company</a> under this keyword.</p></div>`;
+    const term = escapeHtml(q);
+    body.innerHTML = `
+    <div class="empty" style="margin-bottom:4px">
+      <div class="big">No suppliers are listed for &ldquo;${term}&rdquo; yet — this keyword is wide open</div>
+      <p>This is what <b>your company</b> could look like listed under &ldquo;${term}&rdquo;:</p>
+    </div>
+    <div class="premium"><div class="premium-card">
+      <span class="premium-badge">Premium Sponsored</span>
+      <div class="premium-logo">YC</div>
+      <div class="premium-body">
+        <h3>Your Company Name</h3>
+        <p>Own the exclusive Premium Sponsor Banner for &ldquo;${term}&rdquo; — the first listing every buyer sees.</p>
+      </div>
+      <div class="premium-contact">Your Contact<br>(555) 123-4567<br>sales@yourcompany.com</div>
+    </div></div>
+    <div class="listings" style="margin-bottom:10px">
+      <div class="table-wrap">
+        <table class="listings-table">
+          <thead><tr><th>Company</th><th>Contact</th><th>Phone</th><th>Email</th></tr></thead>
+          <tbody><tr>
+            <td><div class="co">
+              <span class="co-logo" style="background:#76c000">YC</span>
+              <a href="join.html">Your Company Name</a>
+              <span class="lb" style="background:#c9a227">Verified</span>
+            </div></td>
+            <td class="cell-muted">Your Contact</td>
+            <td class="cell-muted">(555) 123-4567</td>
+            <td class="cell-muted">sales@yourcompany.com</td>
+          </tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="empty" style="margin:10px auto 60px">
+      <div class="big">Claim &ldquo;${term}&rdquo; before a competitor does</div>
+      <p style="margin:8px 0 18px">Be the first supplier buyers see when they search this keyword.</p>
+      <a class="btn btn-primary" href="join.html" style="padding:12px 26px;font-size:1rem;display:inline-block">List Your Company →</a>
+    </div>`;
     return;
   }
 
@@ -56,7 +118,7 @@ async function initResults(){
   let html = '';
   if(featured){
     html += `<div class="premium"><div class="premium-card">
-      <span class="premium-badge">Premium &middot; Sponsored</span>
+      <span class="premium-badge">Premium Sponsored</span>
       <div class="premium-logo">${initials(featured.company)}</div>
       <div class="premium-body">
         <h3><a href="${escapeHtml(featured.website||'#')}" target="_blank" rel="noopener">${escapeHtml(featured.company)}</a></h3>
@@ -122,12 +184,23 @@ function initJoin(){
   });
   renderKw();
 
-  // Trust badge builder (option + color, live preview)
+  /* ---- inline field errors ---- */
+  function setErr(input, msg){
+    const field = input.closest('.field'); if(!field) return;
+    let em = field.querySelector('.err-msg');
+    if(!em){ em = document.createElement('div'); em.className = 'err-msg'; field.appendChild(em); }
+    em.textContent = msg || '';
+    field.classList.toggle('invalid', !!msg);
+  }
+
+  // Trust badge builder (opt-in + option + color, live preview)
+  const badgeCheck = document.getElementById('badge-check');
+  const badgeBuilder = document.getElementById('badge-builder');
   const badgeOpts = document.getElementById('badge-opts');
   const swatches = document.getElementById('swatches');
   const badgePreview = document.getElementById('badge-preview');
   const DEFAULT_TEXT = 'Authorized';
-  const DEFAULT_COLOR = '#1f9d55';
+  const DEFAULT_COLOR = '#c9a227'; /* gold */
   let curBadgeText = DEFAULT_TEXT, curBadgeColor = DEFAULT_COLOR;
   function selectText(text){
     curBadgeText = text;
@@ -148,19 +221,38 @@ function initJoin(){
     selectColor(s.dataset.color);
   });
   selectText(DEFAULT_TEXT); selectColor(DEFAULT_COLOR);
-  function resetBadge(){ selectText(DEFAULT_TEXT); selectColor(DEFAULT_COLOR); }
+  function syncBadgeGate(){
+    if(badgeBuilder) badgeBuilder.classList.toggle('on', !!(badgeCheck && badgeCheck.checked));
+  }
+  if(badgeCheck) badgeCheck.addEventListener('change', syncBadgeGate);
+  syncBadgeGate();
+  function resetBadge(){ selectText(DEFAULT_TEXT); selectColor(DEFAULT_COLOR); syncBadgeGate(); }
 
   // Logo upload preview
   const logoInput = document.getElementById('logo-input');
   const logoPrev = document.getElementById('logo-preview');
   const logoImg = document.getElementById('logo-preview-img');
   const logoName = document.getElementById('logo-name');
+  const LOGO_TYPES = ['image/png','image/jpeg','image/svg+xml','image/webp'];
+  const LOGO_MAX = 2 * 1024 * 1024; // 2 MB
+  let logoUrl = null;
   if(logoInput) logoInput.addEventListener('change', ()=>{
     const f = logoInput.files && logoInput.files[0];
-    if(!f){ logoPrev.style.display='none'; return; }
+    if(!f){ logoPrev.style.display='none'; setErr(logoInput,''); logoUrl=null; updatePreviews(); return; }
+    if(!LOGO_TYPES.includes(f.type)){
+      setErr(logoInput, 'Logo must be a PNG, JPG, SVG, or WebP image.');
+      logoInput.value=''; logoPrev.style.display='none'; logoUrl=null; updatePreviews(); return;
+    }
+    if(f.size > LOGO_MAX){
+      setErr(logoInput, 'Logo file is too large — max 2 MB.');
+      logoInput.value=''; logoPrev.style.display='none'; logoUrl=null; updatePreviews(); return;
+    }
+    setErr(logoInput,'');
     logoName.textContent = f.name;
-    logoImg.src = URL.createObjectURL(f);
+    logoUrl = URL.createObjectURL(f);
+    logoImg.src = logoUrl;
     logoPrev.style.display = 'flex';
+    updatePreviews();
   });
 
   // Live previews (badge + banner) pull from the form fields
@@ -177,9 +269,14 @@ function updatePreviews(){
 const company = fieldVal('f-company');
 if(pvName) pvName.textContent = company || 'Acme Electronics';
 if(bpCompany) bpCompany.textContent = company || 'Acme Electronics, Inc.';
-const ini = initials(company || 'Acme Electronics');
-if(pvLogo) pvLogo.textContent = ini;
-if(bpLogo) bpLogo.textContent = ini;
+if(logoUrl){
+  if(pvLogo) pvLogo.innerHTML = `<img src="${logoUrl}" alt="Your logo">`;
+  if(bpLogo) bpLogo.innerHTML = `<img src="${logoUrl}" alt="Your logo">`;
+} else {
+  const ini = initials(company || 'Acme Electronics');
+  if(pvLogo) pvLogo.textContent = ini;
+  if(bpLogo) bpLogo.textContent = ini;
+}
 if(bpContact) bpContact.textContent = fieldVal('f-contact') || 'Jane Doe, VP Sales';
 if(bpPhone) bpPhone.textContent = fieldVal('f-phone') || '(555) 123-4567';
 if(bpEmail) bpEmail.textContent = fieldVal('f-email') || 'sales@company.com';
@@ -197,16 +294,37 @@ const msg = document.getElementById('msg');
   if(msg) msg.addEventListener('input', ()=>{ msgCount.textContent = `${msg.value.length} / 600`; });
 
   const form = document.getElementById('join-form');
+  function validate(){
+    const v = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    let firstBad = null;
+    const check = (id, ok, errText)=>{
+      const el = document.getElementById(id); if(!el) return;
+      setErr(el, ok ? '' : errText);
+      if(!ok && !firstBad) firstBad = el;
+    };
+    check('f-company', !!v('f-company'), 'Please enter your company name.');
+    check('f-contact', !!v('f-contact'), 'Please enter a contact person.');
+    check('f-email', isValidEmail(v('f-email')), 'Please enter a valid email address (e.g. sales@company.com).');
+    check('f-phone', isValidPhone(v('f-phone')), 'Please enter a valid phone number (at least 10 digits).');
+    check('f-website', !v('f-website') || isValidWebsite(v('f-website')), 'Please enter a valid website (e.g. www.company.com).');
+    if(firstBad){ firstBad.scrollIntoView({behavior:'smooth', block:'center'}); firstBad.focus({preventScroll:true}); return false; }
+    return true;
+  }
+
   if(form) form.addEventListener('submit', async e=>{
     e.preventDefault();
+    if(!validate()) return;
     const submitBtn = form.querySelector('.submit');
     const v = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    let website = v('f-website');
+    if(website && !/^https?:\/\//i.test(website)) website = 'https://' + website;
+    const wantsBadge = !!(badgeCheck && badgeCheck.checked);
     const base = {
       company: v('f-company'), contact: v('f-contact'), email: v('f-email'),
-      phone: v('f-phone'), website: v('f-website'),
+      phone: v('f-phone'), website,
       logo: (logoInput && logoInput.files && logoInput.files[0]) ? logoInput.files[0].name : '',
       banner: !!(document.getElementById('promo-check') && document.getElementById('promo-check').checked),
-      badge: { text: curBadgeText, color: curBadgeColor },
+      badge: wantsBadge ? { text: curBadgeText, color: curBadgeColor } : null,
       message: msg ? msg.value.trim() : '',
       terms: !!(document.getElementById('f-terms') && document.getElementById('f-terms').checked),
       status: 'Pending'
@@ -219,13 +337,26 @@ const msg = document.getElementById('msg');
       alert('Sorry — we couldn’t submit your application right now. Please try again.');
       return;
     }
+    /* notify the founders + send the applicant a confirmation email */
+    sendFounderEmail('New Listing Application — ' + base.company, {
+      company: base.company,
+      contact: base.contact,
+      email: base.email,
+      phone: base.phone,
+      website: base.website || '(none)',
+      keywords: keywords.join(', ') || '(none)',
+      premium_sponsor_banner: base.banner ? 'Yes' : 'No',
+      trust_badge: wantsBadge ? (curBadgeText + ' (' + curBadgeColor + ')') : 'No',
+      message: base.message || '(none)'
+    }, 'Thanks for applying to list ' + base.company + ' on Circuits.com! We received your application and John or Mike will reach out to you shortly to finish setting up your listing.');
     if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
     const ok = document.getElementById('success');
     ok.classList.add('show');
     form.reset();
     keywords = []; renderKw();
     resetBadge();
-updatePreviews();
+    logoUrl = null;
+    updatePreviews();
     if(logoPrev) logoPrev.style.display='none';
     if(msgCount) msgCount.textContent='0 / 600';
     window.scrollTo({top:0,behavior:'smooth'});

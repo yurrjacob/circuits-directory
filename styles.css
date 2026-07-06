@@ -95,8 +95,8 @@ img{max-width:100%}
 .results-meta b{color:var(--ink);text-transform:capitalize}
 
 .premium{max-width:var(--maxw);margin:14px auto 6px;padding:0 24px}
-.premium-card{position:relative;display:flex;align-items:center;gap:20px;border:1px solid #e4cf8a;border-left:5px solid #d4af37;border-radius:var(--radius);padding:18px 22px;background:linear-gradient(90deg,#fdf6e3,#ffffff);box-shadow:0 2px 16px rgba(196,160,44,.18)}
-.premium-badge{position:absolute;top:-10px;left:18px;background:linear-gradient(180deg,#f6d878,#d4af37);color:#4a3600;font-size:.68rem;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:20px;text-transform:uppercase;box-shadow:0 1px 4px rgba(160,120,10,.35)}
+.premium-card{position:relative;display:flex;align-items:center;gap:20px;border:1px solid #c9ced6;border-left:5px solid #9aa4ae;border-radius:var(--radius);padding:18px 22px;background:linear-gradient(90deg,#f3f5f8,#ffffff);box-shadow:0 2px 16px rgba(122,133,146,.22)}
+.premium-badge{position:absolute;top:-10px;left:18px;background:linear-gradient(180deg,#f2f4f7,#aab3bd);color:#2b3138;font-size:.68rem;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:20px;text-transform:uppercase;box-shadow:0 1px 4px rgba(90,100,112,.35)}
 .premium-logo{width:64px;height:64px;border-radius:12px;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.4rem;flex:0 0 auto}
 .premium-body{flex:1;min-width:0}
 .premium-body h3{margin:0 0 4px;font-size:1.15rem}
@@ -172,16 +172,25 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.92rem}
 .promo:hover{box-shadow:0 0 0 3px rgba(118,192,0,.14)}
 .promo input{margin-top:3px;width:18px;height:18px;accent-color:var(--green);flex:0 0 auto;cursor:pointer}
 .promo-title{font-weight:800;font-size:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--ink)}
-.promo-badge{background:linear-gradient(180deg,#f6d878,#d4af37);color:#4a3600;font-size:.66rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:20px}
+.promo-badge{background:linear-gradient(180deg,#f2f4f7,#aab3bd);color:#2b3138;font-size:.66rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:20px}
 .promo-sub{margin:6px 0 12px;color:var(--muted);font-size:.9rem}
-.benefits-h{margin:8px 0 8px;font-size:.74rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#9a7b12}
+.benefits-h{margin:8px 0 8px;font-size:.74rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5d6770}
 .promo-benefits{margin:0;padding-left:20px;color:#3c4043;font-size:.9rem}
 .promo-benefits li{margin-bottom:6px}
-.promo-benefits li::marker{color:#c8a02c}
-.badge-premium{display:inline-block;background:linear-gradient(180deg,#f6d878,#d4af37);color:#4a3600;font-size:.66rem;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:20px;text-transform:uppercase;vertical-align:middle}
-.promo-gold{border:1px solid #e0c568;background:#fdf9ec}
-.promo-gold:hover{box-shadow:0 0 0 3px rgba(212,175,55,.22)}
-.promo-gold input{accent-color:#c8a02c}
+.promo-benefits li::marker{color:#9aa4ae}
+.badge-premium{display:inline-block;background:linear-gradient(180deg,#f2f4f7,#aab3bd);color:#2b3138;font-size:.66rem;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:20px;text-transform:uppercase;vertical-align:middle}
+.promo-gold{border:1px solid #c9ced6;background:#f6f8fa}
+.promo-gold:hover{box-shadow:0 0 0 3px rgba(154,164,174,.28)}
+.promo-gold input{accent-color:#7d8894}
+/* uploaded logo inside preview boxes */
+.premium-logo img,.co-logo img{width:100%;height:100%;object-fit:contain;border-radius:inherit;background:#fff;display:block}
+/* gated trust-badge builder (Join form) */
+.badge-gated{opacity:.45;pointer-events:none;transition:opacity .15s}
+.badge-gated.on{opacity:1;pointer-events:auto}
+/* inline validation */
+.err-msg{display:none;color:#b3261e;font-size:.78rem;margin-top:2px}
+.field.invalid .err-msg{display:block}
+.field.invalid input{border-color:#b3261e;box-shadow:0 0 0 3px rgba(179,38,30,.12)}
 
 /* ===== Purchasable status badges ===== */
 .lb{display:inline-block;font-size:.68rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:20px;color:#fff;white-space:nowrap;vertical-align:middle}
@@ -342,7 +351,8 @@ tr.row-paused td{opacity:.45}
 .founder-card{position:relative;border:1px solid var(--line);border-radius:12px;padding:22px;margin-bottom:18px;background:#fff}
 .founder-card{border-left:3px solid var(--green)}
 .founder-head{display:flex;align-items:center;gap:14px;margin-bottom:14px}
-.founder-avatar{width:48px;height:48px;border-radius:50%;background:#1f6b3a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex:0 0 auto}
+.founder-avatar{width:48px;height:48px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;flex:0 0 auto;overflow:hidden}
+.founder-avatar svg{display:block}
 .founder-name{font-size:1.15rem;font-weight:800;line-height:1.1}
 .founder-role{font-size:.73rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:4px}
 .founder-line{display:flex;align-items:center;gap:12px;padding:10px 2px;color:var(--ink);text-decoration:none;font-size:.95rem;border-top:1px solid #f0f1f3}

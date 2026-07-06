@@ -27,7 +27,7 @@
 
       <div class="founder-card">
         <div class="founder-head">
-          <span class="founder-avatar">JT</span>
+          <span class="founder-avatar" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z"/></svg></span>
           <div>
             <div class="founder-name">John Tietjen</div>
             <div class="founder-role">Founder / CEO</div>
@@ -45,7 +45,7 @@
 
       <div class="founder-card">
         <div class="founder-head">
-          <span class="founder-avatar">MK</span>
+          <span class="founder-avatar" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z"/></svg></span>
           <div>
             <div class="founder-name">Mike Kennedy, PhD</div>
             <div class="founder-role">Co-Founder / COO</div>
@@ -67,15 +67,23 @@
       <h2 class="contact-h">Tell Us What You're Thinking</h2>
       <div class="field">
         <label>Name <span class="req">*</span></label>
-        <input type="text" required placeholder="Your name">
+        <input id="c-name" type="text" required placeholder="Your name">
+      </div>
+      <div class="field">
+        <label>Company Name <span class="req">*</span></label>
+        <input id="c-company" type="text" required placeholder="Your company">
       </div>
       <div class="field">
         <label>Email <span class="req">*</span></label>
-        <input type="email" required placeholder="you@company.com">
+        <input id="c-email" type="email" required placeholder="you@company.com">
+      </div>
+      <div class="field">
+        <label>Phone # <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
+        <input id="c-phone" type="tel" placeholder="(555) 123-4567">
       </div>
       <div class="field">
         <label>Message <span class="req">*</span></label>
-        <textarea required placeholder="How can we help?"></textarea>
+        <textarea id="c-message" required placeholder="Have a question?"></textarea>
       </div>
       <div id="contact-success" class="success">Thanks — your message has been sent. We’ll reply shortly.</div>
       <button class="submit" type="submit" style="margin-top:6px">Send to John &amp; Mike</button>
@@ -100,9 +108,23 @@
   </div>
 </footer>
 
+<script src="app.js"></script>
 <script>
-document.getElementById('contact-form').addEventListener('submit',function(e){
+document.getElementById('contact-form').addEventListener('submit',async function(e){
   e.preventDefault();
+  const v = id => document.getElementById(id).value.trim();
+  const phone = v('c-phone');
+  if(phone && !isValidPhone(phone)){ alert('Please enter a valid phone number (at least 10 digits).'); return; }
+  const btn = this.querySelector('.submit');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  await sendFounderEmail('New Contact Message — Circuits.com', {
+    name: v('c-name'),
+    company: v('c-company'),
+    email: v('c-email'),
+    phone: phone || '(not provided)',
+    message: v('c-message')
+  });
+  btn.disabled = false; btn.textContent = 'Send to John & Mike';
   document.getElementById('contact-success').classList.add('show');
   this.reset();
 });
