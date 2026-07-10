@@ -11,7 +11,7 @@
 
 <header class="topbar">
   <div class="inner">
-    <div class="brand"><a href="index.html"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-title">The Integrated Circuits Directory</span></div>
+    <div class="brand"><a href="index.html"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"><sup class="tm-mark">™</sup></a><span class="brand-title">The Integrated Circuits Directory</span></div>
     <nav class="nav">
       <a href="index.html">Home</a>
       <a href="about.html">About</a>
@@ -30,7 +30,7 @@
           <span class="founder-avatar" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z"/></svg></span>
           <div>
             <div class="founder-name">John Tietjen</div>
-            <div class="founder-role">Founder / CEO</div>
+            <div class="founder-role">Co-Founder / Chief Executive Officer</div>
           </div>
         </div>
         <a class="founder-line" href="mailto:john@circuits.com">
@@ -48,7 +48,7 @@
           <span class="founder-avatar" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z"/></svg></span>
           <div>
             <div class="founder-name">Mike Kennedy, PhD</div>
-            <div class="founder-role">Co-Founder / COO</div>
+            <div class="founder-role">Co-Founder / Chief Operating Officer</div>
           </div>
         </div>
         <a class="founder-line" href="mailto:mike@circuits.com">
@@ -78,7 +78,7 @@
         <input id="c-email" type="email" required placeholder="you@company.com">
       </div>
       <div class="field">
-        <label>Phone # <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
+        <label>Phone #</label>
         <input id="c-phone" type="tel" placeholder="(555) 123-4567">
       </div>
       <div class="field">
@@ -97,13 +97,13 @@
     <div class="flinks">
       <a href="index.html">Home</a>
       <a href="about.html">About</a>
-      <a href="join.html">List Your Company</a>
       <a href="contact.html">Contact</a>
+      <a href="join.html">List Your Company</a>
       <a href="login.html">Login</a>
     </div>
     <div style="display:flex;align-items:center;gap:14px">
       <span>© 2026 Circuits.com</span>
-      <img class="footer-mark" src="assets/favicon.png" alt="Circuits.com">
+      <span class="footer-brand"><img class="footer-mark" src="assets/favicon.png" alt="Circuits.com"><sup class="tm-mark tm-dark">™</sup></span>
     </div>
   </div>
 </footer>
@@ -123,7 +123,14 @@ document.getElementById('contact-form').addEventListener('submit',async function
     email: v('c-email'),
     phone: phone || '(not provided)',
     message: v('c-message')
-  });
+  }, 'Hi ' + v('c-name') + ',\n\nThanks for reaching out to Circuits.com! We received your message and will respond within 1 business day.\n\n'
+    + 'Here is a copy of what you sent:\n'
+    + '- Name: ' + v('c-name') + '\n'
+    + '- Company: ' + v('c-company') + '\n'
+    + '- Email: ' + v('c-email') + '\n'
+    + '- Phone: ' + (phone || '(not provided)') + '\n'
+    + '- Message: ' + v('c-message') + '\n\n'
+    + '— John & Mike, Circuits.com');
   btn.disabled = false; btn.textContent = 'Send to John & Mike';
   document.getElementById('contact-success').classList.add('show');
   this.reset();

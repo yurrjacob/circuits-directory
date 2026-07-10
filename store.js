@@ -40,25 +40,54 @@ async function fetchApproved(){
   if(error){ console.error('fetchApproved', error); return []; }
   return data || [];
 }
-function normKw(s){ return (s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+/* ===== Keyword matching ruleset =====
+   1. Lowercase everything.
+   2. Strip every non-letter/digit (hyphens, spaces, punctuation) — "semi-conductors" == "semi conductors" == "semiconductors".
+   3. Singularize the plural tail — "sensors" == "sensor", "switches" == "switch", "batteries" == "battery".
+   4. EXACT match only after normalization. No substring/partial matching, so
+      "list test 2" never matches "list test 3" and "zzz" only matches "zzz".
+   5. Blank/empty keywords never match anything. */
+function singularize(n){
+  if(n.length>4 && n.endsWith('ies')) return n.slice(0,-3)+'y';   // batteries -> battery
+  if(n.length>3 && /(?:x|z|ch|sh)es$/.test(n)) return n.slice(0,-2); // switches -> switch, boxes -> box
+  if(n.length>3 && n.endsWith('s') && !n.endsWith('ss')) return n.slice(0,-1); // sensors -> sensor, fuses -> fuse
+  return n;
+}
+function normKw(s){
+  return singularize((s||'').toLowerCase().replace(/[^a-z0-9]/g,''));
+}
+/* Approval-level cleanup for stored keywords: lowercase, no hyphens, no plurals. */
+function cleanKw(s){
+  let v = (s||'').toLowerCase().replace(/-+/g,' ').replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+  return v.replace(/([a-z0-9]+)$/, w => singularize(w));
+}
 /* One live listing per company for a searched keyword (skips paused ones). */
 async function fetchApprovedByKeyword(keyword){
   const all = (await fetchApproved()).filter(a => !a.paused);
   const k = normKw(keyword);
-  const match = k ? all.filter(a => {
-    const n = normKw(a.keyword);
-    return n === k || n.includes(k) || k.includes(n);
-  }) : all;
+  if(!k) return [];
+  const match = all.filter(a => normKw(a.keyword) === k);
   const seen = new Set(), out = [];
   for(const a of match){ if(seen.has(a.company)) continue; seen.add(a.company); out.push(a); }
   return out;
 }
 
+/* ---- company logo storage (Supabase Storage, public bucket "logos") ---- */
+async function uploadLogo(file){
+  if(!sb || !file) return '';
+  const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const path = Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+  const { error } = await sb.storage.from('logos').upload(path, file, { contentType: file.type, cacheControl: '31536000' });
+  if(error){ console.error('uploadLogo', error); return ''; }
+  return sb.storage.from('logos').getPublicUrl(path).data.publicUrl;
+}
+function isLogoUrl(s){ return /^https?:\/\//i.test(s||''); }
+
 /* ---- write ---- */
 /* Join form: one submission becomes one row per keyword. */
 async function addApplicationKeywords(base, keywords){
   if(!sb) throw new Error('No connection');
-  const list = (keywords && keywords.length) ? keywords : [''];
+  const list = (keywords && keywords.length) ? keywords.map(cleanKw) : [''];
   const rows = list.map(kw => Object.assign({}, base, {
     keyword: kw, keywords: kw ? [kw] : [], status: base.status || 'Pending'
   }));
@@ -86,7 +115,7 @@ async function setPaused(id, paused){
 }
 async function updateApplication(id, fields){
   if(!sb) return null;
-  if('keyword' in fields) fields.keywords = fields.keyword ? [fields.keyword] : [];
+  if('keyword' in fields){ fields.keyword = cleanKw(fields.keyword); fields.keywords = fields.keyword ? [fields.keyword] : []; }
   const { error } = await sb.from('applications').update(fields).eq('id', id);
   if(error) console.error('updateApplication', error);
   return error || null;

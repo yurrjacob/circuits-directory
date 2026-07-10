@@ -11,7 +11,7 @@
 
 <header class="topbar">
 <div class="inner">
-<div class="brand"><a href="index.html"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-title">The Integrated Circuits Directory</span></div>
+<div class="brand"><a href="index.html"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"><sup class="tm-mark">™</sup></a><span class="brand-title">The Integrated Circuits Directory</span></div>
 <nav class="nav">
 <a href="index.html">Home</a>
 <a href="about.html">About</a>
@@ -51,8 +51,8 @@
 <input id="f-email" type="email" required placeholder="sales@company.com">
 </div>
 <div class="field">
-<label>Phone <span class="req">*</span></label>
-<input id="f-phone" type="tel" required placeholder="(555) 123-4567">
+<label>Phone # <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
+<input id="f-phone" type="tel" placeholder="(555) 123-4567">
 </div>
 <div class="field" style="grid-column:1 / -1">
 <label>Website</label>
@@ -95,20 +95,14 @@
 <p>Optional. Get featured above every keyword list you choose.</p>
 </div>
 </div>
-<label class="promo promo-gold">
-<input type="checkbox" id="promo-check">
-<div class="promo-body">
-<div class="promo-title">Yes, Feature My Company In The Premium Sponsor Banner</div>
 <p class="benefits-h">Benefits</p>
-<ul class="promo-benefits">
+<ul class="promo-benefits" style="margin:0 0 20px">
 <li>Top Banner Placement, Above Every Listing You Choose</li>
 <li>Prominent Logo, Profile Description, And Direct Contact Details</li>
-<li><span class="badge-premium">Premium Sponsored</span> Badge On Your Banner</li>
+<li>Premium Sponsor Badge On Your Banner &nbsp;<span class="badge-premium">Premium Sponsored</span></li>
 </ul>
-</div>
-</label>
 
-<div class="badge-preview-box banner-preview">
+<div class="badge-preview-box banner-preview" style="margin-bottom:20px">
 <span class="preview-label">Live Preview</span>
 <div class="premium-card">
 <span class="premium-badge">Premium Sponsored</span>
@@ -125,6 +119,14 @@
 </div>
 <p class="preview-hint">This Is How Your Premium Banner Would Look Live!</p>
 </div>
+
+<label class="promo promo-gold">
+<input type="checkbox" id="promo-check">
+<div class="promo-body">
+<div class="promo-title">Yes, Feature My Company In The Premium Sponsor Banner</div>
+<p class="promo-sub" style="margin:4px 0 0">The Premium Sponsor Banner is a paid add-on. Check the box to include it in your application.</p>
+</div>
+</label>
 </section>
 
 <!-- Step 4: Supplier trust badge -->
@@ -133,7 +135,7 @@
 <span class="step-num">04</span>
 <div>
 <h2>Supplier Trust Badge</h2>
-<p>Optional. Choose a badge and a color to display next to your company name in every keyword listing.</p>
+<p>Optional. Assign a Trust Badge To Display Next To Your Company On Every Keyword List.</p>
 </div>
 </div>
 <p class="benefits-h">Benefits</p>
@@ -141,8 +143,18 @@
 <li>Build Instant Trust With Buyers Scanning The List</li>
 <li>Make Your Company Stand Out From Competitors</li>
 <li>Highlight Your Status At A Glance</li>
-<li>Assign A Trust Badge To Every Keyword You're Listed Under</li>
 </ul>
+
+<div class="badge-preview-box" style="margin:0 0 20px">
+<span class="preview-label">Live Preview</span>
+<div class="preview-stage">
+<span class="co-logo" id="preview-logo" style="background:#76c000">AE</span>
+<span class="preview-name" id="preview-name">Acme Electronics</span>
+<span class="lb" id="badge-preview" style="background:#c9a227">Authorized</span>
+</div>
+<p class="preview-hint">See How Your Trust Badge Would Look Live!</p>
+</div>
+
 <label class="promo promo-gold" style="margin-bottom:20px">
 <input type="checkbox" id="badge-check">
 <div class="promo-body">
@@ -161,20 +173,9 @@
 <span class="field-label">Badge Color</span>
 <div class="swatches" id="swatches">
 <button type="button" class="swatch" data-color="#c9a227" style="background:linear-gradient(135deg,#e9c95c,#c9a227)" aria-label="gold"></button>
-<button type="button" class="swatch" data-color="#8e9aa4" style="background:linear-gradient(135deg,#c4ccd3,#8e9aa4)" aria-label="silver"></button>
-<button type="button" class="swatch" data-color="#7a828e" style="background:linear-gradient(135deg,#b9bfc8,#7a828e)" aria-label="platinum"></button>
 <button type="button" class="swatch" data-color="#b06c22" style="background:linear-gradient(135deg,#d99a52,#b06c22)" aria-label="bronze"></button>
 <button type="button" class="swatch" data-color="#5d6a7e" style="background:linear-gradient(135deg,#8f9cb0,#5d6a7e)" aria-label="steel"></button>
 </div>
-</div>
-<div class="badge-preview-box">
-<span class="preview-label">Live Preview</span>
-<div class="preview-stage">
-<span class="co-logo" id="preview-logo" style="background:#76c000">AE</span>
-<span class="preview-name" id="preview-name">Acme Electronics</span>
-<span class="lb" id="badge-preview" style="background:#c9a227">Authorized</span>
-</div>
-<p class="preview-hint">See How Your Trust Badge Would Look Live!</p>
 </div>
 </div>
 </section>
@@ -192,8 +193,9 @@
 </div>
 <label class="terms">
 <input id="f-terms" type="checkbox" required>
-<span>I have authority to list this company and accept the <a href="#">Listing Terms</a> and <a href="#">Acceptable Use Policy</a>.</span>
+<span>I have authority to list this company and accept the <a href="#">Listing Terms</a> and <a href="#">Acceptable Use Policy</a>. <span class="req">*</span></span>
 </label>
+<div id="terms-err" class="err-msg" style="display:none">You must accept the Listing Terms and Acceptable Use Policy before submitting.</div>
 </section>
 
 <div class="form-foot">
@@ -208,13 +210,13 @@
 <div class="flinks">
 <a href="index.html">Home</a>
 <a href="about.html">About</a>
-<a href="join.html">List Your Company</a>
 <a href="contact.html">Contact</a>
+<a href="join.html">List Your Company</a>
 <a href="login.html">Login</a>
 </div>
 <div style="display:flex;align-items:center;gap:14px">
 <span>© 2026 Circuits.com</span>
-<img class="footer-mark" src="assets/favicon.png" alt="Circuits.com">
+<span class="footer-brand"><img class="footer-mark" src="assets/favicon.png" alt="Circuits.com"><sup class="tm-mark tm-dark">™</sup></span>
 </div>
 </div>
 </footer>

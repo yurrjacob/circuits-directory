@@ -12,7 +12,7 @@
 <header class="topbar">
   <div class="inner">
     <div class="brand">
-      <a href="index.html"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a>
+      <a href="index.html"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"><sup class="tm-mark">™</sup></a>
       <span class="brand-text"><span class="brand-title">Admin Console</span><span class="portal-tag">Circuits.com staff</span></span>
     </div>
     <a class="signout" href="#" id="signout">Sign out</a>
@@ -56,11 +56,11 @@
       <thead>
         <tr>
           <th>Date</th><th>Company</th><th>Contact</th><th>Email</th><th>Phone</th>
-          <th>Keyword</th><th>Premium Banner</th><th>Trust Badge</th><th>Message</th><th>Terms</th>
-          <th>Listing Price</th><th>Total Price</th><th>Status</th><th>Actions</th>
+          <th>Keyword &amp; Price</th><th>Premium Banner</th><th>Trust Badge</th><th>Message</th>
+          <th>Total Price</th><th>Status</th><th>Actions</th>
         </tr>
       </thead>
-      <tbody id="apps-body"><tr><td colspan="14" style="padding:20px;text-align:center;color:#5f6368">Loading…</td></tr></tbody>
+      <tbody id="apps-body"><tr><td colspan="12" style="padding:20px;text-align:center;color:#5f6368">Loading…</td></tr></tbody>
     </table>
   </div>
 </main>
@@ -122,31 +122,39 @@ function sortRows(rows){
 }
 
 function rowHtml(a){
+  const logoHtml = isLogoUrl(a.logo)
+    ? `<a href="${esc(a.logo)}" target="_blank" rel="noopener" title="View full logo"><img class="logo-thumb" src="${esc(a.logo)}" alt="${esc(a.company)} logo"></a>`
+    : '<span style="color:#c0c4bb">—</span>';
   return `<tr data-id="${a.id}">
     <td class="nowrap">${esc((a.created_at||'').slice(0,10))}</td>
     <td class="co-cell">
       <span class="ce co-name" contenteditable data-field="company" data-ph="Company">${esc(a.company)}</span>
       <div class="co-sub">Web: <span class="ce" contenteditable data-field="website" data-ph="—">${esc(a.website)}</span></div>
-      <div class="co-sub">Logo: <span class="ce" contenteditable data-field="logo" data-ph="—">${esc(a.logo)}</span></div>
+      <div class="co-sub">Logo: ${logoHtml}</div>
     </td>
     <td><span class="ce" contenteditable data-field="contact" data-ph="—">${esc(a.contact)}</span></td>
     <td><span class="ce" contenteditable data-field="email" data-ph="—">${esc(a.email)}</span></td>
     <td><span class="ce" contenteditable data-field="phone" data-ph="—">${esc(a.phone)}</span></td>
-    <td class="kw"><span class="ce" contenteditable data-field="keyword" data-ph="—">${esc(a.keyword)}</span></td>
+    <td class="kw nowrap">
+      <label class="cbx" title="Listing live for this keyword"><input type="checkbox" data-field="live" ${a.paused?'':'checked'}></label>
+      <span class="ce" contenteditable data-field="keyword" data-ph="—">${esc(a.keyword)}</span>
+      <span class="ce price" contenteditable data-price="listing_price" data-ph="${money(BASE_FEE)}">${money(effPrice(a.listing_price,BASE_FEE))}</span>
+    </td>
     <td class="nowrap"><label class="cbx"><input type="checkbox" data-field="banner" ${a.banner?'checked':''}> Yes</label> <span class="ce price" contenteditable data-price="banner_price" data-cell="bannerprice" data-ph="${a.banner?money(BANNER_FEE):''}">${a.banner?money(effPrice(a.banner_price,BANNER_FEE)):''}</span></td>
     <td class="nowrap badge-cell">
-      <span class="ce" contenteditable data-badge="text" data-ph="none">${a.badge?esc(a.badge.text):''}</span>
-      <input type="color" class="badge-color" data-badge="color" value="${a.badge?esc(a.badge.color):'#c9a227'}">
-      <span class="ce price" contenteditable data-price="badge_price" data-cell="badgeprice" data-ph="${a.badge?money(BADGE_FEE):''}">${a.badge?money(effPrice(a.badge_price,BADGE_FEE)):''}</span>
+      <label class="cbx" title="Trust badge on/off"><input type="checkbox" data-badge="on" ${a.badge?'checked':''}> Yes</label>
+      ${a.badge ? `
+      <span class="ce" contenteditable data-badge="text" data-ph="none">${esc(a.badge.text)}</span>
+      <input type="color" class="badge-color" data-badge="color" value="${esc(a.badge.color||'#c9a227')}">
+      <span class="ce price" contenteditable data-price="badge_price" data-cell="badgeprice" data-ph="${money(BADGE_FEE)}">${money(effPrice(a.badge_price,BADGE_FEE))}</span>` : ''}
     </td>
     <td class="msg-cell"><span class="ce" contenteditable data-field="message" data-ph="—">${esc(a.message)}</span></td>
-    <td class="nowrap"><label class="cbx"><input type="checkbox" data-field="terms" ${a.terms?'checked':''}> Accepted</label></td>
-    <td class="nowrap"><span class="ce price" contenteditable data-price="listing_price" data-ph="${money(BASE_FEE)}">${money(effPrice(a.listing_price,BASE_FEE))}</span></td>
     <td class="nowrap" data-cell="total"><b>$${totalPrice(a)}/mo</b></td>
     <td class="nowrap">${statusBadge(a.status)}</td>
     <td class="row-actions nowrap">
       <button class="mini-btn green" data-act="approve">Approve</button>
       <button class="mini-btn danger" data-act="deny">Deny</button>
+      <button class="mini-btn" data-act="reset" title="Undo the changes you made to this line">Reset Changes</button>
     </td>
   </tr>`;
 }
@@ -156,14 +164,35 @@ function draw(){
   if(companyFilter) rows = rows.filter(a => a.company===companyFilter);
   rows = sortRows(rows).slice(0, rowLimit);
   body.innerHTML = rows.map(rowHtml).join('')
-    || `<tr><td colspan="14" class="empty-line" style="text-align:center;padding:20px">No applications in this view.</td></tr>`;
+    || `<tr><td colspan="12" class="empty-line" style="text-align:center;padding:20px">No applications in this view.</td></tr>`;
   $('c-all').textContent = apps.length;
   $('c-acc').textContent = apps.filter(a=>a.status==='Approved').length;
   $('c-pen').textContent = apps.filter(a=>a.status==='Pending').length;
   $('c-den').textContent = apps.filter(a=>a.status==='Denied').length;
 }
 
-async function reload(){ apps = await fetchApplications(); populateCompanies(); draw(); }
+/* pristine copy of every row as loaded from the database, so edits can be undone */
+let originals = {};
+const EDITABLE = ['company','website','logo','contact','email','phone','keyword','banner','badge','message','paused','listing_price','banner_price','badge_price'];
+function snapshot(){
+  originals = {};
+  apps.forEach(a => { originals[a.id] = JSON.parse(JSON.stringify(a)); });
+}
+async function reload(){ apps = await fetchApplications(); snapshot(); populateCompanies(); draw(); }
+
+async function resetRow(id){
+  const a = apps.find(x=>x.id===id), o = originals[id];
+  if(!a || !o) return;
+  const patch = {};
+  EDITABLE.forEach(f => {
+    if(JSON.stringify(a[f]===undefined?null:a[f]) !== JSON.stringify(o[f]===undefined?null:o[f])) patch[f] = o[f]===undefined?null:o[f];
+  });
+  if(!Object.keys(patch).length) return;
+  const err = await updateApplication(id, patch);
+  if(err){ alert(errMsg(err)); return; }
+  Object.assign(a, JSON.parse(JSON.stringify(o)));
+  draw();
+}
 
 /* ---------- inline editing ---------- */
 function updateTotalCell(tr, a){ tr.querySelector('[data-cell="total"]').innerHTML = `<b>$${totalPrice(a)}/mo</b>`; }
@@ -173,17 +202,20 @@ async function saveField(id, field, value){
   if((a[field]==null?'':String(a[field]))===value) return;
   const err = await updateApplication(id, { [field]: value });
   if(err){ alert(errMsg(err)); draw(); return; }
-  a[field] = value; if(field==='keyword') a.keywords=[value];
+  if(field==='keyword'){ a.keyword = cleanKw(value); a.keywords = a.keyword ? [a.keyword] : []; draw(); }
+  else a[field] = value;
 }
 async function saveBadge(tr){
   const id = tr.dataset.id, a = apps.find(x=>x.id===id); if(!a) return;
-  const text = tr.querySelector('[data-badge="text"]').textContent.trim();
-  const color = tr.querySelector('[data-badge="color"]').value;
-  const badge = text ? { text, color } : null;
+  const textEl = tr.querySelector('[data-badge="text"]');
+  const colorEl = tr.querySelector('[data-badge="color"]');
+  if(!textEl || !colorEl) return;
+  const text = textEl.textContent.trim();
+  const badge = text ? { text, color: colorEl.value } : null;
   const err = await updateApplication(id, { badge });
   if(err){ alert(errMsg(err)); return; }
   a.badge = badge;
-  redrawPriceCells(tr, a);
+  if(!badge) draw(); else redrawPriceCells(tr, a);
 }
 
 /* hand-entered prices: "$120", "120", "99.50" all work; blank = back to default */
@@ -223,8 +255,17 @@ body.addEventListener('change', async e=>{
     if(err){ el.checked = !want; alert(errMsg(err)); return; }
     a.banner = want;
     redrawPriceCells(tr, a);
-  } else if(el.matches('input[data-field="terms"]')){
-    await saveField(id, 'terms', el.checked); a.terms = el.checked;
+  } else if(el.matches('input[data-field="live"]')){
+    const paused = !el.checked;
+    const err = await updateApplication(id, { paused });
+    if(err){ el.checked = paused; alert(errMsg(err)); return; }
+    a.paused = paused;
+  } else if(el.matches('input[data-badge="on"]')){
+    const badge = el.checked ? ((originals[id] && originals[id].badge) || { text:'Authorized', color:'#c9a227' }) : null;
+    const err = await updateApplication(id, { badge });
+    if(err){ el.checked = !el.checked; alert(errMsg(err)); return; }
+    a.badge = badge;
+    draw();
   } else if(el.matches('input[data-badge="color"]')){
     await saveBadge(tr);
   }
@@ -235,6 +276,7 @@ body.addEventListener('click', async e=>{
   const id = btn.closest('tr').dataset.id;
   if(btn.dataset.act==='approve'){ const err = await updateAppStatus(id,'Approved'); if(err){ alert(errMsg(err)); return; } }
   else if(btn.dataset.act==='deny'){ await updateAppStatus(id,'Denied'); }
+  else if(btn.dataset.act==='reset'){ await resetRow(id); return; }
   await reload();
 });
 

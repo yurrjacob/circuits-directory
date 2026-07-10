@@ -1,5 +1,6 @@
 /* ===== Circuits.com — shared front-end behavior ===== */
 
+
 function gotoSearch(term){
   const q = (term||'').trim();
   if(!q) return;
@@ -82,7 +83,7 @@ async function initResults(){
     </div>
     <div class="premium"><div class="premium-card">
       <span class="premium-badge">Premium Sponsored</span>
-      <div class="premium-logo">YC</div>
+      <div class="premium-logo" style="background:#76c000">YC</div>
       <div class="premium-body">
         <h3>Your Company Name</h3>
         <p>Own the exclusive Premium Sponsor Banner for &ldquo;${term}&rdquo; — the first listing every buyer sees.</p>
@@ -97,7 +98,7 @@ async function initResults(){
             <td><div class="co">
               <span class="co-logo" style="background:#76c000">YC</span>
               <a href="join.html">Your Company Name</a>
-              <span class="lb" style="background:#c9a227">Verified</span>
+              <span class="lb" style="background:#c9a227">Authorized</span>
             </div></td>
             <td class="cell-muted">Your Contact</td>
             <td class="cell-muted">(555) 123-4567</td>
@@ -117,9 +118,12 @@ async function initResults(){
   const featured = listings.find(l => l.banner);
   let html = '';
   if(featured){
+    const fLogo = isLogoUrl(featured.logo)
+      ? `<img src="${escapeHtml(featured.logo)}" alt="${escapeHtml(featured.company)} logo">`
+      : initials(featured.company);
     html += `<div class="premium"><div class="premium-card">
       <span class="premium-badge">Premium Sponsored</span>
-      <div class="premium-logo">${initials(featured.company)}</div>
+      <div class="premium-logo">${fLogo}</div>
       <div class="premium-body">
         <h3><a href="${escapeHtml(featured.website||'#')}" target="_blank" rel="noopener">${escapeHtml(featured.company)}</a></h3>
         <p>${escapeHtml(featured.message||'')}</p>
@@ -136,7 +140,9 @@ async function initResults(){
     <tr>
       <td>
         <div class="co">
-          <span class="co-logo" style="background:${COLORS[i%COLORS.length]}">${initials(c.company)}</span>
+          ${isLogoUrl(c.logo)
+            ? `<span class="co-logo"><img src="${escapeHtml(c.logo)}" alt="${escapeHtml(c.company)} logo"></span>`
+            : `<span class="co-logo" style="background:${COLORS[i%COLORS.length]}">${initials(c.company)}</span>`}
           <a href="${escapeHtml(c.website||'#')}" target="_blank" rel="noopener">${escapeHtml(c.company)}</a>
           ${c.badge ? `<span class="lb" style="background:${escapeHtml(c.badge.color)}">${escapeHtml(c.badge.text)}</span>` : ''}
         </div>
@@ -172,7 +178,8 @@ function initJoin(){
     if(kwCount) kwCount.innerHTML = `<b>${keywords.length}</b> keyword${keywords.length===1?'':'s'}`;
   }
   function addKw(){
-    const v = (kwInput.value||'').trim().toLowerCase();
+    // approval-level ruleset: lowercase, no hyphens, no plurals
+    const v = (typeof cleanKw==='function') ? cleanKw(kwInput.value) : (kwInput.value||'').trim().toLowerCase();
     if(!v || keywords.includes(v)) return;
     keywords.push(v); kwInput.value=''; renderKw(); kwInput.focus();
   }
@@ -305,8 +312,14 @@ const msg = document.getElementById('msg');
     check('f-company', !!v('f-company'), 'Please enter your company name.');
     check('f-contact', !!v('f-contact'), 'Please enter a contact person.');
     check('f-email', isValidEmail(v('f-email')), 'Please enter a valid email address (e.g. sales@company.com).');
-    check('f-phone', isValidPhone(v('f-phone')), 'Please enter a valid phone number (at least 10 digits).');
+    check('f-phone', !v('f-phone') || isValidPhone(v('f-phone')), 'Please enter a valid phone number (at least 10 digits).');
     check('f-website', !v('f-website') || isValidWebsite(v('f-website')), 'Please enter a valid website (e.g. www.company.com).');
+    /* terms must be accepted before the form can be submitted */
+    const termsBox = document.getElementById('f-terms');
+    const termsErr = document.getElementById('terms-err');
+    const termsOk = !!(termsBox && termsBox.checked);
+    if(termsErr) termsErr.style.display = termsOk ? 'none' : 'block';
+    if(!termsOk && !firstBad) firstBad = termsBox;
     if(firstBad){ firstBad.scrollIntoView({behavior:'smooth', block:'center'}); firstBad.focus({preventScroll:true}); return false; }
     return true;
   }
@@ -322,7 +335,7 @@ const msg = document.getElementById('msg');
     const base = {
       company: v('f-company'), contact: v('f-contact'), email: v('f-email'),
       phone: v('f-phone'), website,
-      logo: (logoInput && logoInput.files && logoInput.files[0]) ? logoInput.files[0].name : '',
+      logo: '',
       banner: !!(document.getElementById('promo-check') && document.getElementById('promo-check').checked),
       badge: wantsBadge ? { text: curBadgeText, color: curBadgeColor } : null,
       message: msg ? msg.value.trim() : '',
@@ -331,24 +344,40 @@ const msg = document.getElementById('msg');
     };
     try {
       if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
+      /* store the actual logo file so it can be viewed everywhere on the site */
+      const logoFile = logoInput && logoInput.files && logoInput.files[0];
+      if(logoFile) base.logo = await uploadLogo(logoFile);
       await addApplicationKeywords(base, keywords);
     } catch(err) {
       if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
       alert('Sorry — we couldn’t submit your application right now. Please try again.');
       return;
     }
-    /* notify the founders + send the applicant a confirmation email */
+    /* notify the founders + send the applicant a confirmation email with a copy of what they submitted */
+    const kwList = keywords.map(cleanKw).join(', ') || '(none)';
     sendFounderEmail('New Listing Application — ' + base.company, {
       company: base.company,
       contact: base.contact,
       email: base.email,
-      phone: base.phone,
+      phone: base.phone || '(not provided)',
       website: base.website || '(none)',
-      keywords: keywords.join(', ') || '(none)',
+      logo: base.logo || '(none)',
+      keywords: kwList,
       premium_sponsor_banner: base.banner ? 'Yes' : 'No',
       trust_badge: wantsBadge ? (curBadgeText + ' (' + curBadgeColor + ')') : 'No',
       message: base.message || '(none)'
-    }, 'Thanks for applying to list ' + base.company + ' on Circuits.com! We received your application and John or Mike will reach out to you shortly to finish setting up your listing.');
+    }, 'Thanks for applying to list ' + base.company + ' on Circuits.com! We received your application and will respond within 1 business day.\n\n'
+      + 'Here is a copy of what you submitted:\n'
+      + '- Company: ' + base.company + '\n'
+      + '- Contact: ' + base.contact + '\n'
+      + '- Email: ' + base.email + '\n'
+      + '- Phone: ' + (base.phone || '(not provided)') + '\n'
+      + '- Website: ' + (base.website || '(none)') + '\n'
+      + '- Keywords: ' + kwList + '\n'
+      + '- Premium Sponsor Banner: ' + (base.banner ? 'Yes' : 'No') + '\n'
+      + '- Supplier Trust Badge: ' + (wantsBadge ? curBadgeText : 'No') + '\n'
+      + '- Message: ' + (base.message || '(none)') + '\n\n'
+      + '— John & Mike, Circuits.com');
     if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
     const ok = document.getElementById('success');
     ok.classList.add('show');
