@@ -45,6 +45,13 @@ async function sendFounderEmail(subject, fields, autoresponse){
 
 /* Results page rendering */
 function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+/* "View Documentation" link(s) for a listing's uploaded documents */
+function docLinks(c){
+  const docs = Array.isArray(c && c.docs) ? c.docs : [];
+  if(!docs.length) return '';
+  if(docs.length === 1) return `<a class="doc-link" href="${escapeHtml(docs[0].url)}" target="_blank" rel="noopener">View Documentation</a>`;
+  return `<span class="doc-link">View Documentation:${docs.map((d,i)=>` <a href="${escapeHtml(d.url)}" target="_blank" rel="noopener" title="${escapeHtml(d.name)}">${i+1}</a>`).join('')}</span>`;
+}
 function initials(name){return name.split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
 
 async function initResults(){
@@ -56,7 +63,7 @@ async function initResults(){
   const miniForm = document.getElementById('mini-form');
   if(mini) mini.value = q;
   if(miniForm) miniForm.addEventListener('submit', e=>{ e.preventDefault(); gotoSearch(mini.value); });
-  document.querySelectorAll('[data-term]').forEach(el=> el.textContent = q || '—');
+  document.querySelectorAll('[data-term]').forEach(el=> el.textContent = q || '…');
 
   const body = document.getElementById('results-body');
 
@@ -78,15 +85,15 @@ async function initResults(){
     const term = escapeHtml(q);
     body.innerHTML = `
     <div class="empty" style="margin-bottom:4px">
-      <div class="big">No suppliers are listed for &ldquo;${term}&rdquo; yet — this keyword is wide open</div>
+      <div class="big">No suppliers are listed for &ldquo;${term}&rdquo; yet. This keyword is wide open</div>
       <p>This is what <b>your company</b> could look like listed under &ldquo;${term}&rdquo;:</p>
     </div>
     <div class="premium"><div class="premium-card">
-      <span class="premium-badge">Premium Sponsored</span>
+      <span class="premium-badge">Featured Sponsor</span>
       <div class="premium-logo" style="background:#76c000">YC</div>
       <div class="premium-body">
         <h3>Your Company Name</h3>
-        <p>Own the exclusive Premium Sponsor Banner for &ldquo;${term}&rdquo; — the first listing every buyer sees.</p>
+        <p>Own the exclusive Featured Circuits-Keyword™ Sponsor Banner for &ldquo;${term}&rdquo;, the first listing every viewer sees.</p>
       </div>
       <div class="premium-contact">Your Contact<br>(555) 123-4567<br>sales@yourcompany.com</div>
     </div></div>
@@ -122,11 +129,12 @@ async function initResults(){
       ? `<img src="${escapeHtml(featured.logo)}" alt="${escapeHtml(featured.company)} logo">`
       : initials(featured.company);
     html += `<div class="premium"><div class="premium-card">
-      <span class="premium-badge">Premium Sponsored</span>
+      <span class="premium-badge">Featured Sponsor</span>
       <div class="premium-logo">${fLogo}</div>
       <div class="premium-body">
         <h3><a href="${escapeHtml(featured.website||'#')}" target="_blank" rel="noopener">${escapeHtml(featured.company)}</a></h3>
         <p>${escapeHtml(featured.message||'')}</p>
+        ${docLinks(featured)}
       </div>
       <div class="premium-contact">
         ${escapeHtml(featured.contact||'')}<br>
@@ -145,6 +153,7 @@ async function initResults(){
             : `<span class="co-logo" style="background:${COLORS[i%COLORS.length]}">${initials(c.company)}</span>`}
           <a href="${escapeHtml(c.website||'#')}" target="_blank" rel="noopener">${escapeHtml(c.company)}</a>
           ${c.badge ? `<span class="lb" style="background:${escapeHtml(c.badge.color)}">${escapeHtml(c.badge.text)}</span>` : ''}
+          ${docLinks(c)}
         </div>
       </td>
       <td class="cell-muted">${escapeHtml(c.contact||'—')}</td>
@@ -251,7 +260,7 @@ function initJoin(){
       logoInput.value=''; logoPrev.style.display='none'; logoUrl=null; updatePreviews(); return;
     }
     if(f.size > LOGO_MAX){
-      setErr(logoInput, 'Logo file is too large — max 2 MB.');
+      setErr(logoInput, 'Logo file is too large (max 2 MB).');
       logoInput.value=''; logoPrev.style.display='none'; logoUrl=null; updatePreviews(); return;
     }
     setErr(logoInput,'');
@@ -260,6 +269,22 @@ function initJoin(){
     logoImg.src = logoUrl;
     logoPrev.style.display = 'flex';
     updatePreviews();
+  });
+
+  // Additional documentation upload (PDFs / images)
+  const docsInput = document.getElementById('docs-input');
+  const docsList = document.getElementById('docs-list');
+  const DOC_TYPES = ['application/pdf','image/png','image/jpeg','image/webp'];
+  const DOC_MAX = 10 * 1024 * 1024; // 10 MB each
+  const DOC_LIMIT = 5;
+  function clearDocs(){ if(docsInput) docsInput.value=''; if(docsList) docsList.innerHTML=''; }
+  if(docsInput) docsInput.addEventListener('change', ()=>{
+    const files = Array.from(docsInput.files || []);
+    if(files.length > DOC_LIMIT){ setErr(docsInput, 'You can upload up to ' + DOC_LIMIT + ' documents.'); clearDocs(); return; }
+    if(files.some(f => !DOC_TYPES.includes(f.type))){ setErr(docsInput, 'Documents must be PDF, PNG, JPEG, or WebP files.'); clearDocs(); return; }
+    if(files.some(f => f.size > DOC_MAX)){ setErr(docsInput, 'Each document must be 10 MB or smaller.'); clearDocs(); return; }
+    setErr(docsInput,'');
+    if(docsList) docsList.innerHTML = files.map(f=>`<span>${escapeHtml(f.name)}</span>`).join('');
   });
 
   // Live previews (badge + banner) pull from the form fields
@@ -274,13 +299,13 @@ const bpEmail = document.getElementById('bp-email');
 function fieldVal(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
 function updatePreviews(){
 const company = fieldVal('f-company');
-if(pvName) pvName.textContent = company || 'Acme Electronics';
-if(bpCompany) bpCompany.textContent = company || 'Acme Electronics, Inc.';
+if(pvName) pvName.textContent = company || 'AAA Electronics';
+if(bpCompany) bpCompany.textContent = company || 'AAA Electronics, Inc.';
 if(logoUrl){
   if(pvLogo) pvLogo.innerHTML = `<img src="${logoUrl}" alt="Your logo">`;
   if(bpLogo) bpLogo.innerHTML = `<img src="${logoUrl}" alt="Your logo">`;
 } else {
-  const ini = initials(company || 'Acme Electronics');
+  const ini = initials(company || 'AAA Electronics');
   if(pvLogo) pvLogo.textContent = ini;
   if(bpLogo) bpLogo.textContent = ini;
 }
@@ -288,7 +313,7 @@ if(bpContact) bpContact.textContent = fieldVal('f-contact') || 'Jane Doe, VP Sal
 if(bpPhone) bpPhone.textContent = fieldVal('f-phone') || '(555) 123-4567';
 if(bpEmail) bpEmail.textContent = fieldVal('f-email') || 'sales@company.com';
 const m = document.getElementById('msg');
-if(bpMessage) bpMessage.textContent = (m && m.value.trim()) || 'Prominent profile description shown to every buyer.';
+if(bpMessage) bpMessage.textContent = (m && m.value.trim()) || 'Prominent profile description shown to every viewer.';
 }
 ['f-company','f-contact','f-phone','f-email','msg'].forEach(function(id){
 const el = document.getElementById(id);
@@ -347,15 +372,19 @@ const msg = document.getElementById('msg');
       /* store the actual logo file so it can be viewed everywhere on the site */
       const logoFile = logoInput && logoInput.files && logoInput.files[0];
       if(logoFile) base.logo = await uploadLogo(logoFile);
+      /* store uploaded documentation so viewers can open it from the listing */
+      base.docs = [];
+      const docFiles = (docsInput && docsInput.files) ? Array.from(docsInput.files) : [];
+      for(const f of docFiles){ const d = await uploadDoc(f); if(d) base.docs.push(d); }
       await addApplicationKeywords(base, keywords);
     } catch(err) {
       if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
-      alert('Sorry — we couldn’t submit your application right now. Please try again.');
+      alert('Sorry, we couldn’t submit your application right now. Please try again.');
       return;
     }
     /* notify the founders + send the applicant a confirmation email with a copy of what they submitted */
     const kwList = keywords.map(cleanKw).join(', ') || '(none)';
-    sendFounderEmail('New Listing Application — ' + base.company, {
+    sendFounderEmail('New Listing Application - ' + base.company, {
       company: base.company,
       contact: base.contact,
       email: base.email,
@@ -363,8 +392,9 @@ const msg = document.getElementById('msg');
       website: base.website || '(none)',
       logo: base.logo || '(none)',
       keywords: kwList,
-      premium_sponsor_banner: base.banner ? 'Yes' : 'No',
+      featured_sponsor: base.banner ? 'Yes' : 'No',
       trust_badge: wantsBadge ? (curBadgeText + ' (' + curBadgeColor + ')') : 'No',
+      documentation: base.docs.length ? base.docs.map(d=>d.name).join(', ') : '(none)',
       message: base.message || '(none)'
     }, 'Thanks for applying to list ' + base.company + ' on Circuits.com! We received your application and will respond within 1 business day.\n\n'
       + 'Here is a copy of what you submitted:\n'
@@ -374,10 +404,11 @@ const msg = document.getElementById('msg');
       + '- Phone: ' + (base.phone || '(not provided)') + '\n'
       + '- Website: ' + (base.website || '(none)') + '\n'
       + '- Keywords: ' + kwList + '\n'
-      + '- Premium Sponsor Banner: ' + (base.banner ? 'Yes' : 'No') + '\n'
-      + '- Supplier Trust Badge: ' + (wantsBadge ? curBadgeText : 'No') + '\n'
+      + '- Featured Circuits-Keyword™ Sponsor: ' + (base.banner ? 'Yes' : 'No') + '\n'
+      + '- Circuits.com Trust Badge: ' + (wantsBadge ? curBadgeText : 'No') + '\n'
+      + '- Documentation: ' + (base.docs.length ? base.docs.map(d=>d.name).join(', ') : '(none)') + '\n'
       + '- Message: ' + (base.message || '(none)') + '\n\n'
-      + '— John & Mike, Circuits.com');
+      + '- John & Mike, Circuits.com');
     if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
     const ok = document.getElementById('success');
     ok.classList.add('show');
@@ -385,6 +416,7 @@ const msg = document.getElementById('msg');
     keywords = []; renderKw();
     resetBadge();
     logoUrl = null;
+    clearDocs();
     updatePreviews();
     if(logoPrev) logoPrev.style.display='none';
     if(msgCount) msgCount.textContent='0 / 600';

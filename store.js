@@ -83,6 +83,16 @@ async function uploadLogo(file){
 }
 function isLogoUrl(s){ return /^https?:\/\//i.test(s||''); }
 
+/* ---- listing documentation storage (Supabase Storage, public bucket "docs") ---- */
+async function uploadDoc(file){
+  if(!sb || !file) return null;
+  const ext = (file.name.split('.').pop() || 'pdf').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const path = Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+  const { error } = await sb.storage.from('docs').upload(path, file, { contentType: file.type, cacheControl: '31536000' });
+  if(error){ console.error('uploadDoc', error); return null; }
+  return { name: file.name, url: sb.storage.from('docs').getPublicUrl(path).data.publicUrl };
+}
+
 /* ---- write ---- */
 /* Join form: one submission becomes one row per keyword. */
 async function addApplicationKeywords(base, keywords){

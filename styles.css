@@ -383,3 +383,20 @@ tr.row-paused td{opacity:.45}
 .banner-preview .premium-card{margin-top:12px}
 .banner-preview .premium-contact{white-space:normal}
 @media(max-width:680px){.banner-preview .premium-card{flex-wrap:wrap}}
+
+/* ---- Prose pages (About / How It Works / Terms) ---- */
+.prose h1{margin-bottom:10px}
+.prose .lede{font-size:1.1rem;line-height:1.6;max-width:720px}
+.prose .section-title{font-size:1.3rem;margin:44px 0 14px;padding-top:30px;border-top:1px solid var(--line);max-width:720px}
+.prose ul{margin:0 0 16px;padding-left:22px;max-width:720px}
+.prose li{margin:0 0 8px}
+.btn-row{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0 6px}
+.btn-white{background:#fff}
+.terms-meta{color:var(--muted);font-size:.9rem;margin:0 0 28px}
+
+/* ---- Listing documentation ---- */
+.doc-link{display:inline-flex;align-items:center;gap:4px;font-size:.8rem;font-weight:600;color:var(--green-dark);text-decoration:none;margin-left:10px;white-space:nowrap}
+.doc-link:hover{text-decoration:underline}
+.doc-link a{color:inherit;text-decoration:underline}
+.docs-list{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:.85rem;color:var(--muted)}
+.field-hint{font-size:.8rem;color:var(--muted);margin:6px 0 0;line-height:1.5}

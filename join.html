@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>List Your Company — Circuits.com</title>
+<title>List Your Company - Circuits.com</title>
 <link rel="icon" href="assets/favicon.png">
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -11,11 +11,11 @@
 
 <header class="topbar">
 <div class="inner">
-<div class="brand"><a href="index.html"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"><sup class="tm-mark">™</sup></a><span class="brand-title">The Integrated Circuits Directory</span></div>
+<div class="brand"><a href="index.html"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-title">The Circuits Industry Directory</span></div>
 <nav class="nav">
 <a href="index.html">Home</a>
-<a href="how-it-works.html">How It Works</a>
 <a href="about.html">About</a>
+<a href="how-it-works.html">How It Works</a>
 <a href="contact.html">Contact</a>
 <a class="active cta" href="join.html">List Your Company</a>
 </nav>
@@ -24,10 +24,10 @@
 
 <div class="form-wrap">
 <h1>List Your Company</h1>
-<p class="lede">Get found by buyers searching for the parts you supply. Pick your keywords and feature your company in the premium banner above the list.</p>
+<p class="lede">Get found by the people searching for what you offer. Secure your Circuits-Keyword™ and establish your presence where the circuits industry connects.</p>
 
 <div id="success" class="success">
-<b>Application received.</b> Thanks — our team will review your listing and reach out within one business day.
+<b>Application received.</b> Thanks! Our team will review your listing and reach out within one business day.
 </div>
 
 <form id="join-form" autocomplete="off" novalidate>
@@ -41,7 +41,7 @@
 <div class="grid2">
 <div class="field">
 <label>Company Name <span class="req">*</span></label>
-<input id="f-company" type="text" required placeholder="Acme Electronics, Inc.">
+<input id="f-company" type="text" required placeholder="AAA Electronics, Inc.">
 </div>
 <div class="field">
 <label>Contact Person <span class="req">*</span></label>
@@ -60,12 +60,18 @@
 <input id="f-website" type="url" placeholder="https://www.company.com">
 </div>
 <div class="field" style="grid-column:1 / -1">
-<label>Company Logo <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
+<label>Company Logo or Headshot <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
 <input id="logo-input" type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp">
 <div id="logo-preview" class="logo-preview" style="display:none">
 <img id="logo-preview-img" alt="Logo preview">
 <span id="logo-name"></span>
 </div>
+</div>
+<div class="field" style="grid-column:1 / -1">
+<label>Additional Documentation <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
+<input id="docs-input" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" multiple>
+<p class="field-hint">Upload up to 5 files (PDF, PNG, or JPEG): spec sheets, line cards, certifications, and more. People who find your profile can open them through a "View Documentation" link on your listing.</p>
+<div id="docs-list" class="docs-list"></div>
 </div>
 </div>
 </section>
@@ -75,8 +81,8 @@
 <div class="step-head">
 <span class="step-num">02</span>
 <div>
-<h2>Your Keyword List</h2>
-<p>Tell us which keywords you’d like to be listed under.</p>
+<h2>Circuits-Keyword™</h2>
+<p>Tell us which Circuits-Keyword™ you’d like to be listed under.</p>
 </div>
 </div>
 <div class="kw-input-row">
@@ -92,7 +98,7 @@
 <div class="step-head">
 <span class="step-num">03</span>
 <div>
-<h2>Premium Sponsor Banner</h2>
+<h2>Featured Circuits-Keyword™ Sponsor</h2>
 <p>Optional. Get featured above every keyword list you choose.</p>
 </div>
 </div>
@@ -100,17 +106,17 @@
 <ul class="promo-benefits" style="margin:0 0 20px">
 <li>Top Banner Placement, Above Every Listing You Choose</li>
 <li>Prominent Logo, Profile Description, And Direct Contact Details</li>
-<li>Premium Sponsor Badge On Your Banner &nbsp;<span class="badge-premium">Premium Sponsored</span></li>
+<li>Featured Sponsor Badge On Your Banner &nbsp;<span class="badge-premium">Featured Sponsor</span></li>
 </ul>
 
 <div class="badge-preview-box banner-preview" style="margin-bottom:20px">
 <span class="preview-label">Live Preview</span>
 <div class="premium-card">
-<span class="premium-badge">Premium Sponsored</span>
+<span class="premium-badge">Featured Sponsor</span>
 <div class="premium-logo" id="bp-logo">AE</div>
 <div class="premium-body">
-<h3 id="bp-company">Acme Electronics, Inc.</h3>
-<p id="bp-message">Prominent profile description shown to every buyer.</p>
+<h3 id="bp-company">AAA Electronics, Inc.</h3>
+<p id="bp-message">Prominent profile description shown to every viewer.</p>
 </div>
 <div class="premium-contact">
 <span id="bp-contact">Jane Doe, VP Sales</span><br>
@@ -118,14 +124,14 @@
 <span id="bp-email">sales@company.com</span>
 </div>
 </div>
-<p class="preview-hint">This Is How Your Premium Banner Would Look Live!</p>
+<p class="preview-hint">This Is How Your Featured Sponsor Banner Would Look Live!</p>
 </div>
 
 <label class="promo promo-gold">
 <input type="checkbox" id="promo-check">
 <div class="promo-body">
-<div class="promo-title">Yes, Feature My Company In The Premium Sponsor Banner</div>
-<p class="promo-sub" style="margin:4px 0 0">The Premium Sponsor Banner is a paid add-on. Check the box to include it in your application.</p>
+<div class="promo-title">Yes, Showcase My Company In The Featured Circuits-Keyword™ Sponsor Banner</div>
+<p class="promo-sub" style="margin:4px 0 0">The Featured Circuits-Keyword™ Sponsor Banner is a paid add-on. Check the box to include it in your application.</p>
 </div>
 </label>
 </section>
@@ -135,14 +141,14 @@
 <div class="step-head">
 <span class="step-num">04</span>
 <div>
-<h2>Supplier Trust Badge</h2>
-<p>Optional. Assign a Trust Badge To Display Next To Your Company On Every Keyword List.</p>
+<h2>Circuits.com Trust Badge</h2>
+<p>Optional. Assign a Trust Badge To Display Next To Your Listing On Every Keyword List.</p>
 </div>
 </div>
 <p class="benefits-h">Benefits</p>
 <ul class="promo-benefits" style="margin:0 0 20px">
-<li>Build Instant Trust With Buyers Scanning The List</li>
-<li>Make Your Company Stand Out From Competitors</li>
+<li>Build Instant Trust With Viewers Scanning The List</li>
+<li>Make Your Listing Stand Out From Competitors</li>
 <li>Highlight Your Status At A Glance</li>
 </ul>
 
@@ -150,17 +156,17 @@
 <span class="preview-label">Live Preview</span>
 <div class="preview-stage">
 <span class="co-logo" id="preview-logo" style="background:#76c000">AE</span>
-<span class="preview-name" id="preview-name">Acme Electronics</span>
+<span class="preview-name" id="preview-name">AAA Electronics</span>
 <span class="lb" id="badge-preview" style="background:#c9a227">Authorized</span>
 </div>
-<p class="preview-hint">See How Your Trust Badge Would Look Live!</p>
+<p class="preview-hint">This Is How Your Trust Badge Would Look Live!</p>
 </div>
 
 <label class="promo promo-gold" style="margin-bottom:20px">
 <input type="checkbox" id="badge-check">
 <div class="promo-body">
-<div class="promo-title">Yes, Add A Supplier Trust Badge To My Listings</div>
-<p class="promo-sub" style="margin:4px 0 0">The Supplier Trust Badge is a paid add-on. Check the box to include it in your application, then pick your badge below.</p>
+<div class="promo-title">Yes, Add A Circuits.com Trust Badge To My Listings</div>
+<p class="promo-sub" style="margin:4px 0 0">The Circuits.com Trust Badge is a paid add-on. Check the box to include it in your application, then pick your badge below.</p>
 </div>
 </label>
 <div class="badge-builder badge-gated" id="badge-builder">
@@ -189,12 +195,12 @@
 </div>
 <div class="field">
 <label>Message (Optional)</label>
-<textarea id="msg" maxlength="600" placeholder="Tell us about your needs to reach buyers or any other questions."></textarea>
+<textarea id="msg" maxlength="600" placeholder="Tell us about your needs to reach viewers or any other questions."></textarea>
 <div class="charcount" id="msg-count">0 / 600</div>
 </div>
 <label class="terms">
 <input id="f-terms" type="checkbox" required>
-<span>I have authority to list this company and accept the <a href="#">Listing Terms</a> and <a href="#">Acceptable Use Policy</a>. <span class="req">*</span></span>
+<span>I have authority to create a listing and accept the <a href="terms.html" target="_blank">Listing Terms</a> and <a href="terms.html#acceptable-use" target="_blank">Acceptable Use Policy</a>. <span class="req">*</span></span>
 </label>
 <div id="terms-err" class="err-msg" style="display:none">You must accept the Listing Terms and Acceptable Use Policy before submitting.</div>
 </section>
@@ -210,15 +216,15 @@
 <div class="inner">
 <div class="flinks">
 <a href="index.html">Home</a>
-<a href="how-it-works.html">How It Works</a>
 <a href="about.html">About</a>
+<a href="how-it-works.html">How It Works</a>
 <a href="contact.html">Contact</a>
 <a href="join.html">List Your Company</a>
 <a href="login.html">Login</a>
 </div>
 <div style="display:flex;align-items:center;gap:14px">
 <span>© 2026 Circuits.com</span>
-<span class="footer-brand"><img class="footer-mark" src="assets/favicon.png" alt="Circuits.com"><sup class="tm-mark tm-dark">™</sup></span>
+<span class="footer-brand"><img class="footer-mark" src="assets/favicon.png" alt="Circuits.com"></span>
 </div>
 </div>
 </footer>
