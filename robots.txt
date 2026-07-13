@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /dashboard.html
+Disallow: /applications.html
+Disallow: /login.html
+Disallow: /results.html
+
+Sitemap: https://circuits.com/sitemap.xml
