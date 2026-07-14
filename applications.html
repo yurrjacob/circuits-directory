@@ -100,8 +100,17 @@ function statusBadge(s){
 }
 function errMsg(err){
   if(err && (err.code==='23505' || /duplicate|unique/i.test(err.message||'')))
-    return 'That keyword already has a premium banner. Only one premium banner is allowed per keyword.';
+    return 'That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword.';
   return 'Could not save. Make sure you are signed in as staff.';
+}
+
+/* One live Exclusive Sponsor banner per keyword: an app conflicts when it wants
+   a banner on a keyword that another APPROVED listing already runs a banner on. */
+function bannerConflict(app){
+  if(!app || !app.banner) return false;
+  const k = normKw(app.keyword);
+  if(!k) return false;
+  return apps.some(a => a.id!==app.id && a.banner && a.status==='Approved' && normKw(a.keyword)===k);
 }
 
 function populateCompanies(){
@@ -126,7 +135,8 @@ function rowHtml(a){
   const logoHtml = isLogoUrl(a.logo)
     ? `<a href="${esc(a.logo)}" target="_blank" rel="noopener" title="View full logo"><img class="logo-thumb" src="${esc(a.logo)}" alt="${esc(a.company)} logo"></a>`
     : '<span style="color:#c0c4bb">—</span>';
-  return `<tr data-id="${a.id}">
+  const conflict = a.status!=='Approved' && bannerConflict(a);
+  return `<tr data-id="${a.id}" class="${conflict?'row-warn':''}">
     <td class="nowrap">${esc((a.created_at||'').slice(0,10))}</td>
     <td class="co-cell">
       <span class="ce co-name" contenteditable data-field="company" data-ph="Company">${esc(a.company)}</span>
@@ -141,7 +151,7 @@ function rowHtml(a){
       <span class="ce" contenteditable data-field="keyword" data-ph="—">${esc(a.keyword)}</span>
       <span class="ce price" contenteditable data-price="listing_price" data-ph="${money(BASE_FEE)}">${money(effPrice(a.listing_price,BASE_FEE))}</span>
     </td>
-    <td class="nowrap"><label class="cbx"><input type="checkbox" data-field="banner" ${a.banner?'checked':''}> Yes</label> <span class="ce price" contenteditable data-price="banner_price" data-cell="bannerprice" data-ph="${a.banner?money(BANNER_FEE):''}">${a.banner?money(effPrice(a.banner_price,BANNER_FEE)):''}</span></td>
+    <td class="nowrap"><label class="cbx"><input type="checkbox" data-field="banner" ${a.banner?'checked':''}> Yes</label>${conflict?' <span class="warn-flag" title="This keyword already has a live Exclusive Sponsor banner">⚠</span>':''} <span class="ce price" contenteditable data-price="banner_price" data-cell="bannerprice" data-ph="${a.banner?money(BANNER_FEE):''}">${a.banner?money(effPrice(a.banner_price,BANNER_FEE)):''}</span></td>
     <td class="nowrap badge-cell">
       <label class="cbx" title="Trust badge on/off"><input type="checkbox" data-badge="on" ${a.badge?'checked':''}> Yes</label>
       ${a.badge ? `
@@ -153,7 +163,7 @@ function rowHtml(a){
     <td class="nowrap" data-cell="total"><b>$${totalPrice(a)}/mo</b></td>
     <td class="nowrap">${statusBadge(a.status)}</td>
     <td class="row-actions nowrap">
-      <button class="mini-btn green" data-act="approve">Approve</button>
+      <button class="mini-btn green" data-act="approve" ${conflict?'disabled title="Blocked: this keyword already has a live Exclusive Sponsor banner. Remove that banner first."':''}>Approve</button>
       <button class="mini-btn danger" data-act="deny">Deny</button>
       <button class="mini-btn" data-act="reset" title="Undo the changes you made to this line">Reset Changes</button>
     </td>
@@ -252,10 +262,16 @@ body.addEventListener('change', async e=>{
   const id = tr.dataset.id, a = apps.find(x=>x.id===id); if(!a) return;
   if(el.matches('input[data-field="banner"]')){
     const want = el.checked;
+    if(want && bannerConflict({ id, banner:true, keyword: a.keyword })
+        && a.status==='Approved'){
+      el.checked = false;
+      alert('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword — remove the existing banner first.');
+      return;
+    }
     const err = await updateApplication(id, { banner: want });
     if(err){ el.checked = !want; alert(errMsg(err)); return; }
     a.banner = want;
-    redrawPriceCells(tr, a);
+    draw();
   } else if(el.matches('input[data-field="live"]')){
     const paused = !el.checked;
     const err = await updateApplication(id, { paused });
@@ -275,7 +291,14 @@ body.addEventListener('change', async e=>{
 body.addEventListener('click', async e=>{
   const btn = e.target.closest('button[data-act]'); if(!btn) return;
   const id = btn.closest('tr').dataset.id;
-  if(btn.dataset.act==='approve'){ const err = await updateAppStatus(id,'Approved'); if(err){ alert(errMsg(err)); return; } }
+  if(btn.dataset.act==='approve'){
+    const app = apps.find(x=>x.id===id);
+    if(app && bannerConflict(app)){
+      alert('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword — remove the existing banner first.');
+      return;
+    }
+    const err = await updateAppStatus(id,'Approved'); if(err){ alert(errMsg(err)); return; }
+  }
   else if(btn.dataset.act==='deny'){ await updateAppStatus(id,'Denied'); }
   else if(btn.dataset.act==='reset'){ await resetRow(id); return; }
   await reload();

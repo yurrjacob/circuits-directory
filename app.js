@@ -24,31 +24,34 @@ function isValidWebsite(s){ return /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}([\/?
 /* ---- email notifications to the founders (via FormSubmit) ----
    Note: the first submission triggers a one-time activation email to
    mike@circuits.com — click the link inside it once and delivery is live. */
-const FOUNDER_EMAIL = 'mike@circuits.com';
-const FOUNDER_CC    = 'john@circuits.com';
+/* Each founder gets his own FormSubmit send (no CC), so one un-activated
+   form can never block the other. IMPORTANT: FormSubmit requires a ONE-TIME
+   activation per address — check mike@circuits.com AND john@circuits.com
+   (including spam) for an "Activate Form" email and click the link once. */
+const FOUNDER_EMAILS = ['mike@circuits.com','john@circuits.com'];
 async function sendFounderEmail(subject, fields, autoresponse){
-  const payload = Object.assign({
-    _subject: subject,
-    _cc: FOUNDER_CC,
-    _template: 'table',
-    _captcha: 'false'
-  }, fields);
-  if(autoresponse) payload._autoresponse = autoresponse;
-  if(fields && fields.email) payload._replyto = fields.email;
-  try{
-    const res = await fetch('https://formsubmit.co/ajax/' + FOUNDER_EMAIL, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'Accept':'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const out = await res.json().catch(()=>null);
-    if(!out || out.success === 'false' || out.success === false){
-      /* Most common cause: the FormSubmit form for FOUNDER_EMAIL hasn't been
-         activated yet — check that inbox (and spam) for an "Activate Form"
-         email from FormSubmit and click the link once. */
-      console.error('Email notification NOT delivered:', out && out.message);
-    }
-  }catch(err){ console.warn('Email notification failed:', err); }
+  async function sendOne(to, withAuto){
+    const payload = Object.assign({
+      _subject: subject,
+      _template: 'table',
+      _captcha: 'false'
+    }, fields);
+    if(withAuto && autoresponse) payload._autoresponse = autoresponse;
+    if(fields && fields.email) payload._replyto = fields.email;
+    try{
+      const res = await fetch('https://formsubmit.co/ajax/' + to, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Accept':'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const out = await res.json().catch(()=>null);
+      if(!out || out.success === 'false' || out.success === false){
+        console.error('Email to ' + to + ' NOT delivered:', out && out.message);
+      }
+    }catch(err){ console.warn('Email to ' + to + ' failed:', err); }
+  }
+  /* autoresponse rides on the first send only, so the sender gets one confirmation */
+  await Promise.all(FOUNDER_EMAILS.map((to,i)=>sendOne(to, i===0)));
 }
 
 /* Results page rendering */
@@ -93,15 +96,15 @@ async function initResults(){
     const term = escapeHtml(q);
     body.innerHTML = `
     <div class="empty" style="margin-bottom:4px">
-      <div class="big">No suppliers are listed for &ldquo;${term}&rdquo; yet. This keyword is wide open</div>
-      <p>This is what <b>your company</b> could look like listed under &ldquo;${term}&rdquo;:</p>
+      <div class="big">No listings for &ldquo;${term}&rdquo; yet. This Circuits-Keyword&trade; is wide open</div>
+      <p>This is what <b>your listing</b> could look like listed under &ldquo;${term}&rdquo;:</p>
     </div>
     <div class="premium"><div class="premium-card">
-      <span class="premium-badge">Featured Sponsor</span>
-      <div class="premium-logo" style="background:#76c000">YC</div>
+      <span class="premium-badge">Exclusive Sponsor</span>
+      <div class="premium-logo">YC</div>
       <div class="premium-body">
-        <h3>Your Company Name</h3>
-        <p>Own the exclusive Featured Circuits-Keyword™ Sponsor Banner for &ldquo;${term}&rdquo;, the first listing every viewer sees.</p>
+        <h3>Your Company or Name</h3>
+        <p>Own the Exclusive Circuits-Keyword™ Sponsor Banner for &ldquo;${term}&rdquo;, the first listing every viewer sees.</p>
       </div>
       <div class="premium-contact">Your Contact<br>(555) 123-4567<br>sales@yourcompany.com</div>
     </div></div>
@@ -111,8 +114,8 @@ async function initResults(){
           <thead><tr><th>Company</th><th>Contact</th><th>Phone</th><th>Email</th></tr></thead>
           <tbody><tr>
             <td><div class="co">
-              <span class="co-logo" style="background:#76c000">YC</span>
-              <a href="join.html">Your Company Name</a>
+              <span class="co-logo" style="background:var(--dark)">YC</span>
+              <a href="join.html">Your Company or Name</a>
               <span class="lb" style="background:#c9a227">Authorized</span>
             </div></td>
             <td class="cell-muted">Your Contact</td>
@@ -123,9 +126,7 @@ async function initResults(){
       </div>
     </div>
     <div class="empty" style="margin:10px auto 60px">
-      <div class="big">Claim &ldquo;${term}&rdquo; before a competitor does</div>
-      <p style="margin:8px 0 18px">Be the first supplier buyers see when they search this keyword.</p>
-      <a class="btn btn-primary" href="join.html" style="padding:12px 26px;font-size:1rem;display:inline-block">Get Listed →</a>
+      <a class="btn btn-primary" href="join.html" style="padding:14px 28px;font-size:1rem;display:inline-block;font-weight:700">Claim Your Circuits-Keyword™ &ndash; Permanent Ranked Ownership</a>
     </div>`;
     return;
   }
@@ -137,7 +138,7 @@ async function initResults(){
       ? `<img src="${escapeHtml(featured.logo)}" alt="${escapeHtml(featured.company)} logo">`
       : initials(featured.company);
     html += `<div class="premium"><div class="premium-card">
-      <span class="premium-badge">Featured Sponsor</span>
+      <span class="premium-badge">Exclusive Sponsor</span>
       <div class="premium-logo">${fLogo}</div>
       <div class="premium-body">
         <h3><a href="${escapeHtml(featured.website||'#')}" target="_blank" rel="noopener">${escapeHtml(featured.company)}</a></h3>
@@ -258,7 +259,7 @@ function initJoin(){
   const logoImg = document.getElementById('logo-preview-img');
   const logoName = document.getElementById('logo-name');
   const LOGO_TYPES = ['image/png','image/jpeg','image/svg+xml','image/webp'];
-  const LOGO_MAX = 2 * 1024 * 1024; // 2 MB
+  const LOGO_MAX = 10 * 1024 * 1024; // 10 MB
   let logoUrl = null;
   if(logoInput) logoInput.addEventListener('change', ()=>{
     const f = logoInput.files && logoInput.files[0];
@@ -268,7 +269,7 @@ function initJoin(){
       logoInput.value=''; logoPrev.style.display='none'; logoUrl=null; updatePreviews(); return;
     }
     if(f.size > LOGO_MAX){
-      setErr(logoInput, 'Logo file is too large (max 2 MB).');
+      setErr(logoInput, 'Logo file is too large (max 10 MB).');
       logoInput.value=''; logoPrev.style.display='none'; logoUrl=null; updatePreviews(); return;
     }
     setErr(logoInput,'');
@@ -392,12 +393,16 @@ const msg = document.getElementById('msg');
     };
     try {
       if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
-      /* store the actual logo file so it can be viewed everywhere on the site */
-      const logoFile = logoInput && logoInput.files && logoInput.files[0];
-      if(logoFile) base.logo = await uploadLogo(logoFile);
-      /* store uploaded documentation so viewers can open it from the listing */
+      /* Uploads are best-effort: a failed logo/document upload must NEVER
+         stop the application data from reaching the database. */
       base.docs = [];
-      for(const f of docFiles){ const d = await uploadDoc(f); if(d) base.docs.push(d); }
+      try{
+        const logoFile = logoInput && logoInput.files && logoInput.files[0];
+        if(logoFile) base.logo = await uploadLogo(logoFile);
+      }catch(e){ console.warn('logo upload skipped', e); }
+      try{
+        for(const f of docFiles){ const d = await uploadDoc(f); if(d) base.docs.push(d); }
+      }catch(e){ console.warn('doc upload skipped', e); }
       await addApplicationKeywords(base, keywords);
     } catch(err) {
       if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
@@ -414,7 +419,7 @@ const msg = document.getElementById('msg');
       website: base.website || '(none)',
       logo: base.logo || '(none)',
       keywords: kwList,
-      featured_sponsor: base.banner ? 'Yes' : 'No',
+      exclusive_sponsor: base.banner ? 'Yes' : 'No',
       trust_badge: wantsBadge ? (curBadgeText + ' (' + curBadgeColor + ')') : 'No',
       documentation: base.docs.length ? base.docs.map(d=>d.name).join(', ') : '(none)',
       message: base.message || '(none)'
@@ -426,7 +431,7 @@ const msg = document.getElementById('msg');
       + '- Phone: ' + (base.phone || '(not provided)') + '\n'
       + '- Website: ' + (base.website || '(none)') + '\n'
       + '- Keywords: ' + kwList + '\n'
-      + '- Featured Circuits-Keyword™ Sponsor: ' + (base.banner ? 'Yes' : 'No') + '\n'
+      + '- Exclusive Circuits-Keyword™ Sponsor: ' + (base.banner ? 'Yes' : 'No') + '\n'
       + '- Circuits.com Trust Badge: ' + (wantsBadge ? curBadgeText : 'No') + '\n'
       + '- Documentation: ' + (base.docs.length ? base.docs.map(d=>d.name).join(', ') : '(none)') + '\n'
       + '- Message: ' + (base.message || '(none)') + '\n\n'

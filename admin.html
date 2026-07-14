@@ -58,7 +58,7 @@
               <option value="#c9a227">Gold</option><option value="#b06c22">Bronze</option><option value="#5d6a7e">Steel</option>
             </select>
           </div>
-          <label class="terms" style="margin:0;align-self:center"><input id="e-banner" type="checkbox"> <span>Featured Circuits-Keyword™ Sponsor</span></label>
+          <label class="terms" style="margin:0;align-self:center"><input id="e-banner" type="checkbox"> <span>Exclusive Circuits-Keyword™ Sponsor</span></label>
           <div style="display:flex;gap:8px;align-self:flex-end">
             <button class="mini-btn green" id="e-save" type="button" style="height:42px">Save Changes</button>
             <button class="mini-btn" id="e-cancel" type="button" style="height:42px">Cancel</button>
@@ -184,6 +184,16 @@ const approved = () => allApps.filter(a=>a.status==='Approved');
 const pending  = () => allApps.filter(a=>a.status==='Pending');
 const badgeTag = b => b ? `<span class="lb" style="background:${esc(b.color)}">${esc(b.text)}</span>` : '—';
 
+/* A keyword can only carry ONE live Exclusive Sponsor banner. An app conflicts
+   when it wants a banner on a keyword that another APPROVED listing already
+   runs a banner on (matched with the same normalization search uses). */
+function bannerConflict(app){
+  if(!app || !app.banner) return false;
+  const k = normKw(app.keyword);
+  if(!k) return false;
+  return allApps.some(a => a.id!==app.id && a.banner && a.status==='Approved' && normKw(a.keyword)===k);
+}
+
 function sortRows(rows, key){
   const r = rows.slice();
   if(key==='keyword')    r.sort((a,b)=>(a.keyword||'').localeCompare(b.keyword||'') || (a.company||'').localeCompare(b.company||''));
@@ -245,18 +255,20 @@ function renderBadges(){
 
 function renderPending(){
   const rows = view(pending(), 'pending');
-  $('pending-body').innerHTML = rows.map(p=>`
-    <tr>
+  $('pending-body').innerHTML = rows.map(p=>{
+    const conflict = bannerConflict(p);
+    return `
+    <tr class="${conflict?'row-warn':''}">
       <td>${esc(p.company)||'—'}</td>
       <td class="kw">${esc(p.keyword)||'—'}</td>
       <td>${esc(p.email)||'—'}</td>
-      <td>${p.banner ? '<span class="badge sponsored">Yes</span>' : 'No'}</td>
+      <td>${p.banner ? '<span class="badge sponsored">Yes</span>' : 'No'}${conflict?' <span class="warn-flag" title="This keyword already has a live Exclusive Sponsor banner">⚠</span>':''}</td>
       <td>${badgeTag(p.badge)}</td>
       <td class="row-actions">
-        <button class="mini-btn green" onclick="approveApp('${p.id}')">Approve</button>
+        <button class="mini-btn green" onclick="approveApp('${p.id}')" ${conflict?'disabled title="Blocked: this keyword already has a live Exclusive Sponsor banner. Remove that banner first."':''}>Approve</button>
         <button class="mini-btn danger" onclick="rejectApp('${p.id}')">Reject</button>
       </td>
-    </tr>`).join('');
+    </tr>`;}).join('');
   $('pending-empty').style.display = pending().length ? 'none' : 'block';
 }
 
@@ -304,6 +316,11 @@ $('e-save').addEventListener('click', async ()=>{
     banner: $('e-banner').checked,
     badge: badgeText ? { text: badgeText, color: $('e-color').value } : null
   };
+  if(patch.banner && patch.status==='Approved'
+     && bannerConflict({ id: editId, banner: true, keyword: patch.keyword })){
+    alert('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword — remove the existing banner first.');
+    return;
+  }
   $('e-save').disabled = true;
   const err = await updateApplication(editId, patch);
   $('e-save').disabled = false;
@@ -319,7 +336,14 @@ function bannerError(err){
 
 async function removeListing(id){ if(!confirm('Remove this keyword listing?')) return; await deleteApplication(id); await reload(); }
 async function togglePause(id){ const l = allApps.find(a=>a.id===id); if(!l) return; await setPaused(id, !l.paused); await reload(); }
-async function approveApp(id){ const err = await updateAppStatus(id,'Approved'); if(err){ alert(bannerError(err)); return; } await reload(); }
+async function approveApp(id){
+  const app = allApps.find(a=>a.id===id);
+  if(app && bannerConflict(app)){
+    alert('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword — remove the existing banner first.');
+    return;
+  }
+  const err = await updateAppStatus(id,'Approved'); if(err){ alert(bannerError(err)); return; } await reload();
+}
 async function rejectApp(id){ await updateAppStatus(id,'Denied'); await reload(); }
 
 function syncControls(){ document.querySelectorAll('.list-controls').forEach(bar=>{ const p = panels[bar.dataset.panel]; bar.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active', b.dataset.sort===p.sort)); bar.querySelector('.lc-limit').value = p.limit; }); } (async ()=>{ if(!(await requireStaff())) return; const saved = await loadPrefs('admin'); if(saved) for(const k in panels){ if(saved[k] && saved[k].sort) panels[k].sort = saved[k].sort; if(saved[k] && saved[k].limit) panels[k].limit = saved[k].limit; } syncControls(); reload(); })();
