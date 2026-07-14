@@ -27,16 +27,18 @@ function appPriceLabel(a){ return (a && a.fee) ? a.fee : ('$' + appPrice(a) + '/
 /* ---- read ---- */
 async function fetchApplications(){
   if(!sb) return [];
+  // oldest first — new listings join at the BOTTOM of the list
+  // (earlier claims keep the higher permanent position)
   // secondary sort by id keeps rows from jumping when timestamps tie
   const { data, error } = await sb.from('applications').select('*')
-    .order('created_at', { ascending:false }).order('id', { ascending:true });
+    .order('created_at', { ascending:true }).order('id', { ascending:true });
   if(error){ console.error('fetchApplications', error); return []; }
   return data || [];
 }
 async function fetchApproved(){
   if(!sb) return [];
   const { data, error } = await sb.from('applications').select('*').eq('status','Approved')
-    .order('created_at', { ascending:false }).order('id', { ascending:true });
+    .order('created_at', { ascending:true }).order('id', { ascending:true });
   if(error){ console.error('fetchApproved', error); return []; }
   return data || [];
 }

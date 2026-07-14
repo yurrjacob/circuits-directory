@@ -34,12 +34,20 @@ async function sendFounderEmail(subject, fields, autoresponse){
     _captcha: 'false'
   }, fields);
   if(autoresponse) payload._autoresponse = autoresponse;
+  if(fields && fields.email) payload._replyto = fields.email;
   try{
-    await fetch('https://formsubmit.co/ajax/' + FOUNDER_EMAIL, {
+    const res = await fetch('https://formsubmit.co/ajax/' + FOUNDER_EMAIL, {
       method: 'POST',
       headers: { 'Content-Type':'application/json', 'Accept':'application/json' },
       body: JSON.stringify(payload)
     });
+    const out = await res.json().catch(()=>null);
+    if(!out || out.success === 'false' || out.success === false){
+      /* Most common cause: the FormSubmit form for FOUNDER_EMAIL hasn't been
+         activated yet — check that inbox (and spam) for an "Activate Form"
+         email from FormSubmit and click the link once. */
+      console.error('Email notification NOT delivered:', out && out.message);
+    }
   }catch(err){ console.warn('Email notification failed:', err); }
 }
 
@@ -117,7 +125,7 @@ async function initResults(){
     <div class="empty" style="margin:10px auto 60px">
       <div class="big">Claim &ldquo;${term}&rdquo; before a competitor does</div>
       <p style="margin:8px 0 18px">Be the first supplier buyers see when they search this keyword.</p>
-      <a class="btn btn-primary" href="join.html" style="padding:12px 26px;font-size:1rem;display:inline-block">List Your Company →</a>
+      <a class="btn btn-primary" href="join.html" style="padding:12px 26px;font-size:1rem;display:inline-block">Get Listed →</a>
     </div>`;
     return;
   }
@@ -272,19 +280,34 @@ function initJoin(){
   });
 
   // Additional documentation upload (PDFs / images)
+  // Files accumulate across picks (up to 5) instead of replacing each other.
   const docsInput = document.getElementById('docs-input');
   const docsList = document.getElementById('docs-list');
   const DOC_TYPES = ['application/pdf','image/png','image/jpeg','image/webp'];
   const DOC_MAX = 10 * 1024 * 1024; // 10 MB each
   const DOC_LIMIT = 5;
-  function clearDocs(){ if(docsInput) docsInput.value=''; if(docsList) docsList.innerHTML=''; }
+  let docFiles = [];
+  function renderDocs(){
+    if(docsList) docsList.innerHTML = docFiles.map((f,i)=>
+      `<span>${escapeHtml(f.name)} <button type="button" class="doc-remove" data-i="${i}" aria-label="Remove ${escapeHtml(f.name)}" style="border:0;background:none;cursor:pointer;color:#b3261e;font-size:1rem;line-height:1;padding:0 2px">×</button></span>`
+    ).join('');
+  }
+  if(docsList) docsList.addEventListener('click', e=>{
+    const b = e.target.closest('.doc-remove'); if(!b) return;
+    docFiles.splice(+b.dataset.i, 1); setErr(docsInput,''); renderDocs();
+  });
+  function clearDocs(){ docFiles = []; if(docsInput) docsInput.value=''; renderDocs(); }
   if(docsInput) docsInput.addEventListener('change', ()=>{
-    const files = Array.from(docsInput.files || []);
-    if(files.length > DOC_LIMIT){ setErr(docsInput, 'You can upload up to ' + DOC_LIMIT + ' documents.'); clearDocs(); return; }
-    if(files.some(f => !DOC_TYPES.includes(f.type))){ setErr(docsInput, 'Documents must be PDF, PNG, JPEG, or WebP files.'); clearDocs(); return; }
-    if(files.some(f => f.size > DOC_MAX)){ setErr(docsInput, 'Each document must be 10 MB or smaller.'); clearDocs(); return; }
+    const picked = Array.from(docsInput.files || []);
+    docsInput.value = ''; // allow re-picking the same file later
+    if(!picked.length) return;
+    if(picked.some(f => !DOC_TYPES.includes(f.type))){ setErr(docsInput, 'Documents must be PDF, PNG, JPEG, or WebP files.'); return; }
+    if(picked.some(f => f.size > DOC_MAX)){ setErr(docsInput, 'Each document must be 10 MB or smaller.'); return; }
+    const fresh = picked.filter(f => !docFiles.some(d => d.name === f.name && d.size === f.size));
+    if(docFiles.length + fresh.length > DOC_LIMIT){ setErr(docsInput, 'You can upload up to ' + DOC_LIMIT + ' documents.'); return; }
+    docFiles = docFiles.concat(fresh);
     setErr(docsInput,'');
-    if(docsList) docsList.innerHTML = files.map(f=>`<span>${escapeHtml(f.name)}</span>`).join('');
+    renderDocs();
   });
 
   // Live previews (badge + banner) pull from the form fields
@@ -374,7 +397,6 @@ const msg = document.getElementById('msg');
       if(logoFile) base.logo = await uploadLogo(logoFile);
       /* store uploaded documentation so viewers can open it from the listing */
       base.docs = [];
-      const docFiles = (docsInput && docsInput.files) ? Array.from(docsInput.files) : [];
       for(const f of docFiles){ const d = await uploadDoc(f); if(d) base.docs.push(d); }
       await addApplicationKeywords(base, keywords);
     } catch(err) {
