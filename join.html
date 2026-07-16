@@ -83,7 +83,7 @@
 <div class="field" style="grid-column:1 / -1">
 <label>Additional Documentation <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
 <input id="docs-input" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" multiple>
-<p class="field-hint">Upload up to 5 files (PDF, PNG, or JPEG): spec sheets, line cards, certifications, and more. People who find your profile can open them through a "View Documentation" link on your listing.</p>
+<p class="field-hint">Upload up to 5 files (PDF, PNG, or JPEG): spec sheets, line cards, certifications, and more. People who find your profile can open them through a "View Docs" link on your listing.</p>
 <div id="docs-list" class="docs-list"></div>
 </div>
 </div>
@@ -94,10 +94,16 @@
 <div class="step-head">
 <span class="step-num">02</span>
 <div>
-<h2>Circuits-Keyword™</h2>
+<h2>Claim Your Circuits-Keyword™</h2>
 <p>Tell us which Circuits-Keyword™ you’d like to be listed under. Each keyword carries its own listing fee.</p>
 </div>
 </div>
+<p class="benefits-h">Benefits</p>
+<ul class="promo-benefits" style="margin:0 0 20px">
+<li>Permanently Ranked Listing Positions</li>
+<li>Higher Placement For Early Participants</li>
+<li>Create Lasting Digital Real Estate</li>
+</ul>
 <div class="kw-input-row">
 <input id="kw-input" type="text" placeholder="e.g. semiconductors — one listing fee per keyword, add as many as you want" maxlength="40">
 <button type="button" class="mini-btn green" id="kw-add">Add</button>
@@ -126,7 +132,7 @@
 <span class="preview-label">Live Preview</span>
 <div class="premium-card">
 <span class="premium-badge">Exclusive Sponsor</span>
-<div class="premium-logo" id="bp-logo">AE</div>
+<div class="premium-logo logo-ph" id="bp-logo">Your Logo</div>
 <div class="premium-body">
 <h3 id="bp-company">AAA Electronics, Inc.</h3>
 <p id="bp-message">Prominent profile description shown to every viewer.</p>
@@ -168,7 +174,7 @@
 <div class="badge-preview-box" style="margin:0 0 20px">
 <span class="preview-label">Live Preview</span>
 <div class="preview-stage">
-<span class="co-logo" id="preview-logo" style="background:var(--dark)">AE</span>
+<span class="co-logo logo-ph" id="preview-logo" style="background:var(--dark)">Your Logo</span>
 <span class="preview-name" id="preview-name">AAA Electronics</span>
 <span class="lb" id="badge-preview" style="background:#c9a227">Authorized</span>
 </div>
@@ -187,9 +193,12 @@
 <span class="field-label">Badge</span>
 <div class="opt-row" id="badge-opts">
 <button type="button" class="opt-btn" data-text="Authorized">Authorized</button>
-<button type="button" class="opt-btn" data-text="Validated">Validated</button>
-<button type="button" class="opt-btn" data-text="Verified">Verified</button>
+<button type="button" class="opt-btn" data-text="Certified">Certified</button>
+<button type="button" class="opt-btn" data-text="Featured">Featured</button>
+<button type="button" class="opt-btn" data-text="Premium">Premium</button>
+<button type="button" class="opt-btn" id="badge-custom-btn">Custom…</button>
 </div>
+<input id="badge-custom" type="text" maxlength="18" placeholder="Type your custom badge" style="display:none;max-width:240px;margin-bottom:4px">
 <span class="field-label">Badge Color</span>
 <div class="swatches" id="swatches">
 <button type="button" class="swatch" data-color="#c9a227" style="background:linear-gradient(135deg,#e9c95c,#c9a227)" aria-label="gold"></button>

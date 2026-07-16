@@ -45,13 +45,18 @@ async function sendFounderEmail(subject, fields, autoresponse){
         body: JSON.stringify(payload)
       });
       const out = await res.json().catch(()=>null);
-      if(!out || out.success === 'false' || out.success === false){
-        console.error('Email to ' + to + ' NOT delivered:', out && out.message);
-      }
-    }catch(err){ console.warn('Email to ' + to + ' failed:', err); }
+      const ok = !!out && out.success !== 'false' && out.success !== false;
+      if(!ok) console.error('Email to ' + to + ' NOT delivered:', out && out.message);
+      return ok;
+    }catch(err){ console.warn('Email to ' + to + ' failed:', err); return false; }
   }
-  /* autoresponse rides on the first send only, so the sender gets one confirmation */
-  await Promise.all(FOUNDER_EMAILS.map((to,i)=>sendOne(to, i===0)));
+  /* The applicant's confirmation (_autoresponse) only goes out if the send it
+     rides on succeeds — so try the first founder with it, and if that send
+     fails (e.g. un-activated FormSubmit address), retry it on the second.
+     Exactly one confirmation reaches the applicant when any send works. */
+  const [first, ...rest] = FOUNDER_EMAILS;
+  const firstOk = await sendOne(first, true);
+  await Promise.all(rest.map(to=>sendOne(to, !firstOk)));
 }
 
 /* Results page rendering */
@@ -60,8 +65,8 @@ function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&l
 function docLinks(c){
   const docs = Array.isArray(c && c.docs) ? c.docs : [];
   if(!docs.length) return '';
-  if(docs.length === 1) return `<a class="doc-link" href="${escapeHtml(docs[0].url)}" target="_blank" rel="noopener">View Documentation</a>`;
-  return `<span class="doc-link">View Documentation:${docs.map((d,i)=>` <a href="${escapeHtml(d.url)}" target="_blank" rel="noopener" title="${escapeHtml(d.name)}">${i+1}</a>`).join('')}</span>`;
+  if(docs.length === 1) return `<a class="doc-link" href="${escapeHtml(docs[0].url)}" target="_blank" rel="noopener">View Docs</a>`;
+  return `<span class="doc-link">View Docs:${docs.map((d,i)=>` <a href="${escapeHtml(d.url)}" target="_blank" rel="noopener" title="${escapeHtml(d.name)}">${i+1}</a>`).join('')}</span>`;
 }
 function initials(name){return name.split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
 
@@ -142,7 +147,7 @@ async function initResults(){
       <div class="premium-logo">${fLogo}</div>
       <div class="premium-body">
         <h3><a href="${escapeHtml(featured.website||'#')}" target="_blank" rel="noopener">${escapeHtml(featured.company)}</a></h3>
-        <p>${escapeHtml(featured.message||'')}</p>
+        <p>${escapeHtml(featured.description||'')}</p>
         ${docLinks(featured)}
       </div>
       <div class="premium-contact">
@@ -224,6 +229,8 @@ function initJoin(){
   const badgeOpts = document.getElementById('badge-opts');
   const swatches = document.getElementById('swatches');
   const badgePreview = document.getElementById('badge-preview');
+  const customBtn = document.getElementById('badge-custom-btn');
+  const customInput = document.getElementById('badge-custom');
   const DEFAULT_TEXT = 'Authorized';
   const DEFAULT_COLOR = '#c9a227'; /* gold */
   let curBadgeText = DEFAULT_TEXT, curBadgeColor = DEFAULT_COLOR;
@@ -231,14 +238,31 @@ function initJoin(){
     curBadgeText = text;
     if(badgePreview) badgePreview.textContent = text;
     if(badgeOpts) badgeOpts.querySelectorAll('.opt-btn').forEach(b=>b.classList.toggle('selected', b.dataset.text===text));
+    if(customBtn) customBtn.classList.remove('selected');
+    if(customInput) customInput.style.display = 'none';
   }
+  function selectCustom(){
+    if(badgeOpts) badgeOpts.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('selected'));
+    if(customBtn) customBtn.classList.add('selected');
+    if(customInput){
+      customInput.style.display = 'block';
+      curBadgeText = customInput.value.trim() || 'Your Badge';
+      if(badgePreview) badgePreview.textContent = curBadgeText;
+      customInput.focus();
+    }
+  }
+  if(customBtn) customBtn.addEventListener('click', selectCustom);
+  if(customInput) customInput.addEventListener('input', ()=>{
+    curBadgeText = customInput.value.trim() || 'Your Badge';
+    if(badgePreview) badgePreview.textContent = curBadgeText;
+  });
   function selectColor(color){
     curBadgeColor = color;
     if(badgePreview) badgePreview.style.background = color;
     if(swatches) swatches.querySelectorAll('.swatch').forEach(s=>s.classList.toggle('selected', s.dataset.color===color));
   }
   if(badgeOpts) badgeOpts.addEventListener('click', e=>{
-    const b = e.target.closest('.opt-btn'); if(!b) return;
+    const b = e.target.closest('.opt-btn'); if(!b || !b.dataset.text) return;
     selectText(b.dataset.text);
   });
   if(swatches) swatches.addEventListener('click', e=>{
@@ -251,7 +275,7 @@ function initJoin(){
   }
   if(badgeCheck) badgeCheck.addEventListener('change', syncBadgeGate);
   syncBadgeGate();
-  function resetBadge(){ selectText(DEFAULT_TEXT); selectColor(DEFAULT_COLOR); syncBadgeGate(); }
+  function resetBadge(){ if(customInput) customInput.value=''; selectText(DEFAULT_TEXT); selectColor(DEFAULT_COLOR); syncBadgeGate(); }
 
   // Logo upload preview
   const logoInput = document.getElementById('logo-input');
@@ -326,20 +350,20 @@ const company = fieldVal('f-company');
 if(pvName) pvName.textContent = company || 'AAA Electronics';
 if(bpCompany) bpCompany.textContent = company || 'AAA Electronics, Inc.';
 if(logoUrl){
-  if(pvLogo) pvLogo.innerHTML = `<img src="${logoUrl}" alt="Your logo">`;
-  if(bpLogo) bpLogo.innerHTML = `<img src="${logoUrl}" alt="Your logo">`;
+  if(pvLogo){ pvLogo.classList.remove('logo-ph'); pvLogo.innerHTML = `<img src="${logoUrl}" alt="Your logo">`; }
+  if(bpLogo){ bpLogo.classList.remove('logo-ph'); bpLogo.innerHTML = `<img src="${logoUrl}" alt="Your logo">`; }
 } else {
-  const ini = initials(company || 'AAA Electronics');
-  if(pvLogo) pvLogo.textContent = ini;
-  if(bpLogo) bpLogo.textContent = ini;
+  /* no logo picked yet — show a "Your Logo" placeholder, never initials */
+  if(pvLogo){ pvLogo.classList.add('logo-ph'); pvLogo.textContent = 'Your Logo'; }
+  if(bpLogo){ bpLogo.classList.add('logo-ph'); bpLogo.textContent = 'Your Logo'; }
 }
 if(bpContact) bpContact.textContent = fieldVal('f-contact') || 'Jane Doe, VP Sales';
 if(bpPhone) bpPhone.textContent = fieldVal('f-phone') || '(555) 123-4567';
 if(bpEmail) bpEmail.textContent = fieldVal('f-email') || 'sales@company.com';
-const m = document.getElementById('msg');
-if(bpMessage) bpMessage.textContent = (m && m.value.trim()) || 'Prominent profile description shown to every viewer.';
+/* the profile description is written by staff after review, so the preview
+   keeps its example text — the Step 5 suggestions box does NOT feed it */
 }
-['f-company','f-contact','f-phone','f-email','msg'].forEach(function(id){
+['f-company','f-contact','f-phone','f-email'].forEach(function(id){
 const el = document.getElementById(id);
 if(el) el.addEventListener('input', updatePreviews);
 });
@@ -422,7 +446,7 @@ const msg = document.getElementById('msg');
       exclusive_sponsor: base.banner ? 'Yes' : 'No',
       trust_badge: wantsBadge ? (curBadgeText + ' (' + curBadgeColor + ')') : 'No',
       documentation: base.docs.length ? base.docs.map(d=>d.name).join(', ') : '(none)',
-      message: base.message || '(none)'
+      suggestions: base.message || '(none)'
     }, 'Thanks for applying to list ' + base.company + ' on Circuits.com! We received your application and will respond within 1 business day.\n\n'
       + 'Here is a copy of what you submitted:\n'
       + '- Company: ' + base.company + '\n'
@@ -434,7 +458,7 @@ const msg = document.getElementById('msg');
       + '- Exclusive Circuits-Keyword™ Sponsor: ' + (base.banner ? 'Yes' : 'No') + '\n'
       + '- Circuits.com Trust Badge: ' + (wantsBadge ? curBadgeText : 'No') + '\n'
       + '- Documentation: ' + (base.docs.length ? base.docs.map(d=>d.name).join(', ') : '(none)') + '\n'
-      + '- Message: ' + (base.message || '(none)') + '\n\n'
+      + '- Suggestions: ' + (base.message || '(none)') + '\n\n'
       + '- John & Mike, Circuits.com');
     if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
     const ok = document.getElementById('success');
@@ -450,3 +474,4 @@ const msg = document.getElementById('msg');
     window.scrollTo({top:0,behavior:'smooth'});
   });
 }
+/* end */

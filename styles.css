@@ -84,6 +84,10 @@ img{max-width:100%}
 .claim-line{margin:16px 0 0;text-align:center;font-size:.9rem}
 .claim-line a{color:var(--green-dark);text-decoration:none;font-weight:700}
 .claim-line a:hover{text-decoration:underline}
+.claim-cta{margin-top:30px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.claim-cta .btn-primary{display:inline-block;padding:13px 30px;font-size:1rem;font-weight:700;color:#000;border-radius:10px}
+.claim-sub{font-size:.78rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.claim-sub::before,.claim-sub::after{content:"—";margin:0 8px;color:var(--line)}
 
 /* ---- Footer ---- */
 .footer{border-top:1px solid var(--line);background:var(--bg-soft);color:var(--muted);font-size:.85rem;margin-top:auto}
@@ -225,8 +229,14 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.92rem}
 .preview-hint{margin-top:12px;font-size:.78rem;color:var(--muted)}
 #badge-preview{flex:0 0 auto;white-space:nowrap}
 
+/* logo placeholder before a logo is uploaded */
+.premium-logo.logo-ph{font-size:.72rem;font-weight:700;text-align:center;line-height:1.15;letter-spacing:.02em}
+.co-logo.logo-ph{font-size:.5rem;font-weight:700;text-align:center;line-height:1.1;letter-spacing:.02em}
+
 /* trust badge option buttons */
 .opt-row{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:4px}
+#badge-custom{border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-family:inherit;font-size:.88rem;outline:0}
+#badge-custom:focus{border-color:var(--green)}
 .opt-btn{border:1px solid var(--line);background:#fff;border-radius:24px;padding:8px 16px;font-family:inherit;font-size:.88rem;font-weight:600;color:#3c4043;cursor:pointer;transition:.15s}
 .opt-btn:hover{border-color:#c9ccd0}
 .opt-btn.selected{background:var(--ink);color:#fff;border-color:var(--ink)}

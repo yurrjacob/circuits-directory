@@ -51,7 +51,7 @@
         </div>
         <div class="form-row" style="align-items:center">
           <div class="auth-field"><label>Badge</label>
-            <select id="e-badge"><option value="">None</option><option>Authorized</option><option>Validated</option><option>Verified</option></select>
+            <select id="e-badge"><option value="">None</option><option>Authorized</option><option>Certified</option><option>Featured</option><option>Premium</option></select>
           </div>
           <div class="auth-field"><label>Badge Color</label>
             <select id="e-color">
@@ -298,7 +298,12 @@ function editListing(id){
   $('e-keyword').value = l.keyword||'';
   $('e-fee').value = l.fee||'';
   $('e-status').value = l.status||'Approved';
-  $('e-badge').value = l.badge ? l.badge.text : '';
+  /* keep custom badge text selectable — add it as an option if it isn't one */
+  const badgeSel = $('e-badge'), bText = l.badge ? l.badge.text : '';
+  if(bText && ![...badgeSel.options].some(o=>o.value===bText)){
+    const o = document.createElement('option'); o.textContent = bText; badgeSel.appendChild(o);
+  }
+  badgeSel.value = bText;
   $('e-color').value = l.badge ? l.badge.color : '#c9a227';
   $('e-banner').checked = !!l.banner;
   $('edit-form').style.display = 'block';

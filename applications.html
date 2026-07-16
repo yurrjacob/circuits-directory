@@ -57,11 +57,11 @@
       <thead>
         <tr>
           <th>Date</th><th>Company</th><th>Contact</th><th>Email</th><th>Phone</th>
-          <th>Keyword &amp; Price</th><th>Premium Banner</th><th>Trust Badge</th><th>Message</th>
+          <th>Keyword &amp; Price</th><th>Premium Banner</th><th>Trust Badge</th><th>Profile Description</th><th>Suggestions</th>
           <th>Total Price</th><th>Status</th><th>Actions</th>
         </tr>
       </thead>
-      <tbody id="apps-body"><tr><td colspan="12" style="padding:20px;text-align:center;color:#5f6368">Loading…</td></tr></tbody>
+      <tbody id="apps-body"><tr><td colspan="13" style="padding:20px;text-align:center;color:#5f6368">Loading…</td></tr></tbody>
     </table>
   </div>
 </main>
@@ -159,7 +159,8 @@ function rowHtml(a){
       <input type="color" class="badge-color" data-badge="color" value="${esc(a.badge.color||'#c9a227')}">
       <span class="ce price" contenteditable data-price="badge_price" data-cell="badgeprice" data-ph="${money(BADGE_FEE)}">${money(effPrice(a.badge_price,BADGE_FEE))}</span>` : ''}
     </td>
-    <td class="msg-cell"><span class="ce" contenteditable data-field="message" data-ph="—">${esc(a.message)}</span></td>
+    <td class="msg-cell"><span class="ce" contenteditable data-field="description" data-maxlen="300" data-ph="Add description…" title="Shown on the listing's Exclusive Sponsor banner once entered (max 300 characters)">${esc(a.description)}</span></td>
+    <td class="msg-cell"><span class="ce" contenteditable data-field="message" data-ph="—" title="Applicant's ideas/suggestions from the form — not shown on their profile">${esc(a.message)}</span></td>
     <td class="nowrap" data-cell="total"><b>$${totalPrice(a)}/mo</b></td>
     <td class="nowrap">${statusBadge(a.status)}</td>
     <td class="row-actions nowrap">
@@ -175,7 +176,7 @@ function draw(){
   if(companyFilter) rows = rows.filter(a => a.company===companyFilter);
   rows = sortRows(rows).slice(0, rowLimit);
   body.innerHTML = rows.map(rowHtml).join('')
-    || `<tr><td colspan="12" class="empty-line" style="text-align:center;padding:20px">No applications in this view.</td></tr>`;
+    || `<tr><td colspan="13" class="empty-line" style="text-align:center;padding:20px">No applications in this view.</td></tr>`;
   $('c-all').textContent = apps.length;
   $('c-acc').textContent = apps.filter(a=>a.status==='Approved').length;
   $('c-pen').textContent = apps.filter(a=>a.status==='Pending').length;
@@ -184,7 +185,7 @@ function draw(){
 
 /* pristine copy of every row as loaded from the database, so edits can be undone */
 let originals = {};
-const EDITABLE = ['company','website','logo','contact','email','phone','keyword','banner','badge','message','paused','listing_price','banner_price','badge_price'];
+const EDITABLE = ['company','website','logo','contact','email','phone','keyword','banner','badge','message','description','paused','listing_price','banner_price','badge_price'];
 function snapshot(){
   originals = {};
   apps.forEach(a => { originals[a.id] = JSON.parse(JSON.stringify(a)); });
@@ -253,8 +254,24 @@ body.addEventListener('focusout', async e=>{
   const el = e.target.closest('[contenteditable]'); if(!el) return;
   const tr = el.closest('tr'); if(!tr) return;
   if(el.dataset.price) await savePrice(tr, el);
-  else if(el.dataset.field) await saveField(tr.dataset.id, el.dataset.field, el.textContent.trim());
+  else if(el.dataset.field){
+    let val = el.textContent.trim();
+    const max = parseInt(el.dataset.maxlen, 10);
+    if(max && val.length > max){ val = val.slice(0, max); el.textContent = val; }
+    await saveField(tr.dataset.id, el.dataset.field, val);
+  }
   else if(el.dataset.badge==='text') await saveBadge(tr);
+});
+
+/* live character cap for cells with data-maxlen (e.g. profile description, 300) */
+body.addEventListener('input', e=>{
+  const el = e.target.closest('[contenteditable][data-maxlen]'); if(!el) return;
+  const max = parseInt(el.dataset.maxlen, 10);
+  if(el.textContent.length > max){
+    el.textContent = el.textContent.slice(0, max);
+    const r = document.createRange(); r.selectNodeContents(el); r.collapse(false);
+    const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
 });
 
 body.addEventListener('change', async e=>{
