@@ -55,8 +55,10 @@ img{max-width:100%}
 .brand a{display:inline-flex;align-items:center}
 .brand-text{display:flex;flex-direction:column;line-height:1.18}
 .brand-title{color:#e8eaed;font-size:.92rem;font-weight:600;letter-spacing:.02em;white-space:nowrap;font-style:italic;line-height:1;display:flex;align-items:center}
+/* home topbar slogan — quiet uppercase wordmark set off from the logo by a hairline */
+.brand-slogan{color:#bdc1c6;font-size:.7rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;white-space:nowrap;line-height:1.4;padding-left:14px;border-left:1px solid rgba(255,255,255,.22)}
 .slogan{color:#9aa0a6;font-size:.78rem;letter-spacing:.04em;white-space:nowrap;font-style:italic}
-@media(max-width:620px){.brand-title,.slogan{font-size:.72rem}}
+@media(max-width:620px){.brand-title,.slogan{font-size:.72rem}.brand-slogan{font-size:.58rem;letter-spacing:.14em;padding-left:10px}}
 
 /* results sub-bar (search row under the unified header) */
 .subbar{background:var(--bg-soft);border-bottom:1px solid var(--line)}
