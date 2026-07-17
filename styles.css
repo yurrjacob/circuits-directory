@@ -88,8 +88,8 @@ img{max-width:100%}
 .claim-line a:hover{text-decoration:underline}
 .claim-cta{margin-top:30px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
 .claim-cta .btn-primary{display:inline-block;padding:13px 30px;font-size:1rem;font-weight:700;color:#000;border-radius:10px}
-.claim-sub{font-size:.78rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-.claim-sub::before,.claim-sub::after{content:"—";margin:0 8px;color:var(--line)}
+.claim-sub{display:inline-flex;align-items:center;gap:7px;font-size:.72rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.claim-sub svg{color:var(--green-dark);flex:none}
 
 /* ---- Footer ---- */
 .footer{border-top:1px solid var(--line);background:var(--bg-soft);color:var(--muted);font-size:.85rem;margin-top:auto}
@@ -180,6 +180,8 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.92rem}
 .kw-input-row .mini-btn{height:auto;padding:0 18px}
 .kw-tags{display:flex;flex-wrap:wrap;gap:8px}
 .kw-tag{display:inline-flex;align-items:center;gap:8px;background:#f1fae0;border:1px solid var(--green);color:#2f4a00;border-radius:20px;padding:7px 14px;font-size:.88rem;font-weight:600}
+.kw-tag .kw-check-link{color:inherit;text-decoration:none;cursor:pointer}
+.kw-tag .kw-check-link:hover{text-decoration:underline}
 .kw-tag button{border:0;background:none;cursor:pointer;color:#5f7a2e;font-size:1.1rem;line-height:1;padding:0}
 .kw-tag button:hover{color:#2f4a00}
 

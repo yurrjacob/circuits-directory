@@ -195,9 +195,10 @@ function initJoin(){
   const kwCount = document.getElementById('kw-count');
 
   function renderKw(){
-    if(kwTags) kwTags.innerHTML = keywords.map((k,i)=>
-      `<span class="kw-tag">${k.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}<button type="button" data-i="${i}" aria-label="Remove">×</button></span>`
-    ).join('');
+    if(kwTags) kwTags.innerHTML = keywords.map((k,i)=>{
+      const esc = k.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+      return `<span class="kw-tag"><a class="kw-check-link" href="results.html?q=${encodeURIComponent(k)}" target="_blank" rel="noopener" title="Check availability — opens this keyword's live listing page in a new tab">${esc}</a><button type="button" data-i="${i}" aria-label="Remove">×</button></span>`;
+    }).join('');
     if(kwCount) kwCount.innerHTML = `<b>${keywords.length}</b> keyword${keywords.length===1?'':'s'}`;
   }
   function addKw(){
@@ -206,6 +207,14 @@ function initJoin(){
     if(!v || keywords.includes(v)) return;
     keywords.push(v); kwInput.value=''; renderKw(); kwInput.focus();
   }
+  function checkKw(){
+    // preview the keyword's live listing page without touching the form
+    const v = (typeof cleanKw==='function') ? cleanKw(kwInput.value) : (kwInput.value||'').trim().toLowerCase();
+    if(!v){ kwInput.focus(); return; }
+    window.open('results.html?q=' + encodeURIComponent(v), '_blank', 'noopener');
+  }
+  const kwCheck = document.getElementById('kw-check');
+  if(kwCheck) kwCheck.addEventListener('click', checkKw);
   if(kwAdd) kwAdd.addEventListener('click', addKw);
   if(kwInput) kwInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addKw(); } });
   if(kwTags) kwTags.addEventListener('click', e=>{
