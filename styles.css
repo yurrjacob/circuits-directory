@@ -74,6 +74,10 @@ img{max-width:100%}
 .search-pill:focus-within{box-shadow:0 1px 10px rgba(32,33,36,.28);border-color:#d7d9dc}
 .search-pill svg{flex:0 0 auto;color:var(--muted)}
 .search-pill input{flex:1;border:0;outline:0;font-size:1.05rem;background:transparent;color:var(--ink)}
+.search-go{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border:0;border-radius:50%;background:var(--green);color:#0f0f0f;cursor:pointer;transition:.15s;margin:-4px -8px -4px 0}
+.search-go:hover{background:var(--green-dark);color:#fff}
+.search-pill .search-go svg,.mini-search .search-go svg{color:inherit}
+.search-go.mini{width:34px;height:34px;margin:-2px -8px -2px 0}
 .search-actions{display:flex;gap:12px;justify-content:center;margin-top:26px;flex-wrap:wrap}
 .search-actions button[type=submit]{font-weight:700}
 .btn{font-family:inherit;font-size:.9rem;border-radius:8px;padding:10px 18px;border:1px solid var(--line);background:var(--bg-soft);color:#3c4043;cursor:pointer;text-decoration:none;transition:.15s}
@@ -110,15 +114,20 @@ img{max-width:100%}
 .mini-search{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:24px;padding:9px 16px;max-width:560px}
 .mini-search input{flex:1;background:transparent;border:0;outline:0;color:var(--ink);font-size:.95rem}
 .mini-search svg{color:var(--muted)}
-.results-meta{max-width:var(--maxw);margin:0 auto;padding:22px 24px 4px;color:var(--muted);font-size:.9rem}
-.results-meta b{color:var(--ink);text-transform:capitalize}
-.results-meta .kw-line{font-size:1.3rem;font-weight:800;color:var(--ink);margin-bottom:2px}
-.results-meta .kw-line b{font-weight:800}
+/* search row + result meta share one compact bar to leave more room for results */
+.subbar-inner{display:flex;align-items:center;justify-content:space-between;gap:10px 24px;flex-wrap:wrap}
+.subbar .mini-search{flex:1 1 300px}
+.subbar-meta{display:flex;align-items:baseline;gap:2px 16px;flex-wrap:wrap;color:var(--muted);font-size:.85rem}
+.subbar-meta b{color:var(--ink);text-transform:capitalize}
+.subbar-meta .kw-line{font-size:1rem;font-weight:800;color:var(--ink)}
+.subbar-meta .kw-line b{font-weight:800}
+.subbar-meta .count-line{white-space:nowrap}
 
-.premium{max-width:var(--maxw);margin:14px auto 6px;padding:0 24px}
+.premium{max-width:var(--maxw);margin:10px auto 4px;padding:0 24px}
 .premium-card{position:relative;display:flex;align-items:center;gap:20px;border:1px solid #c9ced6;border-left:5px solid #9aa4ae;border-radius:var(--radius);padding:18px 22px;background:linear-gradient(90deg,#f3f5f8,#ffffff);box-shadow:0 2px 16px rgba(122,133,146,.22)}
 .premium-badge{position:absolute;top:-10px;left:18px;background:linear-gradient(180deg,#f2f4f7,#aab3bd);color:#2b3138;font-size:.68rem;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:20px;text-transform:uppercase;box-shadow:0 1px 4px rgba(90,100,112,.35)}
-.premium-logo{width:64px;height:64px;border-radius:12px;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.4rem;flex:0 0 auto}
+.premium-logo{width:56px;height:56px;border-radius:12px;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.4rem;flex:0 0 auto;overflow:hidden}
+.co-logo svg.silhouette,.premium-logo svg.silhouette{width:66%;height:66%;display:block}
 .premium-body{flex:1;min-width:0}
 .premium-body h3{margin:0 0 4px;font-size:1.15rem}
 .premium-body h3 a{color:var(--ink);text-decoration:none}
@@ -127,15 +136,15 @@ img{max-width:100%}
 .premium-contact{font-size:.85rem;color:var(--muted);text-align:right;white-space:nowrap}
 @media(max-width:680px){.premium-contact{text-align:left;white-space:normal}}
 
-.listings{max-width:var(--maxw);margin:18px auto 60px;padding:0 24px}
+.listings{max-width:var(--maxw);margin:12px auto 48px;padding:0 24px}
 .table-wrap{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
 table.listings-table{width:100%;border-collapse:collapse;font-size:.92rem}
-.listings-table thead th{background:var(--bg-soft);text-align:left;padding:12px 16px;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
-.listings-table td{padding:14px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+.listings-table thead th{background:var(--bg-soft);text-align:left;padding:9px 16px;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+.listings-table td{padding:8px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
 .listings-table tr:last-child td{border-bottom:0}
 .listings-table tr:hover td{background:#fcfdfb}
 .co{display:flex;align-items:center;gap:12px}
-.co-logo{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:.95rem;flex:0 0 auto}
+.co-logo{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:.95rem;flex:0 0 auto;overflow:hidden}
 .co a{color:var(--ink);text-decoration:none;font-weight:600}
 .co a:hover{color:var(--green-dark);text-decoration:underline}
 .cell-muted{color:var(--muted)}
@@ -421,3 +430,35 @@ tr.row-warn td{background:#fff3cd}
 .doc-link a{color:inherit;text-decoration:underline}
 .docs-list{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:.85rem;color:var(--muted)}
 .field-hint{font-size:.8rem;color:var(--muted);margin:6px 0 0;line-height:1.5}
+
+/* ===== Mobile / small screens (fix the squeeze) ===== */
+@media(max-width:640px){
+  /* header: brand on row one, nav wraps to a centered row below instead of cramming */
+  .topbar .inner{padding:10px 14px;flex-wrap:wrap;gap:8px 10px}
+  .brand{gap:8px;min-width:0}
+  .brand-slogan{display:none}
+  .brand-title{white-space:normal;font-size:.72rem}
+  .nav{flex:1 1 100%;justify-content:center;flex-wrap:wrap;gap:2px 4px}
+  .nav a{padding:6px 9px;font-size:.8rem}
+
+  /* reclaim horizontal room everywhere so content isn't pinched */
+  .subbar .inner{padding:10px 14px}
+  .subbar-inner{gap:8px}
+  .subbar-meta{width:100%}
+  .footer .inner{padding:14px 14px}
+  .page{padding:30px 16px 60px}
+  .form-wrap{padding:30px 16px 70px}
+  .console,.console-wide{padding:22px 14px 60px}
+  .premium,.listings,.empty{padding-left:16px;padding-right:16px}
+  .step{padding:18px 16px}
+
+  /* forms: stack the keyword row and footer controls full width */
+  .kw-input-row{flex-wrap:wrap}
+  .kw-input-row input{flex:1 1 100%}
+  .form-foot{flex-direction:column;align-items:stretch;gap:10px}
+  .form-foot .submit{width:100%}
+}
+@media(max-width:400px){
+  /* very narrow phones: drop the italic brand line, keep just the logo + nav */
+  .brand-title{display:none}
+}

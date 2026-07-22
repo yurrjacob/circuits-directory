@@ -57,7 +57,7 @@
       <thead>
         <tr>
           <th>Date</th><th>Company</th><th>Contact</th><th>Email</th><th>Phone</th>
-          <th>Keyword &amp; Price</th><th>Premium Banner</th><th>Trust Badge</th><th>Profile Description</th><th>Suggestions</th>
+          <th>Keyword &amp; Price</th><th>Premium Banner</th><th>Trust Badge</th><th>Profile Description</th><th>Ideas</th>
           <th>Total Price</th><th>Status</th><th>Actions</th>
         </tr>
       </thead>
@@ -141,7 +141,10 @@ function rowHtml(a){
     <td class="co-cell">
       <span class="ce co-name" contenteditable data-field="company" data-ph="Company">${esc(a.company)}</span>
       <div class="co-sub">Web: <span class="ce" contenteditable data-field="website" data-ph="—">${esc(a.website)}</span></div>
-      <div class="co-sub">Logo: ${logoHtml}</div>
+      <div class="co-sub">Logo: ${logoHtml}
+        <label class="mini-btn" style="padding:2px 8px;font-size:.72rem;cursor:pointer;margin-left:6px" title="Upload a logo image">Upload<input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" data-logo-up style="display:none"></label>
+      </div>
+      <div class="co-sub">URL: <span class="ce" contenteditable data-field="logo" data-ph="paste image URL">${isLogoUrl(a.logo)?esc(a.logo):''}</span></div>
     </td>
     <td><span class="ce" contenteditable data-field="contact" data-ph="—">${esc(a.contact)}</span></td>
     <td><span class="ce" contenteditable data-field="email" data-ph="—">${esc(a.email)}</span></td>
@@ -160,7 +163,7 @@ function rowHtml(a){
       <span class="ce price" contenteditable data-price="badge_price" data-cell="badgeprice" data-ph="${money(BADGE_FEE)}">${money(effPrice(a.badge_price,BADGE_FEE))}</span>` : ''}
     </td>
     <td class="msg-cell"><span class="ce" contenteditable data-field="description" data-maxlen="300" data-ph="Add description…" title="Shown on the listing's Exclusive Sponsor banner once entered (max 300 characters)">${esc(a.description)}</span></td>
-    <td class="msg-cell"><span class="ce" contenteditable data-field="message" data-ph="—" title="Applicant's ideas/suggestions from the form — not shown on their profile">${esc(a.message)}</span></td>
+    <td class="msg-cell"><span class="ce" contenteditable data-field="message" data-ph="—" title="Applicant's ideas from the form (not shown on their profile)">${esc(a.message)}</span></td>
     <td class="nowrap" data-cell="total"><b>$${totalPrice(a)}/mo</b></td>
     <td class="nowrap">${statusBadge(a.status)}</td>
     <td class="row-actions nowrap">
@@ -277,6 +280,18 @@ body.addEventListener('input', e=>{
 body.addEventListener('change', async e=>{
   const el = e.target, tr = el.closest('tr'); if(!tr) return;
   const id = tr.dataset.id, a = apps.find(x=>x.id===id); if(!a) return;
+  if(el.matches('input[data-logo-up]')){
+    const f = el.files && el.files[0]; if(!f){ return; }
+    if(!/^image\//.test(f.type)){ alert('Please choose an image file (PNG, JPG, SVG, or WebP).'); el.value=''; return; }
+    el.disabled = true;
+    const url = await uploadLogo(f);
+    el.disabled = false; el.value = '';
+    if(!url){ alert('Logo upload failed. Please try again.'); return; }
+    const err = await updateApplication(id, { logo: url });
+    if(err){ alert(errMsg(err)); return; }
+    a.logo = url; draw();
+    return;
+  }
   if(el.matches('input[data-field="banner"]')){
     const want = el.checked;
     if(want && bannerConflict({ id, banner:true, keyword: a.keyword })

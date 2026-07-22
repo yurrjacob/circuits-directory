@@ -50,13 +50,14 @@ async function sendFounderEmail(subject, fields, autoresponse){
       return ok;
     }catch(err){ console.warn('Email to ' + to + ' failed:', err); return false; }
   }
-  /* The applicant's confirmation (_autoresponse) only goes out if the send it
-     rides on succeeds — so try the first founder with it, and if that send
-     fails (e.g. un-activated FormSubmit address), retry it on the second.
-     Exactly one confirmation reaches the applicant when any send works. */
-  const [first, ...rest] = FOUNDER_EMAILS;
-  const firstOk = await sendOne(first, true);
-  await Promise.all(rest.map(to=>sendOne(to, !firstOk)));
+  /* The applicant's confirmation is FormSubmit's _autoresponse, which only
+     goes out from an ACTIVATED endpoint. A send can return HTTP success while
+     silently dropping the autoresponse (e.g. that founder address was never
+     activated), so we can't tell which endpoint will actually deliver it.
+     Attach the confirmation to EVERY founder send: as long as at least one
+     address is activated, the applicant gets their confirmation. (If both are
+     activated the applicant may get two copies — acceptable vs. getting none.) */
+  await Promise.all(FOUNDER_EMAILS.map(to => sendOne(to, true)));
 }
 
 /* Results page rendering */
@@ -69,6 +70,9 @@ function docLinks(c){
   return `<span class="doc-link">View Docs:${docs.map((d,i)=>` <a href="${escapeHtml(d.url)}" target="_blank" rel="noopener" title="${escapeHtml(d.name)}">${i+1}</a>`).join('')}</span>`;
 }
 function initials(name){return name.split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
+/* default logo placeholder: a generic person silhouette (white on the tile's
+   varying color) shown whenever a listing has no uploaded logo */
+function avatarSvg(){return '<svg class="silhouette" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.2" r="4.2"/><path d="M12 13.6c-4.5 0-7.7 2.4-7.7 5.4V21h15.4v-2c0-3-3.2-5.4-7.7-5.4z"/></svg>';}
 
 async function initResults(){
   const params = new URLSearchParams(location.search);
@@ -106,7 +110,7 @@ async function initResults(){
     </div>
     <div class="premium"><div class="premium-card">
       <span class="premium-badge">Exclusive Sponsor</span>
-      <div class="premium-logo">YC</div>
+      <div class="premium-logo">${avatarSvg()}</div>
       <div class="premium-body">
         <h3>Your Company or Name</h3>
         <p>Own the Exclusive Circuits-Keyword™ Sponsor Banner for &ldquo;${term}&rdquo;, the first listing every viewer sees.</p>
@@ -119,7 +123,7 @@ async function initResults(){
           <thead><tr><th>Company</th><th>Contact</th><th>Phone</th><th>Email</th></tr></thead>
           <tbody><tr>
             <td><div class="co">
-              <span class="co-logo" style="background:var(--dark)">YC</span>
+              <span class="co-logo" style="background:var(--dark)">${avatarSvg()}</span>
               <a href="join.html">Your Company or Name</a>
               <span class="lb" style="background:#c9a227">Authorized</span>
             </div></td>
@@ -141,7 +145,7 @@ async function initResults(){
   if(featured){
     const fLogo = isLogoUrl(featured.logo)
       ? `<img src="${escapeHtml(featured.logo)}" alt="${escapeHtml(featured.company)} logo">`
-      : initials(featured.company);
+      : avatarSvg();
     html += `<div class="premium"><div class="premium-card">
       <span class="premium-badge">Exclusive Sponsor</span>
       <div class="premium-logo">${fLogo}</div>
@@ -164,7 +168,7 @@ async function initResults(){
         <div class="co">
           ${isLogoUrl(c.logo)
             ? `<span class="co-logo"><img src="${escapeHtml(c.logo)}" alt="${escapeHtml(c.company)} logo"></span>`
-            : `<span class="co-logo" style="background:${COLORS[i%COLORS.length]}">${initials(c.company)}</span>`}
+            : `<span class="co-logo" style="background:${COLORS[i%COLORS.length]}">${avatarSvg()}</span>`}
           <a href="${escapeHtml(c.website||'#')}" target="_blank" rel="noopener">${escapeHtml(c.company)}</a>
           ${c.badge ? `<span class="lb" style="background:${escapeHtml(c.badge.color)}">${escapeHtml(c.badge.text)}</span>` : ''}
           ${docLinks(c)}
@@ -455,7 +459,7 @@ const msg = document.getElementById('msg');
       exclusive_sponsor: base.banner ? 'Yes' : 'No',
       trust_badge: wantsBadge ? (curBadgeText + ' (' + curBadgeColor + ')') : 'No',
       documentation: base.docs.length ? base.docs.map(d=>d.name).join(', ') : '(none)',
-      suggestions: base.message || '(none)'
+      ideas: base.message || '(none)'
     }, 'Thanks for applying to list ' + base.company + ' on Circuits.com! We received your application and will respond within 1 business day.\n\n'
       + 'Here is a copy of what you submitted:\n'
       + '- Company: ' + base.company + '\n'
@@ -467,7 +471,7 @@ const msg = document.getElementById('msg');
       + '- Exclusive Circuits-Keyword™ Sponsor: ' + (base.banner ? 'Yes' : 'No') + '\n'
       + '- Circuits.com Trust Badge: ' + (wantsBadge ? curBadgeText : 'No') + '\n'
       + '- Documentation: ' + (base.docs.length ? base.docs.map(d=>d.name).join(', ') : '(none)') + '\n'
-      + '- Suggestions: ' + (base.message || '(none)') + '\n\n'
+      + '- Ideas: ' + (base.message || '(none)') + '\n\n'
       + '- John & Mike, Circuits.com');
     if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
     const ok = document.getElementById('success');
