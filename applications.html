@@ -143,6 +143,7 @@ function rowHtml(a){
       <div class="co-sub">Web: <span class="ce" contenteditable data-field="website" data-ph="—">${esc(a.website)}</span></div>
       <div class="co-sub">Logo: ${logoHtml}
         <label class="mini-btn" style="padding:2px 8px;font-size:.72rem;cursor:pointer;margin-left:6px" title="Upload a logo image">Upload<input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" data-logo-up style="display:none"></label>
+        ${isLogoUrl(a.logo)?`<button type="button" class="mini-btn danger" data-act="clearlogo" style="padding:2px 8px;font-size:.72rem;margin-left:6px" title="Remove this logo">Clear</button>`:''}
       </div>
       <div class="co-sub">URL: <span class="ce" contenteditable data-field="logo" data-ph="paste image URL">${isLogoUrl(a.logo)?esc(a.logo):''}</span></div>
     </td>
@@ -323,6 +324,13 @@ body.addEventListener('change', async e=>{
 body.addEventListener('click', async e=>{
   const btn = e.target.closest('button[data-act]'); if(!btn) return;
   const id = btn.closest('tr').dataset.id;
+  if(btn.dataset.act==='clearlogo'){
+    if(!confirm('Remove this logo from the company?')) return;
+    const err = await updateApplication(id, { logo: null });
+    if(err){ alert(errMsg(err)); return; }
+    const a = apps.find(x=>x.id===id); if(a) a.logo = null;
+    draw(); return;
+  }
   if(btn.dataset.act==='approve'){
     const app = apps.find(x=>x.id===id);
     if(app && bannerConflict(app)){

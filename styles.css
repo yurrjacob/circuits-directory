@@ -378,6 +378,11 @@ tr.row-warn td{background:#fff3cd}
 .mini-btn.green{background:var(--green);border-color:var(--green);color:#0f0f0f;font-weight:700}
 .mini-btn.green:hover{background:var(--green-dark);color:#fff;border-color:var(--green-dark)}
 .row-actions{display:flex;gap:8px;flex-wrap:wrap}
+/* Pin the Actions column to the right edge so it stays visible while scrolling horizontally */
+.sheet-table th:last-child,.sheet-table td:last-child{position:sticky;right:0;z-index:6;background:#fff;box-shadow:-8px 0 8px -8px rgba(0,0,0,.18)}
+.sheet-table th:last-child{z-index:12;background:var(--bg-soft)}
+.sheet-table tr:hover td:last-child{background:#fcfdfb}
+.sheet-table tr.row-warn td:last-child{background:#fff3cd}
 
 .bars{display:flex;align-items:flex-end;gap:10px;height:140px;padding:10px 4px 26px}
 .bars .bar{flex:1;background:linear-gradient(180deg,var(--green),#aadd55);border-radius:6px 6px 0 0;position:relative;min-height:4px}
