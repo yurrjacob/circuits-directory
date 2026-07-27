@@ -105,15 +105,14 @@ async function initResults(){
     const term = escapeHtml(q);
     body.innerHTML = `
     <div class="empty" style="margin-bottom:4px">
-      <div class="big">No listings for &ldquo;${term}&rdquo; yet. This Circuits-Keyword&trade; is wide open</div>
-      <p>This is what <b>your listing</b> could look like listed under &ldquo;${term}&rdquo;:</p>
+      <div class="big">This Circuits-Keyword&trade; is available</div>
     </div>
     <div class="premium"><div class="premium-card">
       <span class="premium-badge">Exclusive Sponsor</span>
       <div class="premium-logo">${avatarSvg()}</div>
       <div class="premium-body">
         <h3>Your Company or Name</h3>
-        <p>Own the Exclusive Circuits-Keyword™ Sponsor Banner for &ldquo;${term}&rdquo;, the first listing every viewer sees.</p>
+        <p>Own the Exclusive Circuits-Keyword™ Sponsor Banner for &ldquo;${term}&rdquo;.<br>Own the First Listing Every Viewer Sees.</p>
       </div>
       <div class="premium-contact">Your Contact<br>(555) 123-4567<br>sales@yourcompany.com</div>
     </div></div>
@@ -135,7 +134,7 @@ async function initResults(){
       </div>
     </div>
     <div class="empty" style="margin:10px auto 60px">
-      <a class="btn btn-primary" href="join.html" style="padding:14px 28px;font-size:1rem;display:inline-block;font-weight:700">Claim Your Circuits-Keyword™ &ndash; Permanent Ranked Ownership</a>
+      <a class="btn btn-primary" href="join.html" style="padding:14px 28px;font-size:1rem;display:inline-block;font-weight:700">Be The First Listed For &ldquo;${term}&rdquo;</a>
     </div>`;
     return;
   }
