@@ -12,13 +12,13 @@
 
 <header class="topbar">
   <div class="inner">
-    <div class="brand"><a href="index.html"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-slogan">Connecting The Circuits Industry</span></div>
+    <div class="brand"><a href="/"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-slogan">Connecting The Circuits Industry</span></div>
     <nav class="nav">
-      <a href="index.html">Home</a>
-      <a href="about.html">About</a>
-      <a href="how-it-works.html">How It Works</a>
-      <a href="contact.html">Contact</a>
-      <a class="cta" href="join.html">Get Listed</a>
+      <a href="/">Home</a>
+      <a href="about">About</a>
+      <a href="how-it-works">How It Works</a>
+      <a href="contact">Contact</a>
+      <a class="cta" href="join">Get Listed</a>
     </nav>
   </div>
 </header>
@@ -53,12 +53,12 @@
 <footer class="footer">
   <div class="inner">
     <div class="flinks">
-      <a href="index.html">Home</a>
-      <a href="about.html">About</a>
-      <a href="how-it-works.html">How It Works</a>
-      <a href="contact.html">Contact</a>
-      <a href="join.html">Get Listed</a>
-      <a href="login.html">Login</a>
+      <a href="/">Home</a>
+      <a href="about">About</a>
+      <a href="how-it-works">How It Works</a>
+      <a href="contact">Contact</a>
+      <a href="join">Get Listed</a>
+      <a href="login">Login</a>
     </div>
     <div style="display:flex;align-items:center;gap:14px">
       <span>© 2026 Circuits.com</span>
@@ -96,7 +96,7 @@ toggle.addEventListener('click', e=>{
 
 // Already signed in as staff? Go straight to the console.
 (async () => {
-  try { const u = await currentUser(); if(u && await checkStaff()) location.href = 'admin.html'; } catch(e){}
+  try { const u = await currentUser(); if(u && await checkStaff()) location.href = 'admin'; } catch(e){}
 })();
 
 form.addEventListener('submit', async e => {
@@ -109,12 +109,12 @@ form.addEventListener('submit', async e => {
       const { error } = await signIn(email, password);
       if(error){ setMsg(error.message, false); submitBtn.disabled = false; return; }
       if(!(await checkStaff())){ setMsg('Signed in, but this email isn’t on the staff list.', false); await signOut(); submitBtn.disabled = false; return; }
-      location.href = 'admin.html';
+      location.href = 'admin';
     } else {
       const { data, error } = await signUp(email, password);
       if(error){ setMsg(error.message, false); submitBtn.disabled = false; return; }
       if(data && data.session){
-        if(await checkStaff()){ location.href = 'admin.html'; return; }
+        if(await checkStaff()){ location.href = 'admin'; return; }
         setMsg('Account created, but this email isn’t on the staff list yet.', false);
         submitBtn.disabled = false;
       } else {

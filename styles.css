@@ -468,3 +468,5 @@ tr.row-warn td{background:#fff3cd}
   /* very narrow phones: drop the italic brand line, keep just the logo + nav */
   .brand-title{display:none}
 }
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}

@@ -148,12 +148,12 @@ async function signOut(){ if(sb) await sb.auth.signOut(); } async function loadP
 /* Redirect to login unless the visitor is a signed-in staff member. */
 async function requireStaff(){
   const user = await currentUser();
-  if(!user){ location.href = 'login.html'; return false; }
+  if(!user){ location.href = 'login'; return false; }
   const staff = await checkStaff();
   if(!staff){
     document.body.innerHTML = '<div style="max-width:520px;margin:80px auto;font-family:Arial,sans-serif;text-align:center;color:#1a1a1a">'
       + '<h2>Not authorized</h2><p style="color:#5f6368">This account isn’t on the Circuits.com staff list. '
-      + 'Sign in with an approved staff email.</p><p><a href="login.html" style="color:#5f9b00;font-weight:600">Back to sign in</a></p></div>';
+      + 'Sign in with an approved staff email.</p><p><a href="login" style="color:#5f9b00;font-weight:600">Back to sign in</a></p></div>';
     return false;
   }
   return true;

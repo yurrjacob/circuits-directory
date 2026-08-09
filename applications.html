@@ -13,7 +13,7 @@
 <header class="topbar">
   <div class="inner">
     <div class="brand">
-      <a href="index.html"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"><sup class="tm-mark">™</sup></a>
+      <a href="/"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"><sup class="tm-mark">™</sup></a>
       <span class="brand-text"><span class="brand-title">Admin Console</span><span class="portal-tag">Circuits.com staff</span></span>
     </div>
     <a class="signout" href="#" id="signout">Sign out</a>
@@ -26,7 +26,7 @@
       <h1>Website Applications</h1>
       <p>Every submission from the List Your Company form, live from the database. Click any cell to edit it; changes save for everyone.</p>
     </div>
-    <a class="mini-btn green" href="admin.html">← Back To Dashboard</a>
+    <a class="mini-btn green" href="admin">← Back To Dashboard</a>
   </div>
 
   <div class="sheet-filters" id="filters">
@@ -69,9 +69,9 @@
 <footer class="footer">
   <div class="inner">
     <div class="flinks">
-      <a href="admin.html">Dashboard</a>
-      <a href="applications.html">Applications</a>
-      <a href="index.html">View site</a>
+      <a href="admin">Dashboard</a>
+      <a href="applications">Applications</a>
+      <a href="/">View site</a>
     </div>
     <div style="display:flex;align-items:center;gap:14px">
       <span>© 2026 Circuits.com</span>
@@ -92,7 +92,7 @@ const body = $('apps-body');
 const totalPrice = a => appPrice(a); // uses hand-entered prices when set, defaults otherwise
 const money = n => '$' + (Number(n)%1 ? Number(n).toFixed(2) : Number(n));
 
-$('signout').addEventListener('click', async e=>{ e.preventDefault(); await signOut(); location.href='login.html'; });
+$('signout').addEventListener('click', async e=>{ e.preventDefault(); await signOut(); location.href='login'; });
 
 function statusBadge(s){
   const cls = s==='Approved' ? 'accepted' : (s==='Denied' ? 'denied' : 'pending');
