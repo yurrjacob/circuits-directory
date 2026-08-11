@@ -4,7 +4,7 @@
 function gotoSearch(term){
   const q = (term||'').trim();
   if(!q) return;
-  window.location.href = 'results?q=' + encodeURIComponent(q);
+  window.location.href = '/results?q=' + encodeURIComponent(q);
 }
 
 /* Home page search wiring */
@@ -74,9 +74,9 @@ function initials(name){return name.split(/\s+/).slice(0,2).map(w=>w[0]).join(''
    varying color) shown whenever a listing has no uploaded logo */
 function avatarSvg(){return '<svg class="silhouette" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.2" r="4.2"/><path d="M12 13.6c-4.5 0-7.7 2.4-7.7 5.4V21h15.4v-2c0-3-3.2-5.4-7.7-5.4z"/></svg>';}
 
-async function initResults(){
+async function initResults(forcedTerm){
   const params = new URLSearchParams(location.search);
-  const q = params.get('q') || '';
+  const q = forcedTerm || params.get('q') || '';
   const COLORS = ['#76c000','#0f6fff','#ff7a00','#9b51e0','#e02d5b','#00a8a8','#444b54','#c9a400'];
 
   const mini = document.getElementById('mini-search');
@@ -89,7 +89,7 @@ async function initResults(){
 
   if(!q){
     body.innerHTML = `<div class="empty"><div class="big">Type a keyword to see suppliers</div>
-      <p>Try <a href="results?q=circuits">circuits</a>, <a href="results?q=microcontrollers">microcontrollers</a>, or <a href="results?q=sensors">sensors</a>.</p></div>`;
+      <p>Try <a href="/results?q=circuits">circuits</a>, <a href="/results?q=microcontrollers">microcontrollers</a>, or <a href="/results?q=sensors">sensors</a>.</p></div>`;
     return;
   }
 
@@ -123,7 +123,7 @@ async function initResults(){
           <tbody><tr>
             <td><div class="co">
               <span class="co-logo" style="background:var(--dark)">${avatarSvg()}</span>
-              <a href="join">Your Company or Name</a>
+              <a href="/join">Your Company or Name</a>
               <span class="lb" style="background:#c9a227">Authorized</span>
             </div></td>
             <td class="cell-muted">Your Contact</td>
@@ -134,7 +134,7 @@ async function initResults(){
       </div>
     </div>
     <div class="empty" style="margin:10px auto 60px">
-      <a class="btn btn-primary" href="join" style="padding:14px 28px;font-size:1rem;display:inline-block;font-weight:700">Be The First Listed For &ldquo;${term}&rdquo;</a>
+      <a class="btn btn-primary" href="/join" style="padding:14px 28px;font-size:1rem;display:inline-block;font-weight:700">Be The First Listed For &ldquo;${term}&rdquo;</a>
     </div>`;
     return;
   }
@@ -200,7 +200,7 @@ function initJoin(){
   function renderKw(){
     if(kwTags) kwTags.innerHTML = keywords.map((k,i)=>{
       const esc = k.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-      return `<span class="kw-tag"><a class="kw-check-link" href="results?q=${encodeURIComponent(k)}" target="_blank" rel="noopener" title="Check availability: opens this keyword's live listing page in a new tab">${esc}</a><button type="button" data-i="${i}" aria-label="Remove">×</button></span>`;
+      return `<span class="kw-tag"><a class="kw-check-link" href="/results?q=${encodeURIComponent(k)}" target="_blank" rel="noopener" title="Check availability: opens this keyword's live listing page in a new tab">${esc}</a><button type="button" data-i="${i}" aria-label="Remove">×</button></span>`;
     }).join('');
     if(kwCount) kwCount.innerHTML = `<b>${keywords.length}</b> keyword${keywords.length===1?'':'s'}`;
   }
@@ -214,7 +214,7 @@ function initJoin(){
     // preview the keyword's live listing page without touching the form
     const v = (typeof cleanKw==='function') ? cleanKw(kwInput.value) : (kwInput.value||'').trim().toLowerCase();
     if(!v){ kwInput.focus(); return; }
-    window.open('results?q=' + encodeURIComponent(v), '_blank', 'noopener');
+    window.open('/results?q=' + encodeURIComponent(v), '_blank', 'noopener');
   }
   const kwCheck = document.getElementById('kw-check');
   if(kwCheck) kwCheck.addEventListener('click', checkKw);
