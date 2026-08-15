@@ -384,7 +384,7 @@ let allClaims = [];
 async function reloadClaims(){
   allClaims = await fetchClaims();
   const rows = allClaims.map(c=>`<tr>
-    <td><a href="/company/${esc(c.company_slug)}" target="_blank" rel="noopener">${esc(c.company_slug)}</a></td>
+    <td><a href="/${esc(c.company_slug)}" target="_blank" rel="noopener">${esc(c.company_slug)}</a></td>
     <td>${esc(c.name||'—')}${c.role_title?'<br><span class="cell-muted">'+esc(c.role_title)+'</span>':''}</td>
     <td class="cell-muted">${esc(c.email)}</td>
     <td class="cell-muted" style="max-width:280px">${esc(c.evidence||'—')}</td>
@@ -407,7 +407,7 @@ let allReviews = [];
 async function reloadReviews(){
   allReviews = await fetchAllReviews();
   $('reviews-body').innerHTML = allReviews.map(r=>`<tr>
-    <td><a href="/company/${esc(r.company_slug)}" target="_blank" rel="noopener">${esc(r.company_slug)}</a></td>
+    <td><a href="/${esc(r.company_slug)}" target="_blank" rel="noopener">${esc(r.company_slug)}</a></td>
     <td>${'★'.repeat(r.rating)}</td>
     <td class="cell-muted">${esc(r.author_name)}<br><span class="cell-muted">${esc(r.author_email)}</span></td>
     <td class="cell-muted" style="max-width:320px">${esc(r.body)}</td>

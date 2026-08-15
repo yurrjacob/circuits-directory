@@ -85,3 +85,49 @@ end $$;
 delete from applications where company_slug like 'zz-rlstest-%';
 delete from companies    where slug like 'zz-rlstest-%';
 delete from auth.users   where email like 'zz-owner-%@rlstest.invalid';
+
+-- Regression: staff are NOT suppliers.
+-- owns_company() once included is_staff(), which made every Circuits.com staff
+-- account the owner of every listing — the supplier portal showed all 39
+-- companies and pre-filled the form with another company's contact details.
+do $$
+declare us uuid := gen_random_uuid(); uo uuid := gen_random_uuid(); n int;
+begin
+  insert into auth.users (id, instance_id, aud, role, email, email_confirmed_at, created_at, updated_at)
+  values (us,'00000000-0000-0000-0000-000000000000','authenticated','authenticated','zz-staff@rlstest.invalid',now(),now(),now()),
+         (uo,'00000000-0000-0000-0000-000000000000','authenticated','authenticated','zz-supplier@rlstest.invalid',now(),now(),now());
+  insert into staff (email) values ('zz-staff@rlstest.invalid');
+  insert into companies (slug,name,published) values ('zz-a','ZZ A',true),('zz-b','ZZ B',true);
+  insert into applications (company,company_slug,email,keyword,status)
+  values ('ZZ A','zz-a','zz-supplier@rlstest.invalid','zza','Approved'),
+         ('ZZ B','zz-b','someone-else@rlstest.invalid','zzb','Approved');
+
+  perform set_config('request.jwt.claims', json_build_object('sub',us::text,'role','authenticated','email','zz-staff@rlstest.invalid')::text, true);
+  set local role authenticated;
+  select count(*) into n from my_companies();
+  if n <> 0 then raise exception 'FAIL: staff sees % companies in the portal (must be 0)', n; end if;
+  if not is_staff() then raise exception 'FAIL: staff lost their admin flag'; end if;
+  update companies set description='staff fix' where slug='zz-b';
+  get diagnostics n = row_count;
+  if n <> 1 then raise exception 'FAIL: staff can no longer edit a company profile'; end if;
+
+  reset role;
+  perform set_config('request.jwt.claims', json_build_object('sub',uo::text,'role','authenticated','email','zz-supplier@rlstest.invalid')::text, true);
+  set local role authenticated;
+  select count(*) into n from my_companies();
+  if n <> 1 then raise exception 'FAIL: supplier sees % companies (must be exactly 1)', n; end if;
+  if owns_company('zz-b') then raise exception 'FAIL: supplier owns someone else''s company'; end if;
+
+  -- a profile edit must reach every keyword listing row, or half the site goes stale
+  update companies set contact='New Person', phone='555-0100' where slug='zz-a';
+  reset role;
+  select count(*) into n from applications where company_slug='zz-a' and contact='New Person' and phone='555-0100';
+  if n <> 1 then raise exception 'FAIL: profile edit did not propagate to the listing'; end if;
+
+  raise notice 'STAFF SCOPE + SYNC CHECKS PASSED';
+end $$;
+
+delete from applications where company_slug like 'zz-%';
+delete from companies where slug like 'zz-%';
+delete from staff where email like 'zz-%@rlstest.invalid';
+delete from auth.users where email like 'zz-%@rlstest.invalid';

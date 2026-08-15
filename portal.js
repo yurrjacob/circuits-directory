@@ -2,7 +2,7 @@
    Everything here is gated by RLS, not by this file. Hiding a button is a
    convenience; the database is what actually refuses the write. */
 
-let PT = { slug: null, co: null, listings: [], products: [], inquiries: [], reviews: [] };
+let PT = { slug: null, co: null, listings: [], inquiries: [], reviews: [] };
 
 const HOUR_DAYS = [['mon','Mon'],['tue','Tue'],['wed','Wed'],['thu','Thu'],['fri','Fri'],['sat','Sat'],['sun','Sun']];
 const SOCIAL_KEYS = [['linkedin','LinkedIn'],['x','X / Twitter'],['facebook','Facebook'],['youtube','YouTube'],['instagram','Instagram'],['github','GitHub']];
@@ -25,6 +25,9 @@ async function initPortal(){
   if(!cos.length){
     show('pt-auth', false); show('pt-app', false); show('pt-none', true);
     el('pt-none-email').textContent = user.email;
+    /* Staff are not suppliers. Without this they just see "no company linked"
+       and assume the portal is broken. */
+    if(await checkStaff()) show('pt-none-staff', true);
     return;
   }
   show('pt-auth', false); show('pt-none', false); show('pt-app', true);
@@ -38,35 +41,24 @@ async function initPortal(){
   await loadCompany(cos[0].slug);
 }
 
+/* Sign in only. Accounts are created on the Get Listed form, where the
+   applicant also reserves their circuits.com address — there is deliberately
+   no way to register from here. */
 function wireAuth(){
-  const form = el('pt-auth-form');
-  let mode = 'signin';
-  el('pt-auth-toggle').addEventListener('click', e => {
+  el('pt-auth-form').addEventListener('submit', async e => {
     e.preventDefault();
-    mode = mode === 'signin' ? 'signup' : 'signin';
-    el('pt-auth-title').textContent = mode === 'signin' ? 'Supplier sign in' : 'Create a supplier account';
-    el('pt-auth-submit').textContent = mode === 'signin' ? 'Sign in →' : 'Create account →';
-    el('pt-auth-toggle').textContent = mode === 'signin' ? 'New here? Create an account' : 'Have an account? Sign in';
-    el('pt-auth-msg').textContent = '';
-  });
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-    const email = val('pt-email'), pw = val('pt-password');
     const msg = el('pt-auth-msg');
     el('pt-auth-submit').disabled = true;
     try{
-      if(mode === 'signin'){
-        const { error } = await signIn(email, pw);
-        if(error){ msg.textContent = error.message; el('pt-auth-submit').disabled = false; return; }
-        location.reload();
-      } else {
-        const { data, error } = await signUp(email, pw);
-        if(error){ msg.textContent = error.message; el('pt-auth-submit').disabled = false; return; }
-        if(data && data.session){ location.reload(); return; }
-        msg.style.color = '#3f6300';
-        msg.textContent = 'Account created. Confirm your email, then sign in — use the same address that is on your listing.';
+      const { error } = await signIn(val('pt-email'), val('pt-password'));
+      if(error){
+        msg.textContent = /invalid login/i.test(error.message || '')
+          ? 'That email and password do not match an account. Accounts are created when you get listed.'
+          : error.message;
         el('pt-auth-submit').disabled = false;
+        return;
       }
+      location.reload();
     }catch(err){ msg.textContent = 'Something went wrong. Please try again.'; el('pt-auth-submit').disabled = false; }
   });
 }
@@ -84,15 +76,14 @@ async function loadCompany(slug){
   PT.co = await fetchCompany(slug);
   if(!PT.co){ toast('Could not load that company.', false); return; }
   el('pt-name').textContent = PT.co.name;
-  el('pt-view').href = '/company/' + slug;
-  const [listings, products, inquiries, reviews, stats] = await Promise.all([
-    fetchMyListings(slug), fetchProducts(slug), fetchInquiries(slug), fetchMyReviews(slug), companyStats(slug, 30)
+  el('pt-view').href = profileUrl(PT.co.handle) || '#';
+  const [listings, inquiries, reviews, stats] = await Promise.all([
+    fetchMyListings(slug), fetchInquiries(slug), fetchMyReviews(slug), companyStats(slug, 30)
   ]);
-  PT.listings = listings; PT.products = products; PT.inquiries = inquiries; PT.reviews = reviews;
+  PT.listings = listings; PT.inquiries = inquiries; PT.reviews = reviews;
   renderOverview(stats);
   renderProfileForm();
   renderListings();
-  renderProducts();
   renderInquiries();
   renderReviews();
 }
@@ -134,7 +125,9 @@ function renderProfileForm(){
   set('f-tagline', c.tagline); set('f-desc', c.description); set('f-website', c.website);
   set('f-phone', c.phone); set('f-email', c.email); set('f-contact', c.contact);
   set('f-address', c.address); set('f-founded', c.founded); set('f-employees', c.employees);
+  set('f-handle', c.handle);
   el('f-reviews-on').checked = !!c.reviews_enabled;
+  wireHandleCheck();
   el('pt-logo-prev').innerHTML = isLogoUrl(c.logo) ? `<img src="${escapeHtml(c.logo)}" alt="logo">` : avatarSvg();
 
   const hours = c.hours && typeof c.hours === 'object' ? c.hours : {};
@@ -150,6 +143,27 @@ function renderProfileForm(){
   renderRepeater('certs', c.certifications, ['name', 'issuer', 'year'], ['Certification', 'Issuer', 'Year']);
   renderRepeater('team', c.team, ['name', 'role', 'email'], ['Name', 'Role', 'Email']);
   renderRepeater('gallery', c.gallery, ['url', 'caption'], ['Image URL', 'Caption']);
+}
+
+/* Live availability check on the vanity handle. Debounced so typing does not
+   hammer the database; the unique index is what actually enforces it. */
+let handleTimer = null;
+function wireHandleCheck(){
+  const input = el('f-handle');
+  if(!input || input.__wired) return;
+  input.__wired = true;
+  input.addEventListener('input', () => {
+    input.value = input.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    const msg = el('handle-msg');
+    clearTimeout(handleTimer);
+    if(input.value === (PT.co.handle || '')){ msg.textContent = ''; return; }
+    msg.textContent = 'Checking…'; msg.style.color = '';
+    handleTimer = setTimeout(async () => {
+      const why = await handleAvailable(input.value, PT.slug);
+      msg.textContent = why || ('circuits.com/' + input.value + ' is available.');
+      msg.style.color = why ? '#b3261e' : '#3f6300';
+    }, 400);
+  });
 }
 
 /* One generic list editor covers certifications, team and gallery. */
@@ -178,12 +192,18 @@ function renderRepeater(key, items, fields, labels){
 
 async function saveProfile(){
   const btn = el('pt-save'); btn.disabled = true;
+  const wantHandle = val('f-handle');
+  if(wantHandle !== (PT.co.handle || '')){
+    const why = await handleAvailable(wantHandle, PT.slug);
+    if(why){ btn.disabled = false; toast('Address not saved: ' + why, false); return; }
+  }
   const hours = {}, socials = {};
   HOUR_DAYS.forEach(([k]) => { const v = val('h-' + k); if(v) hours[k] = v; });
   SOCIAL_KEYS.forEach(([k]) => { const v = val('s-' + k); if(v) socials[k] = v; });
   const clean = key => (el('f-' + key).__list || []).filter(o => Object.values(o).some(v => (v || '').trim()));
 
   const fields = {
+    handle: wantHandle || null,
     tagline: val('f-tagline') || null,
     description: val('f-desc') || null,
     website: val('f-website') || null,
@@ -254,55 +274,6 @@ async function requestKeyword(){
   sendFounderEmail('Keyword request — ' + PT.co.name, {
     company: PT.co.name, keyword: kw, email: PT.co.email || '(none)', source: 'Supplier portal'
   });
-}
-
-/* ---------- products ---------- */
-function renderProducts(){
-  el('pt-products').innerHTML = (PT.products.map(p => `
-    <div class="pt-item">
-      <div class="pt-item-head">
-        <div><b>${escapeHtml(p.name)}</b> ${p.part_number ? `<code class="pf-pn">${escapeHtml(p.part_number)}</code>` : ''}
-          ${p.price ? `<span class="pf-note">${escapeHtml(p.price)}</span>` : ''}</div>
-        <div><button class="mini-btn" data-edit="${p.id}">Edit</button>
-             <button class="mini-btn" data-delp="${p.id}">Delete</button></div>
-      </div>
-      ${p.description ? `<p class="pf-note">${escapeHtml(p.description)}</p>` : ''}
-    </div>`).join('') || '<p class="empty-line">No products yet.</p>');
-
-  el('pt-products').onclick = async e => {
-    const ed = e.target.closest('[data-edit]'), dl = e.target.closest('[data-delp]');
-    if(ed){
-      const p = PT.products.find(x => x.id === ed.dataset.edit);
-      ['name','part_number','description','price','image','datasheet'].forEach(f => { el('p-' + f).value = p[f] || ''; });
-      el('p-id').value = p.id;
-      el('p-name').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-    if(dl){
-      if(!confirm('Delete this product?')) return;
-      await deleteProduct(dl.dataset.delp);
-      PT.products = await fetchProducts(PT.slug);
-      renderProducts(); toast('Product deleted.', true);
-    }
-  };
-}
-
-async function submitProduct(e){
-  e.preventDefault();
-  if(!val('p-name')){ toast('Product needs a name.', false); return; }
-  const btn = el('p-save'); btn.disabled = true;
-  let image = val('p-image');
-  const file = el('p-image-file').files && el('p-image-file').files[0];
-  if(file){ const url = await uploadImage(file); if(url) image = url; }
-  const err = await saveProduct({
-    id: val('p-id') || null, company_slug: PT.slug, name: val('p-name'),
-    part_number: val('p-part_number'), description: val('p-description'),
-    price: val('p-price'), image, datasheet: val('p-datasheet')
-  });
-  btn.disabled = false;
-  if(err){ toast('Could not save: ' + err, false); return; }
-  el('product-form').reset(); el('p-id').value = '';
-  PT.products = await fetchProducts(PT.slug);
-  renderProducts(); toast('Product saved.', true);
 }
 
 /* ---------- inquiries ---------- */

@@ -31,10 +31,14 @@
       <div id="pt-auth-msg" style="font-size:.85rem;margin-bottom:12px;color:#b3261e"></div>
       <button class="submit" type="submit" id="pt-auth-submit">Sign in →</button>
     </form>
-    <div class="auth-foot"><a href="#" id="pt-auth-toggle">New here? Create an account</a></div>
+    <div class="auth-foot">
+      <a class="btn btn-primary" href="/join" style="display:block;text-align:center;text-decoration:none;padding:11px">Get Listed &amp; Create Your Account →</a>
+    </div>
     <div class="auth-note">
-      Use the email address on your listing application and your profile is linked automatically.
-      Different address? <a href="/claim">Claim your profile</a> and our team will attach it.
+      Accounts are created when you get listed &mdash; that is where you reserve your
+      circuits.com address and set your password. Use the same email and password here.
+      <br><br>
+      Already listed but never set up an account? <a href="/claim">Request access to your profile</a>.
     </div>
   </div>
 </div>
@@ -47,6 +51,10 @@
     <div class="auth-note">
       If your company is already listed, <a href="/claim">claim your profile</a> and our team will connect this account.
       If it is not listed yet, <a href="/join">get listed first</a>.
+    </div>
+    <div class="auth-note" id="pt-none-staff" style="display:none;border-left:3px solid var(--green);padding-left:10px">
+      This address is on the Circuits.com staff list. The supplier portal only ever shows companies you
+      personally own &mdash; to manage listings across the directory, use the <a href="/admin">admin console</a>.
     </div>
     <div class="auth-foot"><a href="#" onclick="signOut().then(()=>location.reload());return false">Sign out</a></div>
   </div>
@@ -71,7 +79,6 @@
     <button class="pt-tab active" data-tab="overview">Overview</button>
     <button class="pt-tab" data-tab="profile">Profile</button>
     <button class="pt-tab" data-tab="listings">Listings</button>
-    <button class="pt-tab" data-tab="products">Products</button>
     <button class="pt-tab" data-tab="inquiries">Quote requests</button>
     <button class="pt-tab" data-tab="reviews">Reviews</button>
   </div>
@@ -91,6 +98,17 @@
   <!-- profile -->
   <section class="pt-panel" id="tab-profile">
     <div class="pf-form">
+      <div class="auth-field" style="max-width:520px">
+        <label>Your Circuits.com address</label>
+        <div class="handle-row">
+          <span class="handle-prefix">circuits.com/</span>
+          <input id="f-handle" type="text" maxlength="32" spellcheck="false" placeholder="zzzelec">
+        </div>
+        <div id="handle-msg" class="pf-note"></div>
+        <p class="pf-note">Short and memorable &mdash; this is the link you put on adverts, business cards and
+        email signatures. Changing it breaks any link already printed with the old one.</p>
+      </div>
+
       <div class="pt-row">
         <div class="auth-field"><label>Tagline</label><input id="f-tagline" type="text" maxlength="160" placeholder="Authorised distributor of analog and power ICs"></div>
         <div class="auth-field"><label>Contact person</label><input id="f-contact" type="text"></div>
@@ -113,7 +131,11 @@
       </div>
       <div class="auth-field"><label>About your company</label>
         <textarea id="f-desc" rows="6" maxlength="2000" placeholder="What you supply, which lines you carry, who you serve."></textarea>
+        <p class="pf-note">Shown on your profile page. The blurb in your Exclusive Sponsor banner on
+        search results is written by Circuits.com and is not changed here.</p>
       </div>
+      <p class="pf-note">Contact person, phone, email, website and logo update everywhere &mdash; your profile,
+      every keyword listing and your sponsor banner.</p>
 
       <h3>Opening hours</h3>
       <div class="pt-row" id="f-hours"></div>
@@ -146,27 +168,6 @@
       <button class="mini-btn green" type="button" onclick="requestKeyword()">Request keyword</button>
       <p class="pf-note">Requests are reviewed by Circuits.com. Pricing, sponsorship and badges stay with our team.</p>
     </div>
-  </section>
-
-  <!-- products -->
-  <section class="pt-panel" id="tab-products">
-    <div class="pt-list" id="pt-products"></div>
-    <form class="pf-form" id="product-form" style="margin-top:16px" onsubmit="submitProduct(event)">
-      <h3>Add or edit a product</h3>
-      <input id="p-id" type="hidden">
-      <div class="pt-row">
-        <div class="auth-field"><label>Name *</label><input id="p-name" type="text" maxlength="120"></div>
-        <div class="auth-field"><label>Part number</label><input id="p-part_number" type="text" maxlength="80"></div>
-        <div class="auth-field"><label>Price / MOQ</label><input id="p-price" type="text" maxlength="60"></div>
-      </div>
-      <div class="auth-field"><label>Description</label><textarea id="p-description" rows="3" maxlength="600"></textarea></div>
-      <div class="pt-row">
-        <div class="auth-field"><label>Datasheet URL</label><input id="p-datasheet" type="text" placeholder="https://…"></div>
-        <div class="auth-field"><label>Image URL</label><input id="p-image" type="text" placeholder="https://…"></div>
-        <div class="auth-field"><label>…or upload an image</label><input id="p-image-file" type="file" accept="image/png,image/jpeg,image/webp"></div>
-      </div>
-      <button class="mini-btn green" type="submit" id="p-save">Save product</button>
-    </form>
   </section>
 
   <!-- inquiries -->

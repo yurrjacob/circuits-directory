@@ -41,11 +41,9 @@
       <button class="submit" type="submit" id="submit-btn">Sign in →</button>
     </form>
 
-    <div class="auth-foot">
-      <a href="#" id="mode-toggle">Need an account? Create one</a>
-    </div>
     <div class="auth-note">
-      Access is limited to approved staff emails. New staff: create an account, then an admin adds you to the staff list.
+      Circuits.com staff only. Accounts are created by an administrator &mdash; there is no self-service sign-up.
+      Supplier? Sign in at <a href="portal">circuits.com/portal</a>.
     </div>
   </div>
 </div>
@@ -77,9 +75,7 @@ const emailEl = document.getElementById('email');
 const passEl = document.getElementById('password');
 const msgEl = document.getElementById('auth-msg');
 const submitBtn = document.getElementById('submit-btn');
-const toggle = document.getElementById('mode-toggle');
 const title = document.getElementById('auth-title');
-let mode = 'signin';
 
 function setMsg(text, ok){
   msgEl.textContent = text || '';
@@ -87,14 +83,6 @@ function setMsg(text, ok){
   msgEl.style.display = text ? 'block' : 'none';
 }
 
-toggle.addEventListener('click', e=>{
-  e.preventDefault();
-  mode = (mode === 'signin') ? 'signup' : 'signin';
-  title.textContent = (mode === 'signin') ? 'Employee Login' : 'Create Staff Account';
-  submitBtn.textContent = (mode === 'signin') ? 'Sign in →' : 'Create account →';
-  toggle.textContent = (mode === 'signin') ? 'Need an account? Create one' : 'Have an account? Sign in';
-  setMsg('', true);
-});
 
 // Already signed in as staff? Go straight to the console.
 (async () => {
@@ -107,25 +95,10 @@ form.addEventListener('submit', async e => {
   if(!email || !password) return;
   submitBtn.disabled = true; setMsg('', true);
   try {
-    if(mode === 'signin'){
       const { error } = await signIn(email, password);
       if(error){ setMsg(error.message, false); submitBtn.disabled = false; return; }
       if(!(await checkStaff())){ setMsg('Signed in, but this email isn’t on the staff list.', false); await signOut(); submitBtn.disabled = false; return; }
       location.href = 'admin';
-    } else {
-      const { data, error } = await signUp(email, password);
-      if(error){ setMsg(error.message, false); submitBtn.disabled = false; return; }
-      if(data && data.session){
-        if(await checkStaff()){ location.href = 'admin'; return; }
-        setMsg('Account created, but this email isn’t on the staff list yet.', false);
-        submitBtn.disabled = false;
-      } else {
-        setMsg('Account created. Check your email to confirm, then sign in.', true);
-        mode = 'signin'; title.textContent = 'Employee Login'; submitBtn.textContent = 'Sign in →';
-        toggle.textContent = 'Need an account? Create one';
-        submitBtn.disabled = false;
-      }
-    }
   } catch(err){ setMsg('Something went wrong. Please try again.', false); submitBtn.disabled = false; }
 });
 </script>

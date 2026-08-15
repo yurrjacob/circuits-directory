@@ -41,6 +41,9 @@
 
 <div id="success" class="success">
 <b>Application received.</b> Thanks! Our team will review your listing and reach out within one business day.
+<br><span id="success-handle"></span>
+Check your inbox to confirm your email address &mdash; then you can sign in at
+<a href="/portal">circuits.com/portal</a> once your listing is approved.
 </div>
 
 <form id="join-form" autocomplete="off" novalidate>
@@ -71,6 +74,27 @@
 <div class="field" style="grid-column:1 / -1">
 <label>Website</label>
 <input id="f-website" type="url" placeholder="https://www.company.com">
+</div>
+<div class="field" style="grid-column:1 / -1">
+<label>Your Circuits.com Address <span class="req">*</span></label>
+<div class="handle-row" style="max-width:420px">
+<span class="handle-prefix">circuits.com/</span>
+<input id="f-handle" type="text" maxlength="32" spellcheck="false" placeholder="zzzelec" required>
+</div>
+<div id="handle-msg" class="field-hint"></div>
+<p class="field-hint">This is your own short link, reserved for you the moment you apply and held while we review it. Put it straight on your adverts, cards and email signature.</p>
+</div>
+<div class="field">
+<label>Create a Password <span class="req">*</span></label>
+<input id="f-pass" type="password" minlength="8" required placeholder="At least 8 characters" autocomplete="new-password">
+</div>
+<div class="field">
+<label>Confirm Password <span class="req">*</span></label>
+<input id="f-pass2" type="password" minlength="8" required placeholder="Re-enter your password" autocomplete="new-password">
+<div id="pass-msg" class="field-hint"></div>
+</div>
+<div class="field" style="grid-column:1 / -1">
+<p class="field-hint">Your email and password become your supplier sign-in. Once your listing is approved you can manage your profile, listings and quote requests at <a href="/portal" target="_blank" rel="noopener">circuits.com/portal</a>.</p>
 </div>
 <div class="field" style="grid-column:1 / -1">
 <label>Logo or Headshot <span class="cell-muted" style="font-weight:400">(Optional)</span></label>

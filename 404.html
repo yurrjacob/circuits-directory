@@ -7,15 +7,6 @@
 <meta name="robots" content="noindex, follow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="stylesheet" href="/styles.css">
-<script>
-/* A profile whose static page has not been generated yet still resolves:
-   /company/<slug> falls back to the client-rendered template. Every other
-   dead URL gets a real 404 — the old parts-catalog paths must stay dead. */
-(function(){
-  var m = location.pathname.match(/^\/company\/([a-z0-9-]+)\/?$/i);
-  if(m) location.replace('/company.html?c=' + encodeURIComponent(m[1]));
-})();
-</script>
 </head>
 <body>
 
@@ -32,7 +23,14 @@
   </div>
 </header>
 
-<main class="page prose">
+<!-- circuits.com/<handle> resolves here until the static page is generated.
+     If the handle belongs to a real company the profile renders in place;
+     otherwise the 404 below stays put, so old dead URLs remain dead. -->
+<main class="page pf-page" id="maybe-profile" style="display:none">
+  <div id="profile-body"></div>
+</main>
+
+<main class="page prose" id="real-404" style="display:none">
   <h1>That page doesn&rsquo;t exist</h1>
   <p class="lede">The link may be out of date. Search for what you need, or browse the directory.</p>
   <form class="mini-search" onsubmit="event.preventDefault();var q=this.q.value.trim();if(q)location.href='/results?q='+encodeURIComponent(q);" style="max-width:420px">
@@ -65,5 +63,18 @@
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/store.js"></script>
+<script src="/app.js"></script>
+<script src="/profile.js"></script>
+<script>
+(async () => {
+  const prof = document.getElementById('maybe-profile');
+  const dead = document.getElementById('real-404');
+  let found = false;
+  try { prof.style.display = ''; found = await initProfile(); } catch(e){ found = false; }
+  if(!found){ prof.style.display = 'none'; dead.style.display = ''; }
+})();
+</script>
 </body>
 </html>

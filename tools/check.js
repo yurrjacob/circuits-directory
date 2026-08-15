@@ -43,7 +43,7 @@ assert.strictEqual(safeUrl('https://acme.com/x'), 'https://acme.com/x');
 
 /* --- the generator template needs every placeholder it substitutes --- */
 const tpl = fs.readFileSync(path.join(ROOT, 'company.html'), 'utf8');
-for (const ph of ['{{SLUG}}', '{{TITLE}}', '{{DESC}}', '{{CANONICAL}}', '{{OGIMAGE}}']) {
+for (const ph of ['{{HANDLE}}', '{{TITLE}}', '{{DESC}}', '{{CANONICAL}}', '{{OGIMAGE}}']) {
   assert.ok(tpl.includes(ph), `company.html is missing ${ph}`);
 }
 
@@ -63,10 +63,52 @@ for (const [file, scripts] of Object.entries(NEEDS)) {
   }
 }
 
+/* --- the products feature was removed; nothing may reference it --- */
+for (const f of ['profile.js', 'portal.js', 'store.js', 'portal.html', 'company.html']) {
+  const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+  for (const gone of ['fetchProducts', 'saveProduct', 'deleteProduct', 'pt-products', 'tab-products']) {
+    assert.ok(!src.includes(gone), `${f} still references removed product code: ${gone}`);
+  }
+}
+
 /* --- profile links must point at the generated path --- */
 const app = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
 assert.ok(app.includes('profileUrl('), 'results listings no longer link to company profiles');
-assert.ok(fs.readFileSync(path.join(ROOT, '404.html'), 'utf8').includes('/company.html?c='),
-  '404.html lost the fallback for ungenerated profile pages');
+assert.ok(fs.readFileSync(path.join(ROOT, '404.html'), 'utf8').includes('initProfile()'),
+  '404.html lost the fallback that resolves circuits.com/<handle> before generation');
+
+/* --- handles: the JS rules must match the SQL handle_ok(), and reserved
+       names must never be claimable --- */
+const handleFormatOk = h =>
+  /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(h || '') && h.length >= 3 && h.length <= 32 && !h.includes('--');
+for (const good of ['zzzelec', 'acme-semi', 'abc', 'a1b2c3', 'x'.repeat(32)]) {
+  assert.ok(handleFormatOk(good), `handle ${good} should be legal`);
+}
+for (const bad of ['ab', '-lead', 'trail-', 'Upper', 'has space', 'double--dash', 'x'.repeat(33), 'dot.dot']) {
+  assert.ok(!handleFormatOk(bad), `handle ${bad} should be rejected`);
+}
+// every root page name must be in the reserved list, or a company could take it
+const RESERVED_IN_DB = ['about','admin','applications','claim','companies','company','contact',
+  'dashboard','data','directory','how-it-works','index','join','login','portal','profile',
+  'results','robots','search','server','sitemap','store','styles','terms','tools'];
+for (const f of fs.readdirSync(ROOT)) {
+  if (!f.endsWith('.html')) continue;
+  const name = f.replace(/\.html$/, '');
+  if (name === '404') continue;
+  assert.ok(RESERVED_IN_DB.includes(name),
+    `root page ${f} is not in the reserved handle list — a company could claim circuits.com/${name}`);
+}
+
+/* --- accounts may ONLY be created from the Get Listed form --- */
+for (const f of ['portal.js', 'portal.html', 'claim.html', 'login.html', 'companies.html', 'company.html']) {
+  assert.ok(!fs.readFileSync(path.join(ROOT, f), 'utf8').includes('signUp('),
+    `${f} can create an account — registration belongs only on the Get Listed form`);
+}
+assert.ok(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8').includes('signUp(base.email'),
+  'the Get Listed form no longer creates the account');
+const joinHtml = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
+for (const id of ['f-handle', 'f-pass', 'f-pass2']) {
+  assert.ok(joinHtml.includes(`id="${id}"`), `join.html is missing ${id}`);
+}
 
 console.log('checks passed (' + (CASES.length + 6) + ' assertions)');

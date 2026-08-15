@@ -153,9 +153,25 @@ async function signOut(){ if(sb) await sb.auth.signOut(); } async function loadP
 function slugify(s){
   return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
 }
-function profileUrl(slugOrCompany){
-  const s = /^[a-z0-9-]+$/.test(slugOrCompany||'') ? slugOrCompany : slugify(slugOrCompany);
-  return '/company/' + s;
+/* A company's public address is its handle, straight off the root:
+   circuits.com/zzzelec — short enough to put on an advert. */
+function profileUrl(handle){
+  return handle ? '/' + handle : '';
+}
+/* Must match handle_ok() in the database. */
+function handleFormatOk(h){
+  return /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(h||'') && h.length >= 3 && h.length <= 32 && !h.includes('--');
+}
+/* Is this handle free? Returns '' if available, or the reason it is not. */
+async function handleAvailable(handle, ownSlug){
+  const h = (handle||'').toLowerCase().trim();
+  if(!handleFormatOk(h)) return '3–32 characters, letters, numbers and single hyphens only.';
+  if(!sb) return 'No connection';
+  const res = await sb.from('reserved_handles').select('name').eq('name', h).maybeSingle();
+  if(res.data) return 'That name is reserved by Circuits.com.';
+  const { data } = await sb.from('companies').select('slug').eq('handle', h).maybeSingle();
+  if(data && data.slug !== ownSlug) return 'Taken by another company.';
+  return '';
 }
 
 /* ---- public reads ---- */
@@ -163,6 +179,14 @@ async function fetchCompany(slug){
   if(!sb || !slug) return null;
   const { data, error } = await sb.from('companies').select('*').eq('slug', slug).maybeSingle();
   if(error){ console.error('fetchCompany', error); return null; }
+  return data;
+}
+/* Public pages address a company by its handle, not its internal slug. */
+async function fetchCompanyByHandle(handle){
+  if(!sb || !handle) return null;
+  const { data, error } = await sb.from('companies')
+    .select('*').eq('handle', (handle||'').toLowerCase()).maybeSingle();
+  if(error){ console.error('fetchCompanyByHandle', error); return null; }
   return data;
 }
 /* Live keywords for a company, in the permanent order they were claimed. */
@@ -173,13 +197,6 @@ async function fetchCompanyKeywords(slug){
     .order('created_at', { ascending:true });
   if(error){ console.error('fetchCompanyKeywords', error); return []; }
   return (data||[]).filter(r => !r.paused && r.keyword);
-}
-async function fetchProducts(slug){
-  if(!sb || !slug) return [];
-  const { data, error } = await sb.from('products').select('*')
-    .eq('company_slug', slug).order('sort').order('created_at');
-  if(error){ console.error('fetchProducts', error); return []; }
-  return data || [];
 }
 async function fetchReviews(slug){
   if(!sb || !slug) return [];
@@ -193,11 +210,11 @@ async function fetchReviews(slug){
 async function fetchLiveCompanies(){
   if(!sb) return [];
   const { data, error } = await sb.from('applications')
-    .select('company_slug, company').eq('status','Approved');
+    .select('company_slug, company_handle, company').eq('status','Approved');
   if(error){ console.error('fetchLiveCompanies', error); return []; }
   const seen = new Map();
-  for(const r of (data||[])) if(r.company_slug && !seen.has(r.company_slug)) seen.set(r.company_slug, r.company);
-  return [...seen].map(([slug,name])=>({slug,name})).sort((a,b)=>a.name.localeCompare(b.name));
+  for(const r of (data||[])) if(r.company_handle && !seen.has(r.company_handle)) seen.set(r.company_handle, r.company);
+  return [...seen].map(([handle,name])=>({handle,name})).sort((a,b)=>a.name.localeCompare(b.name));
 }
 
 /* ---- public writes ---- */
@@ -260,22 +277,6 @@ async function fetchMyListings(slug){
   if(error){ console.error('fetchMyListings', error); return []; }
   return data || [];
 }
-async function saveProduct(p){
-  if(!sb) return 'No connection';
-  const row = { company_slug: p.company_slug, name: p.name, part_number: p.part_number || null,
-                description: p.description || null, image: p.image || null,
-                datasheet: p.datasheet || null, price: p.price || null, sort: p.sort || 0 };
-  const { error } = p.id
-    ? await sb.from('products').update(row).eq('id', p.id)
-    : await sb.from('products').insert(row);
-  if(error){ console.error('saveProduct', error); return error.message; }
-  return null;
-}
-async function deleteProduct(id){
-  if(!sb) return;
-  const { error } = await sb.from('products').delete().eq('id', id);
-  if(error) console.error('deleteProduct', error);
-}
 async function fetchMyReviews(slug){
   if(!sb) return [];
   const { data, error } = await sb.from('reviews').select('*')
@@ -321,12 +322,14 @@ async function companyStats(slug, days){
 }
 
 /* ---- claiming ---- */
+/* No account required: accounts are only created through Get Listed, so a
+   claim is a request that staff verify and fulfil in the admin console. */
 async function submitClaim(slug, c){
   if(!sb) return 'No connection';
   const user = await currentUser();
-  if(!user) return 'Please sign in first.';
   const { error } = await sb.from('claims').insert({
-    company_slug: slug, user_id: user.id, email: user.email,
+    company_slug: slug, user_id: user ? user.id : null,
+    email: c.email || (user && user.email) || '',
     name: c.name || null, role_title: c.role_title || null,
     evidence: c.evidence || null, status: 'Pending'
   });
@@ -339,13 +342,18 @@ async function fetchClaims(){
   if(error){ console.error('fetchClaims', error); return []; }
   return data || [];
 }
-/* Staff approval of a claim is what actually grants access. */
+/* Staff approval of a claim is what actually grants access. The claimant has no
+   account when they ask, so approval attaches the login by email — create it in
+   Supabase Auth first if it does not exist yet. */
 async function decideClaim(claim, approve){
   if(!sb) return;
-  if(approve && claim.user_id){
-    const { error } = await sb.from('company_users')
-      .insert({ user_id: claim.user_id, company_slug: claim.company_slug, role: 'owner' });
-    if(error && error.code !== '23505'){ console.error('decideClaim attach', error); return error.message; }
+  if(approve){
+    const { data, error } = await sb.rpc('attach_company_user',
+      { p_slug: claim.company_slug, p_email: claim.email });
+    if(error){ console.error('decideClaim attach', error); return error.message; }
+    if(data === 'no-account'){
+      return 'No login exists for ' + claim.email + ' yet. Create that user in Supabase Auth, then approve again.';
+    }
   }
   const { error } = await sb.from('claims').update({ status: approve ? 'Approved' : 'Denied' }).eq('id', claim.id);
   if(error){ console.error('decideClaim', error); return error.message; }
@@ -365,7 +373,7 @@ async function setReviewStatus(id, status){
   if(error) console.error('setReviewStatus', error);
 }
 
-/* ---- gallery / product image storage (public bucket "logos") ---- */
+/* ---- logo + gallery image storage (public bucket "logos") ---- */
 async function uploadImage(file){ return uploadLogo(file); }
 
 /* Redirect to login unless the visitor is a signed-in staff member. */

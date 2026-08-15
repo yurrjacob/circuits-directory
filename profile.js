@@ -6,10 +6,18 @@
 const DAYS = [['mon','Monday'],['tue','Tuesday'],['wed','Wednesday'],['thu','Thursday'],['fri','Friday'],['sat','Saturday'],['sun','Sunday']];
 const SOCIALS = [['linkedin','LinkedIn'],['x','X'],['facebook','Facebook'],['youtube','YouTube'],['instagram','Instagram'],['github','GitHub']];
 
-function profileSlug(){
-  const meta = document.querySelector('meta[name="company-slug"]');
-  if(meta && meta.content && meta.content !== '{{SLUG}}') return meta.content;
-  return new URLSearchParams(location.search).get('c') || '';
+/* Where the handle comes from, in order:
+   1. the tag baked in by tools/build-profiles.js on a generated page
+   2. ?c= on the shared template
+   3. the URL itself — circuits.com/zzzelec — which is how 404.html resolves a
+      profile whose static page has not been generated yet */
+function profileHandle(){
+  const meta = document.querySelector('meta[name="company-handle"]');
+  if(meta && meta.content && meta.content !== '{{HANDLE}}') return meta.content;
+  const q = new URLSearchParams(location.search).get('c');
+  if(q) return q.toLowerCase();
+  const m = location.pathname.match(/^\/([a-z0-9][a-z0-9-]*)\/?$/i);
+  return m ? m[1].toLowerCase() : '';
 }
 
 function stars(n){
@@ -32,15 +40,16 @@ function section(title, inner, extra){
 }
 
 async function initProfile(){
-  const slug = profileSlug();
+  const handle = profileHandle();
   const root = document.getElementById('profile-body');
-  if(!slug){ root.innerHTML = notFound(''); return; }
+  if(!handle){ root.innerHTML = notFound(''); return false; }
 
-  const co = await fetchCompany(slug);
-  if(!co){ root.innerHTML = notFound(slug); return; }
+  const co = await fetchCompanyByHandle(handle);
+  if(!co){ root.innerHTML = notFound(handle); return false; }
 
-  const [kws, products, reviews] = await Promise.all([
-    fetchCompanyKeywords(slug), fetchProducts(slug), fetchReviews(slug)
+  const slug = co.slug;   // internal key: everything else still hangs off this
+  const [kws, reviews] = await Promise.all([
+    fetchCompanyKeywords(slug), fetchReviews(slug)
   ]);
 
   const sponsored = kws.some(k => k.banner);
@@ -95,20 +104,6 @@ async function initProfile(){
         `<a class="kw-tag" href="/results?q=${encodeURIComponent(k.keyword)}">${escapeHtml(k.keyword)}${k.banner ? ' ★' : ''}</a>`
       ).join('')}</div>
       <p class="pf-note">★ marks a Circuits-Keyword&trade; this company exclusively sponsors.</p>` : '');
-
-  /* ---- products ---- */
-  html += section('Products & parts', products.length
-    ? `<div class="pf-grid">${products.map(p => `
-        <div class="pf-card">
-          ${p.image ? `<div class="pf-card-img"><img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy"></div>` : ''}
-          <b>${escapeHtml(p.name)}</b>
-          ${p.part_number ? `<code class="pf-pn">${escapeHtml(p.part_number)}</code>` : ''}
-          ${p.description ? `<p>${escapeHtml(p.description)}</p>` : ''}
-          <div class="pf-card-foot">
-            ${p.price ? `<span class="pf-price">${escapeHtml(p.price)}</span>` : ''}
-            ${safeUrl(p.datasheet) ? `<a href="${escapeHtml(safeUrl(p.datasheet))}" target="_blank" rel="noopener" class="doc-link">Datasheet</a>` : ''}
-          </div>
-        </div>`).join('')}</div>` : '');
 
   /* ---- documents ---- */
   html += section('Documentation', docs.length
@@ -173,12 +168,13 @@ async function initProfile(){
   html += rfqForm(co);
   html += `<div class="claim-line" id="claim-line">
       Do you work at ${escapeHtml(co.name)}?
-      <a href="/claim?c=${encodeURIComponent(slug)}">Claim this profile</a> to edit it and receive quote requests.
+      <a href="/claim?c=${encodeURIComponent(co.handle)}">Claim this profile</a> to edit it and receive quote requests.
     </div>`;
 
   root.innerHTML = html;
   jsonLd(co, avg, reviews.length, site);
   wireProfile(slug, co);
+  return true;
 }
 
 function socialLinks(socials){
@@ -229,9 +225,9 @@ function rfqForm(co){
   </section>`;
 }
 
-function notFound(slug){
-  return `<div class="empty"><div class="big">No profile for &ldquo;${escapeHtml(slug)}&rdquo;</div>
-    <p>This company may not be listed yet. <a href="/join">List it here</a> or <a href="/directory">browse the directory</a>.</p></div>`;
+function notFound(handle){
+  return `<div class="empty"><div class="big">No profile at circuits.com/${escapeHtml(handle)}</div>
+    <p>That name is not taken yet. <a href="/join">Claim it here</a>, or <a href="/companies">browse all suppliers</a>.</p></div>`;
 }
 
 function setMeta(name, content){
@@ -246,7 +242,7 @@ function jsonLd(co, avg, count, site){
   const data = {
     '@context': 'https://schema.org', '@type': 'Organization',
     name: co.name,
-    url: 'https://circuits.com/company/' + co.slug,
+    url: 'https://circuits.com/' + co.handle,
     description: co.description || co.tagline || undefined,
     logo: isLogoUrl(co.logo) ? co.logo : undefined,
     sameAs: site ? [site] : undefined,

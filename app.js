@@ -149,7 +149,9 @@ async function initResults(forcedTerm){
       <span class="premium-badge">Exclusive Sponsor</span>
       <div class="premium-logo">${fLogo}</div>
       <div class="premium-body">
-        <h3><a href="${escapeHtml(profileUrl(featured.company_slug||featured.company))}">${escapeHtml(featured.company)}</a></h3>
+        <h3>${featured.company_handle
+          ? `<a href="${escapeHtml(profileUrl(featured.company_handle))}">${escapeHtml(featured.company)}</a>`
+          : escapeHtml(featured.company)}</h3>
         <p>${escapeHtml(featured.description||'')}</p>
         ${featured.website ? `<a class="doc-link" href="${escapeHtml(featured.website)}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
         ${docLinks(featured)}
@@ -169,7 +171,9 @@ async function initResults(forcedTerm){
           ${isLogoUrl(c.logo)
             ? `<span class="co-logo"><img src="${escapeHtml(c.logo)}" alt="${escapeHtml(c.company)} logo"></span>`
             : `<span class="co-logo" style="background:${COLORS[i%COLORS.length]}">${avatarSvg()}</span>`}
-          <a href="${escapeHtml(profileUrl(c.company_slug||c.company))}">${escapeHtml(c.company)}</a>
+          ${c.company_handle
+            ? `<a href="${escapeHtml(profileUrl(c.company_handle))}">${escapeHtml(c.company)}</a>`
+            : escapeHtml(c.company)}
           ${c.badge ? `<span class="lb" style="background:${escapeHtml(c.badge.color)}">${escapeHtml(c.badge.text)}</span>` : ''}
           ${c.website ? `<a class="doc-link" href="${escapeHtml(c.website)}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
           ${docLinks(c)}
@@ -383,6 +387,42 @@ if(el) el.addEventListener('input', updatePreviews);
 });
 updatePreviews();
 
+/* ---- Circuits.com address (handle) + password ----
+   Get Listed is the ONLY place an account is created, so the handle is
+   reserved and the sign-in password is set here. */
+const handleInput = document.getElementById('f-handle');
+const handleMsg = document.getElementById('handle-msg');
+let handleTimer = null, handleState = '';
+if(handleInput) handleInput.addEventListener('input', ()=>{
+  handleInput.value = handleInput.value.toLowerCase().replace(/[^a-z0-9-]/g,'');
+  clearTimeout(handleTimer);
+  handleState = 'checking';
+  if(!handleInput.value){ handleMsg.textContent=''; handleState=''; return; }
+  handleMsg.textContent = 'Checking…'; handleMsg.style.color = '';
+  handleTimer = setTimeout(async ()=>{
+    const why = await handleAvailable(handleInput.value, null);
+    handleState = why ? 'bad' : 'ok';
+    handleMsg.textContent = why || ('circuits.com/' + handleInput.value + ' is yours to reserve.');
+    handleMsg.style.color = why ? '#b3261e' : '#3f6300';
+  }, 400);
+});
+
+const passEl = document.getElementById('f-pass');
+const pass2El = document.getElementById('f-pass2');
+const passMsg = document.getElementById('pass-msg');
+function passwordsMatch(){
+  if(!passEl || !pass2El) return true;
+  if(!pass2El.value){ if(passMsg) passMsg.textContent = ''; return false; }
+  const same = passEl.value === pass2El.value;
+  if(passMsg){
+    passMsg.textContent = same ? 'Passwords match.' : 'Passwords do not match.';
+    passMsg.style.color = same ? '#3f6300' : '#b3261e';
+  }
+  return same;
+}
+if(passEl) passEl.addEventListener('input', passwordsMatch);
+if(pass2El) pass2El.addEventListener('input', passwordsMatch);
+
 const msg = document.getElementById('msg');
   const msgCount = document.getElementById('msg-count');
   if(msg) msg.addEventListener('input', ()=>{ msgCount.textContent = `${msg.value.length} / 600`; });
@@ -401,6 +441,11 @@ const msg = document.getElementById('msg');
     check('f-email', isValidEmail(v('f-email')), 'Please enter a valid email address (e.g. sales@company.com).');
     check('f-phone', !v('f-phone') || isValidPhone(v('f-phone')), 'Please enter a valid phone number (at least 10 digits).');
     check('f-website', !v('f-website') || isValidWebsite(v('f-website')), 'Please enter a valid website (e.g. www.company.com).');
+    check('f-handle', handleFormatOk(v('f-handle')) && handleState !== 'bad',
+      handleState === 'bad' ? 'That Circuits.com address is not available.'
+                            : 'Choose your Circuits.com address (3–32 letters, numbers or hyphens).');
+    check('f-pass', v('f-pass').length >= 8, 'Your password must be at least 8 characters.');
+    check('f-pass2', v('f-pass') === v('f-pass2') && !!v('f-pass2'), 'The two passwords do not match.');
     /* terms must be accepted before the form can be submitted */
     const termsBox = document.getElementById('f-terms');
     const termsErr = document.getElementById('terms-err');
@@ -429,8 +474,27 @@ const msg = document.getElementById('msg');
       terms: !!(document.getElementById('f-terms') && document.getElementById('f-terms').checked),
       status: 'Pending'
     };
+    base.requested_handle = v('f-handle');
     try {
       if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
+
+      /* The account is created HERE — Get Listed is the only route to one.
+         Re-check the handle at submit time: someone may have taken it while
+         this form was open. The unique index is the real guard. */
+      const why = await handleAvailable(base.requested_handle, null);
+      if(why){
+        if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
+        setErr(document.getElementById('f-handle'), 'That address just became unavailable: ' + why);
+        document.getElementById('f-handle').scrollIntoView({behavior:'smooth', block:'center'});
+        return;
+      }
+      const { error: authErr } = await signUp(base.email, v('f-pass'));
+      if(authErr && !/already registered|already exists/i.test(authErr.message || '')){
+        if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
+        setErr(document.getElementById('f-email'), authErr.message);
+        return;
+      }
+
       /* Uploads are best-effort: a failed logo/document upload must NEVER
          stop the application data from reaching the database. */
       base.docs = [];
@@ -455,6 +519,7 @@ const msg = document.getElementById('msg');
       email: base.email,
       phone: base.phone || '(not provided)',
       website: base.website || '(none)',
+      circuits_address: 'circuits.com/' + base.requested_handle,
       logo: base.logo || '(none)',
       keywords: kwList,
       exclusive_sponsor: base.banner ? 'Yes' : 'No',
@@ -468,6 +533,7 @@ const msg = document.getElementById('msg');
       + '- Email: ' + base.email + '\n'
       + '- Phone: ' + (base.phone || '(not provided)') + '\n'
       + '- Website: ' + (base.website || '(none)') + '\n'
+      + '- Your Circuits.com address: circuits.com/' + base.requested_handle + ' (reserved for you)\n'
       + '- Keywords: ' + kwList + '\n'
       + '- Exclusive Circuits-Keyword™ Sponsor: ' + (base.banner ? 'Yes' : 'No') + '\n'
       + '- Circuits.com Trust Badge: ' + (wantsBadge ? curBadgeText : 'No') + '\n'
@@ -476,11 +542,17 @@ const msg = document.getElementById('msg');
       + '- John & Mike, Circuits.com');
     if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
     const ok = document.getElementById('success');
+    const okHandle = document.getElementById('success-handle');
+    if(okHandle) okHandle.innerHTML = '<b>circuits.com/' + escapeHtml(base.requested_handle)
+      + '</b> is reserved for you. ';
     ok.classList.add('show');
     form.reset();
     keywords = []; renderKw();
     resetBadge();
     logoUrl = null;
+    if(handleMsg) handleMsg.textContent = '';
+    if(passMsg) passMsg.textContent = '';
+    handleState = '';
     clearDocs();
     updatePreviews();
     if(logoPrev) logoPrev.style.display='none';

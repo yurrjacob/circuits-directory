@@ -75,7 +75,7 @@
   }
   el.innerHTML = Object.keys(groups).sort().map(k =>
     `<h2 class="az-h">${k}</h2><ul class="az-list">` +
-    groups[k].map(c => `<li><a href="/company/${encodeURIComponent(c.slug)}">${escapeHtml(c.name)}</a></li>`).join('') +
+    groups[k].map(c => `<li><a href="/${encodeURIComponent(c.handle)}">${escapeHtml(c.name)}</a></li>`).join('') +
     '</ul>'
   ).join('');
 })();
