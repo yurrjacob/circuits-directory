@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
+Allow: /company/
+Allow: /companies
 Disallow: /admin
 Disallow: /admin.html
 Disallow: /dashboard
@@ -8,7 +10,12 @@ Disallow: /applications
 Disallow: /applications.html
 Disallow: /login
 Disallow: /login.html
+Disallow: /portal
+Disallow: /portal.html
+Disallow: /claim
+Disallow: /claim.html
 Disallow: /results
 Disallow: /results.html
+Disallow: /company.html
 
 Sitemap: https://circuits.com/sitemap.xml

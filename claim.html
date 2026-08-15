@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claim Your Profile — Circuits.com</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/assets/favicon.png">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="inner">
+    <div class="brand"><a href="/"><img class="logo-nav" src="/assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-slogan">Connecting The Circuits Industry</span></div>
+    <nav class="nav">
+      <a href="/">Home</a>
+      <a href="/companies">Companies</a>
+      <a href="/contact">Contact</a>
+      <a class="cta" href="/join">Get Listed</a>
+    </nav>
+  </div>
+</header>
+
+<div class="auth-wrap">
+  <div class="auth-card" id="claim-card">
+    <h1>Claim your profile</h1>
+    <p class="sub" id="claim-sub-line">Loading…</p>
+    <div id="claim-body"></div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="inner">
+    <div class="flinks">
+      <a href="/">Home</a>
+      <a href="/companies">Companies</a>
+      <a href="/join">Get Listed</a>
+      <a href="/contact">Contact</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span>© 2026 Circuits.com</span>
+      <span class="footer-brand"><img class="footer-mark" src="/assets/favicon.png" alt="Circuits.com"></span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/store.js"></script>
+<script src="/app.js"></script>
+<script>
+const slug = new URLSearchParams(location.search).get('c') || '';
+const body = document.getElementById('claim-body');
+const sub  = document.getElementById('claim-sub-line');
+
+function pick(){
+  sub.textContent = 'Which company do you work for?';
+  body.innerHTML = '<p class="auth-note">Find your company in the <a href="/companies">A–Z list</a> and use the "Claim this profile" link at the bottom of its page.</p>';
+}
+
+(async () => {
+  if(!slug) return pick();
+  const co = await fetchCompany(slug);
+  if(!co){ sub.textContent = 'We could not find that company.'; return pick(); }
+
+  const user = await currentUser();
+  if(!user){
+    sub.innerHTML = 'Claiming <b>' + escapeHtml(co.name) + '</b>. First, create an account or sign in.';
+    body.innerHTML = `
+      <form id="au" autocomplete="off">
+        <div class="auth-field"><label>Work email</label><input id="e" type="email" required placeholder="you@yourcompany.com"></div>
+        <div class="auth-field"><label>Password</label><input id="p" type="password" required minlength="6"></div>
+        <div id="m" style="font-size:.85rem;margin-bottom:12px;color:#b3261e"></div>
+        <button class="submit" type="submit" id="go">Create account →</button>
+      </form>
+      <div class="auth-foot"><a href="#" id="tg">Already have an account? Sign in</a></div>
+      <div class="auth-note">If your work email is already on the listing, signing in links your profile straight away — no review needed.</div>`;
+    let mode = 'signup';
+    document.getElementById('tg').addEventListener('click', e => {
+      e.preventDefault();
+      mode = mode === 'signup' ? 'signin' : 'signup';
+      document.getElementById('go').textContent = mode === 'signup' ? 'Create account →' : 'Sign in →';
+      document.getElementById('tg').textContent = mode === 'signup' ? 'Already have an account? Sign in' : 'Need an account? Create one';
+    });
+    document.getElementById('au').addEventListener('submit', async e => {
+      e.preventDefault();
+      const m = document.getElementById('m');
+      const em = document.getElementById('e').value.trim(), pw = document.getElementById('p').value;
+      const { data, error } = mode === 'signup' ? await signUp(em, pw) : await signIn(em, pw);
+      if(error){ m.textContent = error.message; return; }
+      if(data && data.session) return location.reload();
+      m.style.color = '#3f6300';
+      m.textContent = 'Check your email to confirm the address, then come back to this page.';
+    });
+    return;
+  }
+
+  /* already signed in — did the email already grant access? */
+  const mine = await myCompanies();
+  if(mine.some(c => c.slug === slug)){
+    sub.innerHTML = 'You already manage <b>' + escapeHtml(co.name) + '</b>.';
+    body.innerHTML = '<a class="submit" href="/portal" style="display:block;text-align:center;text-decoration:none">Open your portal →</a>';
+    return;
+  }
+
+  sub.innerHTML = 'Claiming <b>' + escapeHtml(co.name) + '</b> as <b>' + escapeHtml(user.email) + '</b>.';
+  body.innerHTML = `
+    <form id="cf" autocomplete="off">
+      <div class="auth-field"><label>Your name</label><input id="n" type="text" required maxlength="80"></div>
+      <div class="auth-field"><label>Your role</label><input id="r" type="text" maxlength="80" placeholder="Sales Director"></div>
+      <div class="auth-field"><label>How can we verify you?</label>
+        <textarea id="v" rows="4" maxlength="1000" placeholder="Company website listing your name, a work phone number we can call, or the email address already on the listing."></textarea></div>
+      <div id="cm" style="font-size:.85rem;margin-bottom:12px;color:#b3261e"></div>
+      <button class="submit" type="submit" id="cs">Submit claim →</button>
+    </form>
+    <div class="auth-note">Claims are checked by a person. We will not hand over a profile without verifying you work there.</div>`;
+
+  document.getElementById('cf').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('cs'); btn.disabled = true;
+    const name = document.getElementById('n').value.trim();
+    const role = document.getElementById('r').value.trim();
+    const ev   = document.getElementById('v').value.trim();
+    const err = await submitClaim(slug, { name, role_title: role, evidence: ev });
+    if(err){ document.getElementById('cm').textContent = err; btn.disabled = false; return; }
+    sendFounderEmail('Profile claim — ' + co.name, {
+      company: co.name, slug, claimant: name, role: role || '(none)',
+      email: user.email, evidence: ev || '(none)'
+    }, 'Thanks — we received your claim for ' + co.name + ' on Circuits.com. We will verify it and email you back, usually within 1 business day.');
+    document.getElementById('claim-card').innerHTML =
+      '<h1>Claim submitted</h1><p class="sub">We will verify you work at ' + escapeHtml(co.name) +
+      ' and email you when the profile is yours.</p><div class="auth-foot"><a href="/">Back to Circuits.com</a></div>';
+  });
+})();
+</script>
+</body>
+</html>

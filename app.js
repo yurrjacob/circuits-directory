@@ -149,8 +149,9 @@ async function initResults(forcedTerm){
       <span class="premium-badge">Exclusive Sponsor</span>
       <div class="premium-logo">${fLogo}</div>
       <div class="premium-body">
-        <h3><a href="${escapeHtml(featured.website||'#')}" target="_blank" rel="noopener">${escapeHtml(featured.company)}</a></h3>
+        <h3><a href="${escapeHtml(profileUrl(featured.company_slug||featured.company))}">${escapeHtml(featured.company)}</a></h3>
         <p>${escapeHtml(featured.description||'')}</p>
+        ${featured.website ? `<a class="doc-link" href="${escapeHtml(featured.website)}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
         ${docLinks(featured)}
       </div>
       <div class="premium-contact">
@@ -168,8 +169,9 @@ async function initResults(forcedTerm){
           ${isLogoUrl(c.logo)
             ? `<span class="co-logo"><img src="${escapeHtml(c.logo)}" alt="${escapeHtml(c.company)} logo"></span>`
             : `<span class="co-logo" style="background:${COLORS[i%COLORS.length]}">${avatarSvg()}</span>`}
-          <a href="${escapeHtml(c.website||'#')}" target="_blank" rel="noopener">${escapeHtml(c.company)}</a>
+          <a href="${escapeHtml(profileUrl(c.company_slug||c.company))}">${escapeHtml(c.company)}</a>
           ${c.badge ? `<span class="lb" style="background:${escapeHtml(c.badge.color)}">${escapeHtml(c.badge.text)}</span>` : ''}
+          ${c.website ? `<a class="doc-link" href="${escapeHtml(c.website)}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
           ${docLinks(c)}
         </div>
       </td>

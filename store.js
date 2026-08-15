@@ -145,6 +145,229 @@ async function signIn(email, password){ return sb.auth.signInWithPassword({ emai
 async function signUp(email, password){ return sb.auth.signUp({ email, password }); }
 async function signOut(){ if(sb) await sb.auth.signOut(); } async function loadPrefs(page){ if(!sb) return null; const { data, error } = await sb.from('admin_prefs').select('prefs').eq('page', page).maybeSingle(); if(error){ console.error('loadPrefs', error); return null; } return data ? data.prefs : null; } async function savePrefs(page, prefs){ if(!sb) return; const { data } = await sb.auth.getUser(); if(!data || !data.user) return; const { error } = await sb.from('admin_prefs').upsert({ user_id: data.user.id, page, prefs, updated_at: new Date().toISOString() }, { onConflict: 'page' }); if(error) console.error('savePrefs', error); }
 
+/* ===================================================================
+   Company profiles
+   =================================================================== */
+
+/* Must stay identical to the SQL slugify() in the database. */
+function slugify(s){
+  return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+}
+function profileUrl(slugOrCompany){
+  const s = /^[a-z0-9-]+$/.test(slugOrCompany||'') ? slugOrCompany : slugify(slugOrCompany);
+  return '/company/' + s;
+}
+
+/* ---- public reads ---- */
+async function fetchCompany(slug){
+  if(!sb || !slug) return null;
+  const { data, error } = await sb.from('companies').select('*').eq('slug', slug).maybeSingle();
+  if(error){ console.error('fetchCompany', error); return null; }
+  return data;
+}
+/* Live keywords for a company, in the permanent order they were claimed. */
+async function fetchCompanyKeywords(slug){
+  if(!sb || !slug) return [];
+  const { data, error } = await sb.from('applications').select('*')
+    .eq('company_slug', slug).eq('status','Approved')
+    .order('created_at', { ascending:true });
+  if(error){ console.error('fetchCompanyKeywords', error); return []; }
+  return (data||[]).filter(r => !r.paused && r.keyword);
+}
+async function fetchProducts(slug){
+  if(!sb || !slug) return [];
+  const { data, error } = await sb.from('products').select('*')
+    .eq('company_slug', slug).order('sort').order('created_at');
+  if(error){ console.error('fetchProducts', error); return []; }
+  return data || [];
+}
+async function fetchReviews(slug){
+  if(!sb || !slug) return [];
+  const { data, error } = await sb.from('reviews').select('*')
+    .eq('company_slug', slug).eq('status','Approved')
+    .order('created_at', { ascending:false });
+  if(error){ console.error('fetchReviews', error); return []; }
+  return data || [];
+}
+/* Every company with at least one live listing — powers the A–Z index. */
+async function fetchLiveCompanies(){
+  if(!sb) return [];
+  const { data, error } = await sb.from('applications')
+    .select('company_slug, company').eq('status','Approved');
+  if(error){ console.error('fetchLiveCompanies', error); return []; }
+  const seen = new Map();
+  for(const r of (data||[])) if(r.company_slug && !seen.has(r.company_slug)) seen.set(r.company_slug, r.company);
+  return [...seen].map(([slug,name])=>({slug,name})).sort((a,b)=>a.name.localeCompare(b.name));
+}
+
+/* ---- public writes ---- */
+async function submitReview(slug, r){
+  if(!sb) throw new Error('No connection');
+  const { error } = await sb.from('reviews').insert({
+    company_slug: slug, author_name: r.name, author_email: r.email,
+    rating: r.rating, body: r.body, status: 'Pending'
+  });
+  if(error){ console.error('submitReview', error); throw error; }
+}
+async function submitInquiry(slug, q){
+  if(!sb) throw new Error('No connection');
+  const { data, error } = await sb.from('inquiries').insert({
+    company_slug: slug, from_name: q.name, from_email: q.email,
+    from_company: q.company || null, phone: q.phone || null,
+    subject: q.subject || null, body: q.body,
+    quantity: q.quantity || null, part_number: q.part_number || null,
+    status: 'New'
+  }).select('id').maybeSingle();
+  if(error){ console.error('submitInquiry', error); throw error; }
+  return data;
+}
+
+/* ---- analytics ----
+   visitor id is a random string kept in localStorage so repeat page loads by
+   the same browser collapse into one unique hit at query time. */
+function visitorId(){
+  try{
+    let v = localStorage.getItem('cx_v');
+    if(!v){ v = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('cx_v', v); }
+    return v;
+  }catch(e){ return null; }
+}
+function trackEvent(slug, kind, keyword){
+  if(!sb || !slug) return;
+  // fire and forget: analytics must never block or break the page
+  sb.from('profile_events').insert({
+    company_slug: slug, kind, keyword: keyword || null, visitor: visitorId()
+  }).then(null, e => console.warn('trackEvent', e));
+}
+
+/* ---- owner reads/writes (RLS decides what is visible) ---- */
+async function myCompanies(){
+  if(!sb) return [];
+  const { data, error } = await sb.rpc('my_companies');
+  if(error){ console.error('myCompanies', error); return []; }
+  return data || [];
+}
+async function updateCompany(slug, fields){
+  if(!sb) return 'No connection';
+  const { error } = await sb.from('companies').update(fields).eq('slug', slug);
+  if(error){ console.error('updateCompany', error); return error.message; }
+  return null;
+}
+async function fetchMyListings(slug){
+  if(!sb) return [];
+  const { data, error } = await sb.from('applications').select('*')
+    .eq('company_slug', slug).order('created_at', { ascending:true });
+  if(error){ console.error('fetchMyListings', error); return []; }
+  return data || [];
+}
+async function saveProduct(p){
+  if(!sb) return 'No connection';
+  const row = { company_slug: p.company_slug, name: p.name, part_number: p.part_number || null,
+                description: p.description || null, image: p.image || null,
+                datasheet: p.datasheet || null, price: p.price || null, sort: p.sort || 0 };
+  const { error } = p.id
+    ? await sb.from('products').update(row).eq('id', p.id)
+    : await sb.from('products').insert(row);
+  if(error){ console.error('saveProduct', error); return error.message; }
+  return null;
+}
+async function deleteProduct(id){
+  if(!sb) return;
+  const { error } = await sb.from('products').delete().eq('id', id);
+  if(error) console.error('deleteProduct', error);
+}
+async function fetchMyReviews(slug){
+  if(!sb) return [];
+  const { data, error } = await sb.from('reviews').select('*')
+    .eq('company_slug', slug).order('created_at', { ascending:false });
+  if(error){ console.error('fetchMyReviews', error); return []; }
+  return data || [];
+}
+async function replyToReview(id, reply){
+  if(!sb) return;
+  const { error } = await sb.from('reviews').update({ reply }).eq('id', id);
+  if(error) console.error('replyToReview', error);
+}
+async function fetchInquiries(slug){
+  if(!sb) return [];
+  const { data, error } = await sb.from('inquiries').select('*')
+    .eq('company_slug', slug).order('created_at', { ascending:false });
+  if(error){ console.error('fetchInquiries', error); return []; }
+  return data || [];
+}
+async function setInquiryStatus(id, status){
+  if(!sb) return;
+  const { error } = await sb.from('inquiries').update({ status }).eq('id', id);
+  if(error) console.error('setInquiryStatus', error);
+}
+async function fetchThread(inquiryId){
+  if(!sb) return [];
+  const { data, error } = await sb.from('inquiry_messages').select('*')
+    .eq('inquiry_id', inquiryId).order('created_at');
+  if(error){ console.error('fetchThread', error); return []; }
+  return data || [];
+}
+async function postMessage(inquiryId, body){
+  if(!sb) return 'No connection';
+  const { error } = await sb.from('inquiry_messages').insert({ inquiry_id: inquiryId, body, author: 'supplier' });
+  if(error){ console.error('postMessage', error); return error.message; }
+  return null;
+}
+async function companyStats(slug, days){
+  if(!sb) return [];
+  const { data, error } = await sb.rpc('company_stats', { p_slug: slug, p_days: days || 30 });
+  if(error){ console.error('companyStats', error); return []; }
+  return data || [];
+}
+
+/* ---- claiming ---- */
+async function submitClaim(slug, c){
+  if(!sb) return 'No connection';
+  const user = await currentUser();
+  if(!user) return 'Please sign in first.';
+  const { error } = await sb.from('claims').insert({
+    company_slug: slug, user_id: user.id, email: user.email,
+    name: c.name || null, role_title: c.role_title || null,
+    evidence: c.evidence || null, status: 'Pending'
+  });
+  if(error){ console.error('submitClaim', error); return error.message; }
+  return null;
+}
+async function fetchClaims(){
+  if(!sb) return [];
+  const { data, error } = await sb.from('claims').select('*').order('created_at', { ascending:false });
+  if(error){ console.error('fetchClaims', error); return []; }
+  return data || [];
+}
+/* Staff approval of a claim is what actually grants access. */
+async function decideClaim(claim, approve){
+  if(!sb) return;
+  if(approve && claim.user_id){
+    const { error } = await sb.from('company_users')
+      .insert({ user_id: claim.user_id, company_slug: claim.company_slug, role: 'owner' });
+    if(error && error.code !== '23505'){ console.error('decideClaim attach', error); return error.message; }
+  }
+  const { error } = await sb.from('claims').update({ status: approve ? 'Approved' : 'Denied' }).eq('id', claim.id);
+  if(error){ console.error('decideClaim', error); return error.message; }
+  return null;
+}
+
+/* ---- staff moderation ---- */
+async function fetchAllReviews(){
+  if(!sb) return [];
+  const { data, error } = await sb.from('reviews').select('*').order('created_at', { ascending:false });
+  if(error){ console.error('fetchAllReviews', error); return []; }
+  return data || [];
+}
+async function setReviewStatus(id, status){
+  if(!sb) return;
+  const { error } = await sb.from('reviews').update({ status }).eq('id', id);
+  if(error) console.error('setReviewStatus', error);
+}
+
+/* ---- gallery / product image storage (public bucket "logos") ---- */
+async function uploadImage(file){ return uploadLogo(file); }
+
 /* Redirect to login unless the visitor is a signed-in staff member. */
 async function requireStaff(){
   const user = await currentUser();

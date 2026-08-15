@@ -148,6 +148,34 @@
       <div id="pending-empty" class="empty-line" style="display:none">No Applications Pending. All Caught Up.</div>
     </div>
   </div>
+
+  <!-- Profile claims -->
+  <div class="panel">
+    <div class="panel-head"><h2>Profile Claims</h2><span class="hint">Approving A Claim Grants Portal Access</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Claimant</th><th>Email</th><th>Evidence</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="claims-body"></tbody>
+        </table>
+      </div>
+      <div id="claims-empty" class="empty-line" style="display:none">No Profile Claims.</div>
+    </div>
+  </div>
+
+  <!-- Review moderation -->
+  <div class="panel">
+    <div class="panel-head"><h2>Buyer Reviews</h2><span class="hint">Companies Cannot Approve Their Own</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Rating</th><th>Author</th><th>Review</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="reviews-body"></tbody>
+        </table>
+      </div>
+      <div id="reviews-empty" class="empty-line" style="display:none">No Reviews Submitted.</div>
+    </div>
+  </div>
 </main>
 
 <footer class="footer">
@@ -351,7 +379,48 @@ async function approveApp(id){
 }
 async function rejectApp(id){ await updateAppStatus(id,'Denied'); await reload(); }
 
-function syncControls(){ document.querySelectorAll('.list-controls').forEach(bar=>{ const p = panels[bar.dataset.panel]; bar.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active', b.dataset.sort===p.sort)); bar.querySelector('.lc-limit').value = p.limit; }); } (async ()=>{ if(!(await requireStaff())) return; const saved = await loadPrefs('admin'); if(saved) for(const k in panels){ if(saved[k] && saved[k].sort) panels[k].sort = saved[k].sort; if(saved[k] && saved[k].limit) panels[k].limit = saved[k].limit; } syncControls(); reload(); })();
+/* ---- profile claims ---- */
+let allClaims = [];
+async function reloadClaims(){
+  allClaims = await fetchClaims();
+  const rows = allClaims.map(c=>`<tr>
+    <td><a href="/company/${esc(c.company_slug)}" target="_blank" rel="noopener">${esc(c.company_slug)}</a></td>
+    <td>${esc(c.name||'—')}${c.role_title?'<br><span class="cell-muted">'+esc(c.role_title)+'</span>':''}</td>
+    <td class="cell-muted">${esc(c.email)}</td>
+    <td class="cell-muted" style="max-width:280px">${esc(c.evidence||'—')}</td>
+    <td>${esc(c.status)}</td>
+    <td class="row-actions">${c.status==='Pending'
+      ? `<button class="mini-btn green" onclick="decide('${c.id}',true)">Approve</button>
+         <button class="mini-btn" onclick="decide('${c.id}',false)">Deny</button>` : ''}</td></tr>`).join('');
+  $('claims-body').innerHTML = rows;
+  $('claims-empty').style.display = allClaims.length ? 'none' : 'block';
+}
+async function decide(id, approve){
+  const c = allClaims.find(x=>x.id===id); if(!c) return;
+  const err = await decideClaim(c, approve);
+  if(err){ alert('Could not update that claim: ' + err); return; }
+  await reloadClaims();
+}
+
+/* ---- review moderation ---- */
+let allReviews = [];
+async function reloadReviews(){
+  allReviews = await fetchAllReviews();
+  $('reviews-body').innerHTML = allReviews.map(r=>`<tr>
+    <td><a href="/company/${esc(r.company_slug)}" target="_blank" rel="noopener">${esc(r.company_slug)}</a></td>
+    <td>${'★'.repeat(r.rating)}</td>
+    <td class="cell-muted">${esc(r.author_name)}<br><span class="cell-muted">${esc(r.author_email)}</span></td>
+    <td class="cell-muted" style="max-width:320px">${esc(r.body)}</td>
+    <td>${esc(r.status)}</td>
+    <td class="row-actions">
+      ${r.status!=='Approved'?`<button class="mini-btn green" onclick="modReview('${r.id}','Approved')">Approve</button>`:''}
+      ${r.status!=='Denied'?`<button class="mini-btn" onclick="modReview('${r.id}','Denied')">Deny</button>`:''}
+    </td></tr>`).join('');
+  $('reviews-empty').style.display = allReviews.length ? 'none' : 'block';
+}
+async function modReview(id, status){ await setReviewStatus(id, status); await reloadReviews(); }
+
+function syncControls(){ document.querySelectorAll('.list-controls').forEach(bar=>{ const p = panels[bar.dataset.panel]; bar.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active', b.dataset.sort===p.sort)); bar.querySelector('.lc-limit').value = p.limit; }); } (async ()=>{ if(!(await requireStaff())) return; reloadClaims(); reloadReviews(); const saved = await loadPrefs('admin'); if(saved) for(const k in panels){ if(saved[k] && saved[k].sort) panels[k].sort = saved[k].sort; if(saved[k] && saved[k].limit) panels[k].limit = saved[k].limit; } syncControls(); reload(); })();
 </script>
 </body>
 </html>
