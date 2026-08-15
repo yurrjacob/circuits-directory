@@ -21,7 +21,7 @@ const ROOT = path.join(__dirname, '..');
 const MANIFEST = path.join(__dirname, '.generated-profiles.json');
 
 const STATIC_PAGES = [
-  ['/', '1.0'], ['/join', '0.9'], ['/companies', '0.9'], ['/directory', '0.9'],
+  ['/', '1.0'], ['/join', '0.9'], ['/directory', '0.9'],
   ['/directory/engineers', '0.7'], ['/directory/manufacturers', '0.7'],
   ['/directory/distributors', '0.7'], ['/directory/buyers', '0.7'],
   ['/directory/pcb-design', '0.7'], ['/directory/oscillators', '0.7'],

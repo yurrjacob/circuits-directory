@@ -15,7 +15,6 @@
     <div class="brand"><a href="/"><img class="logo-nav" src="/assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-slogan">Connecting The Circuits Industry</span></div>
     <nav class="nav">
       <a href="/">Home</a>
-      <a href="/companies">Companies</a>
       <a href="/contact">Contact</a>
       <a class="cta" href="/join">Get Listed</a>
     </nav>
@@ -34,7 +33,6 @@
   <div class="inner">
     <div class="flinks">
       <a href="/">Home</a>
-      <a href="/companies">Companies</a>
       <a href="/join">Get Listed</a>
       <a href="/contact">Contact</a>
     </div>
@@ -58,8 +56,8 @@ const sub  = document.getElementById('claim-sub-line');
 
 function noCompany(){
   sub.textContent = 'Which company is yours?';
-  body.innerHTML = '<p class="auth-note">Find your company in the <a href="/companies">A–Z list</a> and use the '
-    + '&ldquo;Claim this profile&rdquo; link at the bottom of its page.<br><br>'
+  body.innerHTML = '<p class="auth-note">Search the keyword your company is listed under, open its '
+    + 'profile from the results, and use the &ldquo;Claim this profile&rdquo; link at the bottom.<br><br>'
     + 'Not listed yet? <a href="/join">Get listed</a> — that is where you create your account '
     + 'and reserve your circuits.com address.</p>';
 }

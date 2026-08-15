@@ -1,7 +1,6 @@
 /* ===== Circuits.com — public company profile =====
-   Renders /company/<slug>. The slug comes from the <meta name="company-slug">
-   tag baked in by tools/build-profiles.js, or from ?c= as a fallback so the
-   page also works before the static files are generated. */
+   Renders circuits.com/<handle>. See profileHandle() for where the handle
+   comes from; profiles are reached from search results, not a browsable list. */
 
 const DAYS = [['mon','Monday'],['tue','Tuesday'],['wed','Wednesday'],['thu','Thursday'],['fri','Friday'],['sat','Saturday'],['sun','Sunday']];
 const SOCIALS = [['linkedin','LinkedIn'],['x','X'],['facebook','Facebook'],['youtube','YouTube'],['instagram','Instagram'],['github','GitHub']];
@@ -227,7 +226,7 @@ function rfqForm(co){
 
 function notFound(handle){
   return `<div class="empty"><div class="big">No profile at circuits.com/${escapeHtml(handle)}</div>
-    <p>That name is not taken yet. <a href="/join">Claim it here</a>, or <a href="/companies">browse all suppliers</a>.</p></div>`;
+    <p>That name is not taken yet. <a href="/join">Claim it here</a>, or <a href="/directory">browse the directory</a>.</p></div>`;
 }
 
 function setMeta(name, content){

@@ -394,7 +394,7 @@ const handleInput = document.getElementById('f-handle');
 const handleMsg = document.getElementById('handle-msg');
 let handleTimer = null, handleState = '';
 if(handleInput) handleInput.addEventListener('input', ()=>{
-  handleInput.value = handleInput.value.toLowerCase().replace(/[^a-z0-9-]/g,'');
+  handleInput.value = handleInput.value.toLowerCase().replace(/[^a-z0-9_-]/g,'');
   clearTimeout(handleTimer);
   handleState = 'checking';
   if(!handleInput.value){ handleMsg.textContent=''; handleState=''; return; }
@@ -443,7 +443,7 @@ const msg = document.getElementById('msg');
     check('f-website', !v('f-website') || isValidWebsite(v('f-website')), 'Please enter a valid website (e.g. www.company.com).');
     check('f-handle', handleFormatOk(v('f-handle')) && handleState !== 'bad',
       handleState === 'bad' ? 'That Circuits.com address is not available.'
-                            : 'Choose your Circuits.com address (3–32 letters, numbers or hyphens).');
+                            : 'Choose your Circuits.com address (3–32 letters, numbers, hyphens or underscores).');
     check('f-pass', v('f-pass').length >= 8, 'Your password must be at least 8 characters.');
     check('f-pass2', v('f-pass') === v('f-pass2') && !!v('f-pass2'), 'The two passwords do not match.');
     /* terms must be accepted before the form can be submitted */

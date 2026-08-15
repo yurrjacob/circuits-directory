@@ -50,7 +50,6 @@ for (const ph of ['{{HANDLE}}', '{{TITLE}}', '{{DESC}}', '{{CANONICAL}}', '{{OGI
 /* --- every page that calls store.js/app.js helpers must actually load them --- */
 const NEEDS = {
   'company.html':   ['/store.js', '/app.js', '/profile.js'],
-  'companies.html': ['/store.js', '/app.js'],
   'portal.html':    ['/store.js', '/app.js', '/portal.js'],
   'claim.html':     ['/store.js', '/app.js'],
   'results.html':   ['store.js', 'app.js'],
@@ -80,11 +79,13 @@ assert.ok(fs.readFileSync(path.join(ROOT, '404.html'), 'utf8').includes('initPro
 /* --- handles: the JS rules must match the SQL handle_ok(), and reserved
        names must never be claimable --- */
 const handleFormatOk = h =>
-  /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(h || '') && h.length >= 3 && h.length <= 32 && !h.includes('--');
-for (const good of ['zzzelec', 'acme-semi', 'abc', 'a1b2c3', 'x'.repeat(32)]) {
+  /^[a-z0-9]([a-z0-9_-]*[a-z0-9])?$/.test(h || '')
+  && h.length >= 3 && h.length <= 32 && !/--|__|_-|-_/.test(h);
+for (const good of ['aaa_electronics', 'zzzelec', 'acme-semi', 'abc', 'a1b2c3', 'x'.repeat(32)]) {
   assert.ok(handleFormatOk(good), `handle ${good} should be legal`);
 }
-for (const bad of ['ab', '-lead', 'trail-', 'Upper', 'has space', 'double--dash', 'x'.repeat(33), 'dot.dot']) {
+for (const bad of ['ab', '-lead', 'trail-', '_lead', 'trail_', 'Upper', 'has space',
+                   'double--dash', 'double__score', 'mixed-_sep', 'x'.repeat(33), 'dot.dot']) {
   assert.ok(!handleFormatOk(bad), `handle ${bad} should be rejected`);
 }
 // every root page name must be in the reserved list, or a company could take it
@@ -100,7 +101,7 @@ for (const f of fs.readdirSync(ROOT)) {
 }
 
 /* --- accounts may ONLY be created from the Get Listed form --- */
-for (const f of ['portal.js', 'portal.html', 'claim.html', 'login.html', 'companies.html', 'company.html']) {
+for (const f of ['portal.js', 'portal.html', 'claim.html', 'login.html', 'company.html']) {
   assert.ok(!fs.readFileSync(path.join(ROOT, f), 'utf8').includes('signUp('),
     `${f} can create an account — registration belongs only on the Get Listed form`);
 }

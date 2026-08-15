@@ -153,7 +153,7 @@ function wireHandleCheck(){
   if(!input || input.__wired) return;
   input.__wired = true;
   input.addEventListener('input', () => {
-    input.value = input.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    input.value = input.value.toLowerCase().replace(/[^a-z0-9_-]/g, '');
     const msg = el('handle-msg');
     clearTimeout(handleTimer);
     if(input.value === (PT.co.handle || '')){ msg.textContent = ''; return; }

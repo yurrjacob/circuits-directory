@@ -160,12 +160,14 @@ function profileUrl(handle){
 }
 /* Must match handle_ok() in the database. */
 function handleFormatOk(h){
-  return /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(h||'') && h.length >= 3 && h.length <= 32 && !h.includes('--');
+  return /^[a-z0-9]([a-z0-9_-]*[a-z0-9])?$/.test(h||'')
+      && h.length >= 3 && h.length <= 32
+      && !/--|__|_-|-_/.test(h);
 }
 /* Is this handle free? Returns '' if available, or the reason it is not. */
 async function handleAvailable(handle, ownSlug){
   const h = (handle||'').toLowerCase().trim();
-  if(!handleFormatOk(h)) return '3–32 characters, letters, numbers and single hyphens only.';
+  if(!handleFormatOk(h)) return '3–32 characters: letters, numbers, and single hyphens or underscores between them.';
   if(!sb) return 'No connection';
   const res = await sb.from('reserved_handles').select('name').eq('name', h).maybeSingle();
   if(res.data) return 'That name is reserved by Circuits.com.';
@@ -206,17 +208,6 @@ async function fetchReviews(slug){
   if(error){ console.error('fetchReviews', error); return []; }
   return data || [];
 }
-/* Every company with at least one live listing — powers the A–Z index. */
-async function fetchLiveCompanies(){
-  if(!sb) return [];
-  const { data, error } = await sb.from('applications')
-    .select('company_slug, company_handle, company').eq('status','Approved');
-  if(error){ console.error('fetchLiveCompanies', error); return []; }
-  const seen = new Map();
-  for(const r of (data||[])) if(r.company_handle && !seen.has(r.company_handle)) seen.set(r.company_handle, r.company);
-  return [...seen].map(([handle,name])=>({handle,name})).sort((a,b)=>a.name.localeCompare(b.name));
-}
-
 /* ---- public writes ---- */
 async function submitReview(slug, r){
   if(!sb) throw new Error('No connection');
