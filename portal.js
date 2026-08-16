@@ -413,8 +413,11 @@ async function drawThread(id){
 
 
 /* ---------- promote: printable artwork ----------
-   Everything is drawn in real inches so it prints at true size; the previews
-   are just CSS-scaled copies of the same markup. */
+   Drawn in real inches so it prints at true size; the previews are the same
+   markup scaled down. Light or dark is a class on the wrapper, so one toggle
+   restyles every piece. */
+let KIT_STYLE = 'light';
+
 function qrSvg(text){
   if(typeof qrcode !== 'function') return '<span class="kit-qr-missing">QR unavailable</span>';
   const q = qrcode(0, 'M');
@@ -428,76 +431,106 @@ function renderPromote(){
   if(!kit || !PT.co) return;
   const co = PT.co;
   if(!co.handle){
-    kit.innerHTML = '<p class="empty-line">Set your Circuits.com address on the Profile tab first — '
-      + 'every item here is built around it.</p>';
+    kit.innerHTML = `<div class="pt-empty"><b>Pick your address first</b>
+      <p>Everything here is built around circuits.com/&lt;your name&gt;. Set it on the Profile tab and these appear.</p></div>`;
     return;
   }
+
   const url   = 'https://circuits.com/' + co.handle;
   const short = 'circuits.com/' + co.handle;
   const name  = escapeHtml(co.name);
   const qr    = qrSvg(url);
-  const mark  = isLogoUrl(co.logo)
+  const live  = PT.listings.filter(l => l.status === 'Approved' && !l.paused).map(l => l.keyword).filter(Boolean);
+  const kws   = live.slice(0, 3).join(' · ');
+  const tag   = co.tagline ? escapeHtml(co.tagline) : (kws ? escapeHtml(kws) : 'Find us on Circuits.com');
+
+  const mark = isLogoUrl(co.logo)
     ? `<img class="kit-logo" src="${escapeHtml(co.logo)}" alt="">`
     : `<span class="kit-logo kit-logo-text">${escapeHtml((co.name || '?').slice(0,1).toUpperCase())}</span>`;
 
-  /* one 2in sticker, reused at several sizes */
-  const sticker = `<div class="kit-sticker">
-      <div class="kit-sticker-qr">${qr}</div>
-      <div class="kit-sticker-txt"><b>${escapeHtml(short)}</b><span>Find us on Circuits.com</span></div>
+  const qrBox = (cls) => `<div class="kit-qrbox ${cls || ''}">${qr}</div>`;
+
+  /* --- the pieces --- */
+  const card = `<div class="kit-art kit-card" data-art="card">
+      <span class="kit-accent"></span>
+      <div class="kit-card-l">
+        ${mark}
+        <div class="kit-card-name">${name}</div>
+        <div class="kit-card-tag">${tag}</div>
+        <div class="kit-card-url">${escapeHtml(short)}</div>
+      </div>
+      <div class="kit-card-r">${qrBox()}<span class="kit-scan">Scan for parts &amp; contacts</span></div>
     </div>`;
 
+  const round = `<div class="kit-st kit-st-round">${qrBox('sm')}<b>${escapeHtml(short)}</b></div>`;
+  const wide  = `<div class="kit-st kit-st-wide">${qrBox('sm')}
+      <div><b>${escapeHtml(short)}</b><span>Scan for parts &amp; contacts</span></div></div>`;
+  const tiny  = `<div class="kit-st kit-st-tiny">${qrBox('xs')}<b>${escapeHtml(co.handle)}</b></div>`;
+
+  const stickers = `<div class="kit-art kit-sheet" data-art="stickers">
+      <div class="kit-row kit-row-wide">${wide.repeat(4)}</div>
+      <div class="kit-row kit-row-round">${round.repeat(6)}</div>
+      <div class="kit-row kit-row-tiny">${tiny.repeat(10)}</div>
+    </div>`;
+
+  const sign = `<div class="kit-art kit-sign" data-art="sign">
+      ${mark}
+      <div class="kit-sign-name">${name}</div>
+      <div class="kit-sign-lead">${tag}</div>
+      ${qrBox('big')}
+      <div class="kit-sign-url">${escapeHtml(short)}</div>
+      <div class="kit-sign-foot">Scan for parts, documents and contacts</div>
+    </div>`;
+
+  const shelf = `<div class="kit-art kit-shelf" data-art="shelf">
+      ${Array.from({length:8}, () => `<div class="kit-shelf-row">
+        ${qrBox('xs')}
+        <div class="kit-shelf-txt"><b>${name}</b><span>${escapeHtml(short)}</span></div>
+        <div class="kit-shelf-blank">Part / bin</div>
+      </div>`).join('')}
+    </div>`;
+
+  const decal = `<div class="kit-art kit-decal" data-art="decal">
+      <span class="kit-accent"></span>
+      ${mark}
+      <div class="kit-decal-txt"><b>${name}</b><span>${escapeHtml(short)}</span></div>
+      ${qrBox()}
+    </div>`;
+
+  const ITEMS = [
+    ['card',     'Business card back',  '3.5 × 2 in',       'Hand it over and they can pull up everything you stock.', card,     '3.5in 2in', 1.55],
+    ['stickers', 'Sticker sheet',       'Letter · 20 up',   'Reels, bins, toolboxes, shipping boxes, hard hats.',       stickers, 'letter',    3.2],
+    ['shelf',    'Shelf &amp; bin labels',  'Letter · 8 up',    'Trade counter shelving and stores. Write the part in the blank.', shelf, 'letter', 3.2],
+    ['sign',     'Counter sign',        'Letter',           'Trade show table, trade counter, noticeboard.',            sign,     'letter',    3.2],
+    ['decal',    'Window decal',        '6 × 2 in',         'Shop window, van door, workshop entrance.',                decal,    '6in 2in',   2.4]
+  ];
+
+  kit.className = 'kit kit-' + KIT_STYLE;
   kit.innerHTML = `
-  <div class="kit-item">
-    <div class="kit-head">
-      <div><h3>Business card back</h3>
-        <p class="pf-note">3.5 &times; 2 in. Hand it over and they can pull up your full listing.</p></div>
-      <button class="mini-btn green" data-print="card" data-page="3.5in 2in">Print</button>
+  <div class="kit-bar">
+    <span>Style</span>
+    <div class="kit-toggle">
+      <button type="button" data-style="light" class="${KIT_STYLE === 'light' ? 'on' : ''}">Light</button>
+      <button type="button" data-style="dark" class="${KIT_STYLE === 'dark' ? 'on' : ''}">Dark</button>
     </div>
-    <div class="kit-preview" data-scale="1.5">
-      <div class="kit-art kit-card" data-art="card">
-        <div class="kit-card-l">${mark}<div class="kit-card-name">${name}</div>
-          <div class="kit-card-url">${escapeHtml(short)}</div></div>
-        <div class="kit-card-r"><div class="kit-qr">${qr}</div><span>Scan for our listing</span></div>
-      </div>
-    </div>
+    <span class="kit-bar-note">Dark uses more ink but stands out on a busy counter.</span>
   </div>
 
-  <div class="kit-item">
-    <div class="kit-head">
-      <div><h3>QR sticker sheet</h3>
-        <p class="pf-note">Letter size. Six 2 in and twelve 1 in stickers &mdash; reels, bins, toolboxes, shipping boxes.</p></div>
-      <button class="mini-btn green" data-print="stickers" data-page="letter">Print</button>
-    </div>
-    <div class="kit-preview" data-scale="3.2">
-      <div class="kit-art kit-sheet" data-art="stickers">
-        <div class="kit-grid kit-grid-2">${sticker.repeat(6)}</div>
-        <div class="kit-grid kit-grid-1">${`<div class="kit-sticker kit-sticker-sm"><div class="kit-sticker-qr">${qr}</div><b>${escapeHtml(short)}</b></div>`.repeat(12)}</div>
+  ${ITEMS.map(([id, title, size, why, art, page, scale]) => `
+    <div class="kit-item">
+      <div class="kit-head">
+        <div>
+          <h3>${title} <span class="kit-size">${size}</span></h3>
+          <p class="pf-note">${why}</p>
+        </div>
+        <button class="mini-btn green" data-print="${id}" data-page="${page}">Print</button>
       </div>
-    </div>
-  </div>
+      <div class="kit-stage"><div class="kit-scaler" style="--s:${1/scale}">${art}</div></div>
+    </div>`).join('')}
 
   <div class="kit-item">
-    <div class="kit-head">
-      <div><h3>Counter sign</h3>
-        <p class="pf-note">Letter size. For a trade show table, trade counter or noticeboard.</p></div>
-      <button class="mini-btn green" data-print="sign" data-page="letter">Print</button>
-    </div>
-    <div class="kit-preview" data-scale="3.2">
-      <div class="kit-art kit-sign" data-art="sign">
-        ${mark}
-        <div class="kit-sign-name">${name}</div>
-        <div class="kit-sign-lead">Scan to see our parts, documents and contacts</div>
-        <div class="kit-sign-qr">${qr}</div>
-        <div class="kit-sign-url">${escapeHtml(short)}</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="kit-item">
-    <div class="kit-head">
-      <div><h3>Email signature</h3>
-        <p class="pf-note">Nothing to print &mdash; paste it into Outlook or Gmail and it works every day.</p></div>
-    </div>
+    <div class="kit-head"><div><h3>Email signature</h3>
+      <p class="pf-note">Nothing to print. Paste it once and it goes out on every email you send.</p></div></div>
     <div class="kit-sig">
       <label>Plain text</label>
       <textarea id="sig-text" rows="3" readonly>${escapeHtml(co.name + (co.contact ? ' — ' + co.contact : ''))}
@@ -520,10 +553,12 @@ function wirePromote(){
   kit.__wired = true;
 
   kit.addEventListener('click', async e => {
+    const styleBtn = e.target.closest('[data-style]');
     const printBtn = e.target.closest('[data-print]');
     const copyBtn  = e.target.closest('[data-copy]');
     const richBtn  = e.target.closest('[data-copy-rich]');
 
+    if(styleBtn){ KIT_STYLE = styleBtn.dataset.style; kit.__wired = false; renderPromote(); return; }
     if(printBtn) printArt(printBtn.dataset.print, printBtn.dataset.page);
 
     if(copyBtn){
@@ -542,7 +577,6 @@ function wirePromote(){
         })]);
         richBtn.textContent = 'Copied';
       }catch(err){
-        /* older browsers, or no rich-clipboard permission: select it instead */
         const r = document.createRange(); r.selectNodeContents(box);
         const s = getSelection(); s.removeAllRanges(); s.addRange(r);
         richBtn.textContent = 'Press Ctrl+C';
@@ -552,8 +586,8 @@ function wirePromote(){
   });
 }
 
-/* Print exactly one item at its own paper size. @page cannot be switched with a
-   class, so the rule is injected for the duration of the print. */
+/* Print exactly one piece at its own paper size. @page cannot be switched with
+   a class, so the rule is injected for the duration of the print. */
 function printArt(kind, page){
   const art = document.querySelector(`[data-art="${kind}"]`);
   if(!art) return;
@@ -561,8 +595,7 @@ function printArt(kind, page){
   art.classList.add('kit-art-active');
 
   const style = document.createElement('style');
-  style.id = 'kit-page-size';
-  style.textContent = `@page { size: ${page}; margin: ${kind === 'card' ? '0' : '0.4in'}; }`;
+  style.textContent = `@page { size: ${page}; margin: ${page.includes('letter') ? '0.35in' : '0'}; }`;
   document.head.appendChild(style);
   document.body.setAttribute('data-printing', kind);
 

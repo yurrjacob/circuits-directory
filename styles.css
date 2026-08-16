@@ -626,58 +626,98 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 }
 
 /* ---- promote: printable artwork ---- */
-.kit{display:flex;flex-direction:column;gap:20px}
-.kit-item{border:1px solid var(--line);border-radius:var(--radius);padding:16px;background:#fff}
-.kit-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:14px}
-.kit-head h3{margin:0 0 3px;font-size:1rem}
+.kit-intro{margin:0 0 18px;font-size:.95rem;color:var(--muted);max-width:62ch}
+.kit{display:flex;flex-direction:column;gap:22px}
+.kit-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}
+.kit-toggle{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:#fff}
+.kit-toggle button{border:0;background:none;font:inherit;font-size:.82rem;font-weight:600;
+  padding:6px 16px;cursor:pointer;color:var(--muted)}
+.kit-toggle button.on{background:var(--green);color:#000}
+.kit-bar-note{font-size:.78rem}
+
+.kit-item{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:#fff}
+.kit-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:15px 16px}
+.kit-head h3{margin:0 0 3px;font-size:1rem;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.kit-size{font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .kit-head .pf-note{margin:0}
-.kit-preview{background:var(--bg-soft);border:1px solid var(--line);border-radius:8px;padding:16px;
-  display:flex;justify-content:center;overflow:hidden}
-.kit-preview .kit-art{transform-origin:top center}
-.kit-preview[data-scale="1.5"] .kit-art{transform:scale(.66)}
-.kit-preview[data-scale="3.2"] .kit-art{transform:scale(.31)}
-.kit-preview[data-scale="1.5"]{height:150px}
-.kit-preview[data-scale="3.2"]{height:350px}
 
-/* artwork drawn at true physical size */
-.kit-art{background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;box-shadow:0 0 0 1px var(--line)}
-.kit-logo{width:.5in;height:.5in;object-fit:contain;display:block}
-.kit-logo-text{display:flex;align-items:center;justify-content:center;background:var(--green);
-  color:#000;font-weight:700;font-size:.28in;border-radius:.08in}
-.kit-qr svg,.kit-sticker-qr svg,.kit-sign-qr svg{width:100%;height:100%;display:block}
+/* showcase: artwork sits on a desk-grey surface with a real drop shadow */
+.kit-stage{background:#eceef1;border-top:1px solid var(--line);padding:26px 16px;
+  display:flex;justify-content:center;align-items:flex-start;overflow:hidden}
+.kit-scaler{transform:scale(var(--s));transform-origin:top center}
+.kit-stage .kit-art{box-shadow:0 6px 22px rgba(15,15,15,.22),0 1px 3px rgba(15,15,15,.12)}
+
+/* artwork, drawn at true physical size */
+.kit-art{--ink:#0f0f0f;--paper:#fff;--soft:#5a5f65;--accent:#76c000;--accentink:#3f6300;
+  background:var(--paper);color:var(--ink);font-family:Arial,Helvetica,sans-serif;position:relative;overflow:hidden}
+.kit-dark .kit-art{--ink:#fff;--paper:#0f0f0f;--soft:#a9b0b6;--accentink:#76c000}
+.kit-logo{width:.46in;height:.46in;object-fit:contain;display:block;border-radius:.06in;background:#fff}
+.kit-logo-text{display:flex;align-items:center;justify-content:center;background:var(--accent);
+  color:#000;font-weight:700;font-size:.24in;border-radius:.08in}
+.kit-accent{position:absolute;left:0;top:0;bottom:0;width:.09in;background:var(--accent)}
+.kit-qrbox{width:1in;height:1in;padding:.05in;background:#fff;border-radius:.06in;flex:none}
+.kit-qrbox svg{width:100%;height:100%;display:block}
+.kit-qrbox.sm{width:.8in;height:.8in;padding:.04in}
+.kit-qrbox.xs{width:.55in;height:.55in;padding:.03in}
+.kit-qrbox.big{width:3.3in;height:3.3in;padding:.12in}
 .kit-qr-missing{font-size:10px;color:var(--muted)}
+.kit-scan{font-size:.072in;color:var(--soft);text-align:center;max-width:1.1in;line-height:1.3}
 
+/* business card */
 .kit-card{width:3.5in;height:2in;display:flex;align-items:center;justify-content:space-between;
-  padding:.22in;box-sizing:border-box}
-.kit-card-l{display:flex;flex-direction:column;gap:.06in;min-width:0}
-.kit-card-name{font-size:.17in;font-weight:700;line-height:1.15}
-.kit-card-url{font-size:.13in;font-weight:700;color:#5f9b00;word-break:break-all}
-.kit-card-r{display:flex;flex-direction:column;align-items:center;gap:.04in;flex:none}
-.kit-card-r span{font-size:.075in;color:#555}
-.kit-qr{width:1in;height:1in}
+  gap:.16in;padding:.2in .22in .2in .3in;box-sizing:border-box}
+.kit-card-l{display:flex;flex-direction:column;gap:.05in;min-width:0}
+.kit-card-name{font-size:.165in;font-weight:700;line-height:1.15;margin-top:.04in}
+.kit-card-tag{font-size:.088in;color:var(--soft);line-height:1.35;max-width:1.9in}
+.kit-card-url{font-size:.125in;font-weight:700;color:var(--accentink);word-break:break-all;margin-top:.04in}
+.kit-card-r{display:flex;flex-direction:column;align-items:center;gap:.05in;flex:none}
 
-.kit-sheet{width:7.7in;padding:.1in;box-sizing:border-box}
-.kit-grid{display:grid;gap:.12in;margin-bottom:.18in}
-.kit-grid-2{grid-template-columns:repeat(3,2.3in)}
-.kit-grid-1{grid-template-columns:repeat(6,1.15in)}
-.kit-sticker{border:1px dashed #bbb;border-radius:.1in;padding:.1in;display:flex;align-items:center;
-  gap:.09in;height:1.15in;box-sizing:border-box}
-.kit-sticker-qr{width:.95in;height:.95in;flex:none}
-.kit-sticker-txt{display:flex;flex-direction:column;min-width:0}
-.kit-sticker-txt b{font-size:.1in;color:#5f9b00;word-break:break-all;line-height:1.2}
-.kit-sticker-txt span{font-size:.075in;color:#555;margin-top:.03in}
-.kit-sticker-sm{flex-direction:column;height:1.15in;gap:.04in;padding:.06in;justify-content:center}
-.kit-sticker-sm .kit-sticker-qr{width:.72in;height:.72in}
-.kit-sticker-sm b{font-size:.062in;color:#5f9b00;word-break:break-all;text-align:center;line-height:1.15}
+/* sticker sheet */
+.kit-sheet{width:7.8in;padding:.12in;box-sizing:border-box;display:flex;flex-direction:column;gap:.2in}
+.kit-row{display:grid;gap:.14in}
+.kit-row-wide{grid-template-columns:repeat(2,3.6in)}
+.kit-row-round{grid-template-columns:repeat(3,2.4in)}
+.kit-row-tiny{grid-template-columns:repeat(5,1.45in)}
+.kit-st{border:1px dashed #b6bcc2;box-sizing:border-box;display:flex;align-items:center;
+  background:var(--paper);color:var(--ink)}
+.kit-st b{color:var(--accentink);word-break:break-all;line-height:1.15}
+.kit-st-wide{height:1.05in;border-radius:.1in;padding:.1in;gap:.12in}
+.kit-st-wide div{display:flex;flex-direction:column;min-width:0;gap:.02in}
+.kit-st-wide b{font-size:.105in}
+.kit-st-wide span{font-size:.072in;color:var(--soft)}
+.kit-st-round{height:2.4in;border-radius:50%;flex-direction:column;justify-content:center;gap:.07in;padding:.2in}
+.kit-st-round b{font-size:.088in;text-align:center}
+.kit-st-tiny{height:1.05in;border-radius:.08in;flex-direction:column;justify-content:center;gap:.03in;padding:.06in}
+.kit-st-tiny b{font-size:.06in;text-align:center}
 
-.kit-sign{width:7.7in;height:10in;box-sizing:border-box;padding:.8in .6in;display:flex;
-  flex-direction:column;align-items:center;justify-content:center;gap:.22in;text-align:center}
-.kit-sign .kit-logo{width:1in;height:1in}
-.kit-sign-name{font-size:.42in;font-weight:700;line-height:1.1}
-.kit-sign-lead{font-size:.17in;color:#444;max-width:5.5in}
-.kit-sign-qr{width:3.6in;height:3.6in}
-.kit-sign-url{font-size:.3in;font-weight:700;color:#5f9b00;word-break:break-all}
+/* counter sign */
+.kit-sign{width:7.8in;height:10.1in;box-sizing:border-box;padding:.7in .6in;display:flex;
+  flex-direction:column;align-items:center;justify-content:center;gap:.2in;text-align:center}
+.kit-sign .kit-logo{width:.9in;height:.9in}
+.kit-sign-name{font-size:.4in;font-weight:700;line-height:1.1}
+.kit-sign-lead{font-size:.16in;color:var(--soft);max-width:5.4in;line-height:1.4}
+.kit-sign-url{font-size:.29in;font-weight:700;color:var(--accentink);word-break:break-all}
+.kit-sign-foot{font-size:.13in;color:var(--soft)}
 
+/* shelf + bin labels */
+.kit-shelf{width:7.8in;padding:.12in;box-sizing:border-box;display:flex;flex-direction:column;gap:.1in}
+.kit-shelf-row{display:flex;align-items:center;gap:.14in;height:1.1in;padding:.1in .14in;
+  border:1px dashed #b6bcc2;border-radius:.08in;box-sizing:border-box}
+.kit-shelf-txt{display:flex;flex-direction:column;min-width:1.9in;gap:.02in}
+.kit-shelf-txt b{font-size:.115in;line-height:1.15}
+.kit-shelf-txt span{font-size:.085in;color:var(--accentink);font-weight:700;word-break:break-all}
+.kit-shelf-blank{flex:1;border-bottom:1px solid #c8ced4;align-self:flex-end;margin-bottom:.12in;
+  font-size:.07in;color:#aeb5bb;padding-bottom:.03in}
+
+/* window decal */
+.kit-decal{width:6in;height:2in;display:flex;align-items:center;gap:.18in;
+  padding:.18in .2in .18in .32in;box-sizing:border-box}
+.kit-decal .kit-logo{width:.75in;height:.75in}
+.kit-decal-txt{flex:1;display:flex;flex-direction:column;gap:.04in;min-width:0}
+.kit-decal-txt b{font-size:.21in;line-height:1.1}
+.kit-decal-txt span{font-size:.15in;font-weight:700;color:var(--accentink);word-break:break-all}
+
+.kit-sig{padding:0 16px 16px}
 .kit-sig label{display:block;font-size:.8rem;font-weight:600;margin-bottom:5px}
 .kit-sig textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;
   font:inherit;font-size:.88rem;background:var(--bg-soft);resize:vertical}
@@ -686,19 +726,24 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 .kit-sig-html a{color:var(--green-dark);font-weight:600}
 .kit-sig .mini-btn{margin-top:8px}
 
+@media(max-width:640px){
+  .kit-stage{padding:16px 10px}
+  .kit-head{flex-direction:column;gap:10px}
+}
+
 @media print{
-  /* Print one item at true size and nothing else. display:none on ancestors
+  /* Print one piece at true size and nothing else. display:none on ancestors
      would hide the artwork too, so hide by visibility and lift the chosen
-     piece out to the top-left corner of the sheet. */
+     piece to the top-left of the sheet. */
   body[data-printing] *{visibility:hidden!important}
   body[data-printing] .kit-art-active,
   body[data-printing] .kit-art-active *{visibility:visible!important}
   body[data-printing] .kit-art-active{position:absolute!important;left:0;top:0;
     transform:none!important;box-shadow:none!important;margin:0}
-  body[data-printing] .kit-preview{overflow:visible!important;height:auto!important;
-    padding:0!important;border:0!important;background:none!important}
-  body[data-printing] .kit-sticker{border-color:#999}
-  /* keep the exact greens and QR blacks instead of the browser's ink-saving */
+  body[data-printing] .kit-scaler{transform:none!important}
+  body[data-printing] .kit-stage{overflow:visible!important;padding:0!important;
+    border:0!important;background:none!important}
+  body[data-printing] .kit-st,body[data-printing] .kit-shelf-row{border-color:#8d949b}
   body[data-printing] *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 

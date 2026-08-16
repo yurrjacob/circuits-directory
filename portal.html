@@ -12,10 +12,7 @@
 
 <header class="topbar">
   <div class="inner">
-    <div class="brand">
-      <a href="/"><img class="logo-nav" src="/assets/logo-bar.png" alt="Circuits.com"></a>
-      <span class="brand-text"><span class="brand-title">Supplier Portal</span><span class="portal-tag" id="pt-name"></span></span>
-    </div>
+    <div class="brand"><a href="/"><img class="logo-nav" src="/assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-slogan">Connecting The Circuits Industry</span></div>
     <a class="signout" href="#" id="pt-signout">Sign out</a>
   </div>
 </header>
@@ -65,7 +62,7 @@
   <div class="console-head">
     <div>
       <h1>Your Circuits.com profile</h1>
-      <p>Everything a buyer sees, and every request they send you.</p>
+      <p>Everything a buyer sees for <b id="pt-name"></b>, and every request they send you.</p>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select id="pt-company" style="height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px"></select>
@@ -183,9 +180,8 @@
 
   <!-- promote -->
   <section class="pt-panel" id="tab-promote">
-    <p class="pf-note" style="margin:0 0 16px">Ready-to-print artwork carrying your Circuits.com address.
-    Everything below uses your live logo and short link, so it stays correct if you change them.
-    Print straight from this page &mdash; each item sets its own paper size.</p>
+    <p class="kit-intro">Print these and put your listing in front of people.
+    They pull your logo and link from your profile, so update it once and these follow.</p>
     <div class="kit" id="promo-kit"></div>
   </section>
 
