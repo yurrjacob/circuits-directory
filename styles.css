@@ -809,3 +809,15 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 .pt-empty{border:1px dashed var(--line);border-radius:var(--radius);padding:26px 20px;text-align:center;background:var(--bg-soft)}
 .pt-empty b{display:block;font-size:1rem;margin-bottom:5px}
 .pt-empty p{margin:0 auto;max-width:46ch;font-size:.88rem;color:var(--muted)}
+
+/* ---- portal: image fields in the list editors ---- */
+.rp-img{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.rp-img img{width:42px;height:42px;object-fit:cover;border-radius:7px;border:1px solid var(--line);flex:none}
+.rp-img-ph{width:42px;height:42px;border-radius:7px;border:1px dashed var(--line);flex:none;
+  display:flex;align-items:center;justify-content:center;font-size:.66rem;color:var(--muted)}
+.rp-img input[type=file]{flex:1;min-width:150px;font-size:.8rem}
+.rp-img.busy{opacity:.5;pointer-events:none}
+.rp-img.busy::after{content:"Uploading…";font-size:.78rem;color:var(--muted)}
+
+/* the logo tile in search results is part of the link to the profile */
+.co-logo-link{display:inline-flex;text-decoration:none}

@@ -168,9 +168,11 @@ async function initResults(forcedTerm){
     <tr>
       <td>
         <div class="co">
+          ${c.company_handle ? `<a class="co-logo-link" href="${escapeHtml(profileUrl(c.company_handle))}" aria-label="${escapeHtml(c.company)} profile">` : ''}
           ${isLogoUrl(c.logo)
             ? `<span class="co-logo"><img src="${escapeHtml(c.logo)}" alt="${escapeHtml(c.company)} logo"></span>`
             : `<span class="co-logo" style="background:${COLORS[i%COLORS.length]}">${avatarSvg()}</span>`}
+          ${c.company_handle ? '</a>' : ''}
           ${c.company_handle
             ? `<a href="${escapeHtml(profileUrl(c.company_handle))}">${escapeHtml(c.company)}</a>`
             : escapeHtml(c.company)}

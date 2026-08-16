@@ -178,7 +178,19 @@ function renderProfileForm(){
   set('f-handle', c.handle);
   el('f-reviews-on').checked = !!c.reviews_enabled;
   wireHandleCheck();
+  PT.clearLogo = false;
   el('pt-logo-prev').innerHTML = isLogoUrl(c.logo) ? `<img src="${escapeHtml(c.logo)}" alt="logo">` : avatarSvg();
+  const rmLogo = el('pt-logo-rm');
+  if(rmLogo){
+    rmLogo.style.display = isLogoUrl(c.logo) ? '' : 'none';
+    rmLogo.onclick = () => {
+      PT.clearLogo = true;
+      el('pt-logo-prev').innerHTML = avatarSvg();
+      rmLogo.style.display = 'none';
+      markDirty();
+      toast('Logo will be removed when you save.', true);
+    };
+  }
 
   const hours = c.hours && typeof c.hours === 'object' ? c.hours : {};
   el('f-hours').innerHTML = HOUR_DAYS.map(([k, label]) =>
@@ -190,9 +202,12 @@ function renderProfileForm(){
     `<div class="auth-field"><label>${label}</label><input id="s-${k}" type="text" placeholder="https://…" value="${escapeHtml(soc[k] || '')}"></div>`
   ).join('');
 
-  renderRepeater('certs', c.certifications, ['name', 'issuer', 'year'], ['Certification', 'Issuer', 'Year']);
-  renderRepeater('team', c.team, ['name', 'role', 'email'], ['Name', 'Role', 'Email']);
-  renderRepeater('gallery', c.gallery, ['url', 'caption'], ['Image URL', 'Caption']);
+  renderRepeater('certs', c.certifications, ['name', 'issuer', 'year'],
+                 ['Certification', 'Issuer', 'Year']);
+  renderRepeater('team', c.team, ['name', 'role', 'email', 'photo'],
+                 ['Name', 'Role', 'Email', 'Photo'], ['text', 'text', 'text', 'img']);
+  renderRepeater('gallery', c.gallery, ['url', 'caption'],
+                 ['Image', 'Caption'], ['img', 'text']);
 }
 
 /* Live availability check on the vanity handle. Debounced so typing does not
@@ -216,25 +231,60 @@ function wireHandleCheck(){
   });
 }
 
-/* One generic list editor covers certifications, team and gallery. */
-function renderRepeater(key, items, fields, labels){
+/* One generic list editor covers certifications, team and gallery.
+   A field marked 'img' gets a real file upload — asking a supplier for an
+   "image URL" is asking them to go and host a file somewhere first, which is
+   why the gallery and team photos were unusable. */
+function renderRepeater(key, items, fields, labels, types){
   const list = Array.isArray(items) ? items.slice() : [];
   const box = el('f-' + key);
+  const kind = f => (types || [])[fields.indexOf(f)] || 'text';
+
+  function cell(it, i, f, label){
+    if(kind(f) !== 'img'){
+      return `<div class="auth-field"><label>${label}</label>
+        <input data-k="${key}" data-i="${i}" data-f="${f}" type="text" value="${escapeHtml(it[f] || '')}"></div>`;
+    }
+    return `<div class="auth-field"><label>${label}</label>
+      <div class="rp-img">
+        ${isLogoUrl(it[f]) ? `<img src="${escapeHtml(it[f])}" alt="">` : '<span class="rp-img-ph">None</span>'}
+        <input type="file" accept="image/png,image/jpeg,image/webp" data-i="${i}" data-f="${f}" data-upload>
+        ${isLogoUrl(it[f]) ? `<button type="button" class="mini-btn" data-clear="${i}" data-cf="${f}">Clear</button>` : ''}
+      </div></div>`;
+  }
+
   function draw(){
     box.innerHTML = list.map((it, i) =>
-      `<div class="pt-item"><div class="pt-row">${fields.map((f, j) =>
-        `<div class="auth-field"><label>${labels[j]}</label><input data-k="${key}" data-i="${i}" data-f="${f}" type="text" value="${escapeHtml(it[f] || '')}"></div>`
-      ).join('')}</div><button type="button" class="mini-btn" data-del="${i}">Remove</button></div>`
+      `<div class="pt-item"><div class="pt-row">${fields.map((f, j) => cell(it, i, f, labels[j])).join('')}</div>
+       <button type="button" class="mini-btn" data-del="${i}">Remove</button></div>`
     ).join('') + `<button type="button" class="mini-btn green" data-add="1">+ Add</button>`;
   }
+
   box.onclick = e => {
-    const add = e.target.closest('[data-add]'), del = e.target.closest('[data-del]');
+    const add = e.target.closest('[data-add]'),
+          del = e.target.closest('[data-del]'),
+          clr = e.target.closest('[data-clear]');
     if(add){ list.push({}); draw(); }
     if(del){ list.splice(+del.dataset.del, 1); draw(); }
+    if(clr){ list[+clr.dataset.clear][clr.dataset.cf] = ''; draw(); }
   };
   box.oninput = e => {
-    const t = e.target; if(!t.dataset.f) return;
+    const t = e.target;
+    if(!t.dataset.f || t.type === 'file') return;
     list[+t.dataset.i][t.dataset.f] = t.value;
+  };
+  box.onchange = async e => {
+    const inp = e.target.closest('[data-upload]');
+    if(!inp || !inp.files || !inp.files[0]) return;
+    const i = +inp.dataset.i, f = inp.dataset.f;
+    const holder = inp.closest('.rp-img');
+    holder.classList.add('busy');
+    const url = await uploadImage(inp.files[0]);
+    holder.classList.remove('busy');
+    if(!url){ toast('That image could not be uploaded. Try a smaller PNG or JPEG.', false); return; }
+    list[i][f] = url;
+    markDirty();
+    draw();
   };
   box.__list = list;
   draw();
@@ -277,6 +327,7 @@ async function saveProfile(){
 
   const file = el('pt-logo').files && el('pt-logo').files[0];
   if(file){ const url = await uploadImage(file); if(url) fields.logo = url; }
+  else if(PT.clearLogo){ fields.logo = null; }
 
   const err = await updateCompany(PT.slug, fields);
   btn.disabled = false;
