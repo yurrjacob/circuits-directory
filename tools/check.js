@@ -100,6 +100,13 @@ for (const f of fs.readdirSync(ROOT)) {
     `root page ${f} is not in the reserved handle list — a company could claim circuits.com/${name}`);
 }
 
+/* --- the URL form of a handle must accept underscores, or circuits.com/aaa_electronics
+       never resolves through the 404 fallback --- */
+const pathRe = /^\/([a-z0-9][a-z0-9_-]*)\/?$/i;
+assert.ok(pathRe.test('/aaa_electronics'), 'profile path regex rejects underscores');
+assert.ok(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8').includes('[a-z0-9_-]*'),
+  'profileHandle() lost underscore support in its path match');
+
 /* --- accounts may ONLY be created from the Get Listed form --- */
 for (const f of ['portal.js', 'portal.html', 'claim.html', 'login.html', 'company.html']) {
   assert.ok(!fs.readFileSync(path.join(ROOT, f), 'utf8').includes('signUp('),
@@ -111,5 +118,7 @@ const joinHtml = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
 for (const id of ['f-handle', 'f-pass', 'f-pass2']) {
   assert.ok(joinHtml.includes(`id="${id}"`), `join.html is missing ${id}`);
 }
+
+require('./render-check.js');
 
 console.log('checks passed (' + (CASES.length + 6) + ' assertions)');

@@ -15,7 +15,7 @@ function profileHandle(){
   if(meta && meta.content && meta.content !== '{{HANDLE}}') return meta.content;
   const q = new URLSearchParams(location.search).get('c');
   if(q) return q.toLowerCase();
-  const m = location.pathname.match(/^\/([a-z0-9][a-z0-9-]*)\/?$/i);
+  const m = location.pathname.match(/^\/([a-z0-9][a-z0-9_-]*)\/?$/i);
   return m ? m[1].toLowerCase() : '';
 }
 
@@ -35,7 +35,17 @@ function safeUrl(u){
 
 function section(title, inner, extra){
   if(!inner) return '';
-  return `<section class="pf-sec"${extra || ''}><h2>${escapeHtml(title)}</h2>${inner}</section>`;
+  return `<section class="pf-sec"${extra || ''}><h2 class="pf-sec-h">${escapeHtml(title)}</h2>${inner}</section>`;
+}
+
+/* One contact row in the sidebar card. */
+function row(label, value, opts){
+  if(!value) return '';
+  const o = opts || {};
+  const inner = o.href
+    ? `<a href="${escapeHtml(o.href)}"${o.id ? ` id="${o.id}"` : ''}${o.ext ? ' target="_blank" rel="noopener nofollow"' : ''}>${escapeHtml(value)}</a>`
+    : escapeHtml(value);
+  return `<div class="pf-row"><span class="pf-row-l">${escapeHtml(label)}</span><span class="pf-row-v">${inner}</span></div>`;
 }
 
 async function initProfile(){
@@ -79,19 +89,14 @@ async function initProfile(){
       </h1>
       ${co.tagline ? `<p class="pf-tagline">${escapeHtml(co.tagline)}</p>` : ''}
       <div class="pf-meta">
-        ${reviews.length ? `${stars(avg)} <span>${avg.toFixed(1)} · ${reviews.length} review${reviews.length === 1 ? '' : 's'}</span>` : ''}
-        ${co.address ? `<span>${escapeHtml(co.address)}</span>` : ''}
-        ${co.founded ? `<span>Founded ${escapeHtml(co.founded)}</span>` : ''}
-        ${co.employees ? `<span>${escapeHtml(co.employees)} employees</span>` : ''}
+        ${reviews.length ? `<span class="pf-rating">${stars(avg)} ${avg.toFixed(1)} <i>(${reviews.length})</i></span>` : ''}
+        ${co.address ? `<span class="pf-chip">${escapeHtml(co.address)}</span>` : ''}
+        ${co.founded ? `<span class="pf-chip">Est. ${escapeHtml(co.founded)}</span>` : ''}
+        ${co.employees ? `<span class="pf-chip">${escapeHtml(co.employees)} employees</span>` : ''}
       </div>
     </div>
-    <div class="pf-actions">
-      <button class="btn btn-primary" id="rfq-open">Request a Quote</button>
-      ${site ? `<a class="btn" id="pf-site" href="${escapeHtml(site)}" target="_blank" rel="noopener nofollow">Visit Website</a>` : ''}
-      ${co.phone ? `<a class="btn" id="pf-phone" href="tel:${escapeHtml(co.phone)}">${escapeHtml(co.phone)}</a>` : ''}
-      ${co.email ? `<a class="btn" id="pf-email" href="mailto:${escapeHtml(co.email)}">Email ${escapeHtml(co.contact || 'supplier')}</a>` : ''}
-    </div>
-  </div>`;
+  </div>
+  <div class="pf-layout"><div class="pf-main">`;
 
   /* ---- about ---- */
   html += section('About ' + co.name, co.description
@@ -136,22 +141,6 @@ async function initProfile(){
           ${t.email ? `<a class="founder-line" href="mailto:${escapeHtml(t.email)}">${escapeHtml(t.email)}</a>` : ''}</div>
         </div>`).join('')}</div>` : '');
 
-  /* ---- hours + contact ---- */
-  const hours = co.hours && typeof co.hours === 'object' ? co.hours : {};
-  const openDays = DAYS.filter(([k]) => hours[k]);
-  html += section('Hours & contact', (openDays.length || co.address || co.contact)
-    ? `<div class="grid2">
-        <div>${openDays.length ? `<table class="pf-hours">${openDays.map(([k, label]) =>
-            `<tr><th>${label}</th><td>${escapeHtml(hours[k])}</td></tr>`).join('')}</table>` : ''}</div>
-        <div class="pf-contact">
-          ${co.contact ? `<div><b>${escapeHtml(co.contact)}</b></div>` : ''}
-          ${co.address ? `<div>${escapeHtml(co.address)}</div>` : ''}
-          ${co.phone ? `<div><a href="tel:${escapeHtml(co.phone)}">${escapeHtml(co.phone)}</a></div>` : ''}
-          ${co.email ? `<div><a href="mailto:${escapeHtml(co.email)}">${escapeHtml(co.email)}</a></div>` : ''}
-          ${socialLinks(co.socials)}
-        </div>
-       </div>` : '');
-
   /* ---- reviews ---- */
   html += section('Buyer reviews', `
     ${reviews.length ? `<div class="pf-reviews">${reviews.map(r => `
@@ -163,12 +152,36 @@ async function initProfile(){
       </div>`).join('')}</div>` : '<p class="empty-line">No reviews yet. Be the first to review this supplier.</p>'}
     ${co.reviews_enabled ? reviewForm() : ''}`);
 
-  /* ---- RFQ + claim ---- */
+  /* ---- RFQ ---- */
   html += rfqForm(co);
-  html += `<div class="claim-line" id="claim-line">
-      Do you work at ${escapeHtml(co.name)}?
-      <a href="/claim?c=${encodeURIComponent(co.handle)}">Claim this profile</a> to edit it and receive quote requests.
-    </div>`;
+
+  /* ---- sidebar: one place for everything a buyer needs to act ---- */
+  const hours = co.hours && typeof co.hours === 'object' ? co.hours : {};
+  const openDays = DAYS.filter(([k]) => hours[k]);
+
+  html += `</div><aside class="pf-side">
+    <div class="pf-side-card">
+      <button class="btn btn-primary pf-cta" id="rfq-open">Request a Quote</button>
+      <div class="pf-rows">
+        ${row('Contact', co.contact)}
+        ${row('Phone', co.phone, { href: 'tel:' + (co.phone || ''), id: 'pf-phone' })}
+        ${row('Email', co.email, { href: 'mailto:' + (co.email || ''), id: 'pf-email' })}
+        ${site ? row('Website', site.replace(/^https?:\/\//, '').replace(/\/$/, ''), { href: site, id: 'pf-site', ext: true }) : ''}
+        ${row('Address', co.address)}
+      </div>
+      ${socialLinks(co.socials)}
+    </div>
+
+    ${openDays.length ? `<div class="pf-side-card">
+      <h2 class="pf-sec-h">Opening hours</h2>
+      <div class="pf-rows">${openDays.map(([k, label]) =>
+        `<div class="pf-row"><span class="pf-row-l">${label}</span><span class="pf-row-v">${escapeHtml(hours[k])}</span></div>`
+      ).join('')}</div>
+    </div>` : ''}
+
+    <p class="pf-claim">Do you work at ${escapeHtml(co.name)}?
+      <a href="/claim?c=${encodeURIComponent(co.handle)}">Claim this profile</a>.</p>
+  </aside></div>`;
 
   root.innerHTML = html;
   jsonLd(co, avg, reviews.length, site);
