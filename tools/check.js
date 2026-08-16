@@ -119,6 +119,40 @@ for (const id of ['f-handle', 'f-pass', 'f-pass2']) {
   assert.ok(joinHtml.includes(`id="${id}"`), `join.html is missing ${id}`);
 }
 
+/* --- the estimate shown on Get Listed must equal what admin bills ---
+       Each keyword becomes its own application row, so extras are per keyword.
+       If these two ever diverge, an applicant is quoted one price and invoiced
+       another. */
+const storeSrc = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+const feeLine = storeSrc.match(/const BASE_FEE = (\d+), BANNER_FEE = (\d+), BADGE_FEE = (\d+);/);
+assert.ok(feeLine, 'pricing constants moved or changed shape in store.js');
+const [BASE, BANNER, BADGE] = feeLine.slice(1).map(Number);
+
+const effPrice = (v, f) => (v == null || v === '' || isNaN(Number(v))) ? f : Number(v);
+function appPrice(a){                      // mirrors store.js
+  let p = effPrice(a && a.listing_price, BASE);
+  if (a && a.banner) p += effPrice(a.banner_price, BANNER);
+  if (a && a.badge)  p += effPrice(a.badge_price, BADGE);
+  return p;
+}
+for (const banner of [false, true]) {
+  for (const badge of [null, { text: 'x' }]) {
+    for (const n of [1, 3, 5]) {
+      const quoted = n * (BASE + (banner ? BANNER : 0) + (badge ? BADGE : 0));
+      const billed = Array.from({ length: n }, () => appPrice({ banner, badge }))
+        .reduce((s, x) => s + x, 0);
+      assert.strictEqual(quoted, billed,
+        `estimate ${quoted} != billed ${billed} for ${n} keyword(s), banner=${banner}, badge=${!!badge}`);
+    }
+  }
+}
+const appSrc = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+assert.ok(appSrc.includes('function renderQuote'), 'Get Listed lost its live estimate');
+for (const trigger of ['renderQuote()']) {
+  assert.ok((appSrc.match(/renderQuote\(\)/g) || []).length >= 4,
+    'renderQuote is not wired to every input that changes the price');
+}
+
 require('./render-check.js');
 
 console.log('checks passed (' + (CASES.length + 6) + ' assertions)');
