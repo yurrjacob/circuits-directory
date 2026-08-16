@@ -61,5 +61,18 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   // contact details must not be duplicated in the main column any more
   assert.ok(!captured.includes('pf-contact'), 'old duplicate contact block still rendering');
   assert.ok(!captured.includes('pf-actions'), 'old hero action column still rendering');
-  console.log('render smoke test passed —', opens, 'balanced block tags,', captured.length, 'chars');
+
+  // sidebar values must be single-line: the tooltip carries the untruncated text
+  assert.ok(captured.includes('pf-row-v" title='), 'sidebar rows lost their full-value tooltip');
+
+  // reviews are opt-in — with them off and none approved, the section must vanish
+  assert.ok(captured.includes('Buyer reviews'), 'reviews section missing when enabled');
+  CO.reviews_enabled = false;
+  global.fetchReviews = async () => [];
+  await initProfile();
+  assert.ok(!captured.includes('Buyer reviews'),
+    'reviews section still renders for a company that does not accept reviews');
+  assert.ok(!captured.includes('review-form'), 'review form still renders when reviews are off');
+
+  console.log('render smoke test passed —', opens, 'balanced block tags, reviews gate OK');
 })();

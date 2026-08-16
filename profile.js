@@ -45,7 +45,9 @@ function row(label, value, opts){
   const inner = o.href
     ? `<a href="${escapeHtml(o.href)}"${o.id ? ` id="${o.id}"` : ''}${o.ext ? ' target="_blank" rel="noopener nofollow"' : ''}>${escapeHtml(value)}</a>`
     : escapeHtml(value);
-  return `<div class="pf-row"><span class="pf-row-l">${escapeHtml(label)}</span><span class="pf-row-v">${inner}</span></div>`;
+  // title carries the full value, since long emails and URLs are truncated
+  return `<div class="pf-row"><span class="pf-row-l">${escapeHtml(label)}</span>`
+       + `<span class="pf-row-v" title="${escapeHtml(value)}">${inner}</span></div>`;
 }
 
 async function initProfile(){
@@ -141,8 +143,10 @@ async function initProfile(){
           ${t.email ? `<a class="founder-line" href="mailto:${escapeHtml(t.email)}">${escapeHtml(t.email)}</a>` : ''}</div>
         </div>`).join('')}</div>` : '');
 
-  /* ---- reviews ---- */
-  html += section('Buyer reviews', `
+  /* ---- reviews ----
+     Reviews are off by default. If a company has them switched off, the whole
+     section stays out of the page rather than advertising an empty one. */
+  html += (co.reviews_enabled || reviews.length) ? section('Buyer reviews', `
     ${reviews.length ? `<div class="pf-reviews">${reviews.map(r => `
       <div class="pf-review">
         <div class="pf-review-head">${stars(r.rating)} <b>${escapeHtml(r.author_name)}</b>
@@ -150,7 +154,7 @@ async function initProfile(){
         <p>${escapeHtml(r.body)}</p>
         ${r.reply ? `<div class="pf-reply"><b>${escapeHtml(co.name)} replied:</b> ${escapeHtml(r.reply)}</div>` : ''}
       </div>`).join('')}</div>` : '<p class="empty-line">No reviews yet. Be the first to review this supplier.</p>'}
-    ${co.reviews_enabled ? reviewForm() : ''}`);
+    ${co.reviews_enabled ? reviewForm() : ''}`) : '';
 
   /* ---- RFQ ---- */
   html += rfqForm(co);

@@ -499,8 +499,9 @@ tr.row-warn td{background:#fff3cd}
 .pf-rows{display:flex;flex-direction:column}
 .pf-row{display:flex;gap:10px;padding:7px 0;font-size:.88rem;border-top:1px solid var(--line)}
 .pf-row:first-child{border-top:0;padding-top:0}
-.pf-row-l{flex:none;width:72px;color:var(--muted)}
-.pf-row-v{min-width:0;overflow-wrap:anywhere}
+.pf-row-l{flex:none;width:62px;color:var(--muted)}
+.pf-row-v{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-row-v a{display:block;overflow:hidden;text-overflow:ellipsis}
 .pf-row-v a{color:var(--green-dark);font-weight:600;text-decoration:none}
 .pf-row-v a:hover{text-decoration:underline}
 .pf-side-card .pf-sec-h{margin:0 0 8px}

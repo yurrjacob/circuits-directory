@@ -192,10 +192,14 @@ function renderRepeater(key, items, fields, labels){
 
 async function saveProfile(){
   const btn = el('pt-save'); btn.disabled = true;
+  /* The address is optional on save. It used to abort the whole save when the
+     field was empty or invalid, which silently threw away every other edit —
+     change your contact person with a blank address and nothing persisted. */
   const wantHandle = val('f-handle');
-  if(wantHandle !== (PT.co.handle || '')){
+  const handleChanged = wantHandle !== (PT.co.handle || '');
+  if(handleChanged && wantHandle){
     const why = await handleAvailable(wantHandle, PT.slug);
-    if(why){ btn.disabled = false; toast('Address not saved: ' + why, false); return; }
+    if(why){ btn.disabled = false; toast('Address not saved: ' + why + ' Your other changes were not saved either — fix the address or put the old one back.', false); return; }
   }
   const hours = {}, socials = {};
   HOUR_DAYS.forEach(([k]) => { const v = val('h-' + k); if(v) hours[k] = v; });
@@ -203,7 +207,6 @@ async function saveProfile(){
   const clean = key => (el('f-' + key).__list || []).filter(o => Object.values(o).some(v => (v || '').trim()));
 
   const fields = {
-    handle: wantHandle || null,
     tagline: val('f-tagline') || null,
     description: val('f-desc') || null,
     website: val('f-website') || null,
@@ -217,6 +220,10 @@ async function saveProfile(){
     hours, socials,
     certifications: clean('certs'), team: clean('team'), gallery: clean('gallery')
   };
+  /* only touch the address when it actually changed and is non-empty, so a
+     blank field can never wipe an existing circuits.com/<handle> */
+  if(handleChanged && wantHandle) fields.handle = wantHandle;
+
   const file = el('pt-logo').files && el('pt-logo').files[0];
   if(file){ const url = await uploadImage(file); if(url) fields.logo = url; }
 

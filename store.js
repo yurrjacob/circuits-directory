@@ -255,10 +255,14 @@ async function myCompanies(){
   if(error){ console.error('myCompanies', error); return []; }
   return data || [];
 }
+/* A row-level-security refusal is NOT an error in PostgREST — a blocked update
+   returns success with zero rows touched. Selecting the row back is the only
+   way to tell "saved" from "silently discarded". */
 async function updateCompany(slug, fields){
   if(!sb) return 'No connection';
-  const { error } = await sb.from('companies').update(fields).eq('slug', slug);
+  const { data, error } = await sb.from('companies').update(fields).eq('slug', slug).select('slug');
   if(error){ console.error('updateCompany', error); return error.message; }
+  if(!data || !data.length) return 'nothing was saved — this account does not have permission to edit this company.';
   return null;
 }
 async function fetchMyListings(slug){
