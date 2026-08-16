@@ -600,3 +600,27 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
   *{animation-duration:.01ms!important;animation-iteration-count:1!important;
     transition-duration:.01ms!important;scroll-behavior:auto!important}
 }
+
+/* ---- Get Listed estimate ---- */
+.quote{border:1px solid var(--line);border-radius:var(--radius);background:var(--bg-soft);padding:16px}
+.quote-lines{display:flex;flex-direction:column;gap:2px}
+.quote-line{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:baseline;
+  padding:8px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.quote-line .quote-each{color:var(--muted);font-size:.82rem;white-space:nowrap}
+.quote-line b{min-width:66px;text-align:right}
+.quote-total{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding-top:12px;font-weight:700}
+.quote-total b{font-size:1.35rem;color:var(--green-dark)}
+
+/* ---- results: readable rows, and cards instead of a squashed table on phones ---- */
+.listings-table tbody tr{transition:background .12s}
+.listings-table tbody tr:hover{background:var(--bg-soft)}
+@media(max-width:640px){
+  .listings-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .listings-table,.listings-table tbody,.listings-table tr,.listings-table td{display:block;width:100%}
+  .listings-table tr{border:1px solid var(--line);border-radius:var(--radius);margin-bottom:10px;padding:10px 12px}
+  .listings-table tr:hover{background:transparent}
+  .listings-table td{border:0;padding:3px 0}
+  .listings-table td[data-label]{display:flex;gap:10px;align-items:baseline;font-size:.9rem}
+  .listings-table td[data-label]::before{content:attr(data-label);flex:none;width:62px;color:var(--muted);font-size:.8rem}
+  .table-wrap{overflow:visible}
+}

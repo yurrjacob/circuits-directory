@@ -126,9 +126,9 @@ async function initResults(forcedTerm){
               <a href="/join">Your Company or Name</a>
               <span class="lb" style="background:#c9a227">Authorized</span>
             </div></td>
-            <td class="cell-muted">Your Contact</td>
-            <td class="cell-muted">(555) 123-4567</td>
-            <td class="cell-muted">sales@yourcompany.com</td>
+            <td class="cell-muted" data-label="Contact">Your Contact</td>
+            <td class="cell-muted" data-label="Phone">(555) 123-4567</td>
+            <td class="cell-muted" data-label="Email">sales@yourcompany.com</td>
           </tr></tbody>
         </table>
       </div>
@@ -179,9 +179,9 @@ async function initResults(forcedTerm){
           ${docLinks(c)}
         </div>
       </td>
-      <td class="cell-muted">${escapeHtml(c.contact||'—')}</td>
-      <td class="cell-muted"><a href="tel:${escapeHtml(c.phone||'')}">${escapeHtml(c.phone||'—')}</a></td>
-      <td class="cell-muted"><a href="mailto:${escapeHtml(c.email||'')}">${escapeHtml(c.email||'—')}</a></td>
+      <td class="cell-muted" data-label="Contact">${escapeHtml(c.contact||'—')}</td>
+      <td class="cell-muted" data-label="Phone"><a href="tel:${escapeHtml(c.phone||'')}">${escapeHtml(c.phone||'—')}</a></td>
+      <td class="cell-muted" data-label="Email"><a href="mailto:${escapeHtml(c.email||'')}">${escapeHtml(c.email||'—')}</a></td>
     </tr>`).join('');
 
   body.innerHTML = html + `
@@ -214,7 +214,7 @@ function initJoin(){
     // approval-level ruleset: lowercase, no hyphens, no plurals
     const v = (typeof cleanKw==='function') ? cleanKw(kwInput.value) : (kwInput.value||'').trim().toLowerCase();
     if(!v || keywords.includes(v)) return;
-    keywords.push(v); kwInput.value=''; renderKw(); kwInput.focus();
+    keywords.push(v); kwInput.value=''; renderKw(); renderQuote(); kwInput.focus();
   }
   function checkKw(){
     // preview the keyword's live listing page without touching the form
@@ -228,7 +228,7 @@ function initJoin(){
   if(kwInput) kwInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addKw(); } });
   if(kwTags) kwTags.addEventListener('click', e=>{
     const b = e.target.closest('button'); if(!b) return;
-    keywords.splice(+b.dataset.i,1); renderKw();
+    keywords.splice(+b.dataset.i,1); renderKw(); renderQuote();
   });
   renderKw();
 
@@ -291,8 +291,10 @@ function initJoin(){
   function syncBadgeGate(){
     if(badgeBuilder) badgeBuilder.classList.toggle('on', !!(badgeCheck && badgeCheck.checked));
   }
-  if(badgeCheck) badgeCheck.addEventListener('change', syncBadgeGate);
+  if(badgeCheck) badgeCheck.addEventListener('change', () => { syncBadgeGate(); renderQuote(); });
   syncBadgeGate();
+  const promoCheck = document.getElementById('promo-check');
+  if(promoCheck) promoCheck.addEventListener('change', renderQuote);
   function resetBadge(){ if(customInput) customInput.value=''; selectText(DEFAULT_TEXT); selectColor(DEFAULT_COLOR); syncBadgeGate(); }
 
   // Logo upload preview
@@ -423,9 +425,40 @@ function passwordsMatch(){
 if(passEl) passEl.addEventListener('input', passwordsMatch);
 if(pass2El) pass2El.addEventListener('input', passwordsMatch);
 
+/* ---- live price estimate ----
+   Each keyword is its own listing row, so the banner and badge are charged per
+   keyword. Showing that up front avoids an invoice surprise later. */
+function renderQuote(){
+  const lines = document.getElementById('quote-lines');
+  if(!lines) return;
+  const n = keywords.length;
+  const wantsBanner = !!(document.getElementById('promo-check') && document.getElementById('promo-check').checked);
+  const wantsBadge  = !!(badgeCheck && badgeCheck.checked);
+  const each = BASE_FEE + (wantsBanner ? BANNER_FEE : 0) + (wantsBadge ? BADGE_FEE : 0);
+  const rows = [['Keyword listing', BASE_FEE, true]];
+  if(wantsBanner) rows.push(['Exclusive Circuits-Keyword™ Sponsor banner', BANNER_FEE, true]);
+  if(wantsBadge)  rows.push(['Circuits.com Trust Badge', BADGE_FEE, true]);
+
+  lines.innerHTML = rows.map(([label, price]) =>
+    `<div class="quote-line"><span>${escapeHtml(label)}</span>`
+    + `<span class="quote-each">$${price}/mo &times; ${n || 0}</span>`
+    + `<b>$${price * n}</b></div>`).join('');
+
+  const totalEl = document.getElementById('quote-total');
+  if(totalEl) totalEl.textContent = '$' + (each * n) + (n ? '/mo' : '');
+  const note = document.getElementById('quote-note');
+  if(note) note.textContent = !n
+    ? 'Add at least one Circuits-Keyword™ in step 02 to see your estimate.'
+    : (n === 1
+        ? 'One keyword at $' + each + '/mo.'
+        : n + ' keywords at $' + each + '/mo each. Extras apply to every keyword you claim.');
+}
+
 const msg = document.getElementById('msg');
   const msgCount = document.getElementById('msg-count');
   if(msg) msg.addEventListener('input', ()=>{ msgCount.textContent = `${msg.value.length} / 600`; });
+
+  renderQuote();
 
   const form = document.getElementById('join-form');
   function validate(){
@@ -549,6 +582,7 @@ const msg = document.getElementById('msg');
     form.reset();
     keywords = []; renderKw();
     resetBadge();
+    renderQuote();
     logoUrl = null;
     if(handleMsg) handleMsg.textContent = '';
     if(passMsg) passMsg.textContent = '';
