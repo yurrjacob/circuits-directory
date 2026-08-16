@@ -121,7 +121,8 @@ async function initProfile(){
   const gallery = Array.isArray(co.gallery) ? co.gallery : [];
   html += section('Gallery', gallery.length
     ? `<div class="pf-gallery">${gallery.map(g =>
-        `<figure><img src="${escapeHtml(g.url)}" alt="${escapeHtml(g.caption || co.name)}" loading="lazy">
+        `<figure><img src="${escapeHtml(g.url)}" alt="${escapeHtml(g.caption || co.name)}" loading="lazy"
+           data-full="${escapeHtml(g.url)}" data-cap="${escapeHtml(g.caption || '')}">
          ${g.caption ? `<figcaption>${escapeHtml(g.caption)}</figcaption>` : ''}</figure>`
       ).join('')}</div>` : '');
 
@@ -194,6 +195,28 @@ async function initProfile(){
   jsonLd(co, avg, reviews.length, site);
   wireProfile(slug, co);
   return true;
+}
+
+/* Full-size image overlay. Closes on click, on Esc, or with the button. */
+function openLightbox(src, caption){
+  const box = document.createElement('div');
+  box.className = 'pf-lb';
+  box.innerHTML = `<button class="pf-lb-x" aria-label="Close">×</button>
+    <img src="${escapeHtml(src)}" alt="${escapeHtml(caption || '')}">
+    ${caption ? `<p class="pf-lb-cap">${escapeHtml(caption)}</p>` : ''}`;
+
+  const close = () => {
+    box.remove();
+    document.removeEventListener('keydown', onKey);
+    document.body.style.overflow = '';
+  };
+  const onKey = e => { if(e.key === 'Escape') close(); };
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', onKey);
+  document.body.style.overflow = 'hidden';
+  document.body.appendChild(box);
+  box.querySelector('.pf-lb-x').focus();
 }
 
 function socialLinks(socials){
@@ -278,6 +301,12 @@ function jsonLd(co, avg, count, site){
 
 function wireProfile(slug, co){
   trackEvent(slug, 'view');
+
+  /* Gallery photos open full size — a 140px thumbnail of a warehouse tells a
+     buyer nothing. */
+  document.querySelectorAll('.pf-gallery img[data-full]').forEach(img => {
+    img.addEventListener('click', () => openLightbox(img.dataset.full, img.dataset.cap));
+  });
 
   /* Copy the short link — this is what goes on adverts and email signatures. */
   const copy = document.getElementById('pf-copy');

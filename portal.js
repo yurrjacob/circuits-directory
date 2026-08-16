@@ -526,8 +526,10 @@ function renderPromote(){
         </div>
         <button class="mini-btn green" data-print="${id}" data-page="${page}">Print</button>
       </div>
-      <div class="kit-stage">
+      <div class="kit-stage" role="button" tabindex="0" aria-label="Enlarge ${title}"
+           data-zoom data-w="${w}" data-h="${h}">
         <div class="kit-scaler" style="--s:${s};--w:${w}in;--h:${h}in">${art}</div>
+        <span class="kit-zoom-hint">Click to enlarge</span>
       </div>
     </div>`).join('')}
 
@@ -555,6 +557,12 @@ function wirePromote(){
   if(!kit || kit.__wired) return;
   kit.__wired = true;
 
+  kit.addEventListener('keydown', e => {
+    if(e.key !== 'Enter' && e.key !== ' ') return;
+    const stage = e.target.closest('[data-zoom]');
+    if(stage){ e.preventDefault(); zoomArt(stage); }
+  });
+
   kit.addEventListener('click', async e => {
     const styleBtn = e.target.closest('[data-style]');
     const printBtn = e.target.closest('[data-print]');
@@ -562,7 +570,10 @@ function wirePromote(){
     const richBtn  = e.target.closest('[data-copy-rich]');
 
     if(styleBtn){ KIT_STYLE = styleBtn.dataset.style; kit.__wired = false; renderPromote(); return; }
-    if(printBtn) printArt(printBtn.dataset.print, printBtn.dataset.page);
+    if(printBtn){ printArt(printBtn.dataset.print, printBtn.dataset.page); return; }
+
+    const stage = e.target.closest('[data-zoom]');
+    if(stage){ zoomArt(stage); return; }
 
     if(copyBtn){
       const ta = el(copyBtn.dataset.copy);
@@ -587,6 +598,37 @@ function wirePromote(){
       setTimeout(() => { richBtn.textContent = 'Copy formatted'; }, 2200);
     }
   });
+}
+
+/* Click a preview to see it big. The artwork is cloned and re-scaled to fit the
+   window, so it stays crisp — it is live markup, not an image. */
+function zoomArt(stage){
+  const art = stage.querySelector('.kit-art');
+  if(!art) return;
+  const w = parseFloat(stage.dataset.w), h = parseFloat(stage.dataset.h);
+  const fit = Math.min((window.innerWidth - 120) / (w * 96),
+                       (window.innerHeight - 150) / (h * 96));
+  const s = Math.max(0.2, Math.min(fit, 2));
+
+  const box = document.createElement('div');
+  box.className = 'kit-lb' + (el('promo-kit').classList.contains('kit-dark') ? ' kit-dark' : '');
+  box.innerHTML = `<button class="kit-lb-x" aria-label="Close">×</button>
+    <div class="kit-scaler" style="--s:${s};--w:${w}in;--h:${h}in"></div>
+    <p class="kit-lb-note">${w} × ${h} in at full size · click anywhere or press Esc to close</p>`;
+  box.querySelector('.kit-scaler').appendChild(art.cloneNode(true));
+
+  const close = () => {
+    box.remove();
+    document.removeEventListener('keydown', onKey);
+    document.body.style.overflow = '';
+  };
+  const onKey = ev => { if(ev.key === 'Escape') close(); };
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', onKey);
+  document.body.style.overflow = 'hidden';
+  document.body.appendChild(box);
+  box.querySelector('.kit-lb-x').focus();
 }
 
 /* Print exactly one piece at its own paper size. @page cannot be switched with

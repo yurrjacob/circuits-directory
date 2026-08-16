@@ -530,9 +530,31 @@ tr.row-warn td{background:#fff3cd}
 .pf-gallery figcaption{font-size:.78rem;color:var(--muted);margin-top:5px}
 .pf-certs{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:8px}
 .pf-certs li{border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:.86rem;background:var(--bg-soft)}
-.pf-team{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:12px}
-.pf-team .founder-card{border:1px solid var(--line);border-radius:var(--radius);padding:12px}
+.pf-team{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+/* the shared .founder-card is built for a wide two-column contact page; in a
+   230px grid cell the email has to be allowed to wrap or it leaves the box */
+.pf-team .founder-card{border:1px solid var(--line);border-radius:var(--radius);padding:12px;
+  margin:0;display:flex;gap:11px;align-items:flex-start;min-width:0}
+.pf-team .founder-card > div:last-child{min-width:0;flex:1}
+.pf-team .founder-avatar{width:38px;height:38px;font-size:.85rem}
 .pf-team .founder-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.pf-team .founder-name{font-size:.95rem;font-weight:700}
+.pf-team .founder-role{font-size:.7rem;margin-top:2px}
+.pf-team .founder-line{display:block;border-top:0;padding:5px 0 0;font-size:.8rem;
+  color:var(--green-dark);font-weight:600;overflow-wrap:anywhere;word-break:break-word}
+
+/* gallery: thumbnails open full size */
+.pf-gallery img{cursor:zoom-in;transition:opacity .12s}
+.pf-gallery img:hover{opacity:.88}
+.pf-lb{position:fixed;inset:0;z-index:999;background:rgba(15,15,15,.86);cursor:zoom-out;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px}
+.pf-lb img{max-width:min(1100px,92vw);max-height:82vh;object-fit:contain;border-radius:8px;
+  box-shadow:0 18px 60px rgba(0,0,0,.5)}
+.pf-lb-cap{margin:0;color:#cfd4d9;font-size:.9rem;text-align:center;max-width:60ch}
+.pf-lb-x{position:absolute;top:14px;right:18px;width:38px;height:38px;border-radius:50%;border:0;
+  background:rgba(255,255,255,.14);color:#fff;font-size:1.5rem;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center}
+.pf-lb-x:hover{background:rgba(255,255,255,.26)}
 
 .pf-reviews{display:flex;flex-direction:column;gap:12px;margin-bottom:18px}
 .pf-review{border:1px solid var(--line);border-radius:var(--radius);padding:13px 15px}
@@ -643,7 +665,25 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 
 /* showcase: artwork sits on a desk-grey surface with a real drop shadow */
 .kit-stage{background:#eceef1;border-top:1px solid var(--line);padding:22px 16px;
-  display:flex;justify-content:center;align-items:flex-start}
+  display:flex;justify-content:center;align-items:flex-start;position:relative;cursor:zoom-in}
+.kit-stage:hover{background:#e5e8ec}
+.kit-stage:focus-visible{outline:2px solid var(--green-dark);outline-offset:-2px}
+.kit-zoom-hint{position:absolute;right:10px;bottom:8px;font-size:.7rem;font-weight:600;
+  letter-spacing:.05em;text-transform:uppercase;color:#8b9199;pointer-events:none}
+.kit-stage:hover .kit-zoom-hint{color:var(--green-dark)}
+
+/* click-to-enlarge overlay: the artwork is cloned live, not an image, so it
+   stays sharp at whatever size the window allows */
+.kit-lb{position:fixed;inset:0;z-index:999;background:rgba(15,15,15,.82);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  padding:24px;cursor:zoom-out;overflow:auto}
+.kit-lb .kit-scaler{flex:none}
+.kit-lb .kit-scaler > .kit-art{box-shadow:0 18px 60px rgba(0,0,0,.5)}
+.kit-lb-x{position:absolute;top:14px;right:18px;width:38px;height:38px;border-radius:50%;
+  border:0;background:rgba(255,255,255,.14);color:#fff;font-size:1.5rem;line-height:1;
+  cursor:pointer;display:flex;align-items:center;justify-content:center}
+.kit-lb-x:hover{background:rgba(255,255,255,.26)}
+.kit-lb-note{margin:0;color:#cfd4d9;font-size:.82rem;text-align:center}
 /* A transform does not change layout size, so the stage used to reserve the
    artwork's FULL height — a 10in sign left ~970px of empty grey. The scaler
    box is sized to the scaled result and the art is positioned inside it. */
