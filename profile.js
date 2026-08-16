@@ -217,7 +217,7 @@ function reviewForm(){
 function rfqForm(co){
   return `
   <section class="pf-sec" id="rfq">
-    <h2>Request a quote from ${escapeHtml(co.name)}</h2>
+    <h2 class="pf-sec-h">Request a quote from ${escapeHtml(co.name)}</h2>
     <form class="pf-form" id="rfq-form" autocomplete="off">
       <div class="form-row">
         <div class="auth-field"><label>Your name *</label><input id="rq-name" type="text" required maxlength="80"></div>
