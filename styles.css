@@ -642,10 +642,16 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 .kit-head .pf-note{margin:0}
 
 /* showcase: artwork sits on a desk-grey surface with a real drop shadow */
-.kit-stage{background:#eceef1;border-top:1px solid var(--line);padding:26px 16px;
-  display:flex;justify-content:center;align-items:flex-start;overflow:hidden}
-.kit-scaler{transform:scale(var(--s));transform-origin:top center}
-.kit-stage .kit-art{box-shadow:0 6px 22px rgba(15,15,15,.22),0 1px 3px rgba(15,15,15,.12)}
+.kit-stage{background:#eceef1;border-top:1px solid var(--line);padding:22px 16px;
+  display:flex;justify-content:center;align-items:flex-start}
+/* A transform does not change layout size, so the stage used to reserve the
+   artwork's FULL height — a 10in sign left ~970px of empty grey. The scaler
+   box is sized to the scaled result and the art is positioned inside it. */
+.kit-scaler{position:relative;flex:none;
+  width:calc(var(--w) * var(--s));height:calc(var(--h) * var(--s))}
+.kit-scaler > .kit-art{position:absolute;left:0;top:0;
+  transform:scale(var(--s));transform-origin:top left;
+  box-shadow:0 6px 22px rgba(15,15,15,.22),0 1px 3px rgba(15,15,15,.12)}
 
 /* artwork, drawn at true physical size */
 .kit-art{--ink:#0f0f0f;--paper:#fff;--soft:#5a5f65;--accent:#76c000;--accentink:#3f6300;
@@ -673,7 +679,7 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 .kit-card-r{display:flex;flex-direction:column;align-items:center;gap:.05in;flex:none}
 
 /* sticker sheet */
-.kit-sheet{width:7.8in;padding:.12in;box-sizing:border-box;display:flex;flex-direction:column;gap:.2in}
+.kit-sheet{width:7.8in;height:5.2in;padding:.12in;box-sizing:border-box;display:flex;flex-direction:column;gap:.2in}
 .kit-row{display:grid;gap:.14in}
 .kit-row-wide{grid-template-columns:repeat(2,3.6in)}
 .kit-row-round{grid-template-columns:repeat(3,2.4in)}
@@ -700,7 +706,7 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 .kit-sign-foot{font-size:.13in;color:var(--soft)}
 
 /* shelf + bin labels */
-.kit-shelf{width:7.8in;padding:.12in;box-sizing:border-box;display:flex;flex-direction:column;gap:.1in}
+.kit-shelf{width:7.8in;height:9.8in;padding:.12in;box-sizing:border-box;display:flex;flex-direction:column;gap:.1in}
 .kit-shelf-row{display:flex;align-items:center;gap:.14in;height:1.1in;padding:.1in .14in;
   border:1px dashed #b6bcc2;border-radius:.08in;box-sizing:border-box}
 .kit-shelf-txt{display:flex;flex-direction:column;min-width:1.9in;gap:.02in}
@@ -740,7 +746,8 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
   body[data-printing] .kit-art-active *{visibility:visible!important}
   body[data-printing] .kit-art-active{position:absolute!important;left:0;top:0;
     transform:none!important;box-shadow:none!important;margin:0}
-  body[data-printing] .kit-scaler{transform:none!important}
+  body[data-printing] .kit-scaler{width:auto!important;height:auto!important;position:static!important}
+  body[data-printing] .kit-scaler > .kit-art{position:absolute!important;transform:none!important}
   body[data-printing] .kit-stage{overflow:visible!important;padding:0!important;
     border:0!important;background:none!important}
   body[data-printing] .kit-st,body[data-printing] .kit-shelf-row{border-color:#8d949b}

@@ -497,12 +497,13 @@ function renderPromote(){
       ${qrBox()}
     </div>`;
 
+  /* id, title, size label, what it is for, markup, paper, [width in, height in, preview scale] */
   const ITEMS = [
-    ['card',     'Business card back',  '3.5 × 2 in',       'Hand it over and they can pull up everything you stock.', card,     '3.5in 2in', 1.55],
-    ['stickers', 'Sticker sheet',       'Letter · 20 up',   'Reels, bins, toolboxes, shipping boxes, hard hats.',       stickers, 'letter',    3.2],
-    ['shelf',    'Shelf &amp; bin labels',  'Letter · 8 up',    'Trade counter shelving and stores. Write the part in the blank.', shelf, 'letter', 3.2],
-    ['sign',     'Counter sign',        'Letter',           'Trade show table, trade counter, noticeboard.',            sign,     'letter',    3.2],
-    ['decal',    'Window decal',        '6 × 2 in',         'Shop window, van door, workshop entrance.',                decal,    '6in 2in',   2.4]
+    ['card',     'Business card back',     '3.5 × 2 in',     'Hand it over and they can pull up everything you stock.',        card,     '3.5in 2in', 3.5, 2,    0.80],
+    ['decal',    'Window decal',           '6 × 2 in',       'Shop window, van door, workshop entrance.',                      decal,    '6in 2in',   6,   2,    0.62],
+    ['stickers', 'Sticker sheet',          'Letter · 20 up', 'Reels, bins, toolboxes, shipping boxes, hard hats.',             stickers, 'letter',    7.8, 5.2,  0.46],
+    ['shelf',    'Shelf &amp; bin labels', 'Letter · 8 up',  'Trade counter shelving and stores. Write the part in the blank.', shelf,    'letter',    7.8, 9.8,  0.30],
+    ['sign',     'Counter sign',           'Letter',         'Trade show table, trade counter, noticeboard.',                  sign,     'letter',    7.8, 10.1, 0.30]
   ];
 
   kit.className = 'kit kit-' + KIT_STYLE;
@@ -516,7 +517,7 @@ function renderPromote(){
     <span class="kit-bar-note">Dark uses more ink but stands out on a busy counter.</span>
   </div>
 
-  ${ITEMS.map(([id, title, size, why, art, page, scale]) => `
+  ${ITEMS.map(([id, title, size, why, art, page, w, h, s]) => `
     <div class="kit-item">
       <div class="kit-head">
         <div>
@@ -525,7 +526,9 @@ function renderPromote(){
         </div>
         <button class="mini-btn green" data-print="${id}" data-page="${page}">Print</button>
       </div>
-      <div class="kit-stage"><div class="kit-scaler" style="--s:${1/scale}">${art}</div></div>
+      <div class="kit-stage">
+        <div class="kit-scaler" style="--s:${s};--w:${w}in;--h:${h}in">${art}</div>
+      </div>
     </div>`).join('')}
 
   <div class="kit-item">
