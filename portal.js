@@ -35,7 +35,12 @@ async function initPortal(){
   const picker = el('pt-company');
   picker.innerHTML = cos.map(c => `<option value="${escapeHtml(c.slug)}">${escapeHtml(c.name)}</option>`).join('');
   picker.style.display = cos.length > 1 ? '' : 'none';
-  picker.addEventListener('change', () => loadCompany(picker.value));
+  picker.addEventListener('change', () => {
+    if(PT_DIRTY && !confirm('You have unsaved profile changes. Switch company and lose them?')){
+      picker.value = PT.slug; return;
+    }
+    loadCompany(picker.value);
+  });
 
   wireTabs();
   await loadCompany(cos[0].slug);
@@ -63,12 +68,38 @@ function wireAuth(){
   });
 }
 
+/* Unsaved-changes guard. Editing a profile is a lot of typing; closing the tab
+   or signing out used to bin it silently. */
+let PT_DIRTY = false;
+function markDirty(){ PT_DIRTY = true; }
+function markClean(){ PT_DIRTY = false; }
+function wireDirtyTracking(){
+  const panel = el('tab-profile');
+  if(!panel || panel.__dirtyWired) return;
+  panel.__dirtyWired = true;
+  panel.addEventListener('input', markDirty);
+  panel.addEventListener('change', markDirty);
+  // adding or removing a certification/team/gallery row is an edit too
+  panel.addEventListener('click', e => { if(e.target.closest('[data-add],[data-del]')) markDirty(); });
+  window.addEventListener('beforeunload', e => {
+    if(!PT_DIRTY) return;
+    e.preventDefault();
+    e.returnValue = '';
+  });
+}
+
 function wireTabs(){
   document.querySelectorAll('.pt-tab').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('.pt-tab').forEach(x => x.classList.toggle('active', x === b));
     document.querySelectorAll('.pt-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + b.dataset.tab));
   }));
-  el('pt-signout').addEventListener('click', async e => { e.preventDefault(); await signOut(); location.href = '/'; });
+  el('pt-signout').addEventListener('click', async e => {
+    e.preventDefault();
+    if(PT_DIRTY && !confirm('You have unsaved profile changes. Sign out and lose them?')) return;
+    markClean();
+    await signOut();
+    location.href = '/';
+  });
 }
 
 async function loadCompany(slug){
@@ -81,11 +112,28 @@ async function loadCompany(slug){
     fetchMyListings(slug), fetchInquiries(slug), fetchMyReviews(slug), companyStats(slug, 30)
   ]);
   PT.listings = listings; PT.inquiries = inquiries; PT.reviews = reviews;
+  markUnread();
   renderOverview(stats);
   renderProfileForm();
+  wireDirtyTracking();
+  markClean();
   renderListings();
   renderInquiries();
   renderReviews();
+}
+
+/* A supplier should not have to open the tab to discover a new quote request. */
+function markUnread(){
+  const tab = document.querySelector('.pt-tab[data-tab="inquiries"]');
+  if(!tab) return;
+  const n = PT.inquiries.filter(q => q.status === 'New').length;
+  tab.textContent = 'Quote requests';
+  if(n){
+    const b = document.createElement('span');
+    b.className = 'pt-badge';
+    b.textContent = n;
+    tab.appendChild(b);
+  }
 }
 
 /* ---------- overview ---------- */
@@ -231,8 +279,10 @@ async function saveProfile(){
   btn.disabled = false;
   if(err){ toast('Could not save: ' + err, false); return; }
   toast('Profile saved.', true);
+  markClean();
   PT.co = await fetchCompany(PT.slug);
   renderProfileForm();
+  markClean();
 }
 
 /* ---------- listings ---------- */

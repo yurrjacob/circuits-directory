@@ -65,6 +65,10 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   // sidebar values must be single-line: the tooltip carries the untruncated text
   assert.ok(captured.includes('pf-row-v" title='), 'sidebar rows lost their full-value tooltip');
 
+  // the short link must be copyable — it is what goes on adverts
+  assert.ok(captured.includes('id="pf-copy"'), 'copy-link control missing from the sidebar');
+  assert.ok(captured.includes('https://circuits.com/aaa_electronics'), 'copy-link has the wrong URL');
+
   // reviews are opt-in — with them off and none approved, the section must vanish
   assert.ok(captured.includes('Buyer reviews'), 'reviews section missing when enabled');
   CO.reviews_enabled = false;

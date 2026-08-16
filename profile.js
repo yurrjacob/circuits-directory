@@ -166,6 +166,9 @@ async function initProfile(){
   html += `</div><aside class="pf-side">
     <div class="pf-side-card">
       <button class="btn btn-primary pf-cta" id="rfq-open">Request a Quote</button>
+      <button type="button" class="pf-copy" id="pf-copy" data-url="https://circuits.com/${escapeHtml(co.handle)}">
+        <span>circuits.com/${escapeHtml(co.handle)}</span><b>Copy</b>
+      </button>
       <div class="pf-rows">
         ${row('Contact', co.contact)}
         ${row('Phone', co.phone, { href: 'tel:' + (co.phone || ''), id: 'pf-phone' })}
@@ -275,6 +278,23 @@ function jsonLd(co, avg, count, site){
 
 function wireProfile(slug, co){
   trackEvent(slug, 'view');
+
+  /* Copy the short link — this is what goes on adverts and email signatures. */
+  const copy = document.getElementById('pf-copy');
+  if(copy) copy.addEventListener('click', async () => {
+    const label = copy.querySelector('b');
+    try{
+      await navigator.clipboard.writeText(copy.dataset.url);
+      label.textContent = 'Copied';
+    }catch(e){
+      /* clipboard blocked (http, permissions) — select it so Ctrl+C still works */
+      const r = document.createRange();
+      r.selectNodeContents(copy.querySelector('span'));
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      label.textContent = 'Press Ctrl+C';
+    }
+    setTimeout(() => { label.textContent = 'Copy'; }, 2200);
+  });
   const hit = (id, kind) => { const el = document.getElementById(id); if(el) el.addEventListener('click', () => trackEvent(slug, kind)); };
   hit('pf-site', 'website'); hit('pf-phone', 'phone'); hit('pf-email', 'email');
   document.querySelectorAll('[data-doc]').forEach(a => a.addEventListener('click', () => trackEvent(slug, 'doc')));
