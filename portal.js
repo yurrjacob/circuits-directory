@@ -120,6 +120,7 @@ async function loadCompany(slug){
   renderListings();
   renderInquiries();
   renderReviews();
+  renderPromote();
 }
 
 /* A supplier should not have to open the tab to discover a new quote request. */
@@ -170,6 +171,7 @@ function renderOverview(stats){
 function renderProfileForm(){
   const c = PT.co;
   const set = (id, v) => { if(el(id)) el(id).value = v || ''; };
+  set('f-name', c.name);
   set('f-tagline', c.tagline); set('f-desc', c.description); set('f-website', c.website);
   set('f-phone', c.phone); set('f-email', c.email); set('f-contact', c.contact);
   set('f-address', c.address); set('f-founded', c.founded); set('f-employees', c.employees);
@@ -255,6 +257,7 @@ async function saveProfile(){
   const clean = key => (el('f-' + key).__list || []).filter(o => Object.values(o).some(v => (v || '').trim()));
 
   const fields = {
+    name: val('f-name') || PT.co.name,   // never let the company lose its name
     tagline: val('f-tagline') || null,
     description: val('f-desc') || null,
     website: val('f-website') || null,
@@ -281,7 +284,11 @@ async function saveProfile(){
   toast('Profile saved.', true);
   markClean();
   PT.co = await fetchCompany(PT.slug);
+  el('pt-name').textContent = PT.co.name;
+  const opt = el('pt-company') && el('pt-company').querySelector(`option[value="${PT.slug}"]`);
+  if(opt) opt.textContent = PT.co.name;
   renderProfileForm();
+  renderPromote();
   markClean();
 }
 
@@ -302,7 +309,10 @@ function renderListings(){
         </div>
       </div>
     </div>`).join('');
-  el('pt-listings').innerHTML = rows || '<p class="empty-line">No listings yet.</p>';
+  el('pt-listings').innerHTML = rows || `<div class="pt-empty">
+    <b>No listings yet</b>
+    <p>Once Circuits.com approves a Circuits-Keyword™ for you, it appears here and you can pause or resume it.</p>
+  </div>`;
   el('pt-listings').onclick = async e => {
     const b = e.target.closest('[data-pause]'); if(!b) return;
     b.disabled = true;
@@ -349,18 +359,24 @@ function renderInquiries(){
         <a href="mailto:${escapeHtml(q.from_email)}">${escapeHtml(q.from_email)}</a>
         ${q.phone ? ' · ' + escapeHtml(q.phone) : ''}
       </p>
-      <p>${escapeHtml(q.body)}</p>
+      <p class="pt-quote-body">${escapeHtml(q.body)}</p>
       <div class="pt-thread" id="th-${q.id}"></div>
-      <div class="pt-row" style="margin-top:8px">
-        <textarea id="msg-${q.id}" rows="2" placeholder="Reply — emailed to the buyer and kept on this thread"></textarea>
+      <div class="pt-reply">
+        <label for="msg-${q.id}">Reply to ${escapeHtml(q.from_name)}</label>
+        <textarea id="msg-${q.id}" rows="3" placeholder="Emailed to the buyer and kept on this thread."></textarea>
+        <div class="pt-reply-foot">
+          <button class="mini-btn green" data-send="${q.id}">Send reply</button>
+          <label class="pt-status">Status
+            <select data-status="${q.id}">
+              ${['New','Open','Won','Lost','Closed'].map(s => `<option ${s === q.status ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </label>
+        </div>
       </div>
-      <div style="margin-top:6px">
-        <button class="mini-btn green" data-send="${q.id}">Send reply</button>
-        <select data-status="${q.id}" style="height:32px">
-          ${['New','Open','Won','Lost','Closed'].map(s => `<option ${s === q.status ? 'selected' : ''}>${s}</option>`).join('')}
-        </select>
-      </div>
-    </div>`).join('') || '<p class="empty-line">No quote requests yet.</p>');
+    </div>`).join('') || `<div class="pt-empty">
+      <b>No quote requests yet</b>
+      <p>When a buyer uses the Request a Quote button on your profile, it lands here and you are emailed. Replies are kept on the thread.</p>
+    </div>`);
 
   PT.inquiries.forEach(q => drawThread(q.id));
 
@@ -395,21 +411,194 @@ async function drawThread(id){
      <span class="pf-note">${new Date(m.created_at).toLocaleString()}</span></div>`).join('');
 }
 
+
+/* ---------- promote: printable artwork ----------
+   Everything is drawn in real inches so it prints at true size; the previews
+   are just CSS-scaled copies of the same markup. */
+function qrSvg(text){
+  if(typeof qrcode !== 'function') return '<span class="kit-qr-missing">QR unavailable</span>';
+  const q = qrcode(0, 'M');
+  q.addData(text);
+  q.make();
+  return q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+}
+
+function renderPromote(){
+  const kit = el('promo-kit');
+  if(!kit || !PT.co) return;
+  const co = PT.co;
+  if(!co.handle){
+    kit.innerHTML = '<p class="empty-line">Set your Circuits.com address on the Profile tab first — '
+      + 'every item here is built around it.</p>';
+    return;
+  }
+  const url   = 'https://circuits.com/' + co.handle;
+  const short = 'circuits.com/' + co.handle;
+  const name  = escapeHtml(co.name);
+  const qr    = qrSvg(url);
+  const mark  = isLogoUrl(co.logo)
+    ? `<img class="kit-logo" src="${escapeHtml(co.logo)}" alt="">`
+    : `<span class="kit-logo kit-logo-text">${escapeHtml((co.name || '?').slice(0,1).toUpperCase())}</span>`;
+
+  /* one 2in sticker, reused at several sizes */
+  const sticker = `<div class="kit-sticker">
+      <div class="kit-sticker-qr">${qr}</div>
+      <div class="kit-sticker-txt"><b>${escapeHtml(short)}</b><span>Find us on Circuits.com</span></div>
+    </div>`;
+
+  kit.innerHTML = `
+  <div class="kit-item">
+    <div class="kit-head">
+      <div><h3>Business card back</h3>
+        <p class="pf-note">3.5 &times; 2 in. Hand it over and they can pull up your full listing.</p></div>
+      <button class="mini-btn green" data-print="card" data-page="3.5in 2in">Print</button>
+    </div>
+    <div class="kit-preview" data-scale="1.5">
+      <div class="kit-art kit-card" data-art="card">
+        <div class="kit-card-l">${mark}<div class="kit-card-name">${name}</div>
+          <div class="kit-card-url">${escapeHtml(short)}</div></div>
+        <div class="kit-card-r"><div class="kit-qr">${qr}</div><span>Scan for our listing</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kit-item">
+    <div class="kit-head">
+      <div><h3>QR sticker sheet</h3>
+        <p class="pf-note">Letter size. Six 2 in and twelve 1 in stickers &mdash; reels, bins, toolboxes, shipping boxes.</p></div>
+      <button class="mini-btn green" data-print="stickers" data-page="letter">Print</button>
+    </div>
+    <div class="kit-preview" data-scale="3.2">
+      <div class="kit-art kit-sheet" data-art="stickers">
+        <div class="kit-grid kit-grid-2">${sticker.repeat(6)}</div>
+        <div class="kit-grid kit-grid-1">${`<div class="kit-sticker kit-sticker-sm"><div class="kit-sticker-qr">${qr}</div><b>${escapeHtml(short)}</b></div>`.repeat(12)}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kit-item">
+    <div class="kit-head">
+      <div><h3>Counter sign</h3>
+        <p class="pf-note">Letter size. For a trade show table, trade counter or noticeboard.</p></div>
+      <button class="mini-btn green" data-print="sign" data-page="letter">Print</button>
+    </div>
+    <div class="kit-preview" data-scale="3.2">
+      <div class="kit-art kit-sign" data-art="sign">
+        ${mark}
+        <div class="kit-sign-name">${name}</div>
+        <div class="kit-sign-lead">Scan to see our parts, documents and contacts</div>
+        <div class="kit-sign-qr">${qr}</div>
+        <div class="kit-sign-url">${escapeHtml(short)}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kit-item">
+    <div class="kit-head">
+      <div><h3>Email signature</h3>
+        <p class="pf-note">Nothing to print &mdash; paste it into Outlook or Gmail and it works every day.</p></div>
+    </div>
+    <div class="kit-sig">
+      <label>Plain text</label>
+      <textarea id="sig-text" rows="3" readonly>${escapeHtml(co.name + (co.contact ? ' — ' + co.contact : ''))}
+${escapeHtml(short)}${co.phone ? '\n' + escapeHtml(co.phone) : ''}</textarea>
+      <button class="mini-btn" data-copy="sig-text">Copy plain text</button>
+
+      <label style="margin-top:14px">Formatted (Outlook, Gmail)</label>
+      <div class="kit-sig-html" id="sig-html"><b>${name}</b>${co.contact ? ' &mdash; ' + escapeHtml(co.contact) : ''}<br>
+        <a href="${escapeHtml(url)}">${escapeHtml(short)}</a>${co.phone ? '<br>' + escapeHtml(co.phone) : ''}</div>
+      <button class="mini-btn" data-copy-rich="sig-html">Copy formatted</button>
+    </div>
+  </div>`;
+
+  wirePromote();
+}
+
+function wirePromote(){
+  const kit = el('promo-kit');
+  if(!kit || kit.__wired) return;
+  kit.__wired = true;
+
+  kit.addEventListener('click', async e => {
+    const printBtn = e.target.closest('[data-print]');
+    const copyBtn  = e.target.closest('[data-copy]');
+    const richBtn  = e.target.closest('[data-copy-rich]');
+
+    if(printBtn) printArt(printBtn.dataset.print, printBtn.dataset.page);
+
+    if(copyBtn){
+      const ta = el(copyBtn.dataset.copy);
+      try{ await navigator.clipboard.writeText(ta.value); copyBtn.textContent = 'Copied'; }
+      catch(err){ ta.select(); copyBtn.textContent = 'Press Ctrl+C'; }
+      setTimeout(() => { copyBtn.textContent = 'Copy plain text'; }, 2200);
+    }
+
+    if(richBtn){
+      const box = el(richBtn.dataset.copyRich);
+      try{
+        await navigator.clipboard.write([new ClipboardItem({
+          'text/html':  new Blob([box.innerHTML], { type: 'text/html' }),
+          'text/plain': new Blob([box.innerText],  { type: 'text/plain' })
+        })]);
+        richBtn.textContent = 'Copied';
+      }catch(err){
+        /* older browsers, or no rich-clipboard permission: select it instead */
+        const r = document.createRange(); r.selectNodeContents(box);
+        const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+        richBtn.textContent = 'Press Ctrl+C';
+      }
+      setTimeout(() => { richBtn.textContent = 'Copy formatted'; }, 2200);
+    }
+  });
+}
+
+/* Print exactly one item at its own paper size. @page cannot be switched with a
+   class, so the rule is injected for the duration of the print. */
+function printArt(kind, page){
+  const art = document.querySelector(`[data-art="${kind}"]`);
+  if(!art) return;
+  document.querySelectorAll('.kit-art').forEach(a => a.classList.remove('kit-art-active'));
+  art.classList.add('kit-art-active');
+
+  const style = document.createElement('style');
+  style.id = 'kit-page-size';
+  style.textContent = `@page { size: ${page}; margin: ${kind === 'card' ? '0' : '0.4in'}; }`;
+  document.head.appendChild(style);
+  document.body.setAttribute('data-printing', kind);
+
+  const cleanup = () => {
+    document.body.removeAttribute('data-printing');
+    art.classList.remove('kit-art-active');
+    style.remove();
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+  window.print();
+  setTimeout(() => { if(document.body.hasAttribute('data-printing')) cleanup(); }, 1000);
+}
+
 /* ---------- reviews ---------- */
 function renderReviews(){
   el('pt-reviews').innerHTML = (PT.reviews.map(r => `
     <div class="pt-item">
       <div class="pt-item-head">
-        <div>${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)} <b>${escapeHtml(r.author_name)}</b>
-          <span class="badge ${r.status === 'Approved' ? 'live' : ''}">${escapeHtml(r.status)}</span></div>
+        <div class="pt-review-who">
+          <span class="stars">${'★'.repeat(r.rating)}<span class="stars-off">${'★'.repeat(5 - r.rating)}</span></span>
+          <b>${escapeHtml(r.author_name)}</b>
+          <span class="badge ${r.status === 'Approved' ? 'live' : ''}">${escapeHtml(r.status)}</span>
+        </div>
         <div class="pf-note">${new Date(r.created_at).toLocaleDateString()}</div>
       </div>
-      <p>${escapeHtml(r.body)}</p>
-      <div class="pt-row" style="margin-top:6px">
-        <textarea id="rp-${r.id}" rows="2" placeholder="Public reply">${escapeHtml(r.reply || '')}</textarea>
+      <p class="pt-quote-body">${escapeHtml(r.body)}</p>
+      <div class="pt-reply">
+        <label for="rp-${r.id}">Your public reply</label>
+        <textarea id="rp-${r.id}" rows="3" placeholder="Answer publicly — this appears under the review.">${escapeHtml(r.reply || '')}</textarea>
+        <button class="mini-btn green" data-reply="${r.id}">Save reply</button>
       </div>
-      <button class="mini-btn green" data-reply="${r.id}" style="margin-top:6px">Save reply</button>
-    </div>`).join('') || '<p class="empty-line">No reviews yet.</p>');
+    </div>`).join('') || `<div class="pt-empty">
+      <b>No reviews yet</b>
+      <p>Buyers can leave a review once you switch reviews on under Profile. You are notified here, and you can reply publicly to each one.</p>
+    </div>`);
 
   el('pt-reviews').onclick = async e => {
     const b = e.target.closest('[data-reply]'); if(!b) return;

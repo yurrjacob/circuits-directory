@@ -624,3 +624,96 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
   .listings-table td[data-label]::before{content:attr(data-label);flex:none;width:62px;color:var(--muted);font-size:.8rem}
   .table-wrap{overflow:visible}
 }
+
+/* ---- promote: printable artwork ---- */
+.kit{display:flex;flex-direction:column;gap:20px}
+.kit-item{border:1px solid var(--line);border-radius:var(--radius);padding:16px;background:#fff}
+.kit-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:14px}
+.kit-head h3{margin:0 0 3px;font-size:1rem}
+.kit-head .pf-note{margin:0}
+.kit-preview{background:var(--bg-soft);border:1px solid var(--line);border-radius:8px;padding:16px;
+  display:flex;justify-content:center;overflow:hidden}
+.kit-preview .kit-art{transform-origin:top center}
+.kit-preview[data-scale="1.5"] .kit-art{transform:scale(.66)}
+.kit-preview[data-scale="3.2"] .kit-art{transform:scale(.31)}
+.kit-preview[data-scale="1.5"]{height:150px}
+.kit-preview[data-scale="3.2"]{height:350px}
+
+/* artwork drawn at true physical size */
+.kit-art{background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;box-shadow:0 0 0 1px var(--line)}
+.kit-logo{width:.5in;height:.5in;object-fit:contain;display:block}
+.kit-logo-text{display:flex;align-items:center;justify-content:center;background:var(--green);
+  color:#000;font-weight:700;font-size:.28in;border-radius:.08in}
+.kit-qr svg,.kit-sticker-qr svg,.kit-sign-qr svg{width:100%;height:100%;display:block}
+.kit-qr-missing{font-size:10px;color:var(--muted)}
+
+.kit-card{width:3.5in;height:2in;display:flex;align-items:center;justify-content:space-between;
+  padding:.22in;box-sizing:border-box}
+.kit-card-l{display:flex;flex-direction:column;gap:.06in;min-width:0}
+.kit-card-name{font-size:.17in;font-weight:700;line-height:1.15}
+.kit-card-url{font-size:.13in;font-weight:700;color:#5f9b00;word-break:break-all}
+.kit-card-r{display:flex;flex-direction:column;align-items:center;gap:.04in;flex:none}
+.kit-card-r span{font-size:.075in;color:#555}
+.kit-qr{width:1in;height:1in}
+
+.kit-sheet{width:7.7in;padding:.1in;box-sizing:border-box}
+.kit-grid{display:grid;gap:.12in;margin-bottom:.18in}
+.kit-grid-2{grid-template-columns:repeat(3,2.3in)}
+.kit-grid-1{grid-template-columns:repeat(6,1.15in)}
+.kit-sticker{border:1px dashed #bbb;border-radius:.1in;padding:.1in;display:flex;align-items:center;
+  gap:.09in;height:1.15in;box-sizing:border-box}
+.kit-sticker-qr{width:.95in;height:.95in;flex:none}
+.kit-sticker-txt{display:flex;flex-direction:column;min-width:0}
+.kit-sticker-txt b{font-size:.1in;color:#5f9b00;word-break:break-all;line-height:1.2}
+.kit-sticker-txt span{font-size:.075in;color:#555;margin-top:.03in}
+.kit-sticker-sm{flex-direction:column;height:1.15in;gap:.04in;padding:.06in;justify-content:center}
+.kit-sticker-sm .kit-sticker-qr{width:.72in;height:.72in}
+.kit-sticker-sm b{font-size:.062in;color:#5f9b00;word-break:break-all;text-align:center;line-height:1.15}
+
+.kit-sign{width:7.7in;height:10in;box-sizing:border-box;padding:.8in .6in;display:flex;
+  flex-direction:column;align-items:center;justify-content:center;gap:.22in;text-align:center}
+.kit-sign .kit-logo{width:1in;height:1in}
+.kit-sign-name{font-size:.42in;font-weight:700;line-height:1.1}
+.kit-sign-lead{font-size:.17in;color:#444;max-width:5.5in}
+.kit-sign-qr{width:3.6in;height:3.6in}
+.kit-sign-url{font-size:.3in;font-weight:700;color:#5f9b00;word-break:break-all}
+
+.kit-sig label{display:block;font-size:.8rem;font-weight:600;margin-bottom:5px}
+.kit-sig textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;
+  font:inherit;font-size:.88rem;background:var(--bg-soft);resize:vertical}
+.kit-sig-html{border:1px solid var(--line);border-radius:8px;padding:12px;background:#fff;
+  font-size:.9rem;margin-bottom:10px}
+.kit-sig-html a{color:var(--green-dark);font-weight:600}
+.kit-sig .mini-btn{margin-top:8px}
+
+@media print{
+  /* Print one item at true size and nothing else. display:none on ancestors
+     would hide the artwork too, so hide by visibility and lift the chosen
+     piece out to the top-left corner of the sheet. */
+  body[data-printing] *{visibility:hidden!important}
+  body[data-printing] .kit-art-active,
+  body[data-printing] .kit-art-active *{visibility:visible!important}
+  body[data-printing] .kit-art-active{position:absolute!important;left:0;top:0;
+    transform:none!important;box-shadow:none!important;margin:0}
+  body[data-printing] .kit-preview{overflow:visible!important;height:auto!important;
+    padding:0!important;border:0!important;background:none!important}
+  body[data-printing] .kit-sticker{border-color:#999}
+  /* keep the exact greens and QR blacks instead of the browser's ink-saving */
+  body[data-printing] *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+
+/* ---- portal: reviews, quote replies and empty states ---- */
+.pt-review-who{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.pt-quote-body{margin:8px 0 0;font-size:.92rem;color:#33383d;white-space:pre-wrap}
+.pt-reply{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.pt-reply label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:5px}
+.pt-reply textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;
+  font:inherit;font-size:.9rem;background:#fff;resize:vertical}
+.pt-reply textarea:focus{outline:2px solid var(--green);outline-offset:-1px;border-color:var(--green)}
+.pt-reply .mini-btn{margin-top:9px}
+.pt-reply-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pt-status{display:flex;align-items:center;gap:7px;margin:9px 0 0;font-size:.78rem;font-weight:600;color:var(--muted)}
+.pt-status select{height:32px;border:1px solid var(--line);border-radius:8px;padding:0 8px;font:inherit;background:#fff}
+.pt-empty{border:1px dashed var(--line);border-radius:var(--radius);padding:26px 20px;text-align:center;background:var(--bg-soft)}
+.pt-empty b{display:block;font-size:1rem;margin-bottom:5px}
+.pt-empty p{margin:0 auto;max-width:46ch;font-size:.88rem;color:var(--muted)}

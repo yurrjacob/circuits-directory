@@ -80,6 +80,7 @@
     <button class="pt-tab" data-tab="profile">Profile</button>
     <button class="pt-tab" data-tab="listings">Listings</button>
     <button class="pt-tab" data-tab="inquiries">Quote requests</button>
+    <button class="pt-tab" data-tab="promote">Promote</button>
     <button class="pt-tab" data-tab="reviews">Reviews</button>
   </div>
 
@@ -110,9 +111,14 @@
       </div>
 
       <div class="pt-row">
-        <div class="auth-field"><label>Tagline</label><input id="f-tagline" type="text" maxlength="160" placeholder="Authorised distributor of analog and power ICs"></div>
-        <div class="auth-field"><label>Contact person</label><input id="f-contact" type="text"></div>
+        <div class="auth-field"><label>Company name</label><input id="f-name" type="text" maxlength="120">
+          <p class="pf-note">Your heading on your profile and the name buyers see in search results.</p></div>
+        <div class="auth-field"><label>Contact person</label><input id="f-contact" type="text">
+          <p class="pf-note">The person a buyer asks for.</p></div>
         <div class="auth-field"><label>Public email</label><input id="f-email" type="email"></div>
+      </div>
+      <div class="pt-row">
+        <div class="auth-field"><label>Tagline</label><input id="f-tagline" type="text" maxlength="160" placeholder="Authorised distributor of analog and power ICs"></div>
       </div>
       <div class="pt-row">
         <div class="auth-field"><label>Phone</label><input id="f-phone" type="text"></div>
@@ -175,6 +181,14 @@
     <div class="pt-list" id="pt-inquiries"></div>
   </section>
 
+  <!-- promote -->
+  <section class="pt-panel" id="tab-promote">
+    <p class="pf-note" style="margin:0 0 16px">Ready-to-print artwork carrying your Circuits.com address.
+    Everything below uses your live logo and short link, so it stays correct if you change them.
+    Print straight from this page &mdash; each item sets its own paper size.</p>
+    <div class="kit" id="promo-kit"></div>
+  </section>
+
   <!-- reviews -->
   <section class="pt-panel" id="tab-reviews">
     <p class="pf-note" id="pt-reviews-note"></p>
@@ -186,8 +200,14 @@
   <div class="inner">
     <div class="flinks">
       <a href="/">Home</a>
+      <a href="/about">About</a>
+      <a href="/how-it-works">How It Works</a>
+      <a href="/directory">Directory</a>
+      <a href="/contact">Contact</a>
       <a href="/join">Get Listed</a>
-      <a href="/contact">Support</a>
+      <a href="/portal">Supplier Login</a>
+      <a href="/terms">Terms</a>
+      <a href="/login">Staff Login</a>
     </div>
     <div style="display:flex;align-items:center;gap:14px">
       <span>© 2026 Circuits.com</span>
@@ -197,6 +217,7 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="/store.js"></script>
 <script src="/app.js"></script>
 <script src="/portal.js"></script>
