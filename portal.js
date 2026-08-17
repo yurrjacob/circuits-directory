@@ -89,9 +89,8 @@ async function initPortal(){
   await loadCompany(cos[0].slug);
 }
 
-/* Sign in only. Accounts are created on the Get Listed form, where the
-   applicant also reserves their circuits.com address — there is deliberately
-   no way to register from here. */
+/* Sign in. Registration is open to anyone at /register (a listing still needs
+   approval), so this card links there rather than dead-ending. */
 function wireAuth(){
   el('pt-auth-form').addEventListener('submit', async e => {
     e.preventDefault();
@@ -101,7 +100,7 @@ function wireAuth(){
       const { error } = await signIn(val('pt-email'), val('pt-password'));
       if(error){
         msg.textContent = /invalid login/i.test(error.message || '')
-          ? 'That email and password do not match an account. Accounts are created when you get listed.'
+          ? 'That email and password do not match an account. If you have not made one yet, create your profile below.'
           : error.message;
         el('pt-auth-submit').disabled = false;
         return;

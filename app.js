@@ -794,7 +794,7 @@ function initRegister(){
        The database trigger is the real guard — this is just a kinder message. */
     const why = await handleAvailable(handle);
     if(why){
-      submitBtn.disabled = false; submitBtn.textContent = 'Create Profile →';
+      submitBtn.disabled = false; submitBtn.textContent = 'Create Profile';
       handleMsg.textContent = why; handleMsg.style.color = '#b3261e';
       handleInput.scrollIntoView({ behavior:'smooth', block:'center' });
       return fail('That address just became unavailable.');
@@ -802,7 +802,7 @@ function initRegister(){
 
     const err = await registerProfile(email, passEl.value, handle, v('r-name'));
     if(err){
-      submitBtn.disabled = false; submitBtn.textContent = 'Create Profile →';
+      submitBtn.disabled = false; submitBtn.textContent = 'Create Profile';
       return fail(/already registered|already exists/i.test(err)
         ? 'There is already an account with that email. Sign in instead.'
         : err);

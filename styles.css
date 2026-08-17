@@ -276,8 +276,11 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.92rem}
 .info-card{border:1px solid var(--line);border-radius:var(--radius);padding:22px;background:var(--bg-soft)}
 .info-card h3{margin:0 0 4px;font-size:1rem}
 .info-card a{color:var(--green-dark);text-decoration:none}
-.info-card a.btn-primary{color:#0f0f0f}
-.info-card a.btn-primary:hover{color:#fff}
+/* .info-card a and .auth-foot a both set a green link colour, and being
+   (class + element) they outrank .btn-primary — a green button with green
+   text. Name the button explicitly in those contexts. */
+.info-card a.btn-primary,.auth-foot a.btn-primary{color:#0f0f0f}
+.info-card a.btn-primary:hover,.auth-foot a.btn-primary:hover{color:#fff}
 .info-row{margin-bottom:18px}
 
 /* ===== Auth / Login ===== */
