@@ -113,8 +113,8 @@ async function initProfile(){
   }
 
   const slug = co.slug;   // internal key: everything else still hangs off this
-  const [kws, reviews] = await Promise.all([
-    fetchCompanyKeywords(slug), fetchReviews(slug)
+  const [kws, reviews, claimed] = await Promise.all([
+    fetchCompanyKeywords(slug), fetchReviews(slug), companyClaimed(slug)
   ]);
 
   const docs = [];
@@ -137,7 +137,7 @@ async function initProfile(){
   <div class="pf-head">
     <div class="pf-logo">${logo}</div>
     <div class="pf-id">
-      <h1>${escapeHtml(co.name)}</h1>
+      <h1>${escapeHtml(co.name)}${claimed ? '' : ' <span class="lb lb-unclaimed">Unclaimed</span>'}</h1>
       ${co.tagline ? `<p class="pf-tagline">${escapeHtml(co.tagline)}</p>` : ''}
       <div class="pf-meta">
         ${reviews.length ? `<span class="pf-rating">${stars(avg)} ${avg.toFixed(1)} <i>(${reviews.length})</i></span>` : ''}
@@ -240,9 +240,16 @@ async function initProfile(){
       ).join('')}</div>
     </div>` : ''}
 
-    <p class="pf-claim">Is this your company's listing?
-      <a href="/claim?c=${encodeURIComponent(co.handle)}">Claim this listing</a>
-      to manage it from your Circuits.com profile.</p>
+    ${claimed
+      ? `<p class="pf-claim">Is this your company's listing?
+           <a href="/claim?c=${encodeURIComponent(co.handle)}">Claim this listing</a>
+           to manage it from your Circuits.com profile.</p>`
+      : `<div class="pf-unclaimed-card">
+           <b>This listing is unclaimed.</b>
+           <p>Nobody has connected a Circuits.com account to ${escapeHtml(co.name)} yet, so the
+           details here have not been confirmed by the company.</p>
+           <a class="btn btn-primary auth-cta" href="/claim?c=${encodeURIComponent(co.handle)}">Claim this listing</a>
+         </div>`}
   </aside></div>`;
 
   root.innerHTML = html;

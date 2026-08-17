@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reset Your Password — Circuits.com</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="assets/favicon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="inner">
+    <div class="brand"><a href="/"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-slogan">Connecting The Circuits Industry</span></div>
+    <nav class="nav">
+      <a href="/">Home</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+      <a class="nav-auth" href="/portal">Sign In</a>
+      <a class="cta" href="/join">Get Listed</a>
+    </nav>
+  </div>
+</header>
+
+<div class="auth-wrap">
+
+  <!-- step 1: ask for the reset email -->
+  <div class="auth-card" id="rq-card" style="display:none">
+    <h1>Reset your password</h1>
+    <p class="sub">Enter your email or username and we will send you a link to set a new one.</p>
+    <form id="rq-form" autocomplete="off">
+      <div class="auth-field">
+        <label>Email or username</label>
+        <input id="rq-id" type="text" required placeholder="you@company.com or yourname" autocomplete="username" spellcheck="false">
+      </div>
+      <div id="rq-msg" class="field-hint"></div>
+      <button class="submit" type="submit" id="rq-submit">Send reset link →</button>
+    </form>
+    <div class="auth-note">
+      Remembered it? <a href="/portal">Sign in</a>.
+    </div>
+  </div>
+
+  <!-- step 1 done -->
+  <div class="auth-card" id="rq-sent" style="display:none">
+    <h1>Check your inbox</h1>
+    <p class="sub">If that account exists, a reset link is on its way. The link expires shortly,
+    so use it soon. Check your spam folder if it does not arrive.</p>
+    <div class="auth-foot"><a class="btn btn-primary auth-cta" href="/portal">Back to sign in</a></div>
+  </div>
+
+  <!-- step 2: they followed the link, so set the new password -->
+  <div class="auth-card" id="rs-card" style="display:none">
+    <h1>Choose a new password</h1>
+    <p class="sub">Set a new password for <b id="rs-email">your account</b>.</p>
+    <form id="rs-form" autocomplete="off">
+      <div class="auth-field">
+        <label>New password</label>
+        <input id="rs-pass" type="password" minlength="8" required placeholder="At least 8 characters" autocomplete="new-password">
+      </div>
+      <div class="auth-field">
+        <label>Confirm new password</label>
+        <input id="rs-pass2" type="password" minlength="8" required placeholder="Re-enter your password" autocomplete="new-password">
+        <div id="rs-match" class="field-hint"></div>
+      </div>
+      <div id="rs-msg" class="field-hint"></div>
+      <button class="submit" type="submit" id="rs-submit">Save new password →</button>
+    </form>
+  </div>
+
+  <!-- step 2 done -->
+  <div class="auth-card" id="rs-done" style="display:none">
+    <h1>Password changed</h1>
+    <p class="sub">You are signed in with your new password.</p>
+    <div class="auth-foot"><a class="btn btn-primary auth-cta" href="/portal">Go to your profile →</a></div>
+  </div>
+
+  <!-- the link was bad or had already been used -->
+  <div class="auth-card" id="rs-bad" style="display:none">
+    <h1>That link has expired</h1>
+    <p class="sub">Reset links are single use and time limited. Request a new one and it will
+    arrive within a minute.</p>
+    <div class="auth-foot"><a class="btn btn-primary auth-cta" href="/reset">Request a new link</a></div>
+  </div>
+
+</div>
+
+<footer class="footer">
+  <div class="inner">
+    <div class="flinks">
+      <a href="/">Home</a>
+      <a href="/login">Staff Login</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span>© 2026 Circuits.com</span>
+      <span class="footer-brand"><img class="footer-mark" src="assets/favicon.png" alt="Circuits.com"></span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/store.js"></script>
+<script src="/app.js"></script>
+<script>initReset();</script>
+</body>
+</html>

@@ -91,7 +91,7 @@ for (const bad of ['ab', '-lead', 'trail-', '_lead', 'trail_', 'Upper', 'has spa
 // every root page name must be in the reserved list, or a company could take it
 const RESERVED_IN_DB = ['about','admin','applications','claim','companies','company','contact',
   'dashboard','data','directory','how-it-works','index','join','login','portal','profile',
-  'register','results','robots','search','server','sitemap','store','styles','terms','tools'];
+  'register','reset','results','robots','search','server','sitemap','store','styles','terms','tools'];
 for (const f of fs.readdirSync(ROOT)) {
   if (!f.endsWith('.html')) continue;
   const name = f.replace(/\.html$/, '');
@@ -139,6 +139,59 @@ assert.ok(sitemap.includes('circuits.com/about'), 'sitemap lost /about');
 assert.ok(sitemap.includes('circuits.com/register'), 'sitemap is missing /register');
 assert.ok(!fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8').includes('/how-it-works'),
   'the sitemap generator would put /how-it-works back on the next build');
+
+/* --- somebody who forgets their password must not be locked out forever --- */
+const resetHtml = fs.readFileSync(path.join(ROOT, 'reset.html'), 'utf8');
+for (const id of ['rq-form', 'rq-id', 'rs-form', 'rs-pass', 'rs-pass2', 'rs-bad', 'rs-done']) {
+  assert.ok(resetHtml.includes(`id="${id}"`), `reset.html is missing ${id}`);
+}
+const storeReset = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+assert.ok(storeReset.includes('resetPasswordForEmail'), 'store.js cannot send a reset email');
+assert.ok(storeReset.includes('function setNewPassword'), 'store.js cannot set the new password');
+// both sign-in pages must offer the way out
+for (const f of ['portal.html', 'login.html']) {
+  assert.ok(fs.readFileSync(path.join(ROOT, f), 'utf8').includes('href="/reset"'),
+    `${f} has no forgot-password link`);
+}
+// the reset form must not reveal whether an account exists
+assert.ok(/Deliberately the same outcome|If that account exists/.test(
+  fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8') + resetHtml),
+  'password reset reveals which accounts exist');
+
+/* --- a paid badge must never read as a check Circuits.com performed --- */
+const joinSrc = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
+assert.ok(!/data-text="Verified"/i.test(joinSrc),
+  'Verified is on sale again — a bought badge would be indistinguishable from a real check');
+assert.ok(/Verified/.test(joinSrc), 'Get Listed no longer explains why Verified is not for sale');
+const termsHtml = fs.readFileSync(path.join(ROOT, 'terms.html'), 'utf8');
+assert.ok(/Verified/.test(termsHtml) && /applied only by Circuits\.com/i.test(termsHtml),
+  'the terms do not distinguish paid badges from the Verified badge');
+
+/* --- "permanent" must be tied to an active subscription, not sold outright --- */
+assert.ok(/subscription remains active/i.test(termsHtml),
+  'the terms do not say the keyword position depends on an active subscription');
+for (const f of ['index.html', 'join.html']) {
+  const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+  assert.ok(!/permanent(ly)? (ranked|owned)|permanent ranked ownership/i.test(src),
+    `${f} still promises a permanent position without qualification`);
+}
+
+/* --- an unclaimed listing must say so --- */
+const profSrc2 = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
+assert.ok(profSrc2.includes('companyClaimed'), 'profile.js no longer checks whether a listing is claimed');
+assert.ok(profSrc2.includes('lb-unclaimed'), 'the Unclaimed marker is gone from the profile heading');
+assert.ok(storeReset.includes('function companyClaimed'), 'store.js is missing companyClaimed()');
+assert.ok(/return true;\s*\/\/ fail closed/.test(storeReset),
+  'companyClaimed must fail closed, or an outage would label real listings unclaimed');
+
+/* --- the footer is the staff door; the header is everyone else's --- */
+for (const f of NAV_PAGES) {
+  const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+  const foot = (src.match(/<footer class="footer">[\s\S]*?<\/footer>/) || [null])[0];
+  if (!foot) continue;
+  assert.ok(!foot.includes('Profile Login'), `${f} footer still shows Profile Login`);
+  assert.ok(foot.includes('Staff Login'), `${f} footer is missing Staff Login`);
+}
 
 /* --- the URL form of a handle must accept underscores, or circuits.com/aaa_electronics
        never resolves through the 404 fallback --- */

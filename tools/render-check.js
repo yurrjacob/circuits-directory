@@ -26,6 +26,7 @@ global.fetchCompanyKeywords = async () => ([
   { keyword:'analog ics', banner:true, badge:{text:'Authorized',color:'#c9a227'}, docs:[{name:'Line card',url:'https://x/d.pdf'}] },
   { keyword:'voltage regulator', banner:false, badge:null, docs:[] }]);
 global.fetchReviews = async () => ([{ rating:5, author_name:'Bob', body:'Great', reply:'Thanks', created_at:'2026-08-01T00:00:00Z' }]);
+global.companyClaimed = async () => true;
 
 let captured = '';
 const el = (id) => ({ set innerHTML(v){ if(id==='profile-body') captured = v; },
@@ -78,5 +79,15 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
     'reviews section still renders for a company that does not accept reviews');
   assert.ok(!captured.includes('review-form'), 'review form still renders when reviews are off');
 
-  console.log('render smoke test passed —', opens, 'balanced block tags, reviews gate OK');
+  /* A claimed listing must not be labelled unclaimed, and an unclaimed one must
+     say so plainly — a buyer needs to know the details are unconfirmed. */
+  assert.ok(!captured.includes('lb-unclaimed'), 'a claimed listing was labelled Unclaimed');
+  global.companyClaimed = async () => false;
+  await initProfile();
+  assert.ok(captured.includes('lb-unclaimed'), 'an unclaimed listing is not marked as such');
+  assert.ok(captured.includes('pf-unclaimed-card'), 'the unclaimed listing has no claim prompt');
+  assert.ok(captured.includes('/claim?c='), 'the unclaimed prompt does not link to the claim flow');
+  global.companyClaimed = async () => true;
+
+  console.log('render smoke test passed —', opens, 'balanced block tags, reviews and claim states OK');
 })();

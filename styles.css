@@ -571,6 +571,17 @@ tr.row-warn td{background:#fff3cd}
 /* a review nobody has judged yet is invisible to the public — make it obvious */
 .dash-table tr.row-waiting td{background:#fffbe8}
 
+/* An unclaimed listing is one nobody has confirmed. Saying so is honest to
+   buyers, and it is the strongest prompt we have for getting it claimed. */
+.lb-unclaimed{background:#6b7177;font-size:.62rem;vertical-align:middle}
+.pf-unclaimed-card{border:1px dashed var(--line);border-radius:12px;padding:16px;background:#fafbfa}
+.pf-unclaimed-card b{display:block;margin-bottom:6px}
+.pf-unclaimed-card p{margin:0 0 12px;font-size:.85rem;color:var(--muted);line-height:1.55}
+
+.auth-forgot{margin:10px 0 0;text-align:center;font-size:.85rem}
+.auth-forgot a{color:var(--muted);text-decoration:underline}
+.auth-forgot a:hover{color:var(--ink)}
+
 /* one sign-in system: the staff door is present but quiet */
 .auth-staff{margin:18px 0 0;text-align:center;font-size:.8rem;color:var(--muted)}
 .auth-staff a{color:var(--muted);text-decoration:underline}

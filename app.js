@@ -618,6 +618,70 @@ const msg = document.getElementById('msg');
 }
 
 /* ===================================================================
+   Password reset. One page, two jobs: ask for the link, and — when the
+   person arrives back holding one — set the new password.
+   =================================================================== */
+async function initReset(){
+  const el = id => document.getElementById(id);
+  const show = (id, on) => { const n = el(id); if(n) n.style.display = on ? '' : 'none'; };
+  if(!el('rq-card')) return;
+
+  /* Supabase puts the recovery token in the URL fragment and swaps it for a
+     session as the page loads, so wait for that before deciding which half
+     of this page to show. */
+  const looksLikeRecovery = /type=recovery|access_token|error_description/.test(location.hash || '')
+    || /code=/.test(location.search || '');
+
+  if(looksLikeRecovery){
+    if(/error|expired|invalid/i.test(location.hash || '')){ show('rs-bad', true); return; }
+    let user = null;
+    for(let i = 0; i < 12 && !user; i++){          // ~3s, the exchange is usually instant
+      user = await currentUser();
+      if(!user) await new Promise(r => setTimeout(r, 250));
+    }
+    if(!user){ show('rs-bad', true); return; }
+    el('rs-email').textContent = user.email || 'your account';
+    show('rs-card', true);
+
+    const p1 = el('rs-pass'), p2 = el('rs-pass2'), match = el('rs-match');
+    const check = () => {
+      if(!p2.value){ match.textContent = ''; return false; }
+      const ok = p1.value === p2.value;
+      match.textContent = ok ? 'Passwords match.' : 'Passwords do not match.';
+      match.style.color = ok ? '#3f6300' : '#b3261e';
+      return ok;
+    };
+    p1.addEventListener('input', check);
+    p2.addEventListener('input', check);
+
+    el('rs-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const msg = el('rs-msg'), btn = el('rs-submit');
+      msg.style.color = '#b3261e';
+      if(p1.value.length < 8){ msg.textContent = 'Your password must be at least 8 characters.'; return; }
+      if(p1.value !== p2.value){ msg.textContent = 'The two passwords do not match.'; return; }
+      btn.disabled = true; msg.style.color = ''; msg.textContent = 'Saving…';
+      const err = await setNewPassword(p1.value);
+      if(err){ btn.disabled = false; msg.style.color = '#b3261e'; msg.textContent = err; return; }
+      show('rs-card', false); show('rs-done', true);
+    });
+    return;
+  }
+
+  show('rq-card', true);
+  el('rq-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = el('rq-submit'), msg = el('rq-msg');
+    const id = el('rq-id').value.trim();
+    if(!id){ msg.textContent = 'Enter your email or username.'; msg.style.color = '#b3261e'; return; }
+    btn.disabled = true; msg.style.color = ''; msg.textContent = 'Sending…';
+    await requestPasswordReset(id);
+    /* Deliberately the same outcome whether or not the account exists. */
+    show('rq-card', false); show('rq-sent', true);
+  });
+}
+
+/* ===================================================================
    Get Listed, step 00 — the account.
    Browsing needs no account; submitting a listing does. Rather than send
    people away to Register and lose the form they were filling in, the

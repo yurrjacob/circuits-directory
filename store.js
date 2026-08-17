@@ -168,6 +168,35 @@ async function signIn(identifier, password){
   return sb.auth.signInWithPassword({ email, password });
 }
 async function signUp(email, password){ return sb.auth.signUp({ email, password }); }
+
+/* ---- password reset ----
+   Accepts an email OR a username, the same as signing in. Always reports
+   success: telling someone "no account with that email" turns this form into
+   a way to discover who is registered. */
+async function requestPasswordReset(identifier){
+  if(!sb) return 'No connection';
+  let email = (identifier || '').trim();
+  if(email && !email.includes('@')){
+    try{
+      const { data } = await sb.rpc('email_for_login', { p_id: email });
+      if(data) email = data;
+    }catch(e){ console.warn('username lookup failed', e); }
+  }
+  if(email.includes('@')){
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: location.origin + '/reset'
+    });
+    if(error) console.warn('resetPasswordForEmail', error.message);
+  }
+  return '';
+}
+/* Called on /reset. Supabase puts a recovery session in the URL, which the
+   client picks up on load, so this is just a password change. */
+async function setNewPassword(password){
+  if(!sb) return 'No connection';
+  const { error } = await sb.auth.updateUser({ password });
+  return error ? error.message : '';
+}
 async function signOut(){ if(sb) await sb.auth.signOut(); } async function loadPrefs(page){ if(!sb) return null; const { data, error } = await sb.from('admin_prefs').select('prefs').eq('page', page).maybeSingle(); if(error){ console.error('loadPrefs', error); return null; } return data ? data.prefs : null; } async function savePrefs(page, prefs){ if(!sb) return; const { data } = await sb.auth.getUser(); if(!data || !data.user) return; const { error } = await sb.from('admin_prefs').upsert({ user_id: data.user.id, page, prefs, updated_at: new Date().toISOString() }, { onConflict: 'page' }); if(error) console.error('savePrefs', error); }
 
 /* ===================================================================
@@ -206,6 +235,14 @@ async function handleAvailable(handle, ownSlug, ownUser){
     { p_handle: h, p_user: ownUser || null, p_slug: ownSlug || null });
   if(error){ console.error('handle_taken', error); return 'Could not check that name right now.'; }
   return HANDLE_WHY[data] || '';
+}
+
+/* Is a real account behind this listing? Drives the Unclaimed badge. */
+async function companyClaimed(slug){
+  if(!sb || !slug) return true;   // fail closed: never label a listing unclaimed by mistake
+  const { data, error } = await sb.rpc('company_claimed', { p_slug: slug });
+  if(error){ console.error('company_claimed', error); return true; }
+  return !!data;
 }
 
 /* ---- profiles: a person, separate from any company listing ---- */
