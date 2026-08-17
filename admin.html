@@ -179,8 +179,7 @@
   <div class="inner">
     <div class="flinks">
       <a href="/">Home</a>
-      <a href="/portal">Supplier Login</a>
-      <a href="/login">Staff Login</a>
+      <a href="/portal">Profile Login</a>
     </div>
     <div style="display:flex;align-items:center;gap:14px">
       <span>© 2026 Circuits.com</span>
@@ -403,7 +402,17 @@ async function decide(id, approve){
 let allReviews = [];
 async function reloadReviews(){
   allReviews = await fetchAllReviews();
-  $('reviews-body').innerHTML = allReviews.map(r=>`<tr>
+  /* Anything still Pending is invisible to the public until someone here acts,
+     so it goes to the top rather than being buried under old decisions. */
+  const rank = s => s === 'Pending' ? 0 : 1;
+  allReviews.sort((a,b) => rank(a.status) - rank(b.status));
+  const waiting = allReviews.filter(r => r.status === 'Pending').length;
+  const hint = document.querySelector('#reviews-body')
+    .closest('.panel').querySelector('.panel-head .hint');
+  if(hint) hint.textContent = waiting
+    ? waiting + (waiting === 1 ? ' review waiting' : ' reviews waiting')
+    : 'Nothing waiting';
+  $('reviews-body').innerHTML = allReviews.map(r=>`<tr class="${r.status==='Pending'?'row-waiting':''}">
     <td><a href="/${esc(r.company_slug)}" target="_blank" rel="noopener">${esc(r.company_slug)}</a></td>
     <td>${'★'.repeat(r.rating)}</td>
     <td class="cell-muted">${esc(r.author_name)}<br><span class="cell-muted">${esc(r.author_email)}</span></td>

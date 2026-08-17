@@ -99,8 +99,8 @@ Check your inbox to confirm your email address &mdash; then you can sign in at
 </div>
 <div class="field" style="grid-column:1 / -1">
 <label>Logo or Headshot <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
-<input id="logo-input" type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp">
-<p class="field-hint">PNG, JPG, SVG, or WebP up to 10 MB.</p>
+<input id="logo-input" type="file" accept="image/png,image/jpeg,image/webp">
+<p class="field-hint">PNG, JPG or WebP up to 5 MB.</p>
 <div id="logo-preview" class="logo-preview" style="display:none">
 <img id="logo-preview-img" alt="Logo preview">
 <span id="logo-name"></span>
@@ -151,9 +151,9 @@ Check your inbox to confirm your email address &mdash; then you can sign in at
 </div>
 <p class="benefits-h">Benefits</p>
 <ul class="promo-benefits" style="margin:0 0 20px">
-<li>Top Banner Placement, Above Every Listing You Choose</li>
-<li>Prominent Logo, Profile Description, And Direct Contact Details</li>
-<li>Exclusive Sponsor Badge On Your Banner &nbsp;<span class="badge-premium">Exclusive Sponsor</span></li>
+<li>Top Banner Placement</li>
+<li>Prominent Logo, Profile Description, And Exclusive Sponsor Badge</li>
+<li>Gain Permanent Competitive Advantage</li>
 </ul>
 
 <div class="badge-preview-box banner-preview" style="margin-bottom:20px">
@@ -194,7 +194,7 @@ Check your inbox to confirm your email address &mdash; then you can sign in at
 </div>
 <p class="benefits-h">Benefits</p>
 <ul class="promo-benefits" style="margin:0 0 20px">
-<li>Build Instant Trust With Viewers Scanning The List</li>
+<li>Build Instant Trust With Viewers</li>
 <li>Make Your Listing Stand Out From Competitors</li>
 <li>Highlight Your Status At A Glance</li>
 </ul>
@@ -240,9 +240,25 @@ Check your inbox to confirm your email address &mdash; then you can sign in at
 </section>
 
 <!-- Step 5 -->
-<section class="step">
+<section class="step" id="quote-step">
 <div class="step-head">
 <span class="step-num">05</span>
+<div><h2>Pricing Estimate</h2>
+<p>Updates as you choose keywords and extras. Nothing is charged now &mdash; we confirm pricing when we approve your listing.</p></div>
+</div>
+<div class="quote" id="quote">
+<div class="quote-lines" id="quote-lines"></div>
+<div class="quote-total"><span>Estimated monthly total</span><b id="quote-total">$0</b></div>
+<div class="quote-total quote-total-alt"><span>Or paid yearly</span><b id="quote-total-year">$0</b></div>
+<p class="field-hint" id="quote-note"></p>
+<p class="field-hint beta-note"><b>Beta pricing.</b> Original owners lock in these beta fees
+for as long as they keep an active subscription.</p>
+</div>
+</section>
+
+<section class="step">
+<div class="step-head">
+<span class="step-num">06</span>
 <div><h2>Have Any Ideas? Tell Us What You're Thinking</h2></div>
 </div>
 <div class="field">
@@ -257,19 +273,6 @@ Check your inbox to confirm your email address &mdash; then you can sign in at
 <div id="terms-err" class="err-msg" style="display:none">You must accept the Listing Terms and Acceptable Use Policy before submitting.</div>
 </section>
 
-<section class="step" id="quote-step">
-<div class="step-head">
-<span class="step-num">06</span>
-<div><h2>Your Estimate</h2>
-<p>Updates as you choose keywords and extras. Nothing is charged now &mdash; we confirm pricing when we approve your listing.</p></div>
-</div>
-<div class="quote" id="quote">
-<div class="quote-lines" id="quote-lines"></div>
-<div class="quote-total"><span>Estimated monthly total</span><b id="quote-total">$0</b></div>
-<p class="field-hint" id="quote-note"></p>
-</div>
-</section>
-
 <div class="form-foot">
 <span class="help">Have questions? <a href="contact">Contact us</a></span>
 <button class="submit" type="submit">Submit Application →</button>
@@ -281,8 +284,7 @@ Check your inbox to confirm your email address &mdash; then you can sign in at
 <div class="inner">
 <div class="flinks">
       <a href="/">Home</a>
-      <a href="/portal">Supplier Login</a>
-      <a href="/login">Staff Login</a>
+      <a href="/portal">Profile Login</a>
     </div>
 <div style="display:flex;align-items:center;gap:14px">
 <span>© 2026 Circuits.com</span>

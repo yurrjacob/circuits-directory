@@ -3,6 +3,19 @@
 -- companies owned by two different confirmed users, asserts neither can touch
 -- the other's data, then deletes everything it made. Silence means it passed;
 -- any failure raises.
+
+-- Clear anything a previous failed run left behind. A raise aborts the block
+-- before its cleanup, and the leftovers make the next run fail for the wrong
+-- reason — which cost an afternoon once already.
+delete from profile_events where company_slug like 'zz-%';
+delete from reviews      where company_slug like 'zz-%';
+delete from inquiries    where company_slug like 'zz-%';
+delete from company_users where company_slug like 'zz-%';
+delete from applications where company_slug like 'zz-%';
+delete from companies    where slug like 'zz-%';
+delete from staff        where email like 'zz-%@rlstest.invalid';
+delete from auth.users   where email like 'zz-%@rlstest.invalid';
+
 do $$
 declare
   ua uuid := gen_random_uuid();
@@ -15,8 +28,10 @@ begin
   values (ua, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'zz-owner-a@rlstest.invalid', now(), now(), now()),
          (ub, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'zz-owner-b@rlstest.invalid', now(), now(), now());
 
-  insert into companies (slug, name, published) values
-    ('zz-rlstest-a','ZZ RLS Test A', true), ('zz-rlstest-b','ZZ RLS Test B', true);
+  -- A takes reviews, B does not. Reviews are opt-in per company.
+  insert into companies (slug, name, published, reviews_enabled) values
+    ('zz-rlstest-a','ZZ RLS Test A', true, true),
+    ('zz-rlstest-b','ZZ RLS Test B', true, false);
   insert into applications (company, company_slug, email, keyword, status, listing_price)
   values ('ZZ RLS Test A','zz-rlstest-a','zz-owner-a@rlstest.invalid','zztesta','Approved', 49),
          ('ZZ RLS Test B','zz-rlstest-b','zz-owner-b@rlstest.invalid','zztestb','Approved', 49);
@@ -60,12 +75,23 @@ begin
   perform set_config('request.jwt.claims', null, true);
   set local role anon;
 
-  select count(*) into n from inquiries;
-  if n <> 0 then raise exception 'FAIL: anon read % inquiries', n; end if;
+  -- The public has no read grant on these at all, so this fails at the
+  -- privilege check before RLS is even consulted. Two locks, not one.
+  begin
+    select count(*) into n from inquiries;
+    raise exception 'FAIL: anon read % inquiries', n;
+  exception when insufficient_privilege then null;
+  end;
+
+  begin
+    select count(*) into n from profile_events;
+    raise exception 'FAIL: anon read % profile_events', n;
+  exception when insufficient_privilege then null;
+  end;
+
+  -- Reviews are readable, but only the approved ones — that is RLS filtering.
   select count(*) into n from reviews where status <> 'Approved';
   if n <> 0 then raise exception 'FAIL: anon saw % unapproved reviews', n; end if;
-  select count(*) into n from profile_events;
-  if n <> 0 then raise exception 'FAIL: anon read profile_events'; end if;
 
   insert into profile_events (company_slug, kind, visitor) values ('zz-rlstest-a','view','zz');
   insert into reviews (company_slug, author_name, author_email, rating, body, status)
@@ -78,10 +104,21 @@ begin
   exception when insufficient_privilege then null;
   end;
 
+  -- B has reviews switched off, so nobody can post one there.
+  begin
+    insert into reviews (company_slug, author_name, author_email, rating, body, status)
+    values ('zz-rlstest-b','Anon','a@rlstest.invalid',5,'good','Pending');
+    raise exception 'FAIL: anon reviewed a company that has reviews turned off';
+  exception when insufficient_privilege then null;
+  end;
+
   reset role;
   raise notice 'ALL RLS CHECKS PASSED';
 end $$;
 
+delete from profile_events where company_slug like 'zz-rlstest-%';
+delete from reviews      where company_slug like 'zz-rlstest-%';
+delete from inquiries    where company_slug like 'zz-rlstest-%';
 delete from applications where company_slug like 'zz-rlstest-%';
 delete from companies    where slug like 'zz-rlstest-%';
 delete from auth.users   where email like 'zz-owner-%@rlstest.invalid';
@@ -127,7 +164,139 @@ begin
   raise notice 'STAFF SCOPE + SYNC CHECKS PASSED';
 end $$;
 
+delete from profile_events where company_slug like 'zz-%';
+delete from reviews      where company_slug like 'zz-%';
+delete from inquiries    where company_slug like 'zz-%';
+delete from company_users where company_slug like 'zz-%';
 delete from applications where company_slug like 'zz-%';
-delete from companies where slug like 'zz-%';
-delete from staff where email like 'zz-%@rlstest.invalid';
-delete from auth.users where email like 'zz-%@rlstest.invalid';
+delete from companies    where slug like 'zz-%';
+delete from staff        where email like 'zz-%@rlstest.invalid';
+delete from auth.users   where email like 'zz-%@rlstest.invalid';
+
+-- Regression: your public contact email is not your ownership key.
+-- applications.email was both the account that owns the listing and the address
+-- shown on search results, and companies_sync_listings() copies the profile
+-- email onto it. So editing your public email in the portal either locked you
+-- out of your own company or handed it to whoever owns the address you typed.
+do $$
+declare uo uuid := gen_random_uuid(); ux uuid := gen_random_uuid(); n int;
+begin
+  insert into auth.users (id,instance_id,aud,role,email,email_confirmed_at,created_at,updated_at)
+  values (uo,'00000000-0000-0000-0000-000000000000','authenticated','authenticated','zz-owner@rlstest.invalid',now(),now(),now()),
+         (ux,'00000000-0000-0000-0000-000000000000','authenticated','authenticated','zz-attacker@rlstest.invalid',now(),now(),now());
+  insert into companies (slug,name,published) values ('zz-own','ZZ Own',true);
+  insert into applications (company,company_slug,email,keyword,status)
+  values ('ZZ Own','zz-own','zz-owner@rlstest.invalid','zzown','Approved');
+
+  perform set_config('request.jwt.claims', json_build_object('sub',uo::text,'role','authenticated','email','zz-owner@rlstest.invalid')::text, true);
+  set local role authenticated;
+  if not owns_company('zz-own') then raise exception 'FAIL: owner did not own their company to begin with'; end if;
+
+  update companies set email='zz-attacker@rlstest.invalid' where slug='zz-own';
+
+  select count(*) into n from my_companies();
+  if n <> 1 then raise exception 'FAIL: owner lost their company after editing their public email (sees %)', n; end if;
+
+  reset role;
+  perform set_config('request.jwt.claims', json_build_object('sub',ux::text,'role','authenticated','email','zz-attacker@rlstest.invalid')::text, true);
+  set local role authenticated;
+  if owns_company('zz-own') then raise exception 'FAIL: public email change handed the company to someone else'; end if;
+  select count(*) into n from my_companies();
+  if n <> 0 then raise exception 'FAIL: stranger sees % companies', n; end if;
+
+  reset role;
+  select count(*) into n from applications where company_slug='zz-own' and email='zz-attacker@rlstest.invalid';
+  if n <> 1 then raise exception 'FAIL: public email did not reach the listing'; end if;
+
+  perform set_config('request.jwt.claims', json_build_object('sub',uo::text,'role','authenticated','email','zz-owner@rlstest.invalid')::text, true);
+  set local role authenticated;
+  update applications set owner_email='zz-attacker@rlstest.invalid' where company_slug='zz-own';
+  reset role;
+  select count(*) into n from applications where company_slug='zz-own' and owner_email='zz-owner@rlstest.invalid';
+  if n <> 1 then raise exception 'FAIL: supplier reassigned ownership'; end if;
+
+  raise notice 'OWNERSHIP CHECKS PASSED';
+end $$;
+
+delete from applications where company_slug like 'zz-%';
+delete from companies    where slug like 'zz-%';
+delete from auth.users   where email like 'zz-%@rlstest.invalid';
+
+-- Stored text is capped in the database, and the security log is append-only.
+do $$
+declare us uuid := gen_random_uuid(); n int; before_n int;
+begin
+  insert into auth.users (id,instance_id,aud,role,email,email_confirmed_at,created_at,updated_at)
+  values (us,'00000000-0000-0000-0000-000000000000','authenticated','authenticated','zz-staff@rlstest.invalid',now(),now(),now());
+  insert into staff (email) values ('zz-staff@rlstest.invalid');
+  insert into companies (slug,name,published) values ('zz-aud','ZZ Audit',true);
+  insert into applications (company,company_slug,email,keyword,status,listing_price)
+  values ('ZZ Audit','zz-aud','zz-aud@rlstest.invalid','zzaud','Pending',49);
+
+  begin
+    update companies set contact = repeat('x',300) where slug='zz-aud';
+    raise exception 'FAIL: accepted a 300-char contact name';
+  exception when check_violation then null;
+  end;
+
+  begin
+    update companies set gallery = to_jsonb(array(select repeat('u',400) from generate_series(1,80))) where slug='zz-aud';
+    raise exception 'FAIL: accepted a 32KB gallery blob';
+  exception when check_violation then null;
+  end;
+
+  begin
+    insert into inquiries (company_slug,from_name,from_email,subject,body)
+    values ('zz-aud','B','b@rlstest.invalid',repeat('x',300),'hi');
+    raise exception 'FAIL: accepted a 300-char subject';
+  exception when check_violation then null;
+  end;
+
+  update companies set contact='Jacob', address='12 Example Street, Springfield' where slug='zz-aud';
+
+  -- only staff may approve and price, so the audit has to run as staff
+  perform set_config('request.jwt.claims', json_build_object('sub',us::text,'role','authenticated','email','zz-staff@rlstest.invalid')::text, true);
+  set local role authenticated;
+
+  select count(*) into before_n from security_log;
+  update applications set status='Approved', listing_price=99 where company_slug='zz-aud';
+  select count(*) into n from security_log;
+  if n <> before_n + 1 then raise exception 'FAIL: approval was not logged'; end if;
+
+  update applications set phone='555-0199' where company_slug='zz-aud';
+  select count(*) into before_n from security_log;
+  if before_n <> n then raise exception 'FAIL: logged a routine edit'; end if;
+  reset role;
+
+  begin
+    update security_log set actor='someone else' where id=(select max(id) from security_log);
+    raise exception 'FAIL: security_log was editable';
+  exception when raise_exception then
+    if sqlerrm <> 'security_log is append-only' then raise; end if;
+  end;
+
+  begin
+    delete from security_log where id=(select max(id) from security_log);
+    raise exception 'FAIL: security_log was deletable';
+  exception when raise_exception then
+    if sqlerrm <> 'security_log is append-only' then raise; end if;
+  end;
+
+  begin
+    truncate security_log;
+    raise exception 'FAIL: security_log could be truncated away';
+  exception when raise_exception then
+    if sqlerrm <> 'security_log is append-only' then raise; end if;
+  end;
+
+  raise notice 'TEXT CAP + SECURITY LOG CHECKS PASSED';
+end $$;
+
+delete from profile_events where company_slug like 'zz-%';
+delete from reviews      where company_slug like 'zz-%';
+delete from inquiries    where company_slug like 'zz-%';
+delete from company_users where company_slug like 'zz-%';
+delete from applications where company_slug like 'zz-%';
+delete from companies    where slug like 'zz-%';
+delete from staff        where email like 'zz-%@rlstest.invalid';
+delete from auth.users   where email like 'zz-%@rlstest.invalid';

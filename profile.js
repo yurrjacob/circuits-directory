@@ -33,6 +33,25 @@ function safeUrl(u){
   return '';               // never emit javascript: or data: from stored text
 }
 
+/* A field only earns its place on the page if the value actually fits it.
+   Someone typing a sentence into the phone box shouldn't produce a dead tel:
+   link, and a pasted URL in the address box shouldn't stretch the sidebar. */
+function looksPhone(v){
+  const s = (v || '').trim();
+  if(s.length > 32 || !/^[0-9+()\-.,\s]|ext/i.test(s)) return false;
+  if(/[a-z]/i.test(s.replace(/ext\.?/ig, ''))) return false;
+  return (s.match(/\d/g) || []).length >= 7;
+}
+function looksEmail(v){
+  const s = (v || '').trim();
+  return s.length <= 320 && /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(s);
+}
+/* one short line, no line breaks, not a URL someone pasted into the wrong box */
+function fitsLine(v, max){
+  const s = (v || '').trim();
+  return !!s && s.length <= max && !/[\r\n]/.test(s) && !/^https?:\/\//i.test(s);
+}
+
 function section(title, inner, extra){
   if(!inner) return '';
   return `<section class="pf-sec"${extra || ''}><h2 class="pf-sec-h">${escapeHtml(title)}</h2>${inner}</section>`;
@@ -63,8 +82,6 @@ async function initProfile(){
     fetchCompanyKeywords(slug), fetchReviews(slug)
   ]);
 
-  const sponsored = kws.some(k => k.banner);
-  const badge = (kws.find(k => k.badge) || {}).badge;
   const docs = [];
   const seenDoc = new Set();
   for(const k of kws) for(const d of (Array.isArray(k.docs) ? k.docs : []))
@@ -73,8 +90,8 @@ async function initProfile(){
   const avg = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
   const site = safeUrl(co.website);
 
-  document.title = co.name + ' — Supplier Profile | Circuits.com';
-  setMeta('description', (co.tagline || co.description || (co.name + ' on the Circuits.com supplier directory.')).slice(0, 155));
+  document.title = co.name + ' — Profile | Circuits.com';
+  setMeta('description', (co.tagline || co.description || (co.name + ' on the Circuits.com directory.')).slice(0, 155));
 
   /* ---- hero ---- */
   const logo = isLogoUrl(co.logo)
@@ -85,16 +102,13 @@ async function initProfile(){
   <div class="pf-head">
     <div class="pf-logo">${logo}</div>
     <div class="pf-id">
-      <h1>${escapeHtml(co.name)}
-        ${badge ? `<span class="lb" style="background:${escapeHtml(badge.color)}">${escapeHtml(badge.text)}</span>` : ''}
-        ${sponsored ? '<span class="lb lb-sponsor">Exclusive Sponsor</span>' : ''}
-      </h1>
+      <h1>${escapeHtml(co.name)}</h1>
       ${co.tagline ? `<p class="pf-tagline">${escapeHtml(co.tagline)}</p>` : ''}
       <div class="pf-meta">
         ${reviews.length ? `<span class="pf-rating">${stars(avg)} ${avg.toFixed(1)} <i>(${reviews.length})</i></span>` : ''}
-        ${co.address ? `<span class="pf-chip">${escapeHtml(co.address)}</span>` : ''}
-        ${co.founded ? `<span class="pf-chip">Est. ${escapeHtml(co.founded)}</span>` : ''}
-        ${co.employees ? `<span class="pf-chip">${escapeHtml(co.employees)} employees</span>` : ''}
+        ${fitsLine(co.address, 60) ? `<span class="pf-chip">${escapeHtml(co.address)}</span>` : ''}
+        ${/^\d{4}$/.test((co.founded || '').trim()) ? `<span class="pf-chip">Est. ${escapeHtml(co.founded.trim())}</span>` : ''}
+        ${fitsLine(co.employees, 20) ? `<span class="pf-chip">${escapeHtml(co.employees)} employees</span>` : ''}
       </div>
     </div>
   </div>
@@ -104,10 +118,14 @@ async function initProfile(){
   html += section('About ' + co.name, co.description
     ? `<p class="pf-prose">${escapeHtml(co.description).replace(/\n+/g, '</p><p class="pf-prose">')}</p>` : '');
 
-  /* ---- keywords ---- */
-  html += section('Listed under', kws.length
+  /* ---- keywords ----
+     The trust badge certifies a company for a particular keyword, so it belongs
+     against that keyword — "PCB Design (Certified)", not "Jacob (Certified)". */
+  html += section('Keyword Listings', kws.length
     ? `<div class="kw-tags pf-kws">${kws.map(k =>
-        `<a class="kw-tag" href="/results?q=${encodeURIComponent(k.keyword)}">${escapeHtml(k.keyword)}${k.banner ? ' ★' : ''}</a>`
+        `<a class="kw-tag" href="/results?q=${encodeURIComponent(k.keyword)}">${escapeHtml(k.keyword)}${k.banner ? ' ★' : ''}`
+        + (k.badge ? `<span class="lb kw-lb" style="background:${escapeHtml(k.badge.color)}">${escapeHtml(k.badge.text)}</span>` : '')
+        + `</a>`
       ).join('')}</div>
       <p class="pf-note">★ marks a Circuits-Keyword&trade; this company exclusively sponsors.</p>` : '');
 
@@ -171,11 +189,11 @@ async function initProfile(){
         <span>circuits.com/${escapeHtml(co.handle)}</span><b>Copy</b>
       </button>
       <div class="pf-rows">
-        ${row('Contact', co.contact)}
-        ${row('Phone', co.phone, { href: 'tel:' + (co.phone || ''), id: 'pf-phone' })}
-        ${row('Email', co.email, { href: 'mailto:' + (co.email || ''), id: 'pf-email' })}
+        ${fitsLine(co.contact, 80) ? row('Contact', co.contact) : ''}
+        ${looksPhone(co.phone) ? row('Phone', co.phone, { href: 'tel:' + co.phone.replace(/[^\d+]/g, ''), id: 'pf-phone' }) : ''}
+        ${looksEmail(co.email) ? row('Email', co.email, { href: 'mailto:' + co.email.trim(), id: 'pf-email' }) : ''}
         ${site ? row('Website', site.replace(/^https?:\/\//, '').replace(/\/$/, ''), { href: site, id: 'pf-site', ext: true }) : ''}
-        ${row('Address', co.address)}
+        ${fitsLine(co.address, 120) ? row('Address', co.address) : ''}
       </div>
       ${socialLinks(co.socials)}
     </div>
@@ -187,8 +205,9 @@ async function initProfile(){
       ).join('')}</div>
     </div>` : ''}
 
-    <p class="pf-claim">Do you work at ${escapeHtml(co.name)}?
-      <a href="/claim?c=${encodeURIComponent(co.handle)}">Claim this profile</a>.</p>
+    <p class="pf-claim">Is this your company's listing?
+      <a href="/claim?c=${encodeURIComponent(co.handle)}">Claim this listing</a>
+      to manage it from your Circuits.com profile.</p>
   </aside></div>`;
 
   root.innerHTML = html;

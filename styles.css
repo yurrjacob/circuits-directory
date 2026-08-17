@@ -517,6 +517,20 @@ tr.row-warn td{background:#fff3cd}
 .pf-prose{margin:0 0 10px;max-width:70ch;color:#33383d}
 .pf-note{font-size:.78rem;color:var(--muted);margin:9px 0 0}
 .pf-kws{gap:7px}
+/* a review nobody has judged yet is invisible to the public — make it obvious */
+.dash-table tr.row-waiting td{background:#fffbe8}
+
+/* one sign-in system: the staff door is present but quiet */
+.auth-staff{margin:18px 0 0;text-align:center;font-size:.8rem;color:var(--muted)}
+.auth-staff a{color:var(--muted);text-decoration:underline}
+.auth-staff a:hover{color:var(--ink)}
+.auth-cta{display:block;text-align:center;text-decoration:none;padding:11px}
+.quote-total-alt{font-weight:600;opacity:.8}
+.beta-note{margin-top:10px}
+
+/* the trust badge rides on the keyword it certifies, not the company name */
+.kw-tag .kw-lb{font-size:.68rem;padding:2px 7px;border-radius:10px;color:#fff;
+  font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
 .pf-kws .kw-tag{text-decoration:none;cursor:pointer;transition:background .12s,color .12s}
 .pf-kws .kw-tag:hover{background:var(--green);color:#000}
 

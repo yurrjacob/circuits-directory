@@ -11,8 +11,12 @@ const sb = (window.supabase && window.supabase.createClient)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
   : null;
 
-/* ---- pricing ---- */
-const BASE_FEE = 49, BANNER_FEE = 99, BADGE_FEE = 29;
+/* ---- pricing ----
+   Beta rates. Original owners keep these for as long as their subscription
+   stays active, so these numbers are a floor we honour, not a list price.
+   Yearly works out to ten months, i.e. two months free. */
+const BASE_FEE = 99, BANNER_FEE = 399, BADGE_FEE = 49;
+const BASE_FEE_YEAR = 999, BANNER_FEE_YEAR = 3999, BADGE_FEE_YEAR = 399;
 function effPrice(v, fallback){
   return (v==null || v==='' || isNaN(Number(v))) ? fallback : Number(v);
 }
@@ -149,7 +153,20 @@ async function deleteApplication(id){
 /* ---- auth (staff) ---- */
 async function currentUser(){ if(!sb) return null; const { data } = await sb.auth.getUser(); return data ? data.user : null; }
 async function checkStaff(){ if(!sb) return false; const { data, error } = await sb.rpc('is_staff'); if(error){ console.error('is_staff', error); return false; } return !!data; }
-async function signIn(email, password){ return sb.auth.signInWithPassword({ email, password }); }
+/* Sign in with an email OR a Circuits.com username. Supabase only knows
+   emails, so a username is resolved first. A failed lookup still calls
+   signInWithPassword so a wrong username and a wrong password come back
+   with the same error, rather than confirming which usernames exist. */
+async function signIn(identifier, password){
+  let email = (identifier || '').trim();
+  if(email && !email.includes('@')){
+    try{
+      const { data } = await sb.rpc('email_for_login', { p_id: email });
+      if(data) email = data;
+    }catch(e){ console.warn('username lookup failed', e); }
+  }
+  return sb.auth.signInWithPassword({ email, password });
+}
 async function signUp(email, password){ return sb.auth.signUp({ email, password }); }
 async function signOut(){ if(sb) await sb.auth.signOut(); } async function loadPrefs(page){ if(!sb) return null; const { data, error } = await sb.from('admin_prefs').select('prefs').eq('page', page).maybeSingle(); if(error){ console.error('loadPrefs', error); return null; } return data ? data.prefs : null; } async function savePrefs(page, prefs){ if(!sb) return; const { data } = await sb.auth.getUser(); if(!data || !data.user) return; const { error } = await sb.from('admin_prefs').upsert({ user_id: data.user.id, page, prefs, updated_at: new Date().toISOString() }, { onConflict: 'page' }); if(error) console.error('savePrefs', error); }
 

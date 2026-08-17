@@ -124,7 +124,8 @@ for (const id of ['f-handle', 'f-pass', 'f-pass2']) {
        If these two ever diverge, an applicant is quoted one price and invoiced
        another. */
 const storeSrc = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
-const feeLine = storeSrc.match(/const BASE_FEE = (\d+), BANNER_FEE = (\d+), BADGE_FEE = (\d+);/);
+const feeLine = storeSrc.match(/const BASE_FEE = (\d+), BANNER_FEE = (\d+), BADGE_FEE = (\d+);/)
+  || storeSrc.match(/const BASE_FEE = (\d+), BANNER_FEE = (\d+), BADGE_FEE = (\d+)\b/);
 assert.ok(feeLine, 'pricing constants moved or changed shape in store.js');
 const [BASE, BANNER, BADGE] = feeLine.slice(1).map(Number);
 
@@ -155,4 +156,44 @@ for (const trigger of ['renderQuote()']) {
 
 require('./render-check.js');
 
-console.log('checks passed (' + (CASES.length + 6) + ' assertions)');
+/* --- a profile field only renders when the value fits the field ---
+       Junk in the phone box used to emit a dead tel: link, and a pasted URL in
+       the address box stretched the sidebar until the layout broke. These
+       mirror the guards in profile.js. */
+const profSrc = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
+const grab = name => {
+  const start = profSrc.indexOf('function ' + name + '(');
+  assert.ok(start !== -1, name + '() missing from profile.js');
+  const end = profSrc.indexOf('\n}', start);
+  assert.ok(end !== -1, name + '() has no closing brace');
+  const body = profSrc.slice(start, end + 2).replace('function ' + name, 'function');
+  return eval('(' + body + ')');
+};
+const looksPhone = grab('looksPhone'), looksEmail = grab('looksEmail'), fitsLine = grab('fitsLine');
+
+for (const good of ['(555) 123-4567', '+44 20 7946 0958', '555.123.4567', '5551234567'])
+  assert.ok(looksPhone(good), 'looksPhone rejected a real number: ' + good);
+for (const bad of ['', 'call me', 'dwadwa', '123', 'https://example.com', 'a'.repeat(40)])
+  assert.ok(!looksPhone(bad), 'looksPhone accepted junk: ' + JSON.stringify(bad));
+
+for (const good of ['sales@company.com', 'a.b+c@sub.domain.co.uk'])
+  assert.ok(looksEmail(good), 'looksEmail rejected a real address: ' + good);
+for (const bad of ['', 'nope', 'a@b', 'a @b.com', 'x'.repeat(330) + '@b.com'])
+  assert.ok(!looksEmail(bad), 'looksEmail accepted junk: ' + JSON.stringify(bad));
+
+assert.ok(fitsLine('12 Example Street, Springfield', 120));
+assert.ok(!fitsLine('https://example.com', 120), 'a pasted URL is not an address');
+assert.ok(!fitsLine('line one\nline two', 120), 'multi-line value would break the row');
+assert.ok(!fitsLine('x'.repeat(200), 120), 'over-long value would break the row');
+assert.ok(!fitsLine('   ', 120));
+
+/* --- yearly pricing must exist and undercut twelve monthly payments --- */
+const yearLine = storeSrc.match(/const BASE_FEE_YEAR = (\d+), BANNER_FEE_YEAR = (\d+), BADGE_FEE_YEAR = (\d+);/);
+assert.ok(yearLine, 'yearly pricing constants missing from store.js');
+const [BASE_Y, BANNER_Y, BADGE_Y] = yearLine.slice(1).map(Number);
+for (const [m, y, what] of [[BASE, BASE_Y, 'listing'], [BANNER, BANNER_Y, 'banner'], [BADGE, BADGE_Y, 'badge']]) {
+  assert.ok(y < m * 12, what + ' yearly price is not cheaper than paying monthly');
+  assert.ok(y > m, what + ' yearly price is below one month, which is surely wrong');
+}
+
+console.log('checks passed');

@@ -304,18 +304,20 @@ function initJoin(){
   const logoPrev = document.getElementById('logo-preview');
   const logoImg = document.getElementById('logo-preview-img');
   const logoName = document.getElementById('logo-name');
-  const LOGO_TYPES = ['image/png','image/jpeg','image/svg+xml','image/webp'];
-  const LOGO_MAX = 10 * 1024 * 1024; // 10 MB
+  /* must match the logos bucket, which enforces this server-side. SVG is out:
+     it can carry script and the bucket is publicly served. */
+  const LOGO_TYPES = ['image/png','image/jpeg','image/webp'];
+  const LOGO_MAX = 5 * 1024 * 1024; // 5 MB
   let logoUrl = null;
   if(logoInput) logoInput.addEventListener('change', ()=>{
     const f = logoInput.files && logoInput.files[0];
     if(!f){ logoPrev.style.display='none'; setErr(logoInput,''); logoUrl=null; updatePreviews(); return; }
     if(!LOGO_TYPES.includes(f.type)){
-      setErr(logoInput, 'Logo must be a PNG, JPG, SVG, or WebP image.');
+      setErr(logoInput, 'Logo must be a PNG, JPG or WebP image.');
       logoInput.value=''; logoPrev.style.display='none'; logoUrl=null; updatePreviews(); return;
     }
     if(f.size > LOGO_MAX){
-      setErr(logoInput, 'Logo file is too large (max 10 MB).');
+      setErr(logoInput, 'Logo file is too large (max 5 MB).');
       logoInput.value=''; logoPrev.style.display='none'; logoUrl=null; updatePreviews(); return;
     }
     setErr(logoInput,'');
@@ -437,23 +439,28 @@ function renderQuote(){
   const wantsBanner = !!(document.getElementById('promo-check') && document.getElementById('promo-check').checked);
   const wantsBadge  = !!(badgeCheck && badgeCheck.checked);
   const each = BASE_FEE + (wantsBanner ? BANNER_FEE : 0) + (wantsBadge ? BADGE_FEE : 0);
-  const rows = [['Keyword listing', BASE_FEE, true]];
-  if(wantsBanner) rows.push(['Exclusive Circuits-Keyword™ Sponsor banner', BANNER_FEE, true]);
-  if(wantsBadge)  rows.push(['Circuits.com Trust Badge', BADGE_FEE, true]);
+  const eachYear = BASE_FEE_YEAR + (wantsBanner ? BANNER_FEE_YEAR : 0) + (wantsBadge ? BADGE_FEE_YEAR : 0);
+  const rows = [['Keyword listing', BASE_FEE, BASE_FEE_YEAR]];
+  if(wantsBanner) rows.push(['Exclusive Circuits-Keyword™ Sponsor banner', BANNER_FEE, BANNER_FEE_YEAR]);
+  if(wantsBadge)  rows.push(['Circuits.com Trust Badge', BADGE_FEE, BADGE_FEE_YEAR]);
 
-  lines.innerHTML = rows.map(([label, price]) =>
+  const money = v => '$' + v.toLocaleString('en-US');
+
+  lines.innerHTML = rows.map(([label, price, yearly]) =>
     `<div class="quote-line"><span>${escapeHtml(label)}</span>`
-    + `<span class="quote-each">$${price}/mo &times; ${n || 0}</span>`
-    + `<b>$${price * n}</b></div>`).join('');
+    + `<span class="quote-each">${money(price)}/mo or ${money(yearly)}/yr &times; ${n || 0}</span>`
+    + `<b>${money(price * n)}</b></div>`).join('');
 
   const totalEl = document.getElementById('quote-total');
-  if(totalEl) totalEl.textContent = '$' + (each * n) + (n ? '/mo' : '');
+  if(totalEl) totalEl.textContent = money(each * n) + (n ? '/mo' : '');
+  const yearEl = document.getElementById('quote-total-year');
+  if(yearEl) yearEl.textContent = money(eachYear * n) + (n ? '/yr' : '');
   const note = document.getElementById('quote-note');
   if(note) note.textContent = !n
     ? 'Add at least one Circuits-Keyword™ in step 02 to see your estimate.'
     : (n === 1
-        ? 'One keyword at $' + each + '/mo.'
-        : n + ' keywords at $' + each + '/mo each. Extras apply to every keyword you claim.');
+        ? 'One keyword at ' + money(each) + '/mo, or ' + money(eachYear) + ' a year.'
+        : n + ' keywords at ' + money(each) + '/mo each, or ' + money(eachYear) + ' each a year. Extras apply to every keyword you claim.');
 }
 
 const msg = document.getElementById('msg');

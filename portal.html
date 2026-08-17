@@ -20,23 +20,24 @@
 <!-- signed out -->
 <div class="auth-wrap" id="pt-auth" style="display:none">
   <div class="auth-card">
-    <h1 id="pt-auth-title">Supplier sign in</h1>
+    <h1 id="pt-auth-title">Profile sign in</h1>
     <p class="sub">Manage your Circuits.com profile, listings, quote requests and reviews.</p>
     <form id="pt-auth-form" autocomplete="off">
-      <div class="auth-field"><label>Email</label><input id="pt-email" type="email" required placeholder="sales@yourcompany.com"></div>
-      <div class="auth-field"><label>Password</label><input id="pt-password" type="password" required placeholder="••••••••"></div>
+      <div class="auth-field"><label>Email or username</label>
+        <input id="pt-email" type="text" required placeholder="you@company.com or yourname" autocomplete="username" spellcheck="false"></div>
+      <div class="auth-field"><label>Password</label><input id="pt-password" type="password" required placeholder="••••••••" autocomplete="current-password"></div>
       <div id="pt-auth-msg" style="font-size:.85rem;margin-bottom:12px;color:#b3261e"></div>
       <button class="submit" type="submit" id="pt-auth-submit">Sign in →</button>
     </form>
     <div class="auth-foot">
-      <a class="btn btn-primary" href="/join" style="display:block;text-align:center;text-decoration:none;padding:11px">Get Listed &amp; Create Your Account →</a>
+      <a class="btn btn-primary auth-cta" href="/join">Create your profile →</a>
     </div>
     <div class="auth-note">
-      Accounts are created when you get listed &mdash; that is where you reserve your
-      circuits.com address and set your password. Use the same email and password here.
+      Your username is your Circuits.com address &mdash; sign in with either that or your email.
       <br><br>
-      Already listed but never set up an account? <a href="/claim">Request access to your profile</a>.
+      Company already in the directory but not linked to you? <a href="/claim">Claim the listing</a>.
     </div>
+    <p class="auth-staff">Circuits.com staff? <a href="/login">Sign in here</a>.</p>
   </div>
 </div>
 
@@ -128,7 +129,7 @@
         <div class="auth-field"><label>Logo</label>
           <div style="display:flex;gap:10px;align-items:center">
             <span class="logo-thumb" id="pt-logo-prev" style="width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center"></span>
-            <input id="pt-logo" type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp">
+            <input id="pt-logo" type="file" accept="image/png,image/jpeg,image/webp">
             <button type="button" class="mini-btn" id="pt-logo-rm" style="display:none">Remove</button>
           </div>
         </div>
@@ -197,8 +198,7 @@
   <div class="inner">
     <div class="flinks">
       <a href="/">Home</a>
-      <a href="/portal">Supplier Login</a>
-      <a href="/login">Staff Login</a>
+      <a href="/portal">Profile Login</a>
     </div>
     <div style="display:flex;align-items:center;gap:14px">
       <span>© 2026 Circuits.com</span>
