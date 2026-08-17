@@ -140,6 +140,26 @@ assert.ok(sitemap.includes('circuits.com/register'), 'sitemap is missing /regist
 assert.ok(!fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8').includes('/how-it-works'),
   'the sitemap generator would put /how-it-works back on the next build');
 
+/* --- suspension is a state, not a deletion ---
+       The point of suspending rather than deleting is that it is reversible,
+       so nothing here may reach for a delete, and the owner must be told. */
+const suspSrc = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+for (const fn of ['suspendCompany', 'suspendProfile']) {
+  assert.ok(suspSrc.includes(`async function ${fn}(`), `store.js is missing ${fn}`);
+}
+// must go through the logged RPC, never a bare table write that skips the audit trail
+assert.ok(/rpc\('set_company_suspended'/.test(suspSrc),
+  'suspendCompany no longer calls set_company_suspended, so nothing is written to the audit log');
+assert.ok(/rpc\('set_profile_suspended'/.test(suspSrc),
+  'suspendProfile no longer calls set_profile_suspended');
+assert.ok(!/from\('companies'\)[\s\S]{0,120}suspended_at/.test(suspSrc),
+  'suspension is being set by a direct table update, which bypasses the audit log');
+const suspPortal = fs.readFileSync(path.join(ROOT, "portal.js"), "utf8");
+assert.ok(/suspended_at/.test(suspPortal) && /pt-suspended/.test(suspPortal),
+  'a suspended owner gets no explanation in the portal, so it just looks broken');
+assert.ok(/\.pt-suspended\{/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
+  'the suspension notice has no styling');
+
 /* --- a failed lookup must never be reported as "nothing there" ---
        These three answer questions whose empty answer is commercially loaded:
        "this keyword is available to buy" and "this address is free to claim".

@@ -371,6 +371,97 @@ begin
   raise notice 'LISTING / PROFILE SEPARATION CHECKS PASSED';
 end $$;
 
+/* ---- suspension ----
+   Suspension exists so bad actors can be handled without deleting anything.
+   It is only worth having if the public really stops seeing them and they
+   really cannot lift it themselves. */
+do $$
+declare u uuid; n int;
+begin
+  delete from applications  where company_slug = 'zz-susp';
+  delete from company_users where company_slug = 'zz-susp';
+  delete from companies     where slug = 'zz-susp';
+  delete from auth.users    where email = 'zz-susp@rlstest.invalid';
+
+  insert into auth.users (id, instance_id, aud, role, email, encrypted_password,
+                          email_confirmed_at, created_at, updated_at)
+  values (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'authenticated',
+          'authenticated', 'zz-susp@rlstest.invalid', 'x', now(), now(), now())
+  returning id into u;
+
+  insert into companies (slug, name, handle, published) values ('zz-susp','ZZ Susp','zzsusp', true);
+  insert into company_users (user_id, company_slug) values (u, 'zz-susp');
+  insert into applications (company, keyword, status, company_slug, owner_email, email)
+  values ('ZZ Susp','zzkeyword','Approved','zz-susp','zz-susp@rlstest.invalid','zz-susp@rlstest.invalid');
+
+  set local role anon;
+  select count(*) into n from companies where slug = 'zz-susp';
+  if n <> 1 then raise exception 'FAIL: active company is not publicly visible'; end if;
+  select count(*) into n from applications where company_slug = 'zz-susp';
+  if n <> 1 then raise exception 'FAIL: active listing is not publicly visible'; end if;
+  reset role;
+
+  update companies set suspended_at = now() where slug = 'zz-susp';
+
+  set local role anon;
+  select count(*) into n from companies where slug = 'zz-susp';
+  if n <> 0 then raise exception 'FAIL: suspended company is still publicly visible'; end if;
+  -- the keyword search reads applications, not companies; suspension must reach it
+  select count(*) into n from applications where company_slug = 'zz-susp';
+  if n <> 0 then raise exception 'FAIL: suspended company keeps its ranked keyword listing'; end if;
+  reset role;
+
+  set local role authenticated;
+  perform set_config('request.jwt.claims', json_build_object('sub', u::text,
+    'email','zz-susp@rlstest.invalid','role','authenticated')::text, true);
+
+  -- still readable by its owner, so the portal can explain rather than look broken
+  select count(*) into n from companies where slug = 'zz-susp';
+  if n <> 1 then raise exception 'FAIL: a suspended owner cannot see their own listing'; end if;
+
+  begin
+    update companies set name = 'Renamed while suspended' where slug = 'zz-susp';
+  exception when insufficient_privilege then null;
+  end;
+
+  begin
+    update companies set suspended_at = null where slug = 'zz-susp';
+  exception when insufficient_privilege then null;
+  end;
+  reset role;
+  perform set_config('request.jwt.claims', null, true);
+
+  if (select name from companies where slug = 'zz-susp') <> 'ZZ Susp' then
+    raise exception 'FAIL: a suspended owner edited their listing';
+  end if;
+  if (select suspended_at is null from companies where slug = 'zz-susp') then
+    raise exception 'FAIL: an owner lifted their own suspension';
+  end if;
+
+  delete from applications  where company_slug = 'zz-susp';
+  delete from company_users where company_slug = 'zz-susp';
+  delete from companies     where slug = 'zz-susp';
+  delete from auth.users    where email = 'zz-susp@rlstest.invalid';
+
+  raise notice 'SUSPENSION CHECKS PASSED';
+end $$;
+
+/* Postgres grants EXECUTE to PUBLIC on every new function, so "revoke from
+   anon" is not enough — that mistake shipped once and is easy to repeat. */
+do $$
+begin
+  if has_function_privilege('anon', 'public.set_company_suspended(text,boolean,text)', 'execute')
+  or has_function_privilege('anon', 'public.set_profile_suspended(text,boolean,text)', 'execute') then
+    raise exception 'FAIL: anon can reach the suspension functions';
+  end if;
+  -- but the read-side helper must stay reachable, or keyword search breaks for
+  -- every logged-out visitor
+  if not has_function_privilege('anon', 'public.company_suspended(text)', 'execute') then
+    raise exception 'FAIL: anon cannot evaluate company_suspended(); keyword search would error';
+  end if;
+  raise notice 'SUSPENSION FUNCTION GRANTS CORRECT';
+end $$;
+
 /* ---- rate limiting on the public forms ----
    The honeypot and timing traps live in the browser and can be bypassed by
    anyone who reads the page source. This trigger is the layer that actually
