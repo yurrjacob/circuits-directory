@@ -91,7 +91,7 @@ for (const bad of ['ab', '-lead', 'trail-', '_lead', 'trail_', 'Upper', 'has spa
 // every root page name must be in the reserved list, or a company could take it
 const RESERVED_IN_DB = ['about','admin','applications','claim','companies','company','contact',
   'dashboard','data','directory','how-it-works','index','join','login','portal','profile',
-  'register','reset','results','robots','search','server','sitemap','store','styles','terms','tools'];
+  'privacy','register','reset','results','robots','search','server','sitemap','store','styles','terms','tools'];
 for (const f of fs.readdirSync(ROOT)) {
   if (!f.endsWith('.html')) continue;
   const name = f.replace(/\.html$/, '');
@@ -139,6 +139,68 @@ assert.ok(sitemap.includes('circuits.com/about'), 'sitemap lost /about');
 assert.ok(sitemap.includes('circuits.com/register'), 'sitemap is missing /register');
 assert.ok(!fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8').includes('/how-it-works'),
   'the sitemap generator would put /how-it-works back on the next build');
+
+/* --- one footer everywhere: legal links, not navigation ---
+       Terms used to be reachable only from two form checkboxes. On a paid site
+       they have to be one click from anywhere, and so does Privacy. */
+let footChecked = 0;
+for (const f of NAV_PAGES) {
+  const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+  const foot = (src.match(/<footer class="footer">[\s\S]*?<\/footer>/) || [null])[0];
+  if (!foot) continue;
+  footChecked++;
+  for (const href of ['/terms', '/privacy', '/directory', '/login']) {
+    assert.ok(foot.includes(`href="${href}"`), `${f} footer is missing ${href}`);
+  }
+  // the logo already goes home; a Home link here is dead weight
+  assert.ok(!/>Home</.test(foot), `${f} footer still carries a redundant Home link`);
+  assert.ok(!foot.includes('Profile Login'), `${f} footer still shows Profile Login`);
+}
+assert.ok(footChecked >= 25, `only ${footChecked} pages carry the shared footer`);
+
+/* --- analytics must not run before the visitor agrees ---
+       GA used to load on page open, setting cookies with no consent, which is
+       not lawful for UK and EU visitors. */
+const an = fs.readFileSync(path.join(ROOT, 'analytics.js'), 'utf8');
+assert.ok(an.includes('cx_consent'), 'analytics.js no longer checks for consent');
+const gaIdx = an.indexOf('googletagmanager');
+const fnIdx = an.indexOf('function loadGA');
+assert.ok(gaIdx > fnIdx && fnIdx !== -1,
+  'the Google Analytics tag is no longer inside the consent-gated loader');
+assert.ok(/if \(c === 'yes'\) \{ loadGA\(\); return; \}/.test(an),
+  'analytics loads without an explicit yes');
+assert.ok(/data-c="no"/.test(an) && /data-c="yes"/.test(an),
+  'the cookie banner no longer offers a real choice — decline must be possible');
+
+// declining must also stop the first-party visitor id
+const storeAn = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+const vid = storeAn.slice(storeAn.indexOf('function visitorId'), storeAn.indexOf('function trackEvent'));
+assert.ok(vid.includes("cx_consent") && vid.includes('return null'),
+  'visitorId still fingerprints browsers that declined analytics');
+assert.ok(vid.includes("removeItem('cx_v')"),
+  'an existing visitor id is not cleared when consent is withdrawn');
+
+/* --- the privacy policy has to say what the site actually does --- */
+const priv = fs.readFileSync(path.join(ROOT, 'privacy.html'), 'utf8');
+for (const must of ['Supabase', 'Google Analytics', 'FormSubmit', 'GitHub Pages', 'jsDelivr']) {
+  assert.ok(priv.includes(must), `privacy policy does not disclose ${must}`);
+}
+// the uploads really are world-readable; the policy must not soften that
+assert.ok(/public storage|stored publicly/i.test(priv),
+  'privacy policy does not warn that uploaded files are publicly accessible');
+assert.ok(/do not sell/i.test(priv), 'privacy policy omits the no-sale statement');
+assert.ok(priv.includes('cookie-reset'), 'privacy policy has no way to change a cookie choice');
+assert.ok(priv.includes('/contact'), 'privacy policy gives no route for a data request');
+
+/* --- contact form triage --- */
+const contactHtml = fs.readFileSync(path.join(ROOT, 'contact.html'), 'utf8');
+assert.ok(contactHtml.includes('id="c-category"'), 'contact form lost its category dropdown');
+const opts = (contactHtml.match(/<option[^>]*>[^<]+<\/option>/g) || []).length;
+assert.ok(opts >= 8, `contact form has only ${opts} category options`);
+assert.ok(/Choose a category/.test(contactHtml),
+  'the category dropdown has no unselected placeholder, so it would default to a real value');
+assert.ok(contactHtml.includes("'Contact: ' + category"),
+  'the chosen category never reaches the email subject, where triage happens');
 
 /* --- somebody who forgets their password must not be locked out forever --- */
 const resetHtml = fs.readFileSync(path.join(ROOT, 'reset.html'), 'utf8');
