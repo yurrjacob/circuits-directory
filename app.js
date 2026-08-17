@@ -56,6 +56,21 @@ function fakeSuccess(form, message){
   form.innerHTML = '<div class="success show">' + (message || 'Thanks — your message has been sent.') + '</div>';
 }
 
+/* Shown when a lookup fails, as opposed to succeeding and finding nothing.
+   Those two are very different messages and conflating them is how a visitor
+   ends up being told a keyword is for sale when it is simply unreachable. */
+function loadErrorHtml(what, retryLabel){
+  return `<div class="empty load-error">
+    <div class="big">We couldn&rsquo;t load ${escapeHtml(what)}</div>
+    <p>This is a problem on our side, not yours. Your connection may have dropped,
+       or Circuits.com may be briefly unavailable.</p>
+    <div class="btn-row" style="justify-content:center">
+      <button class="btn btn-primary" type="button" onclick="location.reload()">${escapeHtml(retryLabel || 'Try again')}</button>
+      <a class="btn" href="/directory">Browse the directory</a>
+    </div>
+  </div>`;
+}
+
 /* The database raises this when someone trips the per-IP limit. Turn it into
    something a real person who genuinely sent three quotes can understand. */
 function rateLimitMessage(err){
@@ -140,7 +155,16 @@ async function initResults(forcedTerm){
   body.innerHTML = `<div class="empty"><div class="big">Searching…</div></div>`;
 
   let listings = [];
-  try { listings = await fetchApprovedByKeyword(q); } catch(e){ listings = []; }
+  try {
+    listings = await fetchApprovedByKeyword(q);
+  } catch(e){
+    /* Do NOT fall through to the "this keyword is available" pitch. We do not
+       know that it is available — we only know we could not ask. */
+    body.innerHTML = loadErrorHtml('the results for “' + q + '”', 'Search again');
+    const c = document.getElementById('result-count');
+    if(c) c.textContent = '–';
+    return;
+  }
 
   const countEl = document.getElementById('result-count');
   if(countEl) countEl.textContent = listings.length;

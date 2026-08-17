@@ -80,7 +80,11 @@ async function fetchApprovedByKeyword(keyword){
   const { data, error } = await sb.from('applications').select('*')
     .eq('status','Approved').eq('paused', false).eq('keyword_norm', k)
     .order('created_at', { ascending:true }).order('id', { ascending:true });
-  if(error){ console.error('fetchApprovedByKeyword', error); return []; }
+  /* Throw, don't return []. An empty array here means "nobody owns this
+     keyword", which the results page turns into a pitch to buy it. If the
+     request merely failed we would be offering a keyword somebody already
+     owns — and could sell it twice. Callers must tell the two apart. */
+  if(error){ console.error('fetchApprovedByKeyword', error); throw error; }
   const seen = new Set(), out = [];
   for(const a of (data || [])){ if(seen.has(a.company)) continue; seen.add(a.company); out.push(a); }
   return out;
@@ -250,7 +254,8 @@ async function fetchProfileByHandle(handle){
   if(!sb || !handle) return null;
   const { data, error } = await sb.from('profiles').select('*')
     .ilike('handle', (handle||'').trim()).maybeSingle();
-  if(error){ console.error('fetchProfileByHandle', error); return null; }
+  // same reasoning as fetchCompanyByHandle: never invent a free address
+  if(error){ console.error('fetchProfileByHandle', error); throw error; }
   return data;
 }
 async function myProfile(){
@@ -293,7 +298,8 @@ async function fetchCompanyByHandle(handle){
   if(!sb || !handle) return null;
   const { data, error } = await sb.from('companies')
     .select('*').eq('handle', (handle||'').toLowerCase()).maybeSingle();
-  if(error){ console.error('fetchCompanyByHandle', error); return null; }
+  // null means "this address is free"; a failed lookup must not claim that
+  if(error){ console.error('fetchCompanyByHandle', error); throw error; }
   return data;
 }
 /* Live keywords for a company, in the permanent order they were claimed. */

@@ -609,6 +609,12 @@ tr.row-warn td{background:#fff3cd}
 .auth-staff a{color:var(--muted);text-decoration:underline}
 .auth-staff a:hover{color:var(--ink)}
 .auth-cta{display:block;text-align:center;text-decoration:none;padding:11px}
+/* "we couldn't load this" — deliberately calmer than an empty result, because
+   nothing is wrong with what the visitor asked for */
+.load-error{max-width:520px}
+.load-error .big{color:var(--ink)}
+.load-error p{color:var(--muted);font-size:.92rem;line-height:1.6;margin:8px 0 18px}
+.load-error .btn-row{margin:0}
 .quote-total-alt{font-weight:600;opacity:.8}
 .beta-note{margin-top:10px}
 

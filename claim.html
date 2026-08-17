@@ -67,7 +67,16 @@ function noCompany(){
 
 (async () => {
   if(!handle) return noCompany();
-  const co = await fetchCompanyByHandle(handle);
+  let co;
+  try {
+    co = await fetchCompanyByHandle(handle);
+  } catch(err){
+    // a failed lookup is not the same as "no such company" — do not send them away
+    console.error('claim lookup failed', err);
+    sub.textContent = '';
+    body.innerHTML = loadErrorHtml('that company');
+    return;
+  }
   if(!co){ sub.textContent = 'We could not find that company.'; return noCompany(); }
 
   sub.innerHTML = 'For <b>' + escapeHtml(co.name) + '</b> &mdash; circuits.com/' + escapeHtml(co.handle);

@@ -103,10 +103,19 @@ async function initProfile(){
   if(!handle){ root.innerHTML = notFound(''); return false; }
 
   /* One namespace, two kinds of occupant. A company listing takes priority
-     because it is the older claim; a person's profile is checked next. */
-  const co = await fetchCompanyByHandle(handle);
+     because it is the older claim; a person's profile is checked next.
+     A failed lookup must never reach notFound() — that page tells the visitor
+     the address is free to claim, and this address may well belong to someone. */
+  let co, person;
+  try {
+    co = await fetchCompanyByHandle(handle);
+    if(!co) person = await fetchProfileByHandle(handle);
+  } catch(err){
+    console.error('profile lookup failed', err);
+    root.innerHTML = loadErrorHtml('circuits.com/' + handle);
+    return false;
+  }
   if(!co){
-    const person = await fetchProfileByHandle(handle);
     if(person){ root.innerHTML = personProfile(person); wireCopyLink(); return true; }
     root.innerHTML = notFound(handle);
     return false;
