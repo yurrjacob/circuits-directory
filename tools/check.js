@@ -138,6 +138,32 @@ for (const id of ['f-handle', 'f-pass', 'f-pass2']) {
   assert.ok(joinHtml.includes(`id="${id}"`), `join.html is missing ${id}`);
 }
 
+/* --- you cannot submit a listing without an account ---
+       The account step comes first in Get Listed, with a log-in path for
+       people who already have one, so Register and Get Listed stop competing. */
+assert.ok(/<span class="step-num">00<\/span>/.test(joinHtml),
+  'Get Listed lost its 00 account step');
+assert.ok(joinHtml.indexOf('id="acct-step"') < joinHtml.indexOf('id="f-company"'),
+  'the account step must come before the company details');
+for (const id of ['acct-new', 'acct-login', 'acct-done', 'acct-handle', 'li-id', 'li-pass', 'li-submit']) {
+  assert.ok(joinHtml.includes(`id="${id}"`), `join.html is missing ${id}`);
+}
+// the username field must sit OUTSIDE the register-only block: a signed-in
+// user still has to choose an address for the listing itself
+const newBlock = joinHtml.slice(joinHtml.indexOf('id="acct-new"'), joinHtml.indexOf('id="acct-login"'));
+assert.ok(!newBlock.includes('id="f-handle"'),
+  'the listing username is hidden when signed in — signed-in users could not pick one');
+
+const joinJs = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+assert.ok(joinJs.includes('function initJoinAccount'), 'Get Listed lost its account step logic');
+assert.ok(joinJs.includes('initJoinAccount()'), 'initJoinAccount is never called');
+// submission must be gated on an account existing
+assert.ok(/if\(!JOIN_USER\)\{[\s\S]{0,120}await signUp\(/.test(joinJs),
+  'Get Listed no longer creates the account before submitting the listing');
+// a signed-in user's listing must be owned by the session, not a typed address
+assert.ok(joinJs.includes("JOIN_USER ? JOIN_USER.email : v('f-email')"),
+  'the listing owner is taken from the form rather than the signed-in account');
+
 /* --- the estimate shown on Get Listed must equal what admin bills ---
        Each keyword becomes its own application row, so extras are per keyword.
        If these two ever diverge, an applicant is quoted one price and invoiced
@@ -220,7 +246,18 @@ const grabFrom = (src, name) => {
 const escapeHtml = s => String(s).replace(/[&<>"']/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const bucketSeries = eval('(' + grabFrom(portalSrc, 'bucketSeries') + ')');
-const lineChartSvg = eval('(' + grabFrom(portalSrc, 'lineChartSvg') + ')');
+/* the chart shares its geometry with the hover handler, so pull the whole
+   trio in together rather than the drawing function alone */
+const gConst = portalSrc.match(/const G = \{[^}]*\};/);
+assert.ok(gConst, 'chart geometry constant G missing from portal.js');
+const named = name => {
+  const start = portalSrc.indexOf('function ' + name + '(');
+  assert.ok(start !== -1, name + '() missing from portal.js');
+  return portalSrc.slice(start, portalSrc.indexOf('\n}', start) + 2);
+};
+const { chartGeom, lineChartSvg } = eval(
+  '(function(){ ' + gConst[0] + named('chartGeom') + named('lineChartSvg')
+  + ' return { chartGeom, lineChartSvg }; })()');
 
 const day = 864e5;
 const from = new Date('2026-03-01T00:00:00Z'), to = new Date('2026-03-07T00:00:00Z');
@@ -247,6 +284,59 @@ assert.ok(/<path class="g-line" d="M[\d.]+ [\d.]+/.test(svg), 'chart has no line
 assert.ok(!/NaN|Infinity/.test(svg), 'chart geometry produced NaN or Infinity');
 const flat = lineChartSvg(bucketSeries([], from, to, 'day'), d => '');
 assert.ok(!/NaN|Infinity/.test(flat), 'an all-zero series broke the chart scale');
+
+/* The chart must scale uniformly. preserveAspectRatio="none" stretched x and y
+   independently, which is what made every label look squashed. */
+assert.ok(!/preserveAspectRatio\s*=\s*"none"/.test(svg),
+  'chart stretches non-uniformly again — labels will be distorted');
+assert.ok(/viewBox="0 0 \d+ \d+"/.test(svg), 'chart lost its viewBox');
+const cssSrc = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
+const chartCss = (cssSrc.match(/\.g-chart\{[^}]*\}/) || [''])[0];
+assert.ok(/height:\s*auto/.test(chartCss),
+  '.g-chart needs height:auto, or a fixed height forces a non-uniform scale');
+
+/* Axis labels must stay readable at every range, so they must thin out as the
+   series gets denser — 365 daily labels would be an unreadable smear. */
+const labelCount = s => (lineChartSvg(s, d => 'xx').match(/class="g-xlbl"/g) || []).length;
+for (const [span, bucket, cap] of [
+  [864e5, 'hour', 24], [7 * 864e5, 'day', 7], [30 * 864e5, 'day', 30],
+  [182 * 864e5, 'week', 27], [365 * 864e5, 'month', 13]
+]) {
+  const s = bucketSeries([], new Date(2026, 0, 1), new Date(2026, 0, 1 + span / 864e5), bucket);
+  const labels = labelCount(s);
+  assert.ok(labels >= 2, `range with ${s.length} points drew only ${labels} axis labels`);
+  assert.ok(labels <= 10, `range with ${s.length} points drew ${labels} axis labels — they will overlap`);
+  assert.ok(s.length <= cap + 2, `${bucket} bucketing produced ${s.length} points, expected about ${cap}`);
+}
+
+/* No two axis labels may sit closer than a label's width, at any range.
+   This is the assertion that actually means "readable". */
+for (const [bucket, days] of [['hour', 1], ['day', 7], ['day', 30], ['week', 182], ['month', 365]]) {
+  const s = bucketSeries([], new Date(2026, 0, 1), new Date(2026, 0, 1 + days), bucket);
+  const xs = [...lineChartSvg(s, d => 'Sep 30').matchAll(/class="g-xlbl" x="([\d.]+)"/g)].map(m => Number(m[1]));
+  for (let i = 1; i < xs.length; i++) {
+    assert.ok(xs[i] - xs[i - 1] >= 70,
+      `${bucket} range: axis labels only ${(xs[i] - xs[i - 1]).toFixed(0)}px apart — they overlap`);
+  }
+}
+
+// dots stop once they would merge into a blob
+assert.ok((lineChartSvg(daily, d => 'x').match(/class="g-dot"/g) || []).length === 7,
+  'a 7-point series should show its data points');
+const dense = bucketSeries([], new Date(2025, 0, 1), new Date(2025, 3, 1), 'day');
+assert.strictEqual((lineChartSvg(dense, d => 'x').match(/class="g-dot"/g) || []).length, 0,
+  'a 90-point series must not draw 90 dots');
+
+// the hover handler must use the same geometry the drawing used
+const geom = chartGeom(daily);
+assert.ok(geom.x(0) < geom.x(6), 'chart x scale is not increasing');
+assert.ok(geom.y(0) > geom.y(geom.top), 'chart y scale is not inverted for screen coords');
+assert.ok(Number.isFinite(geom.y(0)) && Number.isFinite(geom.x(0)), 'chart scale produced non-numbers');
+assert.strictEqual(chartGeom([[new Date(), 0]]).top, 1, 'an all-zero series must still have a top of 1');
+for (const [peak, want] of [[1, 1], [3, 5], [7, 10], [12, 20], [45, 50], [230, 500]]) {
+  assert.strictEqual(chartGeom([[new Date(), peak]]).top, want,
+    `axis ceiling for a peak of ${peak} should be ${want}`);
+}
 
 /* --- yearly pricing must exist and undercut twelve monthly payments --- */
 const yearLine = storeSrc.match(/const BASE_FEE_YEAR = (\d+), BANNER_FEE_YEAR = (\d+), BADGE_FEE_YEAR = (\d+);/);

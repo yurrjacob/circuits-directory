@@ -468,6 +468,7 @@ const msg = document.getElementById('msg');
   if(msg) msg.addEventListener('input', ()=>{ msgCount.textContent = `${msg.value.length} / 600`; });
 
   renderQuote();
+  initJoinAccount();
 
   const form = document.getElementById('join-form');
   function validate(){
@@ -480,14 +481,18 @@ const msg = document.getElementById('msg');
     };
     check('f-company', !!v('f-company'), 'Please enter your company name.');
     check('f-contact', !!v('f-contact'), 'Please enter a contact person.');
-    check('f-email', isValidEmail(v('f-email')), 'Please enter a valid email address (e.g. sales@company.com).');
     check('f-phone', !v('f-phone') || isValidPhone(v('f-phone')), 'Please enter a valid phone number (at least 10 digits).');
     check('f-website', !v('f-website') || isValidWebsite(v('f-website')), 'Please enter a valid website (e.g. www.company.com).');
+    /* The account step only applies when there isn't one yet. Signed in, these
+       fields are hidden and there is nothing to fill in. */
     check('f-handle', handleFormatOk(v('f-handle')) && handleState !== 'bad',
       handleState === 'bad' ? 'That Circuits.com address is not available.'
-                            : 'Choose your Circuits.com address (3–32 letters, numbers, hyphens or underscores).');
-    check('f-pass', v('f-pass').length >= 8, 'Your password must be at least 8 characters.');
-    check('f-pass2', v('f-pass') === v('f-pass2') && !!v('f-pass2'), 'The two passwords do not match.');
+                            : 'Choose your Circuits.com username (3–32 letters, numbers, hyphens or underscores).');
+    if(!JOIN_USER){
+      check('f-email', isValidEmail(v('f-email')), 'Please enter a valid email address (e.g. sales@company.com).');
+      check('f-pass', v('f-pass').length >= 8, 'Your password must be at least 8 characters.');
+      check('f-pass2', v('f-pass') === v('f-pass2') && !!v('f-pass2'), 'The two passwords do not match.');
+    }
     /* terms must be accepted before the form can be submitted */
     const termsBox = document.getElementById('f-terms');
     const termsErr = document.getElementById('terms-err');
@@ -507,7 +512,11 @@ const msg = document.getElementById('msg');
     if(website && !/^https?:\/\//i.test(website)) website = 'https://' + website;
     const wantsBadge = !!(badgeCheck && badgeCheck.checked);
     const base = {
-      company: v('f-company'), contact: v('f-contact'), email: v('f-email'),
+      /* applications.email is the account that owns the listing — the database
+         copies it into owner_email on insert. Signed in, that must be the
+         session's address, not whatever is typed on the form. */
+      company: v('f-company'), contact: v('f-contact'),
+      email: JOIN_USER ? JOIN_USER.email : v('f-email'),
       phone: v('f-phone'), website,
       logo: '',
       banner: !!(document.getElementById('promo-check') && document.getElementById('promo-check').checked),
@@ -520,9 +529,8 @@ const msg = document.getElementById('msg');
     try {
       if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
 
-      /* The account is created HERE — Get Listed is the only route to one.
-         Re-check the handle at submit time: someone may have taken it while
-         this form was open. The unique index is the real guard. */
+      /* Re-check the username at submit: someone may have taken it while this
+         form sat open. The database triggers are the real guard. */
       const why = await handleAvailable(base.requested_handle, null);
       if(why){
         if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
@@ -530,11 +538,16 @@ const msg = document.getElementById('msg');
         document.getElementById('f-handle').scrollIntoView({behavior:'smooth', block:'center'});
         return;
       }
-      const { error: authErr } = await signUp(base.email, v('f-pass'));
-      if(authErr && !/already registered|already exists/i.test(authErr.message || '')){
-        if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
-        setErr(document.getElementById('f-email'), authErr.message);
-        return;
+
+      /* No account, no listing. The account is created first, here, so that by
+         the time the listing is submitted it already belongs to somebody. */
+      if(!JOIN_USER){
+        const { error: authErr } = await signUp(base.email, v('f-pass'));
+        if(authErr && !/already registered|already exists/i.test(authErr.message || '')){
+          if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
+          setErr(document.getElementById('f-email'), authErr.message);
+          return;
+        }
       }
 
       /* Uploads are best-effort: a failed logo/document upload must NEVER
@@ -601,6 +614,57 @@ const msg = document.getElementById('msg');
     if(logoPrev) logoPrev.style.display='none';
     if(msgCount) msgCount.textContent='0 / 600';
     window.scrollTo({top:0,behavior:'smooth'});
+  });
+}
+
+/* ===================================================================
+   Get Listed, step 00 — the account.
+   Browsing needs no account; submitting a listing does. Rather than send
+   people away to Register and lose the form they were filling in, the
+   account is created (or signed into) in place, at the top of the flow.
+   =================================================================== */
+let JOIN_USER = null;      // the signed-in user, once we know
+
+async function initJoinAccount(){
+  const el = id => document.getElementById(id);
+  const stepNew = el('acct-new'), stepLogin = el('acct-login'), done = el('acct-done');
+  if(!stepNew) return;
+
+  /* The username field stays put either way — it is the listing's address,
+     not the account's, so a signed-in user still has to choose one. */
+  async function refresh(){
+    JOIN_USER = await currentUser();
+    if(JOIN_USER){
+      el('acct-email').textContent = JOIN_USER.email;
+      done.style.display = ''; stepNew.style.display = 'none'; stepLogin.style.display = 'none';
+    }else{
+      done.style.display = 'none'; stepNew.style.display = '';
+    }
+  }
+  await refresh();
+
+  el('acct-login-toggle').addEventListener('click', e => {
+    e.preventDefault(); stepNew.style.display = 'none'; stepLogin.style.display = '';
+  });
+  el('acct-new-toggle').addEventListener('click', e => {
+    e.preventDefault(); stepLogin.style.display = 'none'; stepNew.style.display = '';
+  });
+  el('acct-signout').addEventListener('click', async e => {
+    e.preventDefault(); await signOut(); await refresh();
+  });
+
+  el('li-submit').addEventListener('click', async () => {
+    const msg = el('li-msg'), btn = el('li-submit');
+    const id = el('li-id').value.trim(), pass = el('li-pass').value;
+    if(!id || !pass){ msg.textContent = 'Enter your email or username and password.'; msg.style.color = '#b3261e'; return; }
+    btn.disabled = true; msg.textContent = 'Signing in…'; msg.style.color = '';
+    const { error } = await signIn(id, pass);
+    btn.disabled = false;
+    if(error){ msg.textContent = error.message; msg.style.color = '#b3261e'; return; }
+    msg.textContent = '';
+    await refresh();
+    const next = document.querySelector('#acct-step + .step');
+    if(next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 }
 

@@ -241,42 +241,110 @@ function bucketSeries(rows, from, to, bucket){
   return out;
 }
 
-function lineChartSvg(series, tick){
-  const W = 700, H = 220, L = 38, R = 10, T = 12, B = 26;
-  const iw = W - L - R, ih = H - T - B;
+/* Geometry lives in one place so the hover handler can reuse the exact same
+   maths the drawing used, rather than approximating it. */
+const G = { W: 720, H: 260, L: 46, R: 14, T: 16, B: 34 };
+function chartGeom(series){
   const n = series.length;
+  const iw = G.W - G.L - G.R, ih = G.H - G.T - G.B;
   const peak = Math.max(1, ...series.map(s => s[1]));
-  /* round the top up to something readable rather than the raw peak */
+  /* a readable ceiling: 1-2-5 steps, so the axis reads 0/5/10 not 0/3.5/7 */
   const mag = Math.pow(10, Math.floor(Math.log10(peak)));
-  const top = Math.max(1, Math.ceil(peak / mag) * mag);
-  const x = i => L + (n <= 1 ? iw / 2 : (i / (n - 1)) * iw);
-  const y = v => T + ih - (v / top) * ih;
+  const step = [1, 2, 5, 10].find(m => peak <= m * mag) || 10;
+  const top = Math.max(1, step * mag);
+  return {
+    n, iw, ih, top,
+    x: i => G.L + (n <= 1 ? iw / 2 : (i / (n - 1)) * iw),
+    y: v => G.T + ih - (v / top) * ih
+  };
+}
 
-  const pts = series.map((s, i) => [x(i), y(s[1])]);
+function lineChartSvg(series, tick){
+  const g = chartGeom(series);
+  const { n } = g;
+  const base = G.T + g.ih;
+
+  const pts = series.map((s, i) => [g.x(i), g.y(s[1])]);
   const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
   const area = pts.length
-    ? line + ` L ${pts[pts.length - 1][0].toFixed(1)} ${T + ih} L ${pts[0][0].toFixed(1)} ${T + ih} Z` : '';
+    ? line + ` L ${pts[pts.length - 1][0].toFixed(1)} ${base} L ${pts[0][0].toFixed(1)} ${base} Z` : '';
 
-  const gridVals = [0, top / 2, top].map(v => Math.round(v));
-  const grid = [...new Set(gridVals)].map(v =>
-    `<line class="g-grid" x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"></line>`
-    + `<text class="g-ylbl" x="${L - 6}" y="${(y(v) + 4).toFixed(1)}">${v}</text>`).join('');
+  /* whole numbers only — "2.5 views" is not a thing */
+  const ticks = [...new Set([0, Math.round(g.top / 2), g.top])].sort((a, b) => a - b);
+  const grid = ticks.map(v =>
+    `<line class="g-grid" x1="${G.L}" x2="${G.W - G.R}" y1="${g.y(v).toFixed(1)}" y2="${g.y(v).toFixed(1)}"></line>`
+    + `<text class="g-ylbl" x="${G.L - 10}" y="${(g.y(v) + 4).toFixed(1)}">${v}</text>`).join('');
 
-  // at most ~7 labels, whatever the window
-  const every = Math.max(1, Math.ceil(n / 7));
-  const xlabels = series.map(([d], i) => i % every === 0 || i === n - 1
-    ? `<text class="g-xlbl" x="${x(i).toFixed(1)}" y="${H - 8}">${escapeHtml(tick(d))}</text>` : '').join('');
+  /* Pick label positions by spacing, not by count. Taking every Nth point and
+     then bolting the last one on lets the final pair land 2 points apart. */
+  const MIN_GAP = 76;                       // viewBox units; a date label is ~66
+  const every = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(g.iw / MIN_GAP))));
+  const wanted = [];
+  for(let i = 0; i < n; i += every) wanted.push(i);
+  if(n && wanted[wanted.length - 1] !== n - 1) wanted.push(n - 1);
 
-  const dots = n <= 40
-    ? pts.map((p, i) => `<circle class="g-dot" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.5"><title>${escapeHtml(series[i][0].toLocaleString())}: ${series[i][1]} views</title></circle>`).join('')
+  const keep = [];
+  for(const i of wanted){
+    if(!keep.length || g.x(i) - g.x(keep[keep.length - 1]) >= MIN_GAP) keep.push(i);
+    else if(i === n - 1) keep[keep.length - 1] = i;   // the end label wins the tie
+  }
+  const xlabels = keep.map(i =>
+    `<text class="g-xlbl" x="${g.x(i).toFixed(1)}" y="${G.H - 12}">${escapeHtml(tick(series[i][0]))}</text>`
+  ).join('');
+
+  /* Dots only while they still read as dots. Denser than that, the line is
+     the information and the hover gives you the number. */
+  const dots = n <= 32
+    ? pts.map(p => `<circle class="g-dot" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3"></circle>`).join('')
     : '';
 
-  return `<svg class="g-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Profile views over time">
+  return `<svg class="g-chart" viewBox="0 0 ${G.W} ${G.H}" role="img" aria-label="Profile views over time">
+    <line class="g-axis" x1="${G.L}" x2="${G.L}" y1="${G.T}" y2="${base}"></line>
     ${grid}
     ${area ? `<path class="g-area" d="${area}"></path>` : ''}
     ${line ? `<path class="g-line" d="${line}"></path>` : ''}
     ${dots}${xlabels}
+    <line class="g-hover-line" x1="0" x2="0" y1="${G.T}" y2="${base}" style="display:none"></line>
+    <circle class="g-hover-dot" r="4.5" style="display:none"></circle>
   </svg>`;
+}
+
+/* Hover readout. The dots carry no <title> because a native tooltip is slow
+   to appear and cannot be styled; this tracks the nearest point instead. */
+function attachChartHover(wrap, series, fmt){
+  const svg = wrap.querySelector('.g-chart');
+  if(!svg || !series.length) return;
+  const g = chartGeom(series);
+  const tip = document.createElement('div');
+  tip.className = 'g-tip';
+  tip.hidden = true;
+  wrap.appendChild(tip);
+  const vline = svg.querySelector('.g-hover-line');
+  const vdot = svg.querySelector('.g-hover-dot');
+
+  const hide = () => { tip.hidden = true; vline.style.display = 'none'; vdot.style.display = 'none'; };
+
+  svg.addEventListener('mousemove', e => {
+    const r = svg.getBoundingClientRect();
+    if(!r.width) return;
+    const vx = (e.clientX - r.left) / r.width * G.W;          // client px -> viewBox units
+    const i = g.n <= 1 ? 0
+      : Math.max(0, Math.min(g.n - 1, Math.round((vx - G.L) / g.iw * (g.n - 1))));
+    const [when, hits] = series[i];
+    const px = g.x(i), py = g.y(hits);
+
+    vline.setAttribute('x1', px); vline.setAttribute('x2', px); vline.style.display = '';
+    vdot.setAttribute('cx', px);  vdot.setAttribute('cy', py);  vdot.style.display = '';
+
+    tip.textContent = fmt(when) + ' · ' + hits + (hits === 1 ? ' view' : ' views');
+    tip.hidden = false;
+    /* position in real pixels, clamped so it never hangs off the panel */
+    const scale = r.width / G.W;
+    const left = Math.max(0, Math.min(r.width - tip.offsetWidth, px * scale - tip.offsetWidth / 2));
+    tip.style.left = left + 'px';
+    tip.style.top  = Math.max(0, py * scale - tip.offsetHeight - 10) + 'px';
+  });
+  svg.addEventListener('mouseleave', hide);
 }
 
 async function drawViews(){
@@ -303,10 +371,20 @@ async function drawViews(){
   const total = series.reduce((a, s) => a + s[1], 0);
 
   host.innerHTML = lineChartSvg(series, tick);
+
+  /* the hover readout says the full date; the axis only has room for a stub */
+  const full = bucket === 'hour'
+    ? (d => d.toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric' }))
+    : bucket === 'month'
+      ? (d => d.toLocaleDateString(undefined, { month:'long', year:'numeric' }))
+      : (d => d.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' }));
+  attachChartHover(host, series, full);
+
   const note = el('pt-chart-note');
+  const per = { hour:'hour', day:'day', week:'week', month:'month' }[bucket] || bucket;
   if(note) note.textContent = total === 0
     ? 'No views recorded in this period — tracking starts the first time someone opens your profile.'
-    : total + (total === 1 ? ' view' : ' views') + ' in this period, counted by ' + bucket + '.';
+    : total + (total === 1 ? ' view' : ' views') + ' in this period, one point per ' + per + '.';
 }
 
 let PT_RANGE_WIRED = false;
