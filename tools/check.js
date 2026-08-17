@@ -140,6 +140,28 @@ assert.ok(sitemap.includes('circuits.com/register'), 'sitemap is missing /regist
 assert.ok(!fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8').includes('/how-it-works'),
   'the sitemap generator would put /how-it-works back on the next build');
 
+/* --- a primary button must never be green text on a green background ---
+       .auth-foot a and .info-card a are (class + element) so they outrank the
+       plain .btn-primary class. Any new context that colours its links has to
+       exempt the button too. */
+const btnCss = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
+for (const ctx of ['.auth-foot', '.info-card']) {
+  const colours = new RegExp(`${ctx.replace('.', '\\.')} a\\{[^}]*color:`).test(btnCss);
+  if (!colours) continue;
+  // must be the plain rule, not just the :hover one — match up to the brace
+  const esc = ctx.replace('.', '\\.');
+  assert.ok(new RegExp(`${esc} a\\.btn-primary[,{]`).test(btnCss),
+    `${ctx} colours its links but never exempts a.btn-primary — buttons there render green on green`);
+}
+
+/* --- no decorative arrows on the auth buttons --- */
+for (const f of ['login.html', 'portal.html', 'register.html']) {
+  const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+  for (const m of src.match(/<(?:button|a)[^>]*>[^<]*→[^<]*<\/(?:button|a)>/g) || []) {
+    assert.ok(!/sign in|create (your )?profile/i.test(m), `${f} still has an arrow on: ${m.trim()}`);
+  }
+}
+
 /* --- one footer everywhere: legal links, not navigation ---
        Terms used to be reachable only from two form checkboxes. On a paid site
        they have to be one click from anywhere, and so does Privacy. */
