@@ -152,6 +152,10 @@ function wireTabs(){
   document.querySelectorAll('.pt-tab').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('.pt-tab').forEach(x => x.classList.toggle('active', x === b));
     document.querySelectorAll('.pt-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + b.dataset.tab));
+    /* Opening the tab is what "seen" means. Without this every request stays
+       New for ever unless the supplier remembers to touch the dropdown, so the
+       unread count stops meaning anything and gets ignored. */
+    if(b.dataset.tab === 'inquiries') markInquiriesSeen();
   }));
   el('pt-signout').addEventListener('click', async e => {
     e.preventDefault();
@@ -183,7 +187,9 @@ async function loadCompany(slug){
   renderPromote();
 }
 
-/* A supplier should not have to open the tab to discover a new quote request. */
+/* A supplier should not have to open the tab to discover a new quote request.
+   The badge counts requests that have never been looked at. Anything already
+   Replied, Won, Lost or Closed is finished business and must not nag. */
 function markUnread(){
   const tab = document.querySelector('.pt-tab[data-tab="inquiries"]');
   if(!tab) return;
@@ -195,6 +201,22 @@ function markUnread(){
     b.textContent = n;
     tab.appendChild(b);
   }
+}
+
+/* New -> Open, once, when the supplier actually looks. Fire and forget: if the
+   write fails the request simply stays New and they see it again next time,
+   which is the safe direction to fail in. */
+function markInquiriesSeen(){
+  const unseen = PT.inquiries.filter(q => q.status === 'New');
+  unseen.forEach(q => {
+    q.status = 'Open';
+    setInquiryStatus(q.id, 'Open').catch(e => { q.status = 'New'; console.warn('mark seen failed', e); });
+    const sel = document.querySelector(`[data-status="${q.id}"]`);
+    if(sel) sel.value = 'Open';
+    const badge = document.querySelector(`[data-q="${q.id}"] .badge`);
+    if(badge){ badge.textContent = 'Open'; badge.classList.remove('live'); }
+  });
+  if(unseen.length) markUnread();
 }
 
 /* ---------- overview ---------- */
@@ -689,12 +711,12 @@ function renderInquiries(){
       <div class="pt-thread" id="th-${q.id}"></div>
       <div class="pt-reply">
         <label for="msg-${q.id}">Reply to ${escapeHtml(q.from_name)}</label>
-        <textarea id="msg-${q.id}" rows="3" placeholder="Emailed to the buyer and kept on this thread."></textarea>
+        <textarea id="msg-${q.id}" rows="3" placeholder="Emailed to ${escapeHtml(q.from_email)} and kept on this thread."></textarea>
         <div class="pt-reply-foot">
           <button class="mini-btn green" data-send="${q.id}">Send reply</button>
           <label class="pt-status">Status
             <select data-status="${q.id}">
-              ${['New','Open','Won','Lost','Closed'].map(s => `<option ${s === q.status ? 'selected' : ''}>${s}</option>`).join('')}
+              ${['New','Open','Replied','Won','Lost','Closed'].map(s => `<option ${s === q.status ? 'selected' : ''}>${s}</option>`).join('')}
             </select>
           </label>
         </div>
@@ -717,10 +739,27 @@ function renderInquiries(){
     box.value = '';
     drawThread(id);
     const q = PT.inquiries.find(x => x.id === id);
+    /* The field MUST be called `email`: sendFounderEmail reads fields.email to
+       set _replyto and to address the auto-response. It used to be named
+       buyer_email, which meant the reply had no recipient — the supplier was
+       told "Reply sent", the buyer never heard anything, and the request just
+       looked ignored. */
     sendFounderEmail('Supplier reply — ' + PT.co.name, {
-      supplier: PT.co.name, buyer: q.from_name, buyer_email: q.from_email, message: body
-    }, 'Reply from ' + PT.co.name + ' via Circuits.com:\n\n' + body);
-    toast('Reply sent.', true);
+      supplier: PT.co.name, buyer: q.from_name, email: q.from_email, message: body
+    }, 'Reply from ' + PT.co.name + ' via Circuits.com:\n\n' + body
+       + '\n\nYou can answer this email directly — it goes back to ' + PT.co.name + '.');
+
+    /* Answering is what moves a request along, so record it here rather than
+       relying on the supplier to also remember the dropdown. Resolved requests
+       are left alone: a follow-up message should not undo Won or Lost. */
+    if(!['Won','Lost','Closed'].includes(q.status)){
+      await setInquiryStatus(id, 'Replied');
+      q.status = 'Replied';
+      const sel = document.querySelector(`[data-status="${id}"]`);
+      if(sel) sel.value = 'Replied';
+      markInquiriesSeen();
+    }
+    toast('Reply sent to ' + q.from_name + '.', true);
   };
   el('pt-inquiries').onchange = async e => {
     const s = e.target.closest('[data-status]'); if(!s) return;
