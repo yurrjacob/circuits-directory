@@ -337,9 +337,18 @@ async function submitInquiry(slug, q){
 
 /* ---- analytics ----
    visitor id is a random string kept in localStorage so repeat page loads by
-   the same browser collapse into one unique hit at query time. */
+   the same browser collapse into one unique hit at query time.
+
+   Only set once the visitor has accepted analytics — see analytics.js, which
+   owns the cx_consent key. Decline and we still record the view so the company
+   sees its traffic; the row just carries no identifier, so it cannot be tied
+   to anything or anyone. */
 function visitorId(){
   try{
+    if(localStorage.getItem('cx_consent') !== 'yes'){
+      localStorage.removeItem('cx_v');      // clean up if they change their mind
+      return null;
+    }
     let v = localStorage.getItem('cx_v');
     if(!v){ v = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('cx_v', v); }
     return v;

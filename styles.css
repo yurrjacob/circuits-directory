@@ -571,6 +571,25 @@ tr.row-warn td{background:#fff3cd}
 /* a review nobody has judged yet is invisible to the public — make it obvious */
 .dash-table tr.row-waiting td{background:#fffbe8}
 
+/* ---- cookie choice ----
+   Sits at the bottom so it never covers the page content or a form field. */
+.cookie-bar{position:fixed;left:0;right:0;bottom:0;z-index:200;background:var(--dark);
+  color:#e8eaed;border-top:1px solid #2a2a2a;box-shadow:0 -4px 18px rgba(0,0,0,.25)}
+.cookie-bar-inner{max-width:1100px;margin:0 auto;padding:14px 24px;display:flex;gap:20px;
+  align-items:center;justify-content:space-between;flex-wrap:wrap}
+.cookie-bar p{margin:0;font-size:.85rem;line-height:1.55;max-width:70ch;color:#cfd2d6}
+.cookie-bar a{color:#fff;text-decoration:underline}
+.cookie-bar-actions{display:flex;gap:8px;flex-shrink:0}
+.cookie-bar .mini-btn{white-space:nowrap}
+@media(max-width:640px){
+  .cookie-bar-inner{padding:12px 14px;gap:12px}
+  .cookie-bar-actions{width:100%}
+  .cookie-bar-actions .mini-btn{flex:1}
+}
+
+/* the staff door in the footer stays present but quiet */
+.flink-quiet{opacity:.6}
+
 /* An unclaimed listing is one nobody has confirmed. Saying so is honest to
    buyers, and it is the strongest prompt we have for getting it claimed. */
 .lb-unclaimed{background:#6b7177;font-size:.62rem;vertical-align:middle}
