@@ -140,6 +140,38 @@ assert.ok(sitemap.includes('circuits.com/register'), 'sitemap is missing /regist
 assert.ok(!fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8').includes('/how-it-works'),
   'the sitemap generator would put /how-it-works back on the next build');
 
+/* --- a supplier's reply has to actually reach the buyer ---
+       sendFounderEmail() reads fields.email to set _replyto and to address the
+       auto-response. The reply payload once called that field buyer_email, so
+       there was no recipient at all: the supplier saw "Reply sent" and the
+       buyer heard nothing. Nothing on screen showed the failure. */
+const crmSrc = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
+const replyCall = crmSrc.slice(crmSrc.indexOf("sendFounderEmail('Supplier reply"),
+                               crmSrc.indexOf("toast('Reply sent"));
+assert.ok(replyCall, 'the supplier reply email has gone missing');
+assert.ok(/\bemail:\s*q\.from_email/.test(replyCall),
+  'the supplier reply does not put the buyer address in the `email` field, so it reaches nobody');
+assert.ok(!/buyer_email:/.test(replyCall),
+  'the reply is back to using buyer_email, which sendFounderEmail ignores');
+// the promise made in the UI must match what actually happens
+assert.ok(/placeholder="Emailed to \$\{escapeHtml\(q\.from_email\)\}/.test(crmSrc),
+  'the reply box no longer tells the supplier which address the reply goes to');
+
+/* --- the quote pipeline moves on its own ---
+       A status that only changes when someone remembers a dropdown is a status
+       nobody trusts, and an unread badge that never clears gets ignored. */
+assert.ok(/function markInquiriesSeen/.test(crmSrc), 'nothing marks quote requests as seen');
+assert.ok(/dataset\.tab === 'inquiries'\)\s*markInquiriesSeen\(\)/.test(crmSrc),
+  'opening the Quote requests tab no longer clears New');
+assert.ok(/setInquiryStatus\(id, 'Replied'\)/.test(crmSrc),
+  'sending a reply no longer advances the request to Replied');
+assert.ok(/\['Won','Lost','Closed'\]\.includes\(q\.status\)/.test(crmSrc),
+  'a late follow-up message would drag a Won or Lost request back to Replied');
+for (const s of ['New', 'Open', 'Replied', 'Won', 'Lost', 'Closed']) {
+  assert.ok(new RegExp(`'${s}'`).test(crmSrc.slice(crmSrc.indexOf('data-status='))) ||
+            crmSrc.includes(`'${s}'`), `the ${s} status is missing from the portal`);
+}
+
 /* --- suspension is a state, not a deletion ---
        The point of suspending rather than deleting is that it is reversible,
        so nothing here may reach for a delete, and the owner must be told. */
