@@ -401,8 +401,10 @@ function wireCopyLink(){
   });
 
   const rf = document.getElementById('rfq-form');
+  armSpamTrap(rf);
   if(rf) rf.addEventListener('submit', async e => {
     e.preventDefault();
+    if(looksLikeSpam(rf)){ fakeSuccess(rf, 'Request sent.'); return; }
     const v = id => (document.getElementById(id).value || '').trim();
     const msg = document.getElementById('rq-msg');
     if(!isValidEmail(v('rq-email'))){ msg.textContent = 'Please enter a valid email address.'; return; }
@@ -424,19 +426,24 @@ function wireCopyLink(){
       rf.innerHTML = '<div class="success show">Request sent. ' + escapeHtml(co.name) + ' will reply to you directly.</div>';
     }catch(err){
       btn.disabled = false;
-      msg.textContent = 'Sorry, that didn’t send. Please try again or email the supplier directly.';
+      msg.textContent = rateLimitMessage(err)
+        || 'Sorry, that didn’t send. Please try again or email the supplier directly.';
     }
   });
 
   const rv = document.getElementById('review-form');
+  armSpamTrap(rv);
   if(rv) rv.addEventListener('submit', async e => {
     e.preventDefault();
+    if(looksLikeSpam(rv)){ fakeSuccess(rv, 'Thanks. Your review is with our team for checking.'); return; }
     const v = id => (document.getElementById(id).value || '').trim();
     const msg = document.getElementById('rv-msg');
     if(!isValidEmail(v('rv-email'))){ msg.textContent = 'Please enter a valid email address.'; return; }
     try{
       await submitReview(slug, { name: v('rv-name'), email: v('rv-email'), rating: +v('rv-rating'), body: v('rv-body') });
       rv.innerHTML = '<div class="success show">Thanks. Your review is with our team for checking.</div>';
-    }catch(err){ msg.textContent = 'Sorry, that didn’t send. Please try again.'; }
+    }catch(err){
+      msg.textContent = rateLimitMessage(err) || 'Sorry, that didn’t send. Please try again.';
+    }
   });
 }

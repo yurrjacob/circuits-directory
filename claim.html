@@ -84,8 +84,14 @@ function noCompany(){
     <div class="auth-note">A person checks every request. We will not hand over a profile without
     verifying you work there. Once approved we email you your sign-in details.</div>`;
 
+  armSpamTrap(document.getElementById('cf'));
   document.getElementById('cf').addEventListener('submit', async e => {
     e.preventDefault();
+    if(looksLikeSpam(e.currentTarget)){
+      document.getElementById('claim-card').innerHTML = '<h1>Request sent</h1>'
+        + '<p class="sub">We will verify your request and email you back.</p>';
+      return;
+    }
     const btn = document.getElementById('cs'); btn.disabled = true;
     const name  = document.getElementById('n').value.trim();
     const email = document.getElementById('e').value.trim();

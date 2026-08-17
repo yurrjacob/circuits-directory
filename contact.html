@@ -141,8 +141,10 @@
 
 <script src="app.js"></script>
 <script>
+armSpamTrap(document.getElementById('contact-form'));
 document.getElementById('contact-form').addEventListener('submit',async function(e){
   e.preventDefault();
+  if(looksLikeSpam(this)){ fakeSuccess(this, 'Thanks! Your message has been sent.'); return; }
   const v = id => document.getElementById(id).value.trim();
   const phone = v('c-phone');
   if(phone && !isValidPhone(phone)){ alert('Please enter a valid phone number (at least 10 digits).'); return; }

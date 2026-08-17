@@ -21,6 +21,50 @@ function isValidEmail(s){ return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test((s||'').tr
 function isValidPhone(s){ const d=(s||'').replace(/\D/g,''); return d.length>=10 && d.length<=15; }
 function isValidWebsite(s){ return /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}([\/?#]\S*)?$/i.test((s||'').trim()); }
 
+/* ---- anti-spam ----
+   Two cheap traps that stop the volume scripts. Neither is a real defence on
+   its own — anything client-side can be bypassed — so the limit that actually
+   holds is the rate_limit() trigger in the database, which applies no matter
+   how the row arrives. These just keep the obvious junk out of the founders'
+   inbox and off the rate limiter.
+   ponytail: no CAPTCHA. Add Turnstile only if real spam gets through these. */
+const SPAM_MIN_SECONDS = 3;   // no human completes a form faster than this
+
+function armSpamTrap(form){
+  if(!form || form.dataset.armedAt) return;
+  form.dataset.armedAt = Date.now();
+  const hp = document.createElement('div');
+  // off-screen rather than display:none — some bots skip hidden inputs
+  hp.style.cssText = 'position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden';
+  hp.setAttribute('aria-hidden', 'true');
+  hp.innerHTML = '<label>Do not fill this in'
+    + '<input type="text" name="company_url" tabindex="-1" autocomplete="off"></label>';
+  form.appendChild(hp);
+}
+
+function looksLikeSpam(form){
+  if(!form) return false;
+  const hp = form.querySelector('input[name="company_url"]');
+  if(hp && hp.value.trim()) return true;          // only a bot fills an invisible field
+  const armed = +(form.dataset.armedAt || 0);
+  return armed > 0 && (Date.now() - armed) < SPAM_MIN_SECONDS * 1000;
+}
+
+/* Silently accept a suspected bot. Telling it why it failed just teaches the
+   author what to change. */
+function fakeSuccess(form, message){
+  form.innerHTML = '<div class="success show">' + (message || 'Thanks — your message has been sent.') + '</div>';
+}
+
+/* The database raises this when someone trips the per-IP limit. Turn it into
+   something a real person who genuinely sent three quotes can understand. */
+function rateLimitMessage(err){
+  const m = (err && (err.message || err.error_description)) || '';
+  return /too many submissions/i.test(m)
+    ? 'You have sent a few of these recently. Please wait a few minutes and try again.'
+    : null;
+}
+
 /* ---- email notifications to the founders (via FormSubmit) ----
    Note: the first submission triggers a one-time activation email to
    mike@circuits.com — click the link inside it once and delivery is live. */
@@ -503,8 +547,13 @@ const msg = document.getElementById('msg');
     return true;
   }
 
+  armSpamTrap(form);
   if(form) form.addEventListener('submit', async e=>{
     e.preventDefault();
+    if(looksLikeSpam(form)){
+      fakeSuccess(form, 'Thanks — your application has been received. We will be in touch.');
+      return;
+    }
     if(!validate()) return;
     const submitBtn = form.querySelector('.submit');
     const v = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
