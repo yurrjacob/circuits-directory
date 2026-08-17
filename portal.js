@@ -219,6 +219,75 @@ function markInquiriesSeen(){
   if(unseen.length) markUnread();
 }
 
+/* ---------- what to do next ----------
+   The dashboard used to open on five numbers and no answer to "so what should
+   I do?". These are ordered by what actually costs the supplier money: an
+   unanswered buyer first, then the fields that make a profile worth landing on.
+   Weighted, because a missing logo hurts more than missing opening hours. */
+const PROFILE_FIELDS = [
+  { key: 'logo',        weight: 3, label: 'Add your company logo',
+    why: 'Listings with a logo get noticeably more clicks than the grey placeholder.' },
+  { key: 'description', weight: 3, label: 'Write a company description',
+    why: 'This is what a buyer reads before deciding whether to contact you.' },
+  { key: 'website',     weight: 2, label: 'Add your website' },
+  { key: 'phone',       weight: 2, label: 'Add a phone number' },
+  { key: 'email',       weight: 2, label: 'Add a contact email' },
+  { key: 'tagline',     weight: 1, label: 'Add a one-line tagline' },
+  { key: 'address',     weight: 1, label: 'Add your location' },
+  { key: 'contact',     weight: 1, label: 'Name a contact person' }
+];
+
+function profileCompleteness(co){
+  const filled = f => {
+    const v = co && co[f.key];
+    return typeof v === 'string' ? v.trim().length > 0 : !!v;
+  };
+  const total = PROFILE_FIELDS.reduce((a, f) => a + f.weight, 0);
+  const got = PROFILE_FIELDS.filter(filled).reduce((a, f) => a + f.weight, 0);
+  return { pct: Math.round(got / total * 100), missing: PROFILE_FIELDS.filter(f => !filled(f)) };
+}
+
+function renderNextSteps(){
+  const host = el('pt-next');
+  if(!host) return;
+  const { pct, missing } = profileCompleteness(PT.co);
+  const waiting = PT.inquiries.filter(q => ['New','Open'].includes(q.status));
+
+  const actions = [];
+  if(waiting.length){
+    actions.push(`<li class="urgent"><b>${waiting.length} quote request${waiting.length > 1 ? 's' : ''}
+      waiting for a reply.</b> Buyers usually go elsewhere if nobody answers.</li>`);
+  }
+  // three at a time; a list of eight chores gets ignored
+  missing.slice(0, 3).forEach(f => {
+    actions.push(`<li>${escapeHtml(f.label)}${f.why ? ' <span class="pf-note">' + escapeHtml(f.why) + '</span>' : ''}</li>`);
+  });
+
+  if(!actions.length && pct === 100){
+    host.innerHTML = `<div class="pt-next done">
+      <b>Your profile is complete and nothing is waiting on you.</b>
+      <p class="pf-note">Anything a buyer sends will show up under Quote requests.</p></div>`;
+    return;
+  }
+
+  host.innerHTML = `<div class="pt-next">
+    <div class="pt-next-head">
+      <div><b>Profile ${pct}% complete</b></div>
+      <div class="pt-meter" role="img" aria-label="Profile ${pct} percent complete">
+        <span style="width:${pct}%"></span>
+      </div>
+    </div>
+    <ul class="pt-next-list">${actions.join('')}</ul>
+    ${missing.length ? '<button type="button" class="mini-btn green" id="pt-next-go">Finish your profile</button>' : ''}
+  </div>`;
+
+  const go = el('pt-next-go');
+  if(go) go.onclick = () => {
+    const tab = document.querySelector('.pt-tab[data-tab="profile"]');
+    if(tab) tab.click();
+  };
+}
+
 /* ---------- overview ---------- */
 function renderOverview(stats){
   const sum = kind => stats.filter(s => s.kind === kind).reduce((a, s) => a + Number(s.hits), 0);
@@ -232,6 +301,7 @@ function renderOverview(stats){
     ['Unread requests', newq]
   ].map(([lbl, n]) => `<div class="stat"><div class="num">${n}</div><div class="lbl">${lbl}</div></div>`).join('');
 
+  renderNextSteps();
   wireViewRanges();
   drawViews();
 }

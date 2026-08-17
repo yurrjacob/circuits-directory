@@ -609,6 +609,21 @@ tr.row-warn td{background:#fff3cd}
 .auth-staff a{color:var(--muted);text-decoration:underline}
 .auth-staff a:hover{color:var(--ink)}
 .auth-cta{display:block;text-align:center;text-decoration:none;padding:11px}
+/* "what should I do next" — the first thing on the dashboard */
+.pt-next{border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:0 0 20px;background:#fff}
+.pt-next.done{background:#f4faea;border-color:var(--green)}
+.pt-next-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.pt-meter{flex:1;min-width:160px;max-width:320px;height:8px;border-radius:99px;background:var(--bg-soft);
+  border:1px solid var(--line);overflow:hidden}
+.pt-meter span{display:block;height:100%;background:var(--green);transition:width .3s}
+.pt-next-list{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:9px}
+.pt-next-list li{font-size:.9rem;padding-left:22px;position:relative;line-height:1.5}
+.pt-next-list li::before{content:"";position:absolute;left:0;top:.45em;width:8px;height:8px;
+  border-radius:50%;background:var(--line);border:1px solid #cfd2d6}
+.pt-next-list li.urgent::before{background:#e6b800;border-color:#c9a000}
+.pt-next-list .pf-note{display:block;margin-top:2px}
+.pt-next .mini-btn{margin-top:16px}
+
 /* suspension notice: serious, but not an error the owner can fix by retrying */
 .pt-suspended{border:1px solid #e6b800;background:#fffae6;color:#4a3c00;
   border-radius:10px;padding:14px 16px;margin:0 0 20px;font-size:.9rem;line-height:1.6}
