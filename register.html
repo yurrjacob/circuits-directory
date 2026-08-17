@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create Your Circuits.com Profile</title>
+<meta name="description" content="Claim your circuits.com address. Your username is your link — circuits.com/yourname.">
+<link rel="canonical" href="https://circuits.com/register">
+<link rel="icon" href="assets/favicon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+<div class="inner">
+<div class="brand"><a href="/"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-slogan">Connecting The Circuits Industry</span></div>
+<nav class="nav">
+<a href="/">Home</a>
+<a href="about">About</a>
+<a href="how-it-works">How It Works</a>
+<a href="/directory">Directory</a>
+<a href="contact">Contact</a>
+<a class="cta" href="join">Get Listed</a>
+</nav>
+</div>
+</header>
+
+<div class="form-wrap form-wrap-narrow">
+<h1>Create Your Profile</h1>
+<p class="lede">Claim your address on Circuits.com. Anyone can have one &mdash; you do not need a
+company listing, and a company can be listed without one.</p>
+
+<div id="reg-success" class="success">
+<b>Profile created.</b> <span id="reg-success-handle"></span>
+Check your inbox to confirm your email address, then sign in at
+<a href="/portal">circuits.com/portal</a>.
+</div>
+
+<form id="reg-form" autocomplete="off" novalidate>
+
+<!-- Step 0 -->
+<section class="step">
+<div class="step-head">
+<span class="step-num">00</span>
+<div>
+<h2>Register</h2>
+<p>Your username is your link. Pick it carefully &mdash; it is what you put on adverts and cards.</p>
+</div>
+</div>
+
+<div class="field">
+<label>Choose Your Username <span class="req">*</span></label>
+<div class="handle-row" style="max-width:420px">
+<span class="handle-prefix">circuits.com/</span>
+<input id="r-handle" type="text" maxlength="32" spellcheck="false" placeholder="jacob" required autocomplete="username">
+</div>
+<div id="r-handle-msg" class="field-hint"></div>
+<p class="field-hint">Your username <b>is</b> your Circuits.com address. Pick <b>jacob</b> and your
+profile lives at <b>circuits.com/jacob</b>. 3&ndash;32 characters: letters, numbers, and single
+hyphens or underscores between them.</p>
+</div>
+
+<div class="grid2">
+<div class="field">
+<label>Display Name <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
+<input id="r-name" type="text" maxlength="120" placeholder="Jacob Kennedy">
+</div>
+<div class="field">
+<label>Email <span class="req">*</span></label>
+<input id="r-email" type="email" required placeholder="you@company.com" autocomplete="email">
+</div>
+<div class="field">
+<label>Create a Password <span class="req">*</span></label>
+<input id="r-pass" type="password" minlength="8" required placeholder="At least 8 characters" autocomplete="new-password">
+</div>
+<div class="field">
+<label>Confirm Password <span class="req">*</span></label>
+<input id="r-pass2" type="password" minlength="8" required placeholder="Re-enter your password" autocomplete="new-password">
+<div id="r-pass-msg" class="field-hint"></div>
+</div>
+</div>
+
+<label class="terms" style="margin:14px 0">
+<input id="r-terms" type="checkbox" required>
+<span>I accept the <a href="terms" target="_blank">Terms</a> and
+<a href="terms#acceptable-use" target="_blank">Acceptable Use Policy</a>. <span class="req">*</span></span>
+</label>
+<div id="r-err" class="err-msg" style="display:none"></div>
+</section>
+
+<div class="form-foot">
+<span class="help">Already have a profile? <a href="/portal">Sign in</a></span>
+<button class="submit" type="submit" id="r-submit">Create Profile →</button>
+</div>
+</form>
+
+<div class="reg-next">
+<h2 class="pf-sec-h">What happens next</h2>
+<ol class="reg-steps">
+<li><b>Profile created</b> &mdash; circuits.com/yourname is yours.</li>
+<li><b>Confirm your email</b> so you can sign in.</li>
+<li><b>Optional:</b> <a href="/claim">claim a company listing</a> already in the directory,
+or <a href="/join">get a company listed</a>. Neither is required to have a profile.</li>
+</ol>
+</div>
+</div>
+
+<footer class="footer">
+  <div class="inner">
+    <div class="flinks">
+      <a href="/">Home</a>
+      <a href="/portal">Profile Login</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span>© 2026 Circuits.com</span>
+      <span class="footer-brand"><img class="footer-mark" src="assets/favicon.png" alt="Circuits.com"></span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/store.js"></script>
+<script src="/app.js"></script>
+<script>initRegister();</script>
+</body>
+</html>

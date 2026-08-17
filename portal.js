@@ -16,15 +16,58 @@ function toast(text, ok){
   setTimeout(() => { t.style.display = 'none'; }, 4000);
 }
 
+/* Your profile: the thing you always have, whether or not you manage a listing. */
+function renderMyProfile(me){
+  const box = el('pt-me');
+  if(!box) return;
+  if(!me){
+    box.innerHTML = `<p class="pf-note">This account has no Circuits.com address yet.
+      <a href="/register">Create a profile</a> to claim one.</p>`;
+    return;
+  }
+  box.innerHTML = `
+    <div class="auth-field"><label>Your Circuits.com address</label>
+      <div class="handle-row"><span class="handle-prefix">circuits.com/</span>
+        <input id="me-handle" type="text" maxlength="32" spellcheck="false" value="${escapeHtml(me.handle)}"></div>
+      <div id="me-handle-msg" class="pf-note"></div>
+    </div>
+    <div class="auth-field"><label>Display name</label>
+      <input id="me-name" type="text" maxlength="120" value="${escapeHtml(me.display_name || '')}"></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-primary" type="button" id="me-save">Save profile</button>
+      <a class="mini-btn" href="/${escapeHtml(me.handle)}" target="_blank" rel="noopener">View profile ↗</a>
+    </div>
+    <div id="me-msg" class="pf-note"></div>`;
+
+  el('me-save').addEventListener('click', async ()=>{
+    const msg = el('me-msg');
+    const handle = el('me-handle').value.trim().toLowerCase();
+    const name = el('me-name').value.trim();
+    msg.textContent = 'Saving…'; msg.style.color = '';
+    if(handle !== me.handle){
+      const why = await handleAvailable(handle);
+      if(why){ msg.textContent = why; msg.style.color = '#b3261e'; return; }
+    }
+    const err = await updateMyProfile({ handle, display_name: name || null });
+    msg.textContent = err || 'Saved. Your profile is at circuits.com/' + handle;
+    msg.style.color = err ? '#b3261e' : '#3f6300';
+    if(!err) me.handle = handle;
+  });
+}
+
 /* ---------- boot ---------- */
 async function initPortal(){
   const user = await currentUser();
   if(!user){ show('pt-auth', true); show('pt-app', false); wireAuth(); return; }
 
-  const cos = await myCompanies();
+  const [cos, me] = await Promise.all([myCompanies(), myProfile()]);
+
+  /* Having a profile and managing a listing are different things. A profile
+     with no listing is a normal, finished state — not an error. */
   if(!cos.length){
     show('pt-auth', false); show('pt-app', false); show('pt-none', true);
     el('pt-none-email').textContent = user.email;
+    renderMyProfile(me);
     /* Staff are not suppliers. Without this they just see "no company linked"
        and assume the portal is broken. */
     if(await checkStaff()) show('pt-none-staff', true);
@@ -150,21 +193,158 @@ function renderOverview(stats){
     ['Unread requests', newq]
   ].map(([lbl, n]) => `<div class="stat"><div class="num">${n}</div><div class="lbl">${lbl}</div></div>`).join('');
 
-  /* last 14 days of profile views */
-  const byDay = {};
-  stats.filter(s => s.kind === 'view').forEach(s => { byDay[s.day] = Number(s.hits); });
-  const days = [];
-  for(let i = 13; i >= 0; i--){
-    const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
-    days.push([d, byDay[d] || 0]);
+  wireViewRanges();
+  drawViews();
+}
+
+/* ---------- profile views ----------
+   One line graph that rescales to the chosen window. Short windows count by
+   hour, long ones by month, because 365 daily points on a 700px chart is mush. */
+const VIEW_RANGES = {
+  '24h': { label: '24 Hours', ms: 864e5,        bucket: 'hour',  tick: d => d.getHours() + ':00' },
+  '7d':  { label: '7 Days',   ms: 7 * 864e5,    bucket: 'day',   tick: d => d.toLocaleDateString(undefined, { weekday: 'short' }) },
+  '30d': { label: '30 Days',  ms: 30 * 864e5,   bucket: 'day',   tick: d => (d.getMonth() + 1) + '/' + d.getDate() },
+  '3m':  { label: '3 Months', ms: 91 * 864e5,   bucket: 'week',  tick: d => (d.getMonth() + 1) + '/' + d.getDate() },
+  '6m':  { label: '6 Months', ms: 182 * 864e5,  bucket: 'week',  tick: d => d.toLocaleDateString(undefined, { month: 'short' }) },
+  '1y':  { label: '1 Year',   ms: 365 * 864e5,  bucket: 'month', tick: d => d.toLocaleDateString(undefined, { month: 'short' }) }
+};
+let PT_RANGE = '30d';
+let PT_CUSTOM = null;   // {from, to} as Date, set by the custom picker
+
+/* Fill in the empty buckets. Without this a quiet week draws as a straight
+   line between two busy days and overstates what happened. */
+function bucketSeries(rows, from, to, bucket){
+  const step = { hour: 36e5, day: 864e5, week: 7 * 864e5 }[bucket] || null;
+  const key = d => {
+    const x = new Date(d);
+    if(bucket === 'hour'){ x.setMinutes(0, 0, 0); }
+    else if(bucket === 'month'){ x.setDate(1); x.setHours(0, 0, 0, 0); }
+    else if(bucket === 'week'){
+      x.setHours(0, 0, 0, 0);
+      x.setDate(x.getDate() - ((x.getDay() + 6) % 7));   // ISO weeks start Monday
+    } else { x.setHours(0, 0, 0, 0); }
+    return x.getTime();
+  };
+  const got = {};
+  for(const r of rows) got[key(r.bucket)] = Number(r.hits) || 0;
+
+  const out = [];
+  let cur = new Date(key(from));
+  const end = to.getTime();
+  let guard = 0;
+  while(cur.getTime() <= end && guard++ < 800){
+    const t = cur.getTime();
+    out.push([new Date(t), got[t] || 0]);
+    if(bucket === 'month'){ cur = new Date(cur); cur.setMonth(cur.getMonth() + 1); }
+    else cur = new Date(t + step);
   }
-  const max = Math.max(1, ...days.map(d => d[1]));
-  el('pt-chart').innerHTML = days.map(([d, n]) =>
-    `<div class="b" style="height:${Math.max(2, Math.round(n / max * 100))}%" title="${d}: ${n} views"><span>${d.slice(8)}</span></div>`
-  ).join('');
-  el('pt-chart-note').textContent = sum('view') === 0
-    ? 'No views recorded yet — tracking starts the first time someone opens your profile.'
-    : 'Unique visitors per day, last 14 days.';
+  return out;
+}
+
+function lineChartSvg(series, tick){
+  const W = 700, H = 220, L = 38, R = 10, T = 12, B = 26;
+  const iw = W - L - R, ih = H - T - B;
+  const n = series.length;
+  const peak = Math.max(1, ...series.map(s => s[1]));
+  /* round the top up to something readable rather than the raw peak */
+  const mag = Math.pow(10, Math.floor(Math.log10(peak)));
+  const top = Math.max(1, Math.ceil(peak / mag) * mag);
+  const x = i => L + (n <= 1 ? iw / 2 : (i / (n - 1)) * iw);
+  const y = v => T + ih - (v / top) * ih;
+
+  const pts = series.map((s, i) => [x(i), y(s[1])]);
+  const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  const area = pts.length
+    ? line + ` L ${pts[pts.length - 1][0].toFixed(1)} ${T + ih} L ${pts[0][0].toFixed(1)} ${T + ih} Z` : '';
+
+  const gridVals = [0, top / 2, top].map(v => Math.round(v));
+  const grid = [...new Set(gridVals)].map(v =>
+    `<line class="g-grid" x1="${L}" x2="${W - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"></line>`
+    + `<text class="g-ylbl" x="${L - 6}" y="${(y(v) + 4).toFixed(1)}">${v}</text>`).join('');
+
+  // at most ~7 labels, whatever the window
+  const every = Math.max(1, Math.ceil(n / 7));
+  const xlabels = series.map(([d], i) => i % every === 0 || i === n - 1
+    ? `<text class="g-xlbl" x="${x(i).toFixed(1)}" y="${H - 8}">${escapeHtml(tick(d))}</text>` : '').join('');
+
+  const dots = n <= 40
+    ? pts.map((p, i) => `<circle class="g-dot" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.5"><title>${escapeHtml(series[i][0].toLocaleString())}: ${series[i][1]} views</title></circle>`).join('')
+    : '';
+
+  return `<svg class="g-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Profile views over time">
+    ${grid}
+    ${area ? `<path class="g-area" d="${area}"></path>` : ''}
+    ${line ? `<path class="g-line" d="${line}"></path>` : ''}
+    ${dots}${xlabels}
+  </svg>`;
+}
+
+async function drawViews(){
+  const host = el('pt-chart');
+  if(!host || !PT.co) return;
+  const r = VIEW_RANGES[PT_RANGE];
+  const to   = PT_CUSTOM ? PT_CUSTOM.to   : new Date();
+  const from = PT_CUSTOM ? PT_CUSTOM.from : new Date(Date.now() - r.ms);
+
+  /* pick a sane bucket for a custom span too */
+  let bucket = r ? r.bucket : 'day';
+  let tick = r ? r.tick : (d => (d.getMonth() + 1) + '/' + d.getDate());
+  if(PT_CUSTOM){
+    const span = to - from;
+    bucket = span <= 2 * 864e5 ? 'hour' : span <= 60 * 864e5 ? 'day' : span <= 400 * 864e5 ? 'week' : 'month';
+    tick = bucket === 'hour' ? (d => d.getHours() + ':00')
+         : bucket === 'month' ? (d => d.toLocaleDateString(undefined, { month: 'short', year: '2-digit' }))
+         : (d => (d.getMonth() + 1) + '/' + d.getDate());
+  }
+
+  host.innerHTML = '<p class="pf-note">Loading…</p>';
+  const rows = await companyViews(PT.co.slug, from.toISOString(), to.toISOString(), bucket);
+  const series = bucketSeries(rows, from, to, bucket);
+  const total = series.reduce((a, s) => a + s[1], 0);
+
+  host.innerHTML = lineChartSvg(series, tick);
+  const note = el('pt-chart-note');
+  if(note) note.textContent = total === 0
+    ? 'No views recorded in this period — tracking starts the first time someone opens your profile.'
+    : total + (total === 1 ? ' view' : ' views') + ' in this period, counted by ' + bucket + '.';
+}
+
+let PT_RANGE_WIRED = false;
+function wireViewRanges(){
+  const bar = el('pt-range');
+  /* renderOverview runs again on every company switch; without this the click
+     handlers stack up and one click redraws the chart several times. */
+  if(!bar || PT_RANGE_WIRED) return;
+  PT_RANGE_WIRED = true;
+  bar.innerHTML = Object.entries(VIEW_RANGES).map(([k, r]) =>
+    `<button type="button" class="range-btn${k === PT_RANGE ? ' active' : ''}" data-range="${k}">${r.label}</button>`
+  ).join('') + `<button type="button" class="range-btn" data-range="custom">Custom</button>`;
+
+  bar.addEventListener('click', e => {
+    const b = e.target.closest('.range-btn');
+    if(!b) return;
+    const custom = el('pt-range-custom');
+    if(b.dataset.range === 'custom'){
+      if(custom) custom.style.display = custom.style.display === 'none' ? 'flex' : 'none';
+      return;
+    }
+    PT_RANGE = b.dataset.range;
+    PT_CUSTOM = null;
+    if(custom) custom.style.display = 'none';
+    bar.querySelectorAll('.range-btn').forEach(x => x.classList.toggle('active', x === b));
+    drawViews();
+  });
+
+  const apply = el('pt-range-apply');
+  if(apply) apply.addEventListener('click', ()=>{
+    const f = el('pt-from').value, t = el('pt-to').value;
+    if(!f || !t) return;
+    const from = new Date(f + 'T00:00:00'), to = new Date(t + 'T23:59:59');
+    if(!(from < to)) { alert('The start date needs to come before the end date.'); return; }
+    PT_CUSTOM = { from, to };
+    bar.querySelectorAll('.range-btn').forEach(x => x.classList.toggle('active', x.dataset.range === 'custom'));
+    drawViews();
+  });
 }
 
 /* ---------- profile editing ---------- */

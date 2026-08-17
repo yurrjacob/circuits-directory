@@ -189,16 +189,59 @@ function handleFormatOk(h){
       && h.length >= 3 && h.length <= 32
       && !/--|__|_-|-_/.test(h);
 }
-/* Is this handle free? Returns '' if available, or the reason it is not. */
-async function handleAvailable(handle, ownSlug){
+/* Is this handle free? Returns '' if available, or the reason it is not.
+   circuits.com/<name> is one namespace shared by listings and profiles, so the
+   database answers this — the same function the insert triggers use. */
+const HANDLE_WHY = {
+  format:   '3–32 characters: letters, numbers, and single hyphens or underscores between them.',
+  reserved: 'That name is reserved by Circuits.com.',
+  company:  'Taken by a company listing.',
+  profile:  'Taken by another profile.'
+};
+async function handleAvailable(handle, ownSlug, ownUser){
   const h = (handle||'').toLowerCase().trim();
-  if(!handleFormatOk(h)) return '3–32 characters: letters, numbers, and single hyphens or underscores between them.';
+  if(!handleFormatOk(h)) return HANDLE_WHY.format;
   if(!sb) return 'No connection';
-  const res = await sb.from('reserved_handles').select('name').eq('name', h).maybeSingle();
-  if(res.data) return 'That name is reserved by Circuits.com.';
-  const { data } = await sb.from('companies').select('slug').eq('handle', h).maybeSingle();
-  if(data && data.slug !== ownSlug) return 'Taken by another company.';
+  const { data, error } = await sb.rpc('handle_taken',
+    { p_handle: h, p_user: ownUser || null, p_slug: ownSlug || null });
+  if(error){ console.error('handle_taken', error); return 'Could not check that name right now.'; }
+  return HANDLE_WHY[data] || '';
+}
+
+/* ---- profiles: a person, separate from any company listing ---- */
+async function fetchProfileByHandle(handle){
+  if(!sb || !handle) return null;
+  const { data, error } = await sb.from('profiles').select('*')
+    .ilike('handle', (handle||'').trim()).maybeSingle();
+  if(error){ console.error('fetchProfileByHandle', error); return null; }
+  return data;
+}
+async function myProfile(){
+  if(!sb) return null;
+  const { data, error } = await sb.rpc('my_profile');
+  if(error){ console.error('my_profile', error); return null; }
+  return (data && data[0]) || null;
+}
+async function updateMyProfile(fields){
+  if(!sb) return 'No connection';
+  const u = await currentUser();
+  if(!u) return 'Not signed in';
+  const { data, error } = await sb.from('profiles').update(fields).eq('user_id', u.id).select();
+  if(error) return error.message;
+  if(!data || !data.length) return 'That change was refused.';
   return '';
+}
+/* Register: the account and the circuits.com address are created together.
+   The handle rides along as signup metadata because email confirmation means
+   there is no session yet — a trigger turns it into the profile row, so the
+   address is held from the moment the account exists. */
+async function registerProfile(email, password, handle, displayName){
+  if(!sb) return 'No connection';
+  const { error } = await sb.auth.signUp({
+    email, password,
+    options: { data: { handle: (handle||'').toLowerCase().trim(), display_name: displayName || '' } }
+  });
+  return error ? error.message : '';
 }
 
 /* ---- public reads ---- */
@@ -333,6 +376,14 @@ async function postMessage(inquiryId, body){
   const { error } = await sb.from('inquiry_messages').insert({ inquiry_id: inquiryId, body, author: 'supplier' });
   if(error){ console.error('postMessage', error); return error.message; }
   return null;
+}
+/* Views over a window, bucketed to suit it. Returns [{bucket, hits}]. */
+async function companyViews(slug, fromIso, toIso, bucket){
+  if(!sb || !slug) return [];
+  const { data, error } = await sb.rpc('company_views',
+    { p_slug: slug, p_from: fromIso, p_to: toIso, p_bucket: bucket || 'day' });
+  if(error){ console.error('companyViews', error); return []; }
+  return data || [];
 }
 async function companyStats(slug, days){
   if(!sb) return [];

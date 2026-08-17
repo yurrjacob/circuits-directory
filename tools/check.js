@@ -91,7 +91,7 @@ for (const bad of ['ab', '-lead', 'trail-', '_lead', 'trail_', 'Upper', 'has spa
 // every root page name must be in the reserved list, or a company could take it
 const RESERVED_IN_DB = ['about','admin','applications','claim','companies','company','contact',
   'dashboard','data','directory','how-it-works','index','join','login','portal','profile',
-  'results','robots','search','server','sitemap','store','styles','terms','tools'];
+  'register','results','robots','search','server','sitemap','store','styles','terms','tools'];
 for (const f of fs.readdirSync(ROOT)) {
   if (!f.endsWith('.html')) continue;
   const name = f.replace(/\.html$/, '');
@@ -107,13 +107,32 @@ assert.ok(pathRe.test('/aaa_electronics'), 'profile path regex rejects underscor
 assert.ok(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8').includes('[a-z0-9_-]*'),
   'profileHandle() lost underscore support in its path match');
 
-/* --- accounts may ONLY be created from the Get Listed form --- */
-for (const f of ['portal.js', 'portal.html', 'claim.html', 'login.html', 'company.html']) {
+/* --- accounts are created on Register or Get Listed, and nowhere else ---
+       Anyone may hold a profile; a company listing still needs approval. Those
+       are the only two doors, so no other page may call signUp. */
+for (const f of ['portal.js', 'portal.html', 'claim.html', 'login.html', 'company.html', 'profile.js']) {
   assert.ok(!fs.readFileSync(path.join(ROOT, f), 'utf8').includes('signUp('),
-    `${f} can create an account — registration belongs only on the Get Listed form`);
+    `${f} can create an account — that belongs on Register or Get Listed only`);
 }
 assert.ok(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8').includes('signUp(base.email'),
   'the Get Listed form no longer creates the account');
+assert.ok(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8').includes('sb.auth.signUp'),
+  'registerProfile() no longer creates the account');
+
+/* --- a listing and a profile are different things --- */
+const regHtml = fs.readFileSync(path.join(ROOT, 'register.html'), 'utf8');
+for (const id of ['r-handle', 'r-pass', 'r-pass2', 'r-email', 'r-terms']) {
+  assert.ok(regHtml.includes(`id="${id}"`), `register.html is missing ${id}`);
+}
+assert.ok(/00<\/span>/.test(regHtml) || regHtml.includes('>00<'), 'register.html lost its 00 step number');
+const storeReg = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+assert.ok(storeReg.includes('handle_taken'),
+  'handle availability no longer asks the database, so a profile and a listing could share an address');
+for (const fn of ['fetchProfileByHandle', 'myProfile', 'registerProfile']) {
+  assert.ok(storeReg.includes('function ' + fn), `store.js is missing ${fn}()`);
+}
+assert.ok(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8').includes('fetchProfileByHandle'),
+  'circuits.com/<name> no longer resolves a person, only a company');
 const joinHtml = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
 for (const id of ['f-handle', 'f-pass', 'f-pass2']) {
   assert.ok(joinHtml.includes(`id="${id}"`), `join.html is missing ${id}`);
@@ -186,6 +205,48 @@ assert.ok(!fitsLine('https://example.com', 120), 'a pasted URL is not an address
 assert.ok(!fitsLine('line one\nline two', 120), 'multi-line value would break the row');
 assert.ok(!fitsLine('x'.repeat(200), 120), 'over-long value would break the row');
 assert.ok(!fitsLine('   ', 120));
+
+/* --- the views graph must not invent or drop data ---
+       An empty bucket has to be a zero, not a gap. If gaps are dropped the line
+       joins two busy days straight across a quiet week and overstates traffic. */
+const portalSrc = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
+const grabFrom = (src, name) => {
+  const start = src.indexOf('function ' + name + '(');
+  assert.ok(start !== -1, name + '() missing from portal.js');
+  const end = src.indexOf('\n}', start);
+  const body = src.slice(start, end + 2).replace('function ' + name, 'function');
+  return body;
+};
+const escapeHtml = s => String(s).replace(/[&<>"']/g, c =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const bucketSeries = eval('(' + grabFrom(portalSrc, 'bucketSeries') + ')');
+const lineChartSvg = eval('(' + grabFrom(portalSrc, 'lineChartSvg') + ')');
+
+const day = 864e5;
+const from = new Date('2026-03-01T00:00:00Z'), to = new Date('2026-03-07T00:00:00Z');
+const daily = bucketSeries([{ bucket: '2026-03-03T00:00:00Z', hits: 5 }], from, to, 'day');
+assert.strictEqual(daily.length, 7, 'a 7-day window should produce 7 daily points');
+assert.strictEqual(daily.reduce((a, s) => a + s[1], 0), 5, 'daily bucketing changed the total');
+assert.ok(daily.some(s => s[1] === 5), 'the day with traffic lost its count');
+assert.strictEqual(daily.filter(s => s[1] === 0).length, 6, 'quiet days must be zeros, not gaps');
+
+const hourly = bucketSeries([], new Date('2026-03-01T00:00:00Z'), new Date('2026-03-02T00:00:00Z'), 'hour');
+assert.ok(hourly.length >= 24 && hourly.length <= 25, '24h window should bucket to ~24 hourly points');
+assert.ok(hourly.every(s => s[1] === 0), 'no data must draw as flat zero, not empty');
+
+const yearly = bucketSeries([], new Date('2025-09-01T00:00:00Z'), new Date('2026-08-01T00:00:00Z'), 'month');
+assert.ok(yearly.length >= 11 && yearly.length <= 13, 'a year should bucket to ~12 monthly points');
+
+// a runaway range must not try to draw tens of thousands of points
+const huge = bucketSeries([], new Date('2000-01-01T00:00:00Z'), new Date('2026-01-01T00:00:00Z'), 'hour');
+assert.ok(huge.length <= 800, 'bucketSeries has no upper bound on points');
+
+const svg = lineChartSvg(daily, d => String(d.getUTCDate()));
+assert.ok(svg.startsWith('<svg') && svg.includes('</svg>'), 'chart did not render an svg');
+assert.ok(/<path class="g-line" d="M[\d.]+ [\d.]+/.test(svg), 'chart has no line path');
+assert.ok(!/NaN|Infinity/.test(svg), 'chart geometry produced NaN or Infinity');
+const flat = lineChartSvg(bucketSeries([], from, to, 'day'), d => '');
+assert.ok(!/NaN|Infinity/.test(flat), 'an all-zero series broke the chart scale');
 
 /* --- yearly pricing must exist and undercut twelve monthly payments --- */
 const yearLine = storeSrc.match(/const BASE_FEE_YEAR = (\d+), BANNER_FEE_YEAR = (\d+), BADGE_FEE_YEAR = (\d+);/);

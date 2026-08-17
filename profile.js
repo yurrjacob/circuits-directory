@@ -69,13 +69,48 @@ function row(label, value, opts){
        + `<span class="pf-row-v" title="${escapeHtml(value)}">${inner}</span></div>`;
 }
 
+/* A person's profile. Deliberately thin: a profile is an identity and a link,
+   not a listing. Anything commercial lives on a company listing they claim. */
+function personProfile(p){
+  const name = p.display_name || p.handle;
+  document.title = name + ' — Profile | Circuits.com';
+  setMeta('description', name + ' on Circuits.com.');
+  return `
+  <div class="pf-head">
+    <div class="pf-logo">${avatarSvg()}</div>
+    <div class="pf-id">
+      <h1>${escapeHtml(name)}</h1>
+      <p class="pf-tagline">circuits.com/${escapeHtml(p.handle)}</p>
+    </div>
+  </div>
+  <div class="pf-layout"><div class="pf-main">
+    ${section('About', `<p class="pf-prose">This is a Circuits.com profile. Profiles are people;
+      company listings are separate, and a profile can claim one to manage it.</p>`)}
+  </div>
+  <aside class="pf-side">
+    <div class="pf-side-card">
+      <button type="button" class="pf-copy" id="pf-copy" data-url="https://circuits.com/${escapeHtml(p.handle)}">
+        <span>circuits.com/${escapeHtml(p.handle)}</span><b>Copy</b>
+      </button>
+    </div>
+    <p class="pf-claim">Is this you? <a href="/portal">Sign in</a> to manage your profile.</p>
+  </aside></div>`;
+}
+
 async function initProfile(){
   const handle = profileHandle();
   const root = document.getElementById('profile-body');
   if(!handle){ root.innerHTML = notFound(''); return false; }
 
+  /* One namespace, two kinds of occupant. A company listing takes priority
+     because it is the older claim; a person's profile is checked next. */
   const co = await fetchCompanyByHandle(handle);
-  if(!co){ root.innerHTML = notFound(handle); return false; }
+  if(!co){
+    const person = await fetchProfileByHandle(handle);
+    if(person){ root.innerHTML = personProfile(person); wireCopyLink(); return true; }
+    root.innerHTML = notFound(handle);
+    return false;
+  }
 
   const slug = co.slug;   // internal key: everything else still hangs off this
   const [kws, reviews] = await Promise.all([
@@ -327,7 +362,12 @@ function wireProfile(slug, co){
     img.addEventListener('click', () => openLightbox(img.dataset.full, img.dataset.cap));
   });
 
-  /* Copy the short link — this is what goes on adverts and email signatures. */
+  wireCopyLink();
+}
+
+/* Copy the short link — this is what goes on adverts and email signatures.
+   Person profiles need it too, and they never reach wireProfile(). */
+function wireCopyLink(){
   const copy = document.getElementById('pf-copy');
   if(copy) copy.addEventListener('click', async () => {
     const label = copy.querySelector('b');

@@ -603,4 +603,89 @@ const msg = document.getElementById('msg');
     window.scrollTo({top:0,behavior:'smooth'});
   });
 }
+
+/* ===================================================================
+   Register — anyone may create a profile. This is not Get Listed:
+   no company, no approval, no fee. The username IS the address.
+   =================================================================== */
+function initRegister(){
+  const form = document.getElementById('reg-form');
+  if(!form) return;
+  const el = id => document.getElementById(id);
+  const v  = id => (el(id) && el(id).value.trim()) || '';
+  const handleInput = el('r-handle'), handleMsg = el('r-handle-msg');
+  const passEl = el('r-pass'), pass2El = el('r-pass2'), passMsg = el('r-pass-msg');
+  const errBox = el('r-err'), submitBtn = el('r-submit');
+  let handleState = '', handleTimer = null;
+
+  function fail(msg){
+    errBox.textContent = msg || '';
+    errBox.style.display = msg ? 'block' : 'none';
+  }
+
+  handleInput.addEventListener('input', ()=>{
+    handleInput.value = handleInput.value.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    handleState = '';
+    clearTimeout(handleTimer);
+    if(!handleInput.value){ handleMsg.textContent = ''; return; }
+    handleMsg.textContent = 'Checking…'; handleMsg.style.color = '';
+    handleTimer = setTimeout(async ()=>{
+      const why = await handleAvailable(handleInput.value);
+      handleState = why ? 'bad' : 'ok';
+      handleMsg.textContent = why || ('circuits.com/' + handleInput.value + ' is available.');
+      handleMsg.style.color = why ? '#b3261e' : '#3f6300';
+    }, 400);
+  });
+
+  /* Two boxes, checked as you type — the password is set once here and there is
+     no "resend" path if it is a typo. */
+  function passwordsMatch(){
+    if(!pass2El.value){ passMsg.textContent = ''; return false; }
+    const ok = passEl.value === pass2El.value;
+    passMsg.textContent = ok ? 'Passwords match.' : 'Passwords do not match.';
+    passMsg.style.color = ok ? '#3f6300' : '#b3261e';
+    return ok;
+  }
+  passEl.addEventListener('input', passwordsMatch);
+  pass2El.addEventListener('input', passwordsMatch);
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    fail('');
+    const handle = v('r-handle'), email = v('r-email');
+
+    if(!handle) return fail('Choose the username that will be your circuits.com address.');
+    if(!email)  return fail('We need an email address so you can sign in.');
+    if(passEl.value.length < 8) return fail('Your password must be at least 8 characters.');
+    if(passEl.value !== pass2El.value) return fail('The two passwords do not match.');
+    if(!el('r-terms').checked) return fail('Please accept the Terms to continue.');
+
+    submitBtn.disabled = true; submitBtn.textContent = 'Creating…';
+
+    /* Re-check at submit: someone may have taken it while this form was open.
+       The database trigger is the real guard — this is just a kinder message. */
+    const why = await handleAvailable(handle);
+    if(why){
+      submitBtn.disabled = false; submitBtn.textContent = 'Create Profile →';
+      handleMsg.textContent = why; handleMsg.style.color = '#b3261e';
+      handleInput.scrollIntoView({ behavior:'smooth', block:'center' });
+      return fail('That address just became unavailable.');
+    }
+
+    const err = await registerProfile(email, passEl.value, handle, v('r-name'));
+    if(err){
+      submitBtn.disabled = false; submitBtn.textContent = 'Create Profile →';
+      return fail(/already registered|already exists/i.test(err)
+        ? 'There is already an account with that email. Sign in instead.'
+        : err);
+    }
+
+    form.style.display = 'none';
+    const ok = el('reg-success');
+    const okHandle = el('reg-success-handle');
+    if(okHandle) okHandle.innerHTML = '<b>circuits.com/' + escapeHtml(handle) + '</b> is yours. ';
+    if(ok) ok.style.display = 'block';
+    window.scrollTo({ top:0, behavior:'smooth' });
+  });
+}
 /* end */

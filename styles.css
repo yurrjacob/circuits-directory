@@ -517,6 +517,29 @@ tr.row-warn td{background:#fff3cd}
 .pf-prose{margin:0 0 10px;max-width:70ch;color:#33383d}
 .pf-note{font-size:.78rem;color:var(--muted);margin:9px 0 0}
 .pf-kws{gap:7px}
+/* ---- profile views: one line graph that rescales to the chosen window ---- */
+.range-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.range-btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:20px;
+  padding:6px 13px;font-size:.82rem;font-weight:600;cursor:pointer;transition:background .12s,border-color .12s}
+.range-btn:hover{border-color:var(--green)}
+.range-btn.active{background:var(--green);border-color:var(--green);color:#000}
+.range-custom{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:0 0 14px}
+.range-custom label{font-size:.8rem;font-weight:600;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.range-custom input{border:1px solid var(--line);border-radius:8px;padding:7px 9px;font:inherit}
+.g-wrap{width:100%;overflow:hidden}
+.g-chart{width:100%;height:220px;display:block}
+.g-grid{stroke:var(--line);stroke-width:1}
+.g-ylbl{fill:var(--muted);font-size:11px;text-anchor:end}
+.g-xlbl{fill:var(--muted);font-size:11px;text-anchor:middle}
+.g-area{fill:rgba(124,179,5,.14);stroke:none}
+.g-line{fill:none;stroke:var(--green);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.g-dot{fill:var(--green)}
+
+/* ---- register ---- */
+.form-wrap-narrow{max-width:760px}
+.reg-next{margin:26px 0 40px;padding:18px 20px;border:1px solid var(--line);border-radius:12px;background:#fafbfa}
+.reg-steps{margin:8px 0 0;padding-left:20px;color:#33383d;font-size:.9rem;line-height:1.7}
+
 /* a review nobody has judged yet is invisible to the public — make it obvious */
 .dash-table tr.row-waiting td{background:#fffbe8}
 

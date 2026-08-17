@@ -7,6 +7,7 @@
 -- Clear anything a previous failed run left behind. A raise aborts the block
 -- before its cleanup, and the leftovers make the next run fail for the wrong
 -- reason — which cost an afternoon once already.
+delete from profiles       where handle like 'zz%';
 delete from profile_events where company_slug like 'zz-%';
 delete from reviews      where company_slug like 'zz-%';
 delete from inquiries    where company_slug like 'zz-%';
@@ -164,6 +165,7 @@ begin
   raise notice 'STAFF SCOPE + SYNC CHECKS PASSED';
 end $$;
 
+delete from profiles       where handle like 'zz%';
 delete from profile_events where company_slug like 'zz-%';
 delete from reviews      where company_slug like 'zz-%';
 delete from inquiries    where company_slug like 'zz-%';
@@ -292,6 +294,7 @@ begin
   raise notice 'TEXT CAP + SECURITY LOG CHECKS PASSED';
 end $$;
 
+delete from profiles       where handle like 'zz%';
 delete from profile_events where company_slug like 'zz-%';
 delete from reviews      where company_slug like 'zz-%';
 delete from inquiries    where company_slug like 'zz-%';
@@ -299,4 +302,75 @@ delete from company_users where company_slug like 'zz-%';
 delete from applications where company_slug like 'zz-%';
 delete from companies    where slug like 'zz-%';
 delete from staff        where email like 'zz-%@rlstest.invalid';
+delete from auth.users   where email like 'zz-%@rlstest.invalid';
+
+-- Listing is not the same thing as profile.
+-- A company can sit in the directory with nobody behind it; a person can hold
+-- circuits.com/name with no company. circuits.com/<name> is ONE namespace, so
+-- a profile and a listing must never be able to claim the same address.
+do $$
+declare u1 uuid := gen_random_uuid(); u2 uuid := gen_random_uuid(); n int; why text;
+begin
+  insert into auth.users (id,instance_id,aud,role,email,email_confirmed_at,created_at,updated_at,raw_user_meta_data)
+  values (u1,'00000000-0000-0000-0000-000000000000','authenticated','authenticated','zz-p1@rlstest.invalid',now(),now(),now(),
+          jsonb_build_object('handle','zzprofile','display_name','ZZ Person'));
+  select count(*) into n from profiles where user_id=u1 and handle='zzprofile';
+  if n <> 1 then raise exception 'FAIL: signing up did not create the profile'; end if;
+
+  begin
+    insert into auth.users (id,instance_id,aud,role,email,email_confirmed_at,created_at,updated_at,raw_user_meta_data)
+    values (u2,'00000000-0000-0000-0000-000000000000','authenticated','authenticated','zz-p2@rlstest.invalid',now(),now(),now(),
+            jsonb_build_object('handle','zzprofile'));
+    raise exception 'FAIL: two profiles took the same address';
+  exception when unique_violation then null;
+  end;
+
+  begin
+    insert into companies (slug,name,handle,published) values ('zz-c1','ZZ Co','zzprofile',true);
+    raise exception 'FAIL: a listing took an address a profile already holds';
+  exception when unique_violation then null;
+  end;
+
+  insert into companies (slug,name,handle,published) values ('zz-c2','ZZ Co2','zzcompany',true);
+  select handle_taken('zzcompany') into why;
+  if why <> 'company'  then raise exception 'FAIL: company handle reported as "%"', why; end if;
+  select handle_taken('register') into why;
+  if why <> 'reserved' then raise exception 'FAIL: reserved handle reported as "%"', why; end if;
+  select handle_taken('ab') into why;
+  if why <> 'format'   then raise exception 'FAIL: too-short handle reported as "%"', why; end if;
+  select handle_taken('zzprofile') into why;
+  if why <> 'profile'  then raise exception 'FAIL: profile handle reported as "%"', why; end if;
+  select handle_taken('zzfree') into why;
+  if why <> ''         then raise exception 'FAIL: a free handle reported as "%"', why; end if;
+
+  -- a listing with nobody behind it is a valid, normal state
+  select count(*) into n from companies where slug='zz-c2';
+  if n <> 1 then raise exception 'FAIL: a listing cannot exist without a profile'; end if;
+
+  if email_for_login('zzprofile') <> 'zz-p1@rlstest.invalid' then
+    raise exception 'FAIL: username sign-in did not resolve the account';
+  end if;
+
+  perform set_config('request.jwt.claims', json_build_object('sub',u1::text,'role','authenticated','email','zz-p1@rlstest.invalid')::text, true);
+  set local role authenticated;
+
+  -- holding a profile grants no control over any listing
+  select count(*) into n from my_companies();
+  if n <> 0 then raise exception 'FAIL: a bare profile controls % listings', n; end if;
+  select count(*) into n from my_profile();
+  if n <> 1 then raise exception 'FAIL: my_profile() returned % rows', n; end if;
+
+  update profiles set handle='zzrenamed' where user_id=u1;
+  begin
+    update profiles set handle='zzcompany' where user_id=u1;
+    raise exception 'FAIL: a profile renamed itself onto a listing address';
+  exception when unique_violation then null;
+  end;
+  reset role;
+
+  raise notice 'LISTING / PROFILE SEPARATION CHECKS PASSED';
+end $$;
+
+delete from profiles     where handle like 'zz%';
+delete from companies    where slug like 'zz-%';
 delete from auth.users   where email like 'zz-%@rlstest.invalid';

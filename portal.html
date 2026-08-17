@@ -30,12 +30,13 @@
       <button class="submit" type="submit" id="pt-auth-submit">Sign in →</button>
     </form>
     <div class="auth-foot">
-      <a class="btn btn-primary auth-cta" href="/join">Create your profile →</a>
+      <a class="btn btn-primary auth-cta" href="/register">Create your profile →</a>
     </div>
     <div class="auth-note">
       Your username is your Circuits.com address &mdash; sign in with either that or your email.
       <br><br>
-      Company already in the directory but not linked to you? <a href="/claim">Claim the listing</a>.
+      Want a company in the directory? <a href="/join">Get it listed</a>.
+      Already listed but not linked to you? <a href="/claim">Claim the listing</a>.
     </div>
     <p class="auth-staff">Circuits.com staff? <a href="/login">Sign in here</a>.</p>
   </div>
@@ -44,11 +45,13 @@
 <!-- signed in, but no company attached -->
 <div class="auth-wrap" id="pt-none" style="display:none">
   <div class="auth-card">
-    <h1>No company linked yet</h1>
-    <p class="sub">You are signed in as <b id="pt-none-email"></b>, but that address is not on any listing.</p>
+    <h1>Your profile</h1>
+    <p class="sub">Signed in as <b id="pt-none-email"></b>. This account does not manage a company listing.</p>
+    <div id="pt-me" class="pf-form"></div>
     <div class="auth-note">
-      If your company is already listed, <a href="/claim">claim your profile</a> and our team will connect this account.
-      If it is not listed yet, <a href="/join">get listed first</a>.
+      A profile and a company listing are separate. If your company is already in the directory,
+      <a href="/claim">claim the listing</a> and our team will connect it to this profile.
+      If it is not listed yet, <a href="/join">get it listed</a>.
     </div>
     <div class="auth-note" id="pt-none-staff" style="display:none;border-left:3px solid var(--green);padding-left:10px">
       This address is on the Circuits.com staff list. The supplier portal only ever shows companies you
@@ -86,10 +89,16 @@
   <section class="pt-panel active" id="tab-overview">
     <div class="stat-grid" id="pt-stats"></div>
     <div class="panel">
-      <div class="panel-head"><h2>Profile views</h2><span class="hint">Last 14 days</span></div>
+      <div class="panel-head"><h2>Profile views</h2></div>
       <div class="panel-body">
-        <div class="pt-bars" id="pt-chart"></div>
-        <p class="pf-note" id="pt-chart-note" style="margin-top:26px"></p>
+        <div class="range-bar" id="pt-range"></div>
+        <div class="range-custom" id="pt-range-custom" style="display:none">
+          <label>From <input type="date" id="pt-from"></label>
+          <label>To <input type="date" id="pt-to"></label>
+          <button type="button" class="mini-btn green" id="pt-range-apply">Apply</button>
+        </div>
+        <div class="g-wrap" id="pt-chart"></div>
+        <p class="pf-note" id="pt-chart-note"></p>
       </div>
     </div>
   </section>
