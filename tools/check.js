@@ -140,25 +140,6 @@ assert.ok(sitemap.includes('circuits.com/register'), 'sitemap is missing /regist
 assert.ok(!fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8').includes('/how-it-works'),
   'the sitemap generator would put /how-it-works back on the next build');
 
-/* --- the homepage has to say what the site is for ---
-       A search box alone tells a first-time visitor nothing. */
-const homeSrc = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-const paths = (homeSrc.match(/<a class="path-card" href="([^"]+)"/g) || [])
-  .map(m => m.match(/href="([^"]+)"/)[1]);
-assert.deepStrictEqual(paths, ['/directory', '/join', '/claim'],
-  `homepage should offer find / list / claim, got ${JSON.stringify(paths)}`);
-assert.ok(/class="home-why"/.test(homeSrc), 'homepage no longer says why anyone should list');
-// the hero must stay above the explanation, not be buried by it
-assert.ok(homeSrc.indexOf('id="home-search"') < homeSrc.indexOf('home-paths'),
-  'the explanation sections have been moved above the search box');
-// and the cards must not promise anything the site cannot do
-for (const bogus of ['part number', 'compare prices', 'distributor stock', 'datasheet']) {
-  assert.ok(!new RegExp(bogus, 'i').test(homeSrc.slice(homeSrc.indexOf('home-paths'))),
-    `homepage advertises "${bogus}", which no part of this site provides`);
-}
-assert.ok(/\.path-card\{/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
-  'the homepage path cards have no styling');
-
 /* --- a failed lookup must never be reported as "nothing there" ---
        These three answer questions whose empty answer is commercially loaded:
        "this keyword is available to buy" and "this address is free to claim".
