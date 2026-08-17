@@ -100,6 +100,46 @@ for (const f of fs.readdirSync(ROOT)) {
     `root page ${f} is not in the reserved handle list — a company could claim circuits.com/${name}`);
 }
 
+/* --- one header, everywhere ---
+       Every public page must carry the same nav: where you can go, then the two
+       account actions. Drift here is what made the old header inconsistent. */
+const NAV_PAGES = fs.readdirSync(ROOT).filter(f => f.endsWith('.html'))
+  .concat(fs.readdirSync(path.join(ROOT, 'directory')).map(f => 'directory/' + f));
+let navChecked = 0;
+for (const f of NAV_PAGES) {
+  const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+  const nav = (src.match(/<nav class="nav">[\s\S]*?<\/nav>/) || [null])[0];
+  if (!nav) continue;                       // redirect stubs and the like
+  navChecked++;
+  for (const href of ['/', '/about', '/contact', '/portal', '/join']) {
+    assert.ok(nav.includes(`href="${href}"`), `${f} nav is missing ${href}`);
+  }
+  // merged away, and deliberately dropped from the header
+  assert.ok(!nav.includes('/how-it-works'), `${f} nav still links the merged How It Works page`);
+  assert.ok(!nav.includes('/directory'), `${f} nav still links Directory`);
+  // relative hrefs break on /directory/* and /company/*
+  assert.ok(!/href="(?!\/|https?:|#)[^"]/.test(nav), `${f} nav uses a relative href`);
+  // exactly one primary action, and the account link present
+  assert.strictEqual((nav.match(/class="[^"]*\bcta\b/g) || []).length, 1,
+    `${f} nav should have exactly one Get Listed call to action`);
+  assert.ok(nav.includes('nav-auth'), `${f} nav is missing the Sign In link`);
+  assert.ok((nav.match(/class="[^"]*\bactive\b/g) || []).length <= 1,
+    `${f} nav marks more than one item active`);
+}
+assert.ok(navChecked >= 20, `only ${navChecked} pages carry the shared header`);
+
+/* How It Works was merged into About; the old URL must still point somewhere */
+const hiw = fs.readFileSync(path.join(ROOT, 'how-it-works.html'), 'utf8');
+assert.ok(hiw.includes('rel="canonical" href="https://circuits.com/about"'),
+  'how-it-works no longer points search engines at /about');
+assert.ok(/http-equiv="refresh"/.test(hiw), 'how-it-works no longer redirects visitors');
+const sitemap = fs.readFileSync(path.join(ROOT, 'sitemap.xml'), 'utf8');
+assert.ok(!sitemap.includes('/how-it-works'), 'sitemap still lists the merged page');
+assert.ok(sitemap.includes('circuits.com/about'), 'sitemap lost /about');
+assert.ok(sitemap.includes('circuits.com/register'), 'sitemap is missing /register');
+assert.ok(!fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8').includes('/how-it-works'),
+  'the sitemap generator would put /how-it-works back on the next build');
+
 /* --- the URL form of a handle must accept underscores, or circuits.com/aaa_electronics
        never resolves through the 404 fallback --- */
 const pathRe = /^\/([a-z0-9][a-z0-9_-]*)\/?$/i;

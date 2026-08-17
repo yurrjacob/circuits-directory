@@ -45,11 +45,16 @@ img{max-width:100%}
 /* ---- Top nav (inner pages) ---- */
 .topbar{position:sticky;top:0;z-index:50;background:var(--dark);border-bottom:1px solid #1d1d1d}
 .topbar .inner{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;gap:16px}
-.nav{display:flex;align-items:center;gap:6px}
-.nav a{color:#cfd2d6;text-decoration:none;font-size:.92rem;padding:8px 14px;border-radius:8px;transition:.15s}
+/* Two groups, not one list: where you can go, then what you can do.
+   The rule before Sign In is what separates them. */
+.nav{display:flex;align-items:center;gap:4px}
+.nav a{color:#cfd2d6;text-decoration:none;font-size:.92rem;padding:8px 14px;border-radius:8px;transition:.15s;white-space:nowrap}
 .nav a:hover{background:#1c1c1c;color:#fff}
 .nav a.active{color:#fff;background:#1c1c1c}
-.nav a.cta{background:var(--green);color:#0f0f0f;font-weight:700}
+.nav a.nav-auth{margin-left:14px;position:relative;color:#e8eaed;font-weight:600}
+.nav a.nav-auth::before{content:"";position:absolute;left:-14px;top:50%;transform:translateY(-50%);
+  width:1px;height:20px;background:rgba(255,255,255,.18)}
+.nav a.cta{background:var(--green);color:#0f0f0f;font-weight:700;margin-left:4px}
 .nav a.cta:hover{background:var(--green-dark);color:#fff}
 .brand{display:flex;align-items:center;gap:14px;min-width:0}
 .brand a{display:inline-flex;align-items:center}
@@ -445,6 +450,11 @@ tr.row-warn td{background:#fff3cd}
   .brand-title{white-space:normal;font-size:.72rem}
   .nav{flex:1 1 100%;justify-content:center;flex-wrap:wrap;gap:2px 4px}
   .nav a{padding:6px 9px;font-size:.8rem}
+  /* the divider only reads correctly on one line — once the nav wraps it
+     ends up floating in the middle of nowhere */
+  .nav a.nav-auth{margin-left:4px}
+  .nav a.nav-auth::before{display:none}
+  .nav a.cta{margin-left:0}
 
   /* reclaim horizontal room everywhere so content isn't pinched */
   .subbar .inner{padding:10px 14px}

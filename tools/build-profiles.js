@@ -28,7 +28,7 @@ const STATIC_PAGES = [
   ['/directory/voltage-regulators', '0.7'], ['/directory/rf-transceivers', '0.7'],
   ['/directory/test-equipment', '0.7'], ['/directory/ic-packaging', '0.7'],
   ['/directory/clock-generators', '0.7'], ['/directory/motion-control-ics', '0.7'],
-  ['/how-it-works', '0.8'], ['/about', '0.8'], ['/contact', '0.6'], ['/terms', '0.3']
+  ['/about', '0.8'], ['/contact', '0.6'], ['/register', '0.6'], ['/terms', '0.3']
 ];
 
 async function api(q) {
