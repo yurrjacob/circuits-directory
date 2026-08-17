@@ -89,36 +89,6 @@ img{max-width:100%}
 .btn:hover{border-color:#d2d4d7;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .btn-primary{background:var(--green);border-color:var(--green);color:#0f0f0f;font-weight:700}
 .btn-primary:hover{background:var(--green-dark);color:#fff;border-color:var(--green-dark)}
-/* ---- Homepage: the three things you can do here ----
-   Sits under the search hero, so the fold stays clean. */
-.home-paths{border-top:1px solid var(--line);background:var(--bg-soft);padding:56px 20px}
-.paths-grid{max-width:var(--maxw);margin:0 auto;display:grid;gap:18px;
-  grid-template-columns:repeat(3,1fr)}
-.path-card{display:flex;flex-direction:column;gap:8px;background:#fff;text-decoration:none;
-  border:1px solid var(--line);border-radius:14px;padding:24px 22px;color:inherit;transition:.15s}
-.path-card:hover{border-color:var(--green);box-shadow:0 2px 12px rgba(32,33,36,.12);transform:translateY(-2px)}
-.path-icon{width:40px;height:40px;border-radius:10px;display:inline-flex;align-items:center;
-  justify-content:center;background:var(--green);color:#0f0f0f;margin-bottom:4px}
-.path-card h3{margin:0;font-size:1.05rem}
-.path-card p{margin:0;color:var(--muted);font-size:.9rem;line-height:1.55;flex:1}
-.path-go{color:var(--green-dark);font-weight:700;font-size:.88rem;margin-top:4px}
-.path-card:hover .path-go{text-decoration:underline}
-
-.home-why{max-width:760px;margin:0 auto;padding:56px 20px 64px}
-.home-why h2{font-size:1.35rem;margin:0 0 20px;text-align:center}
-.why-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
-.why-list li{padding-left:26px;position:relative;color:var(--muted);font-size:.94rem;line-height:1.6}
-.why-list li b{color:var(--ink)}
-.why-list li::before{content:"";position:absolute;left:0;top:.5em;width:9px;height:9px;
-  border-radius:50%;background:var(--green)}
-.why-actions{justify-content:center;margin-top:28px}
-
-@media(max-width:860px){
-  .paths-grid{grid-template-columns:1fr}
-  .home-paths{padding:36px 20px}
-  .home-why{padding:36px 20px 48px}
-}
-
 .popular{margin-top:34px;text-align:center;color:var(--muted);font-size:.85rem}
 .popular a{color:var(--green-dark);text-decoration:none;margin:0 6px;font-weight:600}
 .popular a:hover{text-decoration:underline}
