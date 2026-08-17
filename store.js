@@ -496,6 +496,27 @@ async function setReviewStatus(id, status){
   if(error) console.error('setReviewStatus', error);
 }
 
+/* ---- suspension ----
+   Deliberately not deletion. A suspended company keeps every row it had, so a
+   dispute can be reversed and a returning customer picks up where they left
+   off. The database does the enforcing: a suspended listing disappears from
+   the directory and from keyword results, and its owner can neither edit it
+   nor lift the suspension. See set_company_suspended() in the migration. */
+async function suspendCompany(slug, suspend, reason){
+  if(!sb) return 'Not connected.';
+  const { error } = await sb.rpc('set_company_suspended',
+    { p_slug: slug, p_suspend: !!suspend, p_reason: reason || null });
+  if(error){ console.error('set_company_suspended', error); return error.message; }
+  return '';
+}
+async function suspendProfile(handle, suspend, reason){
+  if(!sb) return 'Not connected.';
+  const { error } = await sb.rpc('set_profile_suspended',
+    { p_handle: handle, p_suspend: !!suspend, p_reason: reason || null });
+  if(error){ console.error('set_profile_suspended', error); return error.message; }
+  return '';
+}
+
 /* ---- logo + gallery image storage (public bucket "logos") ---- */
 async function uploadImage(file){ return uploadLogo(file); }
 

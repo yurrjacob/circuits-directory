@@ -609,6 +609,10 @@ tr.row-warn td{background:#fff3cd}
 .auth-staff a{color:var(--muted);text-decoration:underline}
 .auth-staff a:hover{color:var(--ink)}
 .auth-cta{display:block;text-align:center;text-decoration:none;padding:11px}
+/* suspension notice: serious, but not an error the owner can fix by retrying */
+.pt-suspended{border:1px solid #e6b800;background:#fffae6;color:#4a3c00;
+  border-radius:10px;padding:14px 16px;margin:0 0 20px;font-size:.9rem;line-height:1.6}
+.pt-suspended a{color:#7a5c00;font-weight:700}
 /* "we couldn't load this" — deliberately calmer than an empty result, because
    nothing is wrong with what the visitor asked for */
 .load-error{max-width:520px}

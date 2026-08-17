@@ -75,6 +75,24 @@ async function initPortal(){
   }
   show('pt-auth', false); show('pt-none', false); show('pt-app', true);
 
+  /* A suspended owner can still sign in and still sees their data — the
+     database just refuses every edit. Without a notice the portal would look
+     broken rather than suspended, so say so plainly and once, at the top. */
+  const suspended = cos.filter(c => c.suspended_at);
+  if(suspended.length){
+    const host = el('pt-app');
+    const note = document.createElement('div');
+    note.className = 'pt-suspended';
+    note.innerHTML =
+      '<b>' + escapeHtml(suspended.map(c => c.name).join(', ')) +
+      (suspended.length > 1 ? ' are' : ' is') + ' suspended.</b> ' +
+      (suspended.length > 1 ? 'These listings are' : 'This listing is') +
+      ' hidden from the directory and from keyword results, and cannot be edited ' +
+      'while the suspension is in place. Nothing has been deleted. ' +
+      '<a href="/contact">Contact us</a> and we will explain why and what happens next.';
+    host.insertBefore(note, host.firstChild);
+  }
+
   const picker = el('pt-company');
   picker.innerHTML = cos.map(c => `<option value="${escapeHtml(c.slug)}">${escapeHtml(c.name)}</option>`).join('');
   picker.style.display = cos.length > 1 ? '' : 'none';
