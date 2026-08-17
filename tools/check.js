@@ -140,6 +140,35 @@ assert.ok(sitemap.includes('circuits.com/register'), 'sitemap is missing /regist
 assert.ok(!fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8').includes('/how-it-works'),
   'the sitemap generator would put /how-it-works back on the next build');
 
+/* --- a failed lookup must never be reported as "nothing there" ---
+       These three answer questions whose empty answer is commercially loaded:
+       "this keyword is available to buy" and "this address is free to claim".
+       If they swallow an error and return empty, Circuits.com offers to sell
+       something that may already belong to a paying customer. */
+const lookupSrc = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+for (const fn of ['fetchApprovedByKeyword', 'fetchCompanyByHandle', 'fetchProfileByHandle']) {
+  const body = lookupSrc.slice(lookupSrc.indexOf(`async function ${fn}(`));
+  const guard = body.slice(0, body.indexOf('\n}'));
+  assert.ok(/if\(error\)\{[^}]*throw error/.test(guard),
+    `${fn} swallows its error instead of throwing — a failed lookup would be shown as "available"`);
+}
+// and every caller has to actually handle the throw
+for (const [f, needle] of [['app.js', 'loadErrorHtml('], ['profile.js', 'loadErrorHtml('],
+                           ['claim.html', 'loadErrorHtml(']]) {
+  const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+  assert.ok(src.includes(needle), `${f} never renders a load-failure state`);
+}
+// the results page in particular must not fall through to the sales pitch
+const resultsSrc = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+const catchBlock = resultsSrc.slice(resultsSrc.indexOf('listings = await fetchApprovedByKeyword'));
+const catchBody = catchBlock.slice(catchBlock.indexOf('catch'), catchBlock.indexOf('const countEl'));
+assert.ok(/loadErrorHtml/.test(catchBody) && /return;/.test(catchBody),
+  'a failed keyword search still falls through to the "this keyword is available" pitch');
+assert.ok(!/listings\s*=\s*\[\]/.test(catchBody),
+  'a failed keyword search still pretends the keyword has no owners');
+assert.ok(/\.load-error\{/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
+  'the load-failure state has no styling');
+
 /* --- every public form carries the spam traps ---
        A form that reaches the database without these puts junk straight into
        the founders' inbox and burns the per-IP limit for real visitors. */
@@ -405,6 +434,13 @@ for (const trigger of ['renderQuote()']) {
 }
 
 require('./render-check.js');
+/* Renders the search and profile pages against a database that refuses every
+   request, and fails if either tries to sell something as a result.
+   Spawned rather than required: both harnesses eval site code against the
+   shared `global`, so in one process whichever ran last won and the other
+   silently tested the wrong stubs. */
+require('child_process').execFileSync(process.execPath,
+  [require('path').join(__dirname, 'failure-check.js')], { stdio: 'inherit' });
 
 /* --- a profile field only renders when the value fits the field ---
        Junk in the phone box used to emit a dead tel: link, and a pasted URL in
