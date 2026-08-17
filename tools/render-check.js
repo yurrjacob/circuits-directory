@@ -10,6 +10,13 @@ global.sendFounderEmail = () => {};
 global.trackEvent = () => {};
 global.submitInquiry = async () => {};
 global.submitReview = async () => {};
+/* profile.js runs after app.js on company.html; these come from there.
+   check.js separately asserts app.js really defines them, so these stubs
+   cannot quietly drift away from the real thing. */
+global.armSpamTrap = () => {};
+global.looksLikeSpam = () => false;
+global.fakeSuccess = () => {};
+global.rateLimitMessage = () => null;
 
 const CO = { slug:'aaa', handle:'aaa_electronics', name:'AAA Electronics, Inc.',
   tagline:'Authorised distributor of analog and power ICs', description:'Line one.\nLine two.',

@@ -371,6 +371,59 @@ begin
   raise notice 'LISTING / PROFILE SEPARATION CHECKS PASSED';
 end $$;
 
+/* ---- rate limiting on the public forms ----
+   The honeypot and timing traps live in the browser and can be bypassed by
+   anyone who reads the page source. This trigger is the layer that actually
+   holds, so it needs a test that fails loudly if it is ever dropped. */
+do $$
+declare
+  n int := 0; blocked boolean := false; s text; was_enabled boolean;
+begin
+  delete from rate_log where bucket in ('review','inquiry');
+
+  insert into companies (slug, name, reviews_enabled) values ('zz-rl', 'ZZ Rate Ltd', true);
+  select slug, reviews_enabled into s, was_enabled from companies where slug = 'zz-rl';
+
+  -- reviews: 3 an hour
+  begin
+    while n < 6 loop
+      insert into reviews (company_slug, author_name, author_email, rating, body)
+      values (s, 'zz probe', 'zz-probe@rlstest.invalid', 5, 'probe');
+      n := n + 1;
+    end loop;
+  exception when check_violation then blocked := true;
+  end;
+  if not blocked then raise exception 'FAIL: review rate limit never fired (% accepted)', n; end if;
+  if n <> 3 then raise exception 'FAIL: review limit let % through, expected 3', n; end if;
+
+  -- quote requests: 5 an hour, so the caps are genuinely per-bucket and not shared
+  n := 0; blocked := false;
+  begin
+    while n < 8 loop
+      insert into inquiries (company_slug, from_name, from_email, body)
+      values (s, 'zz probe', 'zz-probe@rlstest.invalid', 'probe');
+      n := n + 1;
+    end loop;
+  exception when check_violation then blocked := true;
+  end;
+  if not blocked then raise exception 'FAIL: inquiry rate limit never fired'; end if;
+  if n <> 5 then raise exception 'FAIL: inquiry limit let % through, expected 5', n; end if;
+
+  raise notice 'RATE LIMIT CHECKS PASSED';
+end $$;
+
+-- rate_log must never be readable through the API, or the IP list leaks
+do $$
+declare n int;
+begin
+  select count(*) into n from pg_policies where tablename = 'rate_log';
+  if n <> 0 then raise exception 'FAIL: rate_log has % policies; it should be reachable only by the definer functions', n; end if;
+  raise notice 'RATE LOG IS SEALED';
+end $$;
+
+delete from inquiries    where from_email = 'zz-probe@rlstest.invalid';
+delete from reviews      where author_email = 'zz-probe@rlstest.invalid';
+delete from rate_log     where bucket in ('review','inquiry');
 delete from profiles     where handle like 'zz%';
 delete from companies    where slug like 'zz-%';
 delete from auth.users   where email like 'zz-%@rlstest.invalid';

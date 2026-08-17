@@ -140,6 +140,34 @@ assert.ok(sitemap.includes('circuits.com/register'), 'sitemap is missing /regist
 assert.ok(!fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8').includes('/how-it-works'),
   'the sitemap generator would put /how-it-works back on the next build');
 
+/* --- every public form carries the spam traps ---
+       A form that reaches the database without these puts junk straight into
+       the founders' inbox and burns the per-IP limit for real visitors. */
+for (const [f, formVar] of [['contact.html', 'contact-form'], ['claim.html', 'cf'],
+                            ['app.js', 'form'], ['profile.js', 'rf'], ['profile.js', 'rv']]) {
+  const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+  assert.ok(new RegExp(`armSpamTrap\\((document\\.getElementById\\('${formVar}'\\)|${formVar})\\)`).test(src),
+    `${f}: the ${formVar} form never arms the spam trap`);
+}
+for (const f of ['contact.html', 'claim.html', 'app.js', 'profile.js']) {
+  const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+  const submits = (src.match(/addEventListener\('submit'/g) || []).length;
+  const gates = (src.match(/looksLikeSpam\(/g) || []).length;
+  assert.ok(gates >= 1, `${f} has ${submits} submit handlers and no spam gate`);
+}
+// a bot must not learn why it was rejected
+const spamSrc = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+assert.ok(/function fakeSuccess/.test(spamSrc), 'rejected bots are no longer shown a fake success');
+assert.ok(!/looksLikeSpam[\s\S]{0,200}(alert|error|blocked|spam detected)/i.test(spamSrc),
+  'the spam gate tells the sender it was detected, which teaches the bot author what to change');
+// and a real person who trips the database limit gets a sentence, not a stack trace
+assert.ok(/function rateLimitMessage/.test(spamSrc), 'the database rate-limit error is no longer translated');
+for (const f of ['profile.js']) {
+  const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+  assert.ok((src.match(/rateLimitMessage\(/g) || []).length >= 2,
+    `${f} does not surface the rate-limit message on both public forms`);
+}
+
 /* --- a primary button must never be green text on a green background ---
        .auth-foot a and .info-card a are (class + element) so they outrank the
        plain .btn-primary class. Any new context that colours its links has to
