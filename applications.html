@@ -23,7 +23,7 @@
       <h1>Website Applications</h1>
       <p>Every submission from the List Your Company form, live from the database. Click any cell to edit it; changes save for everyone.</p>
     </div>
-    <a class="mini-btn green" href="admin">← Back To Dashboard</a>
+    <a class="mini-btn green" href="portal">← Back To The Portal</a>
   </div>
 
   <div class="sheet-filters" id="filters">
@@ -89,7 +89,7 @@ const body = $('apps-body');
 const totalPrice = a => appPrice(a); // uses hand-entered prices when set, defaults otherwise
 const money = n => '$' + (Number(n)%1 ? Number(n).toFixed(2) : Number(n));
 
-$('signout').addEventListener('click', async e=>{ e.preventDefault(); await signOut(); location.href='login'; });
+$('signout').addEventListener('click', async e=>{ e.preventDefault(); await signOut(); location.href='/'; });
 
 function statusBadge(s){
   const cls = s==='Approved' ? 'accepted' : (s==='Denied' ? 'denied' : 'pending');
