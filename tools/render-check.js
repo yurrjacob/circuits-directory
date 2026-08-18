@@ -73,6 +73,18 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
 
   // sidebar values must be single-line: the tooltip carries the untruncated text
   assert.ok(captured.includes('pf-row-v" title='), 'sidebar rows lost their full-value tooltip');
+  /* Everything a company asserts about itself must be labelled as its own
+     claim. A buyer picking a supplier on the strength of "ISO 9001" is making
+     a purchasing decision on something nobody checked. */
+  assert.ok(captured.includes('ISO 9001'), 'the certifications section stopped rendering');
+  assert.ok(/Circuits\.com has not\s+independently verified/.test(captured),
+    'certifications are presented as fact rather than as the company\'s own claim');
+  assert.ok(captured.includes('pf-claimed-note'), 'the certifications disclaimer is gone');
+  assert.ok(/paid labels chosen by the company/.test(captured),
+    'the Trust Badge is no longer identified as a paid label');
+  // and the badge note must not send buyers to certifications as if those were checked
+  assert.ok(!/listed under Certifications/.test(captured),
+    'the badge note still implies the certifications list is verified');
 
   // the short link must be copyable — it is what goes on adverts
   assert.ok(captured.includes('id="pf-copy"'), 'copy-link control missing from the sidebar');
