@@ -140,6 +140,25 @@ assert.ok(sitemap.includes('circuits.com/register'), 'sitemap is missing /regist
 assert.ok(!fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8').includes('/how-it-works'),
   'the sitemap generator would put /how-it-works back on the next build');
 
+/* --- suspension and the audit log must be reachable ---
+       Backend controls nobody can press are not controls. The suspend
+       functions existed for a while with no way to call them. */
+const adminSrc = fs.readFileSync(path.join(ROOT, 'admin.html'), 'utf8');
+for (const need of ['companies-body', 'audit-body', 'function setSuspended', 'function reloadAudit']) {
+  assert.ok(adminSrc.includes(need), `the admin console is missing ${need}`);
+}
+assert.ok(/reloadCompanies\(\);\s*reloadAudit\(\)/.test(adminSrc),
+  'the companies and audit panels are never loaded on open');
+assert.ok(/suspendCompany\(slug, suspend, reason/.test(adminSrc),
+  'suspension is applied without recording a reason');
+// a permanent log entry saying nothing is worse than none
+assert.ok(/if\(!reason\.trim\(\)\)/.test(adminSrc),
+  'a suspension can be recorded with a blank reason');
+const storeAdmin = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+for (const fn of ['fetchAllCompanies', 'fetchSecurityLog']) {
+  assert.ok(storeAdmin.includes(`async function ${fn}(`), `store.js is missing ${fn}`);
+}
+
 /* --- nothing may be too wide for a phone ---
        A single fixed width wider than the screen makes the whole page scroll
        sideways, which is the difference between "works on mobile" and "looks
@@ -351,7 +370,9 @@ assert.ok(/rpc\('set_company_suspended'/.test(suspSrc),
   'suspendCompany no longer calls set_company_suspended, so nothing is written to the audit log');
 assert.ok(/rpc\('set_profile_suspended'/.test(suspSrc),
   'suspendProfile no longer calls set_profile_suspended');
-assert.ok(!/from\('companies'\)[\s\S]{0,120}suspended_at/.test(suspSrc),
+// reading suspended_at is fine and necessary; WRITING it outside the logged
+// RPC is what bypasses the audit trail
+assert.ok(!/\.update\(\s*\{[^}]*suspended_at/.test(suspSrc),
   'suspension is being set by a direct table update, which bypasses the audit log');
 const suspPortal = fs.readFileSync(path.join(ROOT, "portal.js"), "utf8");
 assert.ok(/suspended_at/.test(suspPortal) && /pt-suspended/.test(suspPortal),
