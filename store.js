@@ -201,7 +201,23 @@ async function setNewPassword(password){
   const { error } = await sb.auth.updateUser({ password });
   return error ? error.message : '';
 }
-async function signOut(){ if(sb) await sb.auth.signOut(); } async function loadPrefs(page){ if(!sb) return null; const { data, error } = await sb.from('admin_prefs').select('prefs').eq('page', page).maybeSingle(); if(error){ console.error('loadPrefs', error); return null; } return data ? data.prefs : null; } async function savePrefs(page, prefs){ if(!sb) return; const { data } = await sb.auth.getUser(); if(!data || !data.user) return; const { error } = await sb.from('admin_prefs').upsert({ user_id: data.user.id, page, prefs, updated_at: new Date().toISOString() }, { onConflict: 'page' }); if(error) console.error('savePrefs', error); }
+async function signOut(){ if(sb) await sb.auth.signOut(); }
+/* Ends every session on every device, not just this browser. What you want
+   after a shared laptop or a lost phone. */
+async function signOutEverywhere(){
+  if(!sb) return 'Not connected.';
+  const { error } = await sb.auth.signOut({ scope: 'global' });
+  if(error){ console.error('signOutEverywhere', error); return error.message; }
+  return '';
+}
+/* Returns 'deleted', or 'still_owns_listing' when the account manages a paid
+   listing — see delete_own_account() for why that case is refused. */
+async function deleteOwnAccount(){
+  if(!sb) return 'error';
+  const { data, error } = await sb.rpc('delete_own_account');
+  if(error){ console.error('delete_own_account', error); return 'error'; }
+  return data;
+} async function loadPrefs(page){ if(!sb) return null; const { data, error } = await sb.from('admin_prefs').select('prefs').eq('page', page).maybeSingle(); if(error){ console.error('loadPrefs', error); return null; } return data ? data.prefs : null; } async function savePrefs(page, prefs){ if(!sb) return; const { data } = await sb.auth.getUser(); if(!data || !data.user) return; const { error } = await sb.from('admin_prefs').upsert({ user_id: data.user.id, page, prefs, updated_at: new Date().toISOString() }, { onConflict: 'page' }); if(error) console.error('savePrefs', error); }
 
 /* ===================================================================
    Company profiles

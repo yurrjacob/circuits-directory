@@ -609,6 +609,15 @@ tr.row-warn td{background:#fff3cd}
 .auth-staff a{color:var(--muted);text-decoration:underline}
 .auth-staff a:hover{color:var(--ink)}
 .auth-cta{display:block;text-align:center;text-decoration:none;padding:11px}
+/* account panel */
+.pt-account{border:1px solid var(--line);border-radius:12px;padding:20px;margin-top:22px;text-align:left}
+.pt-account h3{margin:0 0 6px;font-size:1rem}
+.ac-rule{border:0;border-top:1px solid var(--line);margin:20px 0 16px}
+.ac-ok{color:#3b6d11;font-weight:700}
+.ac-warn{color:#8a5a00;font-weight:700}
+.ac-danger{border-color:#e0b4b4;color:#a32d2d}
+.ac-danger:hover{background:#fcebeb;border-color:#d09090}
+
 /* 30-day insights: the funnel matters more than any single number */
 .ins-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .ins-num{font-size:1.7rem;font-weight:700;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}

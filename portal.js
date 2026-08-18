@@ -68,6 +68,7 @@ async function initPortal(){
     show('pt-auth', false); show('pt-app', false); show('pt-none', true);
     el('pt-none-email').textContent = user.email;
     renderMyProfile(me);
+    renderAccount(user);
     /* Staff are not suppliers. Without this they just see "no company linked"
        and assume the portal is broken. */
     if(await checkStaff()) show('pt-none-staff', true);
@@ -217,6 +218,81 @@ function markInquiriesSeen(){
     if(badge){ badge.textContent = 'Open'; badge.classList.remove('live'); }
   });
   if(unseen.length) markUnread();
+}
+
+/* ---------- account ----------
+   Change your password, end every session, leave. Boring, and the absence of
+   any of it is the kind of thing that gets a site refused by a buyer's IT
+   department. */
+async function renderAccount(user){
+  const host = el('pt-account');
+  if(!host || !user) return;
+  const confirmed = !!(user.email_confirmed_at || user.confirmed_at);
+
+  host.innerHTML = `
+    <div class="pt-account">
+      <h3>Your account</h3>
+      <p class="pf-note">Signed in as <b>${escapeHtml(user.email || '')}</b>
+        ${confirmed
+          ? '<span class="ac-ok">email confirmed</span>'
+          : '<span class="ac-warn">email not confirmed yet — check your inbox for the link</span>'}</p>
+
+      <div class="auth-field"><label for="ac-pass">New password</label>
+        <input id="ac-pass" type="password" minlength="8" autocomplete="new-password"
+               placeholder="At least 8 characters"></div>
+      <div class="auth-field"><label for="ac-pass2">Confirm new password</label>
+        <input id="ac-pass2" type="password" minlength="8" autocomplete="new-password"></div>
+      <button class="mini-btn green" type="button" id="ac-save">Change password</button>
+      <div id="ac-msg" class="pf-note"></div>
+
+      <hr class="ac-rule">
+      <button class="mini-btn" type="button" id="ac-signout-all">Sign out on every device</button>
+      <p class="pf-note">Use this if you have signed in on a shared or lost computer.</p>
+
+      <hr class="ac-rule">
+      <button class="mini-btn ac-danger" type="button" id="ac-delete">Delete my account</button>
+      <p class="pf-note">Permanent. Your Circuits.com address is released and can be taken by
+        someone else. Company listings are not deleted this way &mdash; contact us for those.</p>
+      <div id="ac-del-msg" class="pf-note"></div>
+    </div>`;
+
+  el('ac-save').onclick = async () => {
+    const msg = el('ac-msg'), a = el('ac-pass').value, b = el('ac-pass2').value;
+    msg.style.color = '#b3261e';
+    if(a.length < 8){ msg.textContent = 'Use at least 8 characters.'; return; }
+    if(a !== b){ msg.textContent = 'Those two passwords do not match.'; return; }
+    msg.style.color = ''; msg.textContent = 'Saving…';
+    const { error } = await setNewPassword(a);
+    if(error){ msg.style.color = '#b3261e'; msg.textContent = error.message; return; }
+    el('ac-pass').value = el('ac-pass2').value = '';
+    msg.textContent = 'Password changed. Your other devices stay signed in until you sign them out.';
+  };
+
+  el('ac-signout-all').onclick = async () => {
+    if(!confirm('Sign out of Circuits.com everywhere, including this browser?')) return;
+    const err = await signOutEverywhere();
+    if(err){ toast('Could not sign out everywhere: ' + err, false); return; }
+    location.href = '/';
+  };
+
+  el('ac-delete').onclick = async () => {
+    const msg = el('ac-del-msg');
+    // typing the address is deliberate friction; this cannot be undone
+    const typed = prompt('This cannot be undone.\n\nType your Circuits.com email address to confirm:');
+    if(typed === null) return;
+    if((typed || '').trim().toLowerCase() !== (user.email || '').toLowerCase()){
+      msg.style.color = '#b3261e'; msg.textContent = 'That did not match your email address, so nothing was deleted.';
+      return;
+    }
+    msg.style.color = ''; msg.textContent = 'Deleting…';
+    const res = await deleteOwnAccount();
+    if(res === 'deleted'){ await signOut(); location.href = '/'; return; }
+    msg.style.color = '#b3261e';
+    msg.textContent = res === 'still_owns_listing'
+      ? 'This account manages a company listing, so it cannot be deleted here. '
+        + 'Listings are paid for and may be shared with colleagues — contact us and we will sort it out.'
+      : 'Your account could not be deleted just now. Please try again or contact us.';
+  };
 }
 
 /* ---------- insights ----------
