@@ -160,6 +160,34 @@
     </div>
   </div>
 
+  <!-- Companies: the only place suspension can be applied or lifted -->
+  <div class="panel">
+    <div class="panel-head"><h2>Companies</h2><span class="hint" id="companies-hint">Suspend Hides A Listing Without Deleting Anything</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Address</th><th>Email</th><th>State</th><th>Actions</th></tr></thead>
+          <tbody id="companies-body"></tbody>
+        </table>
+      </div>
+      <div id="companies-empty" class="empty-line" style="display:none">No Companies Yet.</div>
+    </div>
+  </div>
+
+  <!-- Audit log: append-only, including our own actions -->
+  <div class="panel">
+    <div class="panel-head"><h2>Staff Audit Log</h2><span class="hint">Append-Only &mdash; Cannot Be Edited Or Deleted, Including By Us</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>When</th><th>Who</th><th>Action</th><th>Target</th><th>Detail</th></tr></thead>
+          <tbody id="audit-body"></tbody>
+        </table>
+      </div>
+      <div id="audit-empty" class="empty-line" style="display:none">Nothing Logged Yet.</div>
+    </div>
+  </div>
+
   <!-- Review moderation -->
   <div class="panel">
     <div class="panel-head"><h2>Buyer Reviews</h2><span class="hint">Companies Cannot Approve Their Own</span></div>
@@ -427,7 +455,68 @@ async function reloadReviews(){
 }
 async function modReview(id, status){ await setReviewStatus(id, status); await reloadReviews(); }
 
-function syncControls(){ document.querySelectorAll('.list-controls').forEach(bar=>{ const p = panels[bar.dataset.panel]; bar.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active', b.dataset.sort===p.sort)); bar.querySelector('.lc-limit').value = p.limit; }); } (async ()=>{ if(!(await requireStaff())) return; reloadClaims(); reloadReviews(); const saved = await loadPrefs('admin'); if(saved) for(const k in panels){ if(saved[k] && saved[k].sort) panels[k].sort = saved[k].sort; if(saved[k] && saved[k].limit) panels[k].limit = saved[k].limit; } syncControls(); reload(); })();
+/* ---- companies: suspend and reinstate ----
+   Suspension is the alternative to deleting. A suspended company disappears
+   from the directory and from keyword results, cannot be edited by its owner,
+   and keeps every row it had, so this is fully reversible. */
+let allCompanies = [];
+async function reloadCompanies(){
+  allCompanies = await fetchAllCompanies();
+  const susp = allCompanies.filter(c => c.suspended_at).length;
+  $('companies-hint').textContent = susp
+    ? susp + (susp === 1 ? ' company suspended' : ' companies suspended')
+    : 'Suspend Hides A Listing Without Deleting Anything';
+  $('companies-body').innerHTML = allCompanies.map(c => `
+    <tr class="${c.suspended_at ? 'row-waiting' : ''}">
+      <td><a href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener">${esc(c.name)}</a></td>
+      <td class="cell-muted">circuits.com/${esc(c.handle || '—')}</td>
+      <td class="cell-muted">${esc(c.email || '—')}</td>
+      <td>${c.suspended_at
+            ? '<b>Suspended</b><br><span class="cell-muted">' + new Date(c.suspended_at).toLocaleDateString() + '</span>'
+            : 'Active'}</td>
+      <td class="row-actions">
+        ${c.suspended_at
+          ? `<button class="mini-btn green" onclick="setSuspended('${esc(c.slug)}', false)">Reinstate</button>`
+          : `<button class="mini-btn" onclick="setSuspended('${esc(c.slug)}', true)">Suspend</button>`}
+      </td></tr>`).join('');
+  $('companies-empty').style.display = allCompanies.length ? 'none' : 'block';
+}
+
+async function setSuspended(slug, suspend){
+  const co = allCompanies.find(c => c.slug === slug);
+  const name = co ? co.name : slug;
+  /* A reason is required going in, because the audit entry is permanent and a
+     bare "suspended" tells nobody anything six months later. */
+  const reason = prompt(
+    (suspend ? 'Suspend ' : 'Reinstate ') + name + '.\n\n'
+    + (suspend
+        ? 'This hides the listing from the directory and from search, and blocks the owner from editing it. Nothing is deleted.\n\nWhy?'
+        : 'This puts the listing back in the directory.\n\nWhy?'));
+  if(reason === null) return;
+  if(!reason.trim()){ alert('Please give a reason — it goes in the permanent audit log.'); return; }
+  const err = await suspendCompany(slug, suspend, reason.trim());
+  if(err){ alert('Could not do that: ' + err); return; }
+  await reloadCompanies();
+  await reloadAudit();
+}
+
+/* ---- audit log ---- */
+async function reloadAudit(){
+  const rows = await fetchSecurityLog(100);
+  $('audit-body').innerHTML = rows.map(r => `
+    <tr>
+      <td class="cell-muted nowrap">${new Date(r.at).toLocaleString()}</td>
+      <td class="cell-muted">${esc(r.actor || 'system')}</td>
+      <td><b>${esc(r.action)}</b></td>
+      <td class="cell-muted">${esc(r.target || '')}</td>
+      <td class="cell-muted" style="max-width:320px">${esc(
+        r.detail && r.detail.reason ? r.detail.reason
+          : r.detail ? JSON.stringify(r.detail) : '')}</td>
+    </tr>`).join('');
+  $('audit-empty').style.display = rows.length ? 'none' : 'block';
+}
+
+function syncControls(){ document.querySelectorAll('.list-controls').forEach(bar=>{ const p = panels[bar.dataset.panel]; bar.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active', b.dataset.sort===p.sort)); bar.querySelector('.lc-limit').value = p.limit; }); } (async ()=>{ if(!(await requireStaff())) return; reloadClaims(); reloadReviews(); reloadCompanies(); reloadAudit(); const saved = await loadPrefs('admin'); if(saved) for(const k in panels){ if(saved[k] && saved[k].sort) panels[k].sort = saved[k].sort; if(saved[k] && saved[k].limit) panels[k].limit = saved[k].limit; } syncControls(); reload(); })();
 </script>
 </body>
 </html>

@@ -540,6 +540,27 @@ async function notifySupplier(slug, quote){
   }catch(err){ console.warn('supplier notification failed', err); return false; }
 }
 
+/* Every company, including suspended ones — staff only, enforced by the
+   companies_read policy rather than by asking nicely here. */
+async function fetchAllCompanies(){
+  if(!sb) return [];
+  const { data, error } = await sb.from('companies')
+    .select('slug, name, handle, email, published, suspended_at, created_at')
+    .order('name');
+  if(error){ console.error('fetchAllCompanies', error); return []; }
+  return data || [];
+}
+
+/* The staff audit trail. Append-only in the database, so this is a faithful
+   record of what was done and by whom — including by us. */
+async function fetchSecurityLog(limit){
+  if(!sb) return [];
+  const { data, error } = await sb.from('security_log')
+    .select('*').order('at', { ascending:false }).limit(limit || 100);
+  if(error){ console.error('fetchSecurityLog', error); return []; }
+  return data || [];
+}
+
 /* ---- suspension ----
    Deliberately not deletion. A suspended company keeps every row it had, so a
    dispute can be reversed and a returning customer picks up where they left
