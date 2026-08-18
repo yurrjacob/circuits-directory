@@ -19,6 +19,19 @@ global.looksLikeSpam = () => false;
 global.fakeSuccess = () => {};
 global.rateLimitMessage = () => null;
 
+/* The badge renderer is real code, not a stub: it decides whether a label is
+   our own Circuits.com mark or a paid Trust Badge, and getting that wrong is
+   exactly what this check exists to catch. */
+{
+  const appSrc = require('fs').readFileSync(require('path').join(__dirname, '..', 'app.js'), 'utf8');
+  const from = appSrc.indexOf('function isCircuitsBadge');
+  const to = appSrc.indexOf('/* Shown when a lookup fails');
+  if (from < 0 || to < 0) throw new Error('could not find the badge helpers in app.js');
+  (0, eval)(appSrc.slice(from, to)
+    .replace('function isCircuitsBadge', 'global.isCircuitsBadge = function')
+    .replace('function badgeHtml', 'global.badgeHtml = function'));
+}
+
 const CO = { slug:'aaa', handle:'aaa_electronics', name:'AAA Electronics, Inc.',
   tagline:'Authorised distributor of analog and power ICs', description:'Line one.\nLine two.',
   logo:'https://x/logo.png', website:'https://aaa.example.com/', phone:'(555) 123-4567',
@@ -91,11 +104,16 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
      claim. A buyer picking a supplier on the strength of "ISO 9001" is making
      a purchasing decision on something nobody checked. */
   assert.ok(captured.includes('ISO 9001'), 'the certifications section stopped rendering');
-  assert.ok(/Circuits\.com has not\s+independently verified/.test(captured),
-    'certifications are presented as fact rather than as the company\'s own claim');
-  assert.ok(captured.includes('pf-claimed-note'), 'the certifications disclaimer is gone');
-  assert.ok(/paid labels chosen by the company/.test(captured),
+  assert.ok(/As stated by the company/.test(captured),
+    "certifications are presented as fact rather than as the company's own claim");
+  assert.ok(/not verified by Circuits\.com/.test(captured),
+    'the certifications section no longer says it is unverified');
+  assert.ok(/paid Trust Badges chosen by the/.test(captured),
     'the Trust Badge is no longer identified as a paid label');
+  // the heading must not render a raw HTML entity
+  assert.ok(!/&amp;amp;/.test(captured), 'a section heading is double-escaping its ampersand');
+  // a blank certification row must not leave a stray bullet
+  assert.ok(!/<li><b><\/b>/.test(captured), 'an empty certification renders as an empty bullet');
   // and the badge note must not send buyers to certifications as if those were checked
   assert.ok(!/listed under Certifications/.test(captured),
     'the badge note still implies the certifications list is verified');

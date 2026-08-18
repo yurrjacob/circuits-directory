@@ -208,13 +208,36 @@ assert.ok(/function badgeProblem/.test(badgeApp) && /showBadgeProblem\(\)/.test(
 const validateBlock = badgeApp.slice(badgeApp.indexOf('badgeCheck.checked && showBadgeProblem()'));
 assert.ok(/firstBad =/.test(validateBlock.slice(0, 300)),
   'a bad badge warns but still lets the application through');
-// the public profile must say what a badge is
-const badgeProf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
-assert.ok(/paid label chosen by this company/i.test(badgeProf),
+/* Badges render through one helper now, so the explanation lives there rather
+   than being repeated at every call site. */
+assert.ok(/function badgeHtml/.test(badgeApp), 'the shared badge renderer is gone');
+assert.ok(/paid label chosen by this company/i.test(badgeApp),
   'the badge no longer carries an explanation that it was paid for');
-assert.ok(/not a certification/i.test(badgeProf),
-  'the profile no longer states that a Trust Badge is not a certification');
-assert.ok(/pf-badge-note/.test(badgeProf), 'the badge explanation note is gone from the profile');
+assert.ok(/not a certification/i.test(badgeApp),
+  'the badge no longer states that it is not a certification');
+
+/* The Circuits.com badge is ours, not a paid one. It must be visually distinct,
+   explain itself on hover, and never pick up the paid-label disclaimer. */
+assert.ok(/function isCircuitsBadge/.test(badgeApp), 'the Circuits.com badge helper is gone');
+assert.ok(/lb-cx-mark/.test(badgeApp), 'the Circuits.com badge no longer shows the logo mark');
+assert.ok(/Circuits\.com team/i.test(badgeApp),
+  'hovering the Circuits.com badge no longer identifies it as the Circuits.com team');
+const badgeProf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
+assert.ok(/!isCircuitsBadge\(k\.badge\)/.test(badgeProf),
+  'the paid-badge disclaimer would also appear for our own Circuits.com badge');
+// and it can only ever come from staff — the database refuses it from anyone else
+assert.ok(!/data-text="Circuits\.com"/i.test(badgeJoin),
+  'the Circuits.com badge is being offered on the public Get Listed form');
+// it belongs in the admin console, where only staff can reach it
+assert.ok(/function editBadge/.test(adminSrc), 'the admin badge editor is missing');
+assert.ok(/CX_BADGE/.test(adminSrc), 'the admin console cannot award the Circuits.com badge');
+assert.ok(/lb-cx-mark/.test(adminSrc), 'the admin console does not show the Circuits.com mark');
+// and the admin dropdown must not offer badges the database will refuse
+const adminBadgeSelect = adminSrc.slice(adminSrc.indexOf('id="e-badge"'), adminSrc.indexOf('id="e-color"'));
+for (const dead of ['Certified', 'Verified']) {
+  assert.ok(!adminBadgeSelect.includes('>' + dead + '<'),
+    `the admin badge dropdown still offers "${dead}", which the database refuses`);
+}
 
 /* --- the supplier notification must not become a spam relay ---
        The whole risk here is a caller naming its own recipient. The address is
