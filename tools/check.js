@@ -717,6 +717,34 @@ require('child_process').execFileSync(process.execPath,
 // same reason: it evaluates part of portal.js and must not share globals
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'completeness-check.js')], { stdio: 'inherit' });
+// likewise — the logo cropper's arithmetic, checked without a browser
+require('child_process').execFileSync(process.execPath,
+  [require('path').join(__dirname, 'crop-check.js')], { stdio: 'inherit' });
+
+/* --- the logo cropper is wired up end to end ---
+       A cropper that draws a nice preview and then uploads the original file
+       is worse than none: the company thinks it fixed its logo and it did not. */
+{
+  const portal = require('fs').readFileSync(require('path').join(__dirname, '..', 'portal.js'), 'utf8');
+  const html = require('fs').readFileSync(require('path').join(__dirname, '..', 'portal.html'), 'utf8');
+  for(const id of ['pt-crop', 'pt-crop-c', 'pt-crop-z', 'pt-crop-ok', 'pt-crop-no']){
+    assert.ok(html.includes(`id="${id}"`), 'the logo cropper is missing #' + id);
+  }
+  assert.ok(/PT\.logoFile = new File\(/.test(portal),
+    'the cropper never produces a file to upload');
+  assert.ok(/uploadImage\(PT\.logoFile\)/.test(portal),
+    'saving the profile uploads something other than the cropped square');
+  assert.ok(!/const file = el\('pt-logo'\)\.files/.test(portal),
+    'saving the profile still uploads the original picked file, ignoring the crop');
+  assert.ok(/out\.width = out\.height = CROP_OUT/.test(portal),
+    'the saved logo is not square');
+  assert.ok(/CROP_MAX_MB/.test(portal) && /over \$\{CROP_MAX_MB\}MB/.test(portal),
+    'an oversized image is not turned away before it is read');
+  assert.ok(/img\.onerror/.test(portal),
+    'a file that is not a readable image would fail silently');
+  assert.ok(/touchAction = 'none'/.test(portal),
+    'dragging the crop on a phone would scroll the page instead');
+}
 
 /* --- a profile field only renders when the value fits the field ---
        Junk in the phone box used to emit a dead tel: link, and a pasted URL in
