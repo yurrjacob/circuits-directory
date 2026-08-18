@@ -417,65 +417,11 @@ function wireProfile(slug, co){
 
   wireCopyLink();
   wireSave();
-}
 
-/* ---- saved suppliers ----
-   A buyer comparing five distributors needs somewhere to put them, and making
-   them create an account first would lose most of them. This lives in their
-   own browser: no account, no server, nothing sent to us, so it is not
-   tracking and needs no consent. The trade-off is honest and stated — it does
-   not follow them to another device. */
-const SAVED_KEY = 'cx_saved';
-
-function savedList(){
-  try { const v = JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'); return Array.isArray(v) ? v : []; }
-  catch(e){ return []; }
-}
-function isSaved(slug){ return savedList().some(c => c.slug === slug); }
-function toggleSaved(entry){
-  const list = savedList();
-  const i = list.findIndex(c => c.slug === entry.slug);
-  if(i >= 0) list.splice(i, 1);
-  else list.unshift({ slug: entry.slug, handle: entry.handle, name: entry.name, at: Date.now() });
-  try { localStorage.setItem(SAVED_KEY, JSON.stringify(list.slice(0, 50))); }
-  catch(e){ console.warn('could not save', e); }   // private mode, quota, etc.
-  return i < 0;
-}
-
-function wireSave(){
-  const btn = document.getElementById('pf-save');
-  if(!btn) return;
-  const entry = { slug: btn.dataset.slug, handle: btn.dataset.handle, name: btn.dataset.name };
-  const paint = () => {
-    const on = isSaved(entry.slug);
-    btn.textContent = on ? 'Saved ✓' : 'Save this supplier';
-    btn.classList.toggle('is-saved', on);
-    btn.title = on
-      ? 'Saved in this browser only. Click to remove.'
-      : 'Keeps this supplier in a list in this browser. No account needed.';
-  };
-  btn.addEventListener('click', () => { toggleSaved(entry); paint(); });
-  paint();
-}
-
-/* Copy the short link — this is what goes on adverts and email signatures.
-   Person profiles need it too, and they never reach wireProfile(). */
-function wireCopyLink(){
-  const copy = document.getElementById('pf-copy');
-  if(copy) copy.addEventListener('click', async () => {
-    const label = copy.querySelector('b');
-    try{
-      await navigator.clipboard.writeText(copy.dataset.url);
-      label.textContent = 'Copied';
-    }catch(e){
-      /* clipboard blocked (http, permissions) — select it so Ctrl+C still works */
-      const r = document.createRange();
-      r.selectNodeContents(copy.querySelector('span'));
-      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
-      label.textContent = 'Press Ctrl+C';
-    }
-    setTimeout(() => { label.textContent = 'Copy'; }, 2200);
-  });
+  /* Everything below needs `slug` and `co`, so it belongs to wireProfile. It
+     once sat in wireCopyLink() because that function was missing its closing
+     brace, which put the quote form out of reach of the company it was for:
+     every request threw on `slug` and the buyer was told it had not sent. */
   const hit = (id, kind) => { const el = document.getElementById(id); if(el) el.addEventListener('click', () => trackEvent(slug, kind)); };
   hit('pf-site', 'website'); hit('pf-phone', 'phone'); hit('pf-email', 'email');
   document.querySelectorAll('[data-doc]').forEach(a => a.addEventListener('click', () => trackEvent(slug, 'doc')));
@@ -542,5 +488,64 @@ function wireCopyLink(){
     }catch(err){
       msg.textContent = rateLimitMessage(err) || 'Sorry, that didn’t send. Please try again.';
     }
+  });
+}
+
+/* ---- saved suppliers ----
+   A buyer comparing five distributors needs somewhere to put them, and making
+   them create an account first would lose most of them. This lives in their
+   own browser: no account, no server, nothing sent to us, so it is not
+   tracking and needs no consent. The trade-off is honest and stated — it does
+   not follow them to another device. */
+const SAVED_KEY = 'cx_saved';
+
+function savedList(){
+  try { const v = JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'); return Array.isArray(v) ? v : []; }
+  catch(e){ return []; }
+}
+function isSaved(slug){ return savedList().some(c => c.slug === slug); }
+function toggleSaved(entry){
+  const list = savedList();
+  const i = list.findIndex(c => c.slug === entry.slug);
+  if(i >= 0) list.splice(i, 1);
+  else list.unshift({ slug: entry.slug, handle: entry.handle, name: entry.name, at: Date.now() });
+  try { localStorage.setItem(SAVED_KEY, JSON.stringify(list.slice(0, 50))); }
+  catch(e){ console.warn('could not save', e); }   // private mode, quota, etc.
+  return i < 0;
+}
+
+function wireSave(){
+  const btn = document.getElementById('pf-save');
+  if(!btn) return;
+  const entry = { slug: btn.dataset.slug, handle: btn.dataset.handle, name: btn.dataset.name };
+  const paint = () => {
+    const on = isSaved(entry.slug);
+    btn.textContent = on ? 'Saved ✓' : 'Save this supplier';
+    btn.classList.toggle('is-saved', on);
+    btn.title = on
+      ? 'Saved in this browser only. Click to remove.'
+      : 'Keeps this supplier in a list in this browser. No account needed.';
+  };
+  btn.addEventListener('click', () => { toggleSaved(entry); paint(); });
+  paint();
+}
+
+/* Copy the short link — this is what goes on adverts and email signatures.
+   Person profiles need it too, and they never reach wireProfile(). */
+function wireCopyLink(){
+  const copy = document.getElementById('pf-copy');
+  if(copy) copy.addEventListener('click', async () => {
+    const label = copy.querySelector('b');
+    try{
+      await navigator.clipboard.writeText(copy.dataset.url);
+      label.textContent = 'Copied';
+    }catch(e){
+      /* clipboard blocked (http, permissions) — select it so Ctrl+C still works */
+      const r = document.createRange();
+      r.selectNodeContents(copy.querySelector('span'));
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      label.textContent = 'Press Ctrl+C';
+    }
+    setTimeout(() => { label.textContent = 'Copy'; }, 2200);
   });
 }
