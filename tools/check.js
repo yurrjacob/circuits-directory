@@ -652,6 +652,27 @@ for (const gone of ['login.html', 'admin.html']) {
   // the console keeps its short names to itself
   assert.ok(adminJs.trimStart().startsWith('/*') && adminJs.includes('(function(){'),
     'admin.js is not wrapped, so its globals can collide with portal.js');
+
+  /* ...but the table rows are HTML strings carrying onclick="foo(...)", and an
+     inline handler is evaluated in global scope. Wrapping the file once put
+     every row button — Edit, Badge, Remove, Pause, Approve, Reject, Deny,
+     Suspend — out of reach of its own code, and they silently did nothing.
+     Every name a row calls must be published on window. */
+  const called = [...adminJs.matchAll(/onclick="([A-Za-z_$][\w$]*)\s*\(/g)].map(m => m[1]);
+  assert.ok(called.length >= 9, 'expected the console to wire its row buttons inline');
+  const exported = (adminJs.match(/Object\.assign\(window,\s*\{([^}]*)\}/) || [, ''])[1]
+    .split(',').map(x => x.trim()).filter(Boolean);
+  for (const fn of new Set(called)) {
+    assert.ok(adminJs.includes('function ' + fn + '('),
+      `the console calls ${fn}() from a row button but never defines it`);
+    assert.ok(exported.includes(fn),
+      `${fn}() is called from a row button but is trapped inside the wrapper — that button does nothing`);
+  }
+  // and nothing may be exported that does not exist
+  for (const fn of exported) {
+    assert.ok(adminJs.includes('function ' + fn + '('),
+      `admin.js exports ${fn} to window but never defines it`);
+  }
 }
 
 /* --- the URL form of a handle must accept underscores, or circuits.com/aaa_electronics
