@@ -397,9 +397,16 @@ assert.ok(/placeholder="Emailed to \$\{escapeHtml\(q\.from_email\)\}/.test(crmSr
 /* --- the quote pipeline moves on its own ---
        A status that only changes when someone remembers a dropdown is a status
        nobody trusts, and an unread badge that never clears gets ignored. */
-assert.ok(/function markInquiriesSeen/.test(crmSrc), 'nothing marks quote requests as seen');
-assert.ok(/dataset\.tab === 'inquiries'\)\s*markInquiriesSeen\(\)/.test(crmSrc),
-  'opening the Quote requests tab no longer clears New');
+assert.ok(/function markInquirySeen/.test(crmSrc), 'nothing marks a quote request as seen');
+/* Opening the TAB shows a list; it is not evidence anybody read anything.
+   Marking every request read on tab click is how an inbox stops meaning
+   anything, so it must be opening one request that clears it. */
+assert.ok(!/function markInquiriesSeen/.test(crmSrc),
+  'the old bulk "mark everything seen" is back');
+assert.ok(/data-open/.test(crmSrc) && /markInquirySeen\(q\)/.test(crmSrc),
+  'opening a single request no longer marks that one seen');
+assert.ok(!/dataset\.tab === 'inquiries'\)\s*markInquir(y|ies)Seen\(/.test(crmSrc),
+  'clicking the tab still marks requests read without anybody opening one');
 assert.ok(/setInquiryStatus\(id, 'Replied'\)/.test(crmSrc),
   'sending a reply no longer advances the request to Replied');
 assert.ok(/\['Won','Lost','Closed'\]\.includes\(q\.status\)/.test(crmSrc),
@@ -892,6 +899,9 @@ require('child_process').execFileSync(process.execPath,
 // likewise — the logo cropper's arithmetic, checked without a browser
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'crop-check.js')], { stdio: 'inherit' });
+// and the quote-request inbox, driven the way a supplier drives it
+require('child_process').execFileSync(process.execPath,
+  [require('path').join(__dirname, 'inbox-check.js')], { stdio: 'inherit' });
 
 /* --- the logo cropper is wired up end to end ---
        A cropper that draws a nice preview and then uploads the original file
