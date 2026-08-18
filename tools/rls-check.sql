@@ -371,6 +371,77 @@ begin
   raise notice 'LISTING / PROFILE SEPARATION CHECKS PASSED';
 end $$;
 
+/* ---- analytics stay private ----
+   company_insights() is SECURITY DEFINER, which means it runs with the rights
+   of its owner and RLS does not protect it. The ownership check inside it is
+   the only thing stopping one supplier reading another's numbers. */
+do $$
+declare u uuid; r record;
+begin
+  delete from profile_events where company_slug = 'zz-ins';
+  delete from company_users   where company_slug = 'zz-ins';
+  delete from companies       where slug = 'zz-ins';
+  delete from auth.users      where email like 'zz-ins%@rlstest.invalid';
+
+  insert into auth.users (id, instance_id, aud, role, email, encrypted_password,
+                          email_confirmed_at, created_at, updated_at)
+  values (gen_random_uuid(),'00000000-0000-0000-0000-000000000000','authenticated','authenticated',
+          'zz-ins-owner@rlstest.invalid','x',now(),now(),now()) returning id into u;
+  insert into companies (slug, name, handle) values ('zz-ins','ZZ Ins','zzins');
+  insert into company_users (user_id, company_slug) values (u, 'zz-ins');
+  insert into profile_events (company_slug, kind, visitor, keyword, created_at) values
+    ('zz-ins','view','v1','oscillators', now() - interval '1 day'),
+    ('zz-ins','view','v1','oscillators', now() - interval '2 days'),
+    ('zz-ins','view','v2','oscillators', now() - interval '3 days'),
+    ('zz-ins','view','v2','buyers',      now() - interval '4 days'),
+    ('zz-ins','view', null,'buyers',     now() - interval '5 days'),
+    ('zz-ins','website','v1',null,       now() - interval '1 day'),
+    ('zz-ins','phone','v2',null,         now() - interval '2 days'),
+    ('zz-ins','rfq','v1',null,           now() - interval '1 day');
+  insert into profile_events (company_slug, kind, visitor, created_at) values
+    ('zz-ins','view','v9', now() - interval '40 days'),
+    ('zz-ins','view','v9', now() - interval '45 days');
+
+  set local role authenticated;
+  perform set_config('request.jwt.claims', json_build_object('sub', u::text,
+    'email','zz-ins-owner@rlstest.invalid','role','authenticated')::text, true);
+  select * into r from company_insights('zz-ins', 30);
+  reset role; perform set_config('request.jwt.claims', null, true);
+
+  if r.views <> 5           then raise exception 'FAIL: views=%, expected 5', r.views; end if;
+  if r.unique_visitors <> 2 then raise exception 'FAIL: unique visitors=%, expected 2', r.unique_visitors; end if;
+  if r.anonymous_views <> 1 then raise exception 'FAIL: anonymous views=%, expected 1', r.anonymous_views; end if;
+  if r.contacts <> 2        then raise exception 'FAIL: contacts=%, expected 2', r.contacts; end if;
+  if r.quotes <> 1          then raise exception 'FAIL: quotes=%, expected 1', r.quotes; end if;
+  -- the previous window must not bleed into the current one
+  if r.prev_views <> 2      then raise exception 'FAIL: previous views=%, expected 2', r.prev_views; end if;
+  if r.top_keyword <> 'oscillators' then raise exception 'FAIL: top keyword=%', r.top_keyword; end if;
+
+  -- a different signed-in supplier must get nothing at all
+  insert into auth.users (id, instance_id, aud, role, email, encrypted_password,
+                          email_confirmed_at, created_at, updated_at)
+  values (gen_random_uuid(),'00000000-0000-0000-0000-000000000000','authenticated','authenticated',
+          'zz-ins-other@rlstest.invalid','x',now(),now(),now()) returning id into u;
+  set local role authenticated;
+  perform set_config('request.jwt.claims', json_build_object('sub', u::text,
+    'email','zz-ins-other@rlstest.invalid','role','authenticated')::text, true);
+  select * into r from company_insights('zz-ins', 30);
+  reset role; perform set_config('request.jwt.claims', null, true);
+  if coalesce(r.views, 0) <> 0 then
+    raise exception 'FAIL: a stranger read another company''s analytics (views=%)', r.views;
+  end if;
+
+  if has_function_privilege('anon', 'public.company_insights(text,int)', 'execute') then
+    raise exception 'FAIL: anon can call company_insights';
+  end if;
+
+  delete from profile_events where company_slug = 'zz-ins';
+  delete from company_users   where company_slug = 'zz-ins';
+  delete from companies       where slug = 'zz-ins';
+  delete from auth.users      where email like 'zz-ins%@rlstest.invalid';
+  raise notice 'ANALYTICS CHECKS PASSED';
+end $$;
+
 /* ---- suspension ----
    Suspension exists so bad actors can be handled without deleting anything.
    It is only worth having if the public really stops seeing them and they

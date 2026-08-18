@@ -46,3 +46,26 @@ assert.strictEqual(profileCompleteness({ logo: null, description: undefined }).p
 assert.strictEqual(profileCompleteness(null).pct, 0, 'a missing company object crashes the meter');
 
 console.log(`profile completeness OK — empty 0%, full 100%, sample partial ${partial.pct}%`);
+
+/* --- "up 18%" has to survive a month with no previous activity ---
+   Percentage change divides by the previous period, which is zero for every
+   brand new listing. Printed unguarded that is Infinity or NaN on the
+   dashboard of a customer who just paid. */
+const changeBlock = src.slice(src.indexOf('function changeLabel'), src.indexOf('/* ---------- overview'));
+(0, eval)(changeBlock.replace('function changeLabel', 'globalThis.changeLabel = function'));
+
+assert.ok(/↑ 100%/.test(changeLabel(20, 10)), `doubling should read +100%, got ${changeLabel(20, 10)}`);
+assert.ok(/↓ 50%/.test(changeLabel(5, 10)), `halving should read -50%, got ${changeLabel(5, 10)}`);
+assert.ok(/no change/.test(changeLabel(7, 7)), 'a flat month should say so');
+assert.ok(/↓ 100%/.test(changeLabel(0, 5)), `falling to nothing should read -100%, got ${changeLabel(0, 5)}`);
+
+// the divide-by-zero cases
+assert.strictEqual(changeLabel(0, 0), '', 'a listing with no activity either side should print nothing');
+assert.ok(/new/.test(changeLabel(4, 0)), `first-ever activity should read "new", got ${changeLabel(4, 0)}`);
+const allCases = [changeLabel(0, 0), changeLabel(4, 0), changeLabel(0, 5), changeLabel(1, 3)].join(' ');
+assert.ok(!/NaN|Infinity|undefined/.test(allCases), `change label produced ${allCases}`);
+
+// PostgREST returns bigint columns as strings; the maths must not silently concatenate
+assert.ok(/↑ 100%/.test(changeLabel('20', '10')), 'string counts from the database break the calculation');
+
+console.log('change-vs-previous OK — no NaN, no Infinity, no divide by zero');
