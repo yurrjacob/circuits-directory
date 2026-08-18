@@ -148,6 +148,17 @@
             <input id="pt-logo" type="file" accept="image/png,image/jpeg,image/webp">
             <button type="button" class="mini-btn" id="pt-logo-rm" style="display:none">Remove</button>
           </div>
+          <div class="crop" id="pt-crop" style="display:none">
+            <canvas id="pt-crop-c" width="260" height="260"></canvas>
+            <label class="crop-zoom">Zoom
+              <input id="pt-crop-z" type="range" min="1" max="4" step="0.01" value="1">
+            </label>
+            <p class="pf-note">Drag the image to move it. Your logo is saved as a square.</p>
+            <div class="crop-btns">
+              <button type="button" class="mini-btn" id="pt-crop-ok">Use this</button>
+              <button type="button" class="mini-btn" id="pt-crop-no">Cancel</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="auth-field"><label>About your company</label>

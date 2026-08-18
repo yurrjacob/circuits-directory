@@ -668,6 +668,146 @@ function wireViewRanges(){
   });
 }
 
+/* ---------- logo cropping ----------
+   Logos are shown as a square everywhere on the site, so a wide or tall image
+   picked straight off a company's desktop gets letterboxed or squashed. This
+   lets them choose the square themselves: drag to move, slider to zoom, and
+   what they see in the box is exactly what gets uploaded.
+   ponytail: canvas and a range input, no cropping library. */
+const CROP_BOX = 260;   // on-screen preview, matches the canvas in portal.html
+const CROP_OUT = 512;   // saved size — big enough for retina, small enough to load fast
+const CROP_MAX_MB = 8;
+
+let CROP = null;        // { img, scale, min, x, y } while the panel is open
+
+function closeCropper(){
+  CROP = null;
+  const p = el('pt-crop');
+  if(p) p.style.display = 'none';
+  const inp = el('pt-logo');
+  if(inp) inp.value = '';
+}
+
+function drawCrop(){
+  const c = el('pt-crop-c');
+  if(!c || !CROP) return;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, CROP_BOX, CROP_BOX);
+  /* white behind the logo: the thumbnail sits on white everywhere on the site,
+     so a transparent PNG must be judged against the same background here */
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, CROP_BOX, CROP_BOX);
+  const w = CROP.img.naturalWidth * CROP.scale;
+  const h = CROP.img.naturalHeight * CROP.scale;
+  ctx.drawImage(CROP.img, CROP.x, CROP.y, w, h);
+}
+
+/* Keep the picture covering the box, so a crop can never contain blank edges. */
+function clampCrop(){
+  const w = CROP.img.naturalWidth * CROP.scale;
+  const h = CROP.img.naturalHeight * CROP.scale;
+  CROP.x = Math.min(0, Math.max(CROP_BOX - w, CROP.x));
+  CROP.y = Math.min(0, Math.max(CROP_BOX - h, CROP.y));
+}
+
+function openCropper(file){
+  const inp = el('pt-logo');
+  if(file.size > CROP_MAX_MB * 1024 * 1024){
+    toast(`That image is over ${CROP_MAX_MB}MB. Please pick a smaller one.`, false);
+    if(inp) inp.value = '';
+    return;
+  }
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    URL.revokeObjectURL(url);
+    if(!img.naturalWidth || !img.naturalHeight){
+      toast('That file is not an image we can read.', false);
+      if(inp) inp.value = '';
+      return;
+    }
+    /* start zoomed just enough to cover the square, centred */
+    const min = Math.max(CROP_BOX / img.naturalWidth, CROP_BOX / img.naturalHeight);
+    CROP = { img, min, scale: min, x: 0, y: 0 };
+    CROP.x = (CROP_BOX - img.naturalWidth * min) / 2;
+    CROP.y = (CROP_BOX - img.naturalHeight * min) / 2;
+    const z = el('pt-crop-z');
+    if(z){ z.min = String(min); z.max = String(min * 4); z.step = String(min / 100); z.value = String(min); }
+    el('pt-crop').style.display = '';
+    drawCrop();
+  };
+  img.onerror = () => {
+    URL.revokeObjectURL(url);
+    toast('That file could not be opened as an image.', false);
+    if(inp) inp.value = '';
+  };
+  img.src = url;
+}
+
+function wireLogoCrop(){
+  const inp = el('pt-crop-c') && el('pt-logo');
+  if(!inp || inp.__cropWired) return;
+  inp.__cropWired = true;
+
+  inp.onchange = () => { if(inp.files && inp.files[0]) openCropper(inp.files[0]); };
+
+  const canvas = el('pt-crop-c');
+  let drag = null;
+  canvas.style.touchAction = 'none';   // let us pan on a phone without scrolling the page
+  canvas.addEventListener('pointerdown', e => {
+    if(!CROP) return;
+    drag = { x: e.clientX - CROP.x, y: e.clientY - CROP.y };
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', e => {
+    if(!drag || !CROP) return;
+    CROP.x = e.clientX - drag.x;
+    CROP.y = e.clientY - drag.y;
+    clampCrop();
+    drawCrop();
+  });
+  const stop = () => { drag = null; };
+  canvas.addEventListener('pointerup', stop);
+  canvas.addEventListener('pointercancel', stop);
+
+  el('pt-crop-z').oninput = e => {
+    if(!CROP) return;
+    /* zoom about the centre of the box, so the part they are looking at stays put */
+    const next = +e.target.value;
+    const k = next / CROP.scale;
+    CROP.x = CROP_BOX / 2 - (CROP_BOX / 2 - CROP.x) * k;
+    CROP.y = CROP_BOX / 2 - (CROP_BOX / 2 - CROP.y) * k;
+    CROP.scale = next;
+    clampCrop();
+    drawCrop();
+  };
+
+  el('pt-crop-no').onclick = () => closeCropper();
+
+  el('pt-crop-ok').onclick = () => {
+    if(!CROP) return;
+    const out = document.createElement('canvas');
+    out.width = out.height = CROP_OUT;
+    const ctx = out.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, CROP_OUT, CROP_OUT);
+    const k = CROP_OUT / CROP_BOX;
+    ctx.drawImage(CROP.img, CROP.x * k, CROP.y * k,
+      CROP.img.naturalWidth * CROP.scale * k, CROP.img.naturalHeight * CROP.scale * k);
+    out.toBlob(blob => {
+      if(!blob){ toast('That crop could not be saved. Try a different image.', false); return; }
+      PT.logoFile = new File([blob], 'logo.png', { type: 'image/png' });
+      PT.clearLogo = false;
+      el('pt-logo-prev').innerHTML = `<img src="${out.toDataURL('image/png')}" alt="logo">`;
+      const rm = el('pt-logo-rm');
+      if(rm) rm.style.display = '';
+      closeCropper();
+      markDirty();
+      toast('Logo cropped. Save to publish it.', true);
+    }, 'image/png');
+  };
+}
+
 /* ---------- profile editing ---------- */
 function renderProfileForm(){
   const c = PT.co;
@@ -680,18 +820,22 @@ function renderProfileForm(){
   el('f-reviews-on').checked = !!c.reviews_enabled;
   wireHandleCheck();
   PT.clearLogo = false;
+  PT.logoFile = null;
   el('pt-logo-prev').innerHTML = isLogoUrl(c.logo) ? `<img src="${escapeHtml(c.logo)}" alt="logo">` : avatarSvg();
   const rmLogo = el('pt-logo-rm');
   if(rmLogo){
     rmLogo.style.display = isLogoUrl(c.logo) ? '' : 'none';
     rmLogo.onclick = () => {
       PT.clearLogo = true;
+      PT.logoFile = null;
+      closeCropper();
       el('pt-logo-prev').innerHTML = avatarSvg();
       rmLogo.style.display = 'none';
       markDirty();
       toast('Logo will be removed when you save.', true);
     };
   }
+  wireLogoCrop();
 
   const hours = c.hours && typeof c.hours === 'object' ? c.hours : {};
   el('f-hours').innerHTML = HOUR_DAYS.map(([k, label]) =>
@@ -826,8 +970,12 @@ async function saveProfile(){
      blank field can never wipe an existing circuits.com/<handle> */
   if(handleChanged && wantHandle) fields.handle = wantHandle;
 
-  const file = el('pt-logo').files && el('pt-logo').files[0];
-  if(file){ const url = await uploadImage(file); if(url) fields.logo = url; }
+  /* PT.logoFile is the square the company cropped, not the file it picked. */
+  if(PT.logoFile){
+    const url = await uploadImage(PT.logoFile);
+    if(url) fields.logo = url;
+    else { btn.disabled = false; toast('That logo could not be uploaded. Try a smaller PNG or JPEG.', false); return; }
+  }
   else if(PT.clearLogo){ fields.logo = null; }
 
   const err = await updateCompany(PT.slug, fields);

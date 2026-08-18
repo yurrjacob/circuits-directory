@@ -371,6 +371,13 @@ tr.row-warn td{background:#fff3cd}
 .badge-cell .badge-color{width:26px;height:20px;border:1px solid var(--line);border-radius:4px;background:none;padding:0;vertical-align:middle;cursor:pointer}
 /* uploaded logo thumbnail in the applications sheet */
 .logo-thumb{width:30px;height:30px;object-fit:contain;border:1px solid var(--line);border-radius:6px;background:#fff;padding:2px;vertical-align:middle}
+/* logo cropper in the portal */
+.crop{margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:8px;background:#fafafa;max-width:300px}
+.crop canvas{display:block;width:260px;height:260px;max-width:100%;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:grab}
+.crop canvas:active{cursor:grabbing}
+.crop-zoom{display:block;margin:10px 0 4px;font-size:13px;color:var(--muted)}
+.crop-zoom input{display:block;width:100%;margin-top:4px}
+.crop-btns{display:flex;gap:8px;margin-top:8px}
 .sheet-table .price{color:var(--green-dark);font-weight:700;font-size:.75rem}
 .sheet-table .cbx{cursor:pointer;white-space:nowrap}
 .sheet-table tr:hover td{background:#fcfdfb}
