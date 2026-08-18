@@ -2,7 +2,7 @@
    Everything here is gated by RLS, not by this file. Hiding a button is a
    convenience; the database is what actually refuses the write. */
 
-let PT = { slug: null, co: null, listings: [], inquiries: [], reviews: [] };
+let PT = { slug: null, co: null, listings: [], inquiries: [], reviews: [], openInquiry: null };
 
 const HOUR_DAYS = [['mon','Mon'],['tue','Tue'],['wed','Wed'],['thu','Thu'],['fri','Fri'],['sat','Sat'],['sun','Sun']];
 const SOCIAL_KEYS = [['linkedin','LinkedIn'],['x','X / Twitter'],['facebook','Facebook'],['youtube','YouTube'],['instagram','Instagram'],['github','GitHub']];
@@ -173,7 +173,9 @@ function wireTabs(){
     /* Opening the tab is what "seen" means. Without this every request stays
        New for ever unless the supplier remembers to touch the dropdown, so the
        unread count stops meaning anything and gets ignored. */
-    if(b.dataset.tab === 'inquiries') markInquiriesSeen();
+    /* Opening the tab shows the list; it does not mean any request was read.
+       markInquirySeen() fires when one is actually opened. */
+    if(b.dataset.tab === 'inquiries'){ PT.openInquiry = null; renderInquiries(); }
     /* The console loads nothing until an admin actually opens it — a company
        owner who never sees this tab never fetches a row of anyone else's data. */
     if(b.dataset.tab === 'admin' && typeof initAdmin === 'function') initAdmin();
@@ -224,20 +226,17 @@ function markUnread(){
   }
 }
 
-/* New -> Open, once, when the supplier actually looks. Fire and forget: if the
-   write fails the request simply stays New and they see it again next time,
-   which is the safe direction to fail in. */
-function markInquiriesSeen(){
-  const unseen = PT.inquiries.filter(q => q.status === 'New');
-  unseen.forEach(q => {
-    q.status = 'Open';
-    setInquiryStatus(q.id, 'Open').catch(e => { q.status = 'New'; console.warn('mark seen failed', e); });
-    const sel = document.querySelector(`[data-status="${q.id}"]`);
-    if(sel) sel.value = 'Open';
-    const badge = document.querySelector(`[data-q="${q.id}"] .badge`);
-    if(badge){ badge.textContent = 'Open'; badge.classList.remove('live'); }
-  });
-  if(unseen.length) markUnread();
+/* New -> Open, for the one they actually opened. This used to fire for every
+   request the moment the tab was clicked, which marked things read that nobody
+   had looked at. Fire and forget: if the write fails it stays New and they see
+   it again, which is the safe direction to fail in. */
+function markInquirySeen(q){
+  if(!q || q.status !== 'New') return;
+  q.status = 'Open';
+  setInquiryStatus(q.id, 'Open').catch(e => { q.status = 'New'; console.warn('mark seen failed', e); });
+  const sel = document.querySelector(`[data-status="${q.id}"]`);
+  if(sel) sel.value = 'Open';
+  markUnread();
 }
 
 /* ---------- account ----------
@@ -1064,43 +1063,119 @@ async function requestKeyword(){
 }
 
 /* ---------- inquiries ---------- */
-function renderInquiries(){
-  el('pt-inquiries').innerHTML = (PT.inquiries.map(q => `
-    <div class="pt-item" data-q="${q.id}">
-      <div class="pt-item-head">
-        <div><b>${escapeHtml(q.from_name)}</b>
-          ${q.from_company ? `<span class="pf-note">${escapeHtml(q.from_company)}</span>` : ''}
-          <span class="badge ${q.status === 'New' ? 'live' : ''}">${escapeHtml(q.status)}</span></div>
-        <div class="pf-note">${new Date(q.created_at).toLocaleString()}</div>
+/* ---------- quote requests: an inbox ----------
+   These used to render every request fully expanded on one page — body, whole
+   thread, reply box and status dropdown, all at once, and it fetched every
+   thread on every draw. With more than about three requests it was unreadable
+   and slow. Now it is a list you open one at a time, like mail: the list says
+   who and what, opening one shows the conversation, and only the open one
+   fetches its messages. */
+
+function inquirySummary(q){
+  const bits = [];
+  if(q.part_number) bits.push(escapeHtml(q.part_number));
+  if(q.quantity) bits.push('qty ' + escapeHtml(q.quantity));
+  const line = bits.join(' · ');
+  const preview = (q.body || '').replace(/\s+/g, ' ').trim();
+  return { line, preview: escapeHtml(preview.length > 110 ? preview.slice(0, 110) + '…' : preview) };
+}
+
+/* Short and relative near the top of the list, absolute once it is old —
+   "2:41 PM" is what you want for today and useless for last month. */
+function inquiryWhen(iso){
+  const d = new Date(iso), now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  if(sameDay) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const days = (now - d) / 86400000;
+  if(days < 7) return d.toLocaleDateString([], { weekday: 'short' });
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
+function renderInquiryList(){
+  const rows = PT.inquiries.map(q => {
+    const { line, preview } = inquirySummary(q);
+    const unread = q.status === 'New';
+    return `
+    <button type="button" class="q-row${unread ? ' q-unread' : ''}" data-open="${q.id}">
+      <span class="q-dot" aria-hidden="true"></span>
+      <span class="q-main">
+        <span class="q-top">
+          <b class="q-who">${escapeHtml(q.from_name)}${q.from_company ? ' <span class="q-co">' + escapeHtml(q.from_company) + '</span>' : ''}</b>
+          <span class="q-when">${escapeHtml(inquiryWhen(q.created_at))}</span>
+        </span>
+        <span class="q-sub">${line ? '<b>' + line + '</b> — ' : ''}${preview}</span>
+      </span>
+      <span class="badge ${unread ? 'live' : ''} q-state">${escapeHtml(q.status)}</span>
+    </button>`;
+  }).join('');
+
+  el('pt-inquiries').innerHTML = rows
+    ? `<div class="q-list">${rows}</div>`
+    : `<div class="pt-empty">
+        <b>No quote requests yet</b>
+        <p>When a buyer uses the Request a Quote button on your profile, it lands here and you are emailed. Replies are kept on the thread.</p>
+      </div>`;
+}
+
+function renderInquiryThread(q){
+  const { line } = inquirySummary(q);
+  const detail = (label, value, href) => value
+    ? `<div class="q-d"><span>${escapeHtml(label)}</span>${href
+        ? `<a href="${escapeHtml(href)}">${escapeHtml(value)}</a>` : `<b>${escapeHtml(value)}</b>`}</div>`
+    : '';
+
+  el('pt-inquiries').innerHTML = `
+    <div class="q-open" data-q="${q.id}">
+      <div class="q-open-head">
+        <button type="button" class="mini-btn" data-back="1">← All requests</button>
+        <label class="pt-status">Status
+          <select data-status="${q.id}">
+            ${['New','Open','Replied','Won','Lost','Closed'].map(s => `<option ${s === q.status ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+        </label>
       </div>
-      <p class="pf-note" style="margin:6px 0">
-        ${q.part_number ? 'Part: ' + escapeHtml(q.part_number) + ' · ' : ''}
-        ${q.quantity ? 'Qty: ' + escapeHtml(q.quantity) + ' · ' : ''}
-        <a href="mailto:${escapeHtml(q.from_email)}">${escapeHtml(q.from_email)}</a>
-        ${q.phone ? ' · ' + escapeHtml(q.phone) : ''}
-      </p>
-      <p class="pt-quote-body">${escapeHtml(q.body)}</p>
-      <div class="pt-thread" id="th-${q.id}"></div>
+
+      <h3 class="q-title">${escapeHtml(q.from_name)}${q.from_company ? ' <span class="q-co">' + escapeHtml(q.from_company) + '</span>' : ''}</h3>
+      <p class="pf-note q-date">${new Date(q.created_at).toLocaleString()}</p>
+
+      <div class="q-details">
+        ${detail('Email', q.from_email, 'mailto:' + q.from_email)}
+        ${detail('Phone', q.phone, q.phone ? 'tel:' + String(q.phone).replace(/[^\d+]/g, '') : '')}
+        ${detail('Part number', q.part_number)}
+        ${detail('Quantity', q.quantity)}
+      </div>
+
+      <div class="q-thread" id="th-${q.id}"></div>
+
       <div class="pt-reply">
         <label for="msg-${q.id}">Reply to ${escapeHtml(q.from_name)}</label>
-        <textarea id="msg-${q.id}" rows="3" placeholder="Emailed to ${escapeHtml(q.from_email)} and kept on this thread."></textarea>
+        <textarea id="msg-${q.id}" rows="4" placeholder="Emailed to ${escapeHtml(q.from_email)} and kept on this thread."></textarea>
         <div class="pt-reply-foot">
           <button class="mini-btn green" data-send="${q.id}">Send reply</button>
-          <label class="pt-status">Status
-            <select data-status="${q.id}">
-              ${['New','Open','Replied','Won','Lost','Closed'].map(s => `<option ${s === q.status ? 'selected' : ''}>${s}</option>`).join('')}
-            </select>
-          </label>
         </div>
       </div>
-    </div>`).join('') || `<div class="pt-empty">
-      <b>No quote requests yet</b>
-      <p>When a buyer uses the Request a Quote button on your profile, it lands here and you are emailed. Replies are kept on the thread.</p>
-    </div>`);
+    </div>`;
 
-  PT.inquiries.forEach(q => drawThread(q.id));
+  drawThread(q.id, q);
+}
+
+function renderInquiries(){
+  const open = PT.openInquiry && PT.inquiries.find(q => q.id === PT.openInquiry);
+  if(open) renderInquiryThread(open); else renderInquiryList();
 
   el('pt-inquiries').onclick = async e => {
+    const row = e.target.closest('[data-open]');
+    if(row){
+      PT.openInquiry = row.dataset.open;
+      const q = PT.inquiries.find(x => x.id === PT.openInquiry);
+      renderInquiries();
+      /* Opening one is what "seen" means now — not opening the tab. Only this
+         request changes, so the others stay unread and keep their badge. */
+      if(q && q.status === 'New') markInquirySeen(q);
+      return;
+    }
+    if(e.target.closest('[data-back]')){ PT.openInquiry = null; renderInquiries(); return; }
+
     const b = e.target.closest('[data-send]'); if(!b) return;
     const id = b.dataset.send, box = el('msg-' + id), body = (box.value || '').trim();
     if(!body) return;
@@ -1109,8 +1184,8 @@ function renderInquiries(){
     b.disabled = false;
     if(err){ toast('Could not send: ' + err, false); return; }
     box.value = '';
-    drawThread(id);
     const q = PT.inquiries.find(x => x.id === id);
+    drawThread(id, q);
     /* The field MUST be called `email`: sendFounderEmail reads fields.email to
        set _replyto and to address the auto-response. It used to be named
        buyer_email, which meant the reply had no recipient — the supplier was
@@ -1129,22 +1204,33 @@ function renderInquiries(){
       q.status = 'Replied';
       const sel = document.querySelector(`[data-status="${id}"]`);
       if(sel) sel.value = 'Replied';
-      markInquiriesSeen();
+      markUnread();
     }
     toast('Reply sent to ' + q.from_name + '.', true);
   };
+
   el('pt-inquiries').onchange = async e => {
     const s = e.target.closest('[data-status]'); if(!s) return;
+    const q = PT.inquiries.find(x => x.id === s.dataset.status);
+    if(q) q.status = s.value;
     await setInquiryStatus(s.dataset.status, s.value);
+    markUnread();
     toast('Status updated.', true);
   };
 }
 
-async function drawThread(id){
-  const msgs = await fetchThread(id);
+async function drawThread(id, q){
   const box = el('th-' + id); if(!box) return;
-  box.innerHTML = msgs.map(m =>
-    `<div class="pt-msg ${escapeHtml(m.author)}"><b>${m.author === 'supplier' ? 'You' : 'Buyer'}:</b> ${escapeHtml(m.body)}
+  box.innerHTML = '<p class="pf-note">Loading the conversation…</p>';
+  const msgs = await fetchThread(id);
+  if(el('th-' + id) !== box) return;          // they went back before it arrived
+  const them = (q && q.from_name) ? escapeHtml(q.from_name) : 'Buyer';
+  /* The original request is the first thing in the thread — it is the message
+     they sent, so it reads as one conversation rather than a form plus a log. */
+  const first = q ? `<div class="pt-msg buyer"><b>${them}:</b> ${escapeHtml(q.body)}
+     <span class="pf-note">${new Date(q.created_at).toLocaleString()}</span></div>` : '';
+  box.innerHTML = first + msgs.map(m =>
+    `<div class="pt-msg ${escapeHtml(m.author)}"><b>${m.author === 'supplier' ? 'You' : them}:</b> ${escapeHtml(m.body)}
      <span class="pf-note">${new Date(m.created_at).toLocaleString()}</span></div>`).join('');
 }
 

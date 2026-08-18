@@ -1005,6 +1005,39 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 /* ---- portal: reviews, quote replies and empty states ---- */
 .pt-review-who{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .pt-quote-body{margin:8px 0 0;font-size:.92rem;color:#33383d;white-space:pre-wrap}
+/* ---- quote requests, as an inbox ---- */
+.q-list{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:#fff}
+.q-row{display:flex;align-items:flex-start;gap:10px;width:100%;text-align:left;cursor:pointer;
+  padding:12px 14px;background:#fff;border:0;border-bottom:1px solid var(--line);font:inherit;color:inherit}
+.q-row:last-child{border-bottom:0}
+.q-row:hover{background:var(--bg-soft)}
+.q-row:focus-visible{outline:2px solid var(--green);outline-offset:-2px}
+.q-dot{width:8px;height:8px;border-radius:50%;background:transparent;flex:0 0 auto;margin-top:7px}
+.q-unread .q-dot{background:var(--green)}
+.q-unread .q-who{font-weight:800}
+.q-main{flex:1 1 auto;min-width:0}
+.q-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.q-who{font-weight:600;font-size:.95rem}
+.q-co{font-weight:400;color:var(--muted);font-size:.85rem}
+.q-when{color:var(--muted);font-size:.78rem;flex:0 0 auto}
+/* one line only — the whole point of a list is that rows are the same height */
+.q-sub{display:block;color:var(--muted);font-size:.86rem;margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.q-sub b{color:var(--ink);font-weight:600}
+.q-state{flex:0 0 auto;align-self:center}
+
+.q-open-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.q-title{margin:0;font-size:1.15rem}
+.q-date{margin:3px 0 14px}
+.q-details{display:flex;flex-wrap:wrap;gap:8px 22px;padding:12px 14px;margin-bottom:16px;
+  background:var(--bg-soft);border-radius:var(--radius)}
+.q-d{display:flex;flex-direction:column;gap:2px;font-size:.9rem}
+.q-d span{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.q-thread{display:flex;flex-direction:column;gap:8px}
+@media(max-width:640px){
+  .q-sub{white-space:normal}
+  .q-state{display:none}
+}
 .pt-reply{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 .pt-reply label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:5px}
 .pt-reply textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;
