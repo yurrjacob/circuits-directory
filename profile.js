@@ -182,7 +182,7 @@ async function initProfile(){
       <p class="pf-note">★ marks a Circuits-Keyword&trade; this company exclusively sponsors.</p>`
       + (anyBadge ? `<p class="pf-note pf-badge-note">Coloured labels are <b>Trust Badges</b> &mdash;
          paid labels chosen by the company. They are not certifications, and Circuits.com has not
-         assessed them. Any certifications this company holds are listed under Certifications.</p>` : '')
+         assessed them.</p>` : '')
     : '');
 
   /* ---- documents ---- */
@@ -200,12 +200,29 @@ async function initProfile(){
          ${g.caption ? `<figcaption>${escapeHtml(g.caption)}</figcaption>` : ''}</figure>`
       ).join('')}</div>` : '');
 
-  /* ---- certifications ---- */
+  /* ---- certifications ----
+     These are typed in by the company. Nobody at Circuits.com checks them, and
+     a buyer choosing a supplier on the strength of "ISO 9001" deserves to know
+     that. So the section says whose claim it is, and points at the evidence
+     when the company has actually attached a certificate. Presenting an
+     unchecked claim as established fact would be the same mistake the Trust
+     Badge used to make. */
   const certs = Array.isArray(co.certifications) ? co.certifications : [];
-  html += section('Certifications & approvals', certs.length
-    ? `<ul class="pf-certs">${certs.map(c =>
-        `<li><b>${escapeHtml(c.name || '')}</b>${c.issuer ? ` — ${escapeHtml(c.issuer)}` : ''}${c.year ? ` (${escapeHtml(String(c.year))})` : ''}</li>`
-      ).join('')}</ul>` : '');
+  const certDoc = name => docs.find(d =>
+    (d.name || '').toLowerCase().includes((name || '').toLowerCase().slice(0, 12)) && (name || '').length > 3);
+  html += section('Certifications &amp; approvals', certs.length
+    ? `<ul class="pf-certs">${certs.map(c => {
+        const doc = certDoc(c.name);
+        return `<li><b>${escapeHtml(c.name || '')}</b>`
+          + (c.issuer ? ` — ${escapeHtml(c.issuer)}` : '')
+          + (c.year ? ` (${escapeHtml(String(c.year))})` : '')
+          + (doc && doc.url
+              ? ` <a class="doc-link" href="${escapeHtml(safeUrl(doc.url))}" target="_blank" rel="noopener nofollow">certificate</a>`
+              : '')
+          + `</li>`;
+      }).join('')}</ul>
+      <p class="pf-note pf-claimed-note">Stated by ${escapeHtml(co.name)}. Circuits.com has not
+      independently verified these. Ask for the certificate before relying on one.</p>` : '');
 
   /* ---- team ---- */
   const team = Array.isArray(co.team) ? co.team : [];

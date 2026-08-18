@@ -620,6 +620,11 @@ tr.row-warn td{background:#fff3cd}
 .auth-staff a{color:var(--muted);text-decoration:underline}
 .auth-staff a:hover{color:var(--ink)}
 .auth-cta{display:block;text-align:center;text-decoration:none;padding:11px}
+/* Anything a company says about itself is marked as such — same treatment for
+   certifications as for Trust Badges, or the disclaimer on one implies the
+   other was checked */
+.pf-claimed-note{border-left:3px solid var(--line);padding-left:10px;margin-top:10px}
+
 /* Trust Badges are paid labels; the note saying so must be legible, not buried */
 .pf-badge-note{border-left:3px solid var(--line);padding-left:10px;margin-top:10px}
 .kw-lb{cursor:help}
