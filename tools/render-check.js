@@ -48,6 +48,7 @@ global.fetchCompanyKeywords = async () => ([
   { keyword:'voltage regulator', banner:false, badge:null, docs:[] }]);
 global.fetchReviews = async () => ([{ rating:5, author_name:'Bob', body:'Great', reply:'Thanks', created_at:'2026-08-01T00:00:00Z' }]);
 global.companyClaimed = async () => true;
+global.companyRunByStaff = async () => false;
 
 let captured = '';
 const el = (id) => ({ set innerHTML(v){ if(id==='profile-body') captured = v; },
@@ -155,6 +156,16 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   assert.ok(captured.includes('pf-unclaimed-card'), 'the unclaimed listing has no claim prompt');
   assert.ok(captured.includes('/claim?c='), 'the unclaimed prompt does not link to the claim flow');
   global.companyClaimed = async () => true;
+
+  /* A profile run by the Circuits.com team wears our mark beside the name, and
+     no ordinary company's profile ever does. */
+  assert.ok(!/lb-cx/.test(captured), 'an ordinary company is wearing the Circuits.com mark');
+  global.companyRunByStaff = async () => true;
+  await initProfile();
+  assert.ok(/<h1>[^<]*<span class="lb lb-cx"/.test(captured),
+    'an admin-run profile does not show the Circuits.com mark next to its name');
+  assert.ok(/Circuits\.com team/.test(captured), 'the mark on the name lost its hover text');
+  global.companyRunByStaff = async () => false;
 
   console.log('render smoke test passed —', opens, 'balanced block tags, reviews and claim states OK');
 })();

@@ -53,7 +53,7 @@ const NEEDS = {
   'portal.html':    ['/store.js', '/app.js', '/portal.js'],
   'claim.html':     ['/store.js', '/app.js'],
   'results.html':   ['store.js', 'app.js'],
-  'admin.html':     ['store.js']
+  'applications.html': ['store.js']
 };
 for (const [file, scripts] of Object.entries(NEEDS)) {
   const html = fs.readFileSync(path.join(ROOT, file), 'utf8');
@@ -143,7 +143,8 @@ assert.ok(!fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8').i
 /* --- suspension and the audit log must be reachable ---
        Backend controls nobody can press are not controls. The suspend
        functions existed for a while with no way to call them. */
-const adminSrc = fs.readFileSync(path.join(ROOT, 'admin.html'), 'utf8');
+const adminSrc = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8')
+  + fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
 for (const need of ['companies-body', 'audit-body', 'function setSuspended', 'function reloadAudit']) {
   assert.ok(adminSrc.includes(need), `the admin console is missing ${need}`);
 }
@@ -475,7 +476,7 @@ for (const ctx of ['.auth-foot', '.info-card']) {
 }
 
 /* --- no decorative arrows on the auth buttons --- */
-for (const f of ['login.html', 'portal.html', 'register.html']) {
+for (const f of ['portal.html', 'register.html']) {
   const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
   for (const m of src.match(/<(?:button|a)[^>]*>[^<]*→[^<]*<\/(?:button|a)>/g) || []) {
     assert.ok(!/sign in|create (your )?profile/i.test(m), `${f} still has an arrow on: ${m.trim()}`);
@@ -555,8 +556,8 @@ for (const id of ['rq-form', 'rq-id', 'rs-form', 'rs-pass', 'rs-pass2', 'rs-bad'
 const storeReset = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
 assert.ok(storeReset.includes('resetPasswordForEmail'), 'store.js cannot send a reset email');
 assert.ok(storeReset.includes('function setNewPassword'), 'store.js cannot set the new password');
-// both sign-in pages must offer the way out
-for (const f of ['portal.html', 'login.html']) {
+// the one sign-in page must offer the way out
+for (const f of ['portal.html']) {
   assert.ok(fs.readFileSync(path.join(ROOT, f), 'utf8').includes('href="/reset"'),
     `${f} has no forgot-password link`);
 }
@@ -624,9 +625,34 @@ for (const f of NAV_PAGES) {
   assert.ok(!/Staff Login/i.test(foot), `${f} footer advertises the staff login`);
   assert.ok(!foot.includes('href="/login"'), `${f} footer links to the staff login`);
 }
-// but the page itself must still exist, or staff cannot get in at all
-assert.ok(fs.readFileSync(path.join(ROOT, 'login.html'), 'utf8').includes('id="submit-btn"'),
-  'the staff login page is gone, so staff have no way in');
+/* --- there is one sign-in, and admin is a property of the account ---
+       The separate employee login was a second door with its own rules. It is
+       gone; everybody signs in at /portal and admins get an extra tab. */
+for (const gone of ['login.html', 'admin.html']) {
+  assert.ok(!fs.existsSync(path.join(ROOT, gone)), gone + ' is back — there should be one way in');
+}
+{
+  const portalHtml = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
+  const portalJs = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
+  const adminJs = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
+  assert.ok(portalHtml.includes('id="pt-tab-admin"'), 'the portal has no Admin tab');
+  assert.ok(portalHtml.includes('id="tab-admin"'), 'the portal has no Admin panel');
+  assert.ok(portalHtml.includes('/admin.js'), 'the portal never loads the admin console');
+  // hidden by default: the tab is only revealed after is_staff() comes back true
+  assert.ok(/id="pt-tab-admin"[^>]*display:none/.test(portalHtml),
+    'the Admin tab is visible before anyone has checked the account is an admin');
+  assert.ok(/async function wireAdminTab\(\)\s*\{\s*if\(!\(await checkStaff\(\)\)\) return false;/.test(portalJs),
+    'the Admin tab is shown without asking the database whether this account is an admin');
+  assert.ok(/if\(!\(await checkStaff\(\)\)\) return;/.test(adminJs),
+    'the console starts loading data without checking the account is an admin');
+  // and it must not fetch anything until the tab is actually opened
+  assert.ok(/b\.dataset\.tab === 'admin'[^\n]*initAdmin\(\)/.test(portalJs),
+    'the admin console is not deferred until the tab is opened');
+  assert.ok(!/^\s*initAdmin\(\)/m.test(portalHtml), 'the portal runs the admin console on page load');
+  // the console keeps its short names to itself
+  assert.ok(adminJs.trimStart().startsWith('/*') && adminJs.includes('(function(){'),
+    'admin.js is not wrapped, so its globals can collide with portal.js');
+}
 
 /* --- the URL form of a handle must accept underscores, or circuits.com/aaa_electronics
        never resolves through the 404 fallback --- */
@@ -638,7 +664,7 @@ assert.ok(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8').includes('[a-z0
 /* --- accounts are created on Register or Get Listed, and nowhere else ---
        Anyone may hold a profile; a company listing still needs approval. Those
        are the only two doors, so no other page may call signUp. */
-for (const f of ['portal.js', 'portal.html', 'claim.html', 'login.html', 'company.html', 'profile.js']) {
+for (const f of ['portal.js', 'portal.html', 'claim.html', 'admin.js', 'company.html', 'profile.js']) {
   assert.ok(!fs.readFileSync(path.join(ROOT, f), 'utf8').includes('signUp('),
     `${f} can create an account — that belongs on Register or Get Listed only`);
 }

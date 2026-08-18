@@ -681,6 +681,49 @@ begin
   raise notice 'RATE LIMIT CHECKS PASSED';
 end $$;
 
+-- Admin is a property of the account now, not a separate login, so the only
+-- thing standing between a company owner and everybody else's data is is_staff().
+-- The hidden tab is presentation; this is the actual gate.
+do $$
+declare
+  saw_admin boolean;
+  n int;
+begin
+  set local role authenticated;
+  set local request.jwt.claims = '{"role":"authenticated","email":"zz-probe@rlstest.invalid","sub":"00000000-0000-0000-0000-0000000000aa"}';
+
+  if is_staff() then raise exception 'FAIL: a stranger is treated as an admin'; end if;
+
+  select count(*) into n from security_log;
+  if n <> 0 then raise exception 'FAIL: a non-admin can read % security log rows', n; end if;
+
+  select count(*) into n from applications where status <> 'Approved';
+  if n <> 0 then raise exception 'FAIL: a non-admin can read % unapproved listings', n; end if;
+
+  begin
+    select count(*) into n from staff;
+    raise exception 'FAIL: a non-admin can read the staff list';
+  exception when insufficient_privilege then null;
+  end;
+
+  reset role;
+  raise notice 'ADMIN GATE HOLDS FOR A NON-ADMIN';
+end $$;
+
+-- The badge lookup is public on purpose (it decides whether a profile shows our
+-- mark), but it must answer one yes/no question and never name an admin.
+do $$
+declare ok boolean;
+begin
+  set local role anon;
+  set local request.jwt.claims = '{"role":"anon"}';
+  ok := company_run_by_staff('zz-nobody-owns-this');
+  if ok then raise exception 'FAIL: an unknown slug is reported as staff-run'; end if;
+  if is_staff() then raise exception 'FAIL: a logged-out visitor is treated as an admin'; end if;
+  reset role;
+  raise notice 'BADGE LOOKUP IS PUBLIC BUT TELLS NOTHING ELSE';
+end $$;
+
 -- rate_log must never be readable through the API, or the IP list leaks
 do $$
 declare n int;
