@@ -140,6 +140,34 @@ assert.ok(sitemap.includes('circuits.com/register'), 'sitemap is missing /regist
 assert.ok(!fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8').includes('/how-it-works'),
   'the sitemap generator would put /how-it-works back on the next build');
 
+/* --- a paid badge must never read as a certification ---
+       This is the one place where a $49 add-on could mislead a buyer into a
+       purchasing decision. The database refuses the dangerous words outright;
+       these checks make sure the site does not offer them in the first place
+       and does not present a bought label as an assessed one. */
+const badgeJoin = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
+const badgePresets = [...badgeJoin.matchAll(/class="opt-btn" data-text="([^"]+)"/g)].map(m => m[1]);
+assert.ok(badgePresets.length >= 3, `only ${badgePresets.length} badge presets offered`);
+for (const preset of badgePresets) {
+  assert.ok(!/certif|approv|accredit|licens|verif|iso|compliant/i.test(preset),
+    `"${preset}" is offered as a buyable badge but claims an assessment nobody made`);
+}
+const badgeApp = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+assert.ok(/const BADGE_FORBIDDEN/.test(badgeApp), 'custom badge text is no longer screened in the browser');
+assert.ok(/function badgeProblem/.test(badgeApp) && /showBadgeProblem\(\)/.test(badgeApp),
+  'the badge warning is never shown to the applicant');
+// and it must actually block submission, not merely warn
+const validateBlock = badgeApp.slice(badgeApp.indexOf('badgeCheck.checked && showBadgeProblem()'));
+assert.ok(/firstBad =/.test(validateBlock.slice(0, 300)),
+  'a bad badge warns but still lets the application through');
+// the public profile must say what a badge is
+const badgeProf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
+assert.ok(/paid label chosen by this company/i.test(badgeProf),
+  'the badge no longer carries an explanation that it was paid for');
+assert.ok(/not a certification/i.test(badgeProf),
+  'the profile no longer states that a Trust Badge is not a certification');
+assert.ok(/pf-badge-note/.test(badgeProf), 'the badge explanation note is gone from the profile');
+
 /* --- the supplier notification must not become a spam relay ---
        The whole risk here is a caller naming its own recipient. The address is
        looked up server-side from the company slug; the browser only ever sends

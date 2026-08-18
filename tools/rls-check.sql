@@ -371,6 +371,50 @@ begin
   raise notice 'LISTING / PROFILE SEPARATION CHECKS PASSED';
 end $$;
 
+/* ---- a paid badge must never claim a certification ----
+   A Trust Badge is $49 and self-chosen. If one could read "ISO 9001" or
+   "Certified", a buyer could make a purchasing decision on a claim nobody
+   assessed — which is the single most damaging thing this site could do. */
+do $$
+declare
+  blocked text[] := array['Certified','ISO 9001','UL Listed','Approved Supplier','Accredited',
+                          'Verified','Circuits.com Approved','AS9100','RoHS Compliant','CE Mark','Audited'];
+  allowed text[] := array['Authorized','Featured','Preferred','Premier','Specialist','Stocking Distributor'];
+  w text; n int; refused int := 0;
+begin
+  delete from applications where company = 'ZZ Badge Probe';
+  delete from rate_log where bucket = 'application';
+
+  foreach w in array blocked loop
+    begin
+      insert into applications (company, keyword, status, email, owner_email, badge)
+      values ('ZZ Badge Probe','zzbadge','Pending','zz@rlstest.invalid','zz@rlstest.invalid',
+              jsonb_build_object('text', w, 'color', '#c9a227'));
+      raise exception 'FAIL: a company could buy the badge "%"', w;
+    exception when insufficient_privilege or check_violation then refused := refused + 1;
+    end;
+    delete from rate_log where bucket = 'application';
+  end loop;
+
+  -- and the neutral ones must still work, or the guard is too blunt to use
+  foreach w in array allowed loop
+    insert into applications (company, keyword, status, email, owner_email, badge)
+    values ('ZZ Badge Probe','zzbadge','Pending','zz@rlstest.invalid','zz@rlstest.invalid',
+            jsonb_build_object('text', w, 'color', '#c9a227'));
+    delete from rate_log where bucket = 'application';
+  end loop;
+  select count(*) into n from applications where company = 'ZZ Badge Probe';
+  if n <> array_length(allowed, 1) then
+    raise exception 'FAIL: the badge guard also blocked legitimate labels (% of % accepted)',
+      n, array_length(allowed, 1);
+  end if;
+
+  delete from applications where company = 'ZZ Badge Probe';
+  delete from rate_log where bucket = 'application';
+  raise notice 'BADGE CHECKS PASSED — % misleading refused, % neutral accepted',
+    refused, array_length(allowed, 1);
+end $$;
+
 /* ---- leaving must be possible, but must not destroy a paid listing ---- */
 do $$
 declare u uuid; u2 uuid; res text; n int;
