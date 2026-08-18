@@ -140,6 +140,33 @@ assert.ok(sitemap.includes('circuits.com/register'), 'sitemap is missing /regist
 assert.ok(!fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8').includes('/how-it-works'),
   'the sitemap generator would put /how-it-works back on the next build');
 
+/* --- an account you cannot leave is not an account ---
+       Password change, sign out everywhere, and deletion. Deletion in
+       particular must be deliberate and must never take a paid listing with it. */
+const acctSrc = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
+const storeAcct = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+assert.ok(/function renderAccount/.test(acctSrc), 'the account panel is gone');
+assert.ok(/renderAccount\(user\)/.test(acctSrc), 'the account panel is never rendered');
+for (const fn of ['signOutEverywhere', 'deleteOwnAccount']) {
+  assert.ok(storeAcct.includes(`async function ${fn}(`), `store.js is missing ${fn}`);
+}
+assert.ok(/scope: 'global'/.test(storeAcct),
+  'sign out everywhere only ends the current browser session');
+assert.ok(/rpc\('delete_own_account'\)/.test(storeAcct),
+  'account deletion no longer goes through the guarded database function');
+// deletion must be confirmed by typing, and must handle the refusal case
+const delFn = acctSrc.slice(acctSrc.indexOf("el('ac-delete').onclick"), acctSrc.indexOf('/* ---------- insights'));
+assert.ok(/prompt\(/.test(delFn), 'account deletion happens without any confirmation step');
+assert.ok(/still_owns_listing/.test(delFn),
+  'the portal does not handle the case where the account manages a paid listing');
+assert.ok(/cannot be undone/i.test(delFn), 'the deletion prompt does not warn that it is permanent');
+// email confirmation state has to be visible
+assert.ok(/email_confirmed_at/.test(acctSrc), 'the account panel no longer shows whether the email is confirmed');
+assert.ok(/\.ac-danger\{/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
+  'the delete button is not visually distinguished');
+assert.ok(fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8').includes('id="pt-account"'),
+  'portal.html has nowhere to put the account panel');
+
 /* --- the dashboard has to answer "what should I do next" ---
        Weights are read out of portal.js rather than restated here, so this
        tests the real numbers instead of a copy that can drift. */

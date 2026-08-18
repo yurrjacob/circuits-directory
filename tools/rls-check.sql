@@ -371,6 +371,69 @@ begin
   raise notice 'LISTING / PROFILE SEPARATION CHECKS PASSED';
 end $$;
 
+/* ---- leaving must be possible, but must not destroy a paid listing ---- */
+do $$
+declare u uuid; u2 uuid; res text; n int;
+begin
+  delete from company_users where company_slug = 'zz-del';
+  delete from companies where slug = 'zz-del';
+  delete from auth.users where email like 'zz-del%@rlstest.invalid';
+
+  insert into auth.users (id, instance_id, aud, role, email, encrypted_password,
+                          email_confirmed_at, created_at, updated_at)
+  values (gen_random_uuid(),'00000000-0000-0000-0000-000000000000','authenticated','authenticated',
+          'zz-del-plain@rlstest.invalid','x',now(),now(),now()) returning id into u;
+  insert into profiles (user_id, handle, email) values (u, 'zzdelplain', 'zz-del-plain@rlstest.invalid');
+
+  set local role authenticated;
+  perform set_config('request.jwt.claims', json_build_object('sub', u::text,
+    'email','zz-del-plain@rlstest.invalid','role','authenticated')::text, true);
+  select delete_own_account() into res;
+  reset role; perform set_config('request.jwt.claims', null, true);
+
+  if res <> 'deleted' then raise exception 'FAIL: a plain account could not delete itself (%)', res; end if;
+  if exists (select 1 from auth.users where id = u) then
+    raise exception 'FAIL: the account survived deletion'; end if;
+  if exists (select 1 from profiles where handle = 'zzdelplain') then
+    raise exception 'FAIL: the profile row survived deletion'; end if;
+  -- the address must be free for someone else afterwards
+  if exists (select 1 from profiles where handle = 'zzdelplain') then
+    raise exception 'FAIL: the released address is still taken'; end if;
+
+  insert into auth.users (id, instance_id, aud, role, email, encrypted_password,
+                          email_confirmed_at, created_at, updated_at)
+  values (gen_random_uuid(),'00000000-0000-0000-0000-000000000000','authenticated','authenticated',
+          'zz-del-owner@rlstest.invalid','x',now(),now(),now()) returning id into u2;
+  insert into companies (slug, name, handle) values ('zz-del','ZZ Del','zzdel');
+  insert into company_users (user_id, company_slug) values (u2, 'zz-del');
+
+  set local role authenticated;
+  perform set_config('request.jwt.claims', json_build_object('sub', u2::text,
+    'email','zz-del-owner@rlstest.invalid','role','authenticated')::text, true);
+  select delete_own_account() into res;
+  reset role; perform set_config('request.jwt.claims', null, true);
+
+  if res <> 'still_owns_listing' then
+    raise exception 'FAIL: an account managing a paid listing self-deleted (%)', res; end if;
+  if not exists (select 1 from auth.users where id = u2) then
+    raise exception 'FAIL: the listing owner was deleted anyway'; end if;
+  if not exists (select 1 from companies where slug = 'zz-del') then
+    raise exception 'FAIL: a paid company listing was destroyed by an account deletion'; end if;
+
+  if not exists (select 1 from security_log
+                  where action = 'delete_account' and target = 'zz-del-plain@rlstest.invalid') then
+    raise exception 'FAIL: the account deletion was not written to the audit log';
+  end if;
+  if has_function_privilege('anon', 'public.delete_own_account()', 'execute') then
+    raise exception 'FAIL: anon can call delete_own_account';
+  end if;
+
+  delete from company_users where company_slug = 'zz-del';
+  delete from companies where slug = 'zz-del';
+  delete from auth.users where email like 'zz-del%@rlstest.invalid';
+  raise notice 'ACCOUNT DELETION CHECKS PASSED';
+end $$;
+
 /* ---- analytics stay private ----
    company_insights() is SECURITY DEFINER, which means it runs with the rights
    of its owner and RLS does not protect it. The ownership check inside it is
