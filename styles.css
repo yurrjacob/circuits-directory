@@ -590,8 +590,19 @@ tr.row-warn td{background:#fff3cd}
   .cookie-bar-actions .mini-btn{flex:1}
 }
 
-/* the staff door in the footer stays present but quiet */
-.flink-quiet{opacity:.6}
+/* Narrow phones. Everything above is fluid; these are the few components
+   added later that need a hand. Verified by measurement, not by eye — see the
+   fixed-width guard in tools/check.js. */
+@media(max-width:640px){
+  .pt-account{padding:16px 14px}
+  .pt-account .mini-btn{width:100%}
+  .funnel{flex-direction:column;align-items:flex-start;gap:4px}
+  .funnel i{display:none}
+  .ins-num{font-size:1.45rem}
+  .pt-next{padding:16px 14px}
+  .pt-next-head{flex-direction:column;align-items:flex-start;gap:8px}
+  .pt-meter{max-width:none;width:100%}
+}
 
 /* An unclaimed listing is one nobody has confirmed. Saying so is honest to
    buyers, and it is the strongest prompt we have for getting it claimed. */
