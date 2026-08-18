@@ -522,6 +522,24 @@ async function companyInsights(slug, days){
   return (data && data[0]) || null;
 }
 
+/* Emails the supplier that a quote request has arrived.
+   The recipient is decided server-side from the company slug — this call
+   cannot name an address, or the site would be an open spam relay.
+   Never throws: the request is already saved in the database and visible in
+   the supplier's portal, so a failed notification must not fail the form. */
+async function notifySupplier(slug, quote){
+  try{
+    const res = await fetch(SUPABASE_URL + '/functions/v1/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY },
+      body: JSON.stringify({ kind: 'quote', company_slug: slug, quote: quote })
+    });
+    const out = await res.json().catch(() => null);
+    if(!out || !out.ok) console.warn('supplier not notified:', out && out.error);
+    return !!(out && out.ok);
+  }catch(err){ console.warn('supplier notification failed', err); return false; }
+}
+
 /* ---- suspension ----
    Deliberately not deletion. A suspended company keeps every row it had, so a
    dispute can be reversed and a returning customer picks up where they left

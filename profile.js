@@ -426,7 +426,18 @@ function wireCopyLink(){
         subject: 'Quote request via Circuits.com'
       });
       trackEvent(slug, 'rfq');
-      /* the supplier is notified by Circuits.com, not by the buyer's own client */
+
+      /* The supplier themselves — the whole point of the product. Goes through
+         our own sending service because FormSubmit can only deliver to
+         addresses that have confirmed themselves, which a customer's address
+         has not. Deliberately not awaited: the request is already saved and
+         will appear in their portal regardless. */
+      notifySupplier(slug, {
+        name: v('rq-name'), email: v('rq-email'), company: v('rq-company'),
+        phone: v('rq-phone'), part_number: v('rq-pn'), quantity: v('rq-qty'), body: v('rq-body')
+      });
+
+      /* and the founders, so nothing is missed while the above beds in */
       sendFounderEmail('New quote request — ' + co.name, {
         supplier: co.name, supplier_email: co.email || '(none)', name: v('rq-name'),
         email: v('rq-email'), company: v('rq-company') || '(none)', phone: v('rq-phone') || '(none)',
