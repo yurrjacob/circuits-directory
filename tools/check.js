@@ -140,6 +140,39 @@ assert.ok(sitemap.includes('circuits.com/register'), 'sitemap is missing /regist
 assert.ok(!fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8').includes('/how-it-works'),
   'the sitemap generator would put /how-it-works back on the next build');
 
+/* --- the documentation has to be true, and must not leak the wrong key --- */
+const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
+assert.ok(readme.length > 2000, `README.md is only ${readme.length} bytes`);
+assert.ok(fs.existsSync(path.join(ROOT, 'SECURITY.md')), 'SECURITY.md is missing');
+const security = fs.readFileSync(path.join(ROOT, 'SECURITY.md'), 'utf8');
+// the docs must keep saying which key is safe and which is not
+for (const doc of [readme, security]) {
+  assert.ok(/service role key/i.test(doc), 'the docs no longer warn about the service role key');
+}
+// and no file may contain one. Match the *shape* of a secret, not the words —
+// looking for "service_role" also matches this check and every doc describing it.
+const SECRET_SHAPES = [
+  /sb_secret_[A-Za-z0-9_-]{8,}/,                              // current format
+  /eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/ // legacy JWT format
+];
+for (const f of fs.readdirSync(ROOT).filter(n => /\.(js|html|md|json|sql)$/.test(n))
+                 .concat(fs.readdirSync(path.join(ROOT, 'tools')).map(n => 'tools/' + n))) {
+  const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+  for (const shape of SECRET_SHAPES) {
+    assert.ok(!shape.test(src), `${f} contains something shaped like a Supabase secret key`);
+  }
+}
+// the publishable key is fine and expected; make sure it has not been swapped for a secret
+assert.ok(/sb_publishable_/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')),
+  'store.js no longer uses a publishable key');
+// the README must not claim features that do not exist
+const notBuilt = readme.slice(readme.indexOf('## Not built'));
+for (const gap of ['Payments', 'Staging']) {
+  assert.ok(notBuilt.includes(gap), `README no longer admits that ${gap} is missing`);
+}
+assert.ok(!/parts database|component search|distributor pricing/i.test(readme),
+  'README describes a parts database, which this site does not have');
+
 /* --- an account you cannot leave is not an account ---
        Password change, sign out everywhere, and deletion. Deletion in
        particular must be deliberate and must never take a paid listing with it. */
