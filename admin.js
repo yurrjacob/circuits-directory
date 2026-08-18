@@ -364,4 +364,14 @@ window.initAdmin = async function(){
   }
   syncControls(); reload();
 };
+
+/* The table rows are built as HTML strings with onclick="..." on each button,
+   and an inline handler is evaluated in global scope — so wrapping this file
+   put every row button out of its own reach. Anything a row calls has to be
+   published deliberately; everything else stays private to this file.
+   tools/check.js fails if a new onclick appears without being listed here. */
+Object.assign(window, {
+  editListing, editBadge, removeListing, togglePause,
+  approveApp, rejectApp, decide, modReview, setSuspended
+});
 })();
