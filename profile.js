@@ -170,16 +170,17 @@ async function initProfile(){
      one. A buyer deciding who to trust must be able to tell the difference
      between this and a certification somebody actually assessed. The wording
      is deliberately plain; a subtle visual difference alone would not do it. */
-  // the note is about PAID badges; our own mark is not one, so it must not
-  // trigger a disclaimer saying the company chose and paid for it
-  const anyBadge = kws.some(k => k.badge && k.badge.text);
+  /* Only explain the star when there is a star to explain. fetchCompanyKeywords
+     already drops paused and unapproved listings, so a banner here is a live
+     sponsorship — a company with none never sees a note about one. */
+  const anyBanner = kws.some(k => k.banner);
   html += section('Keyword Listings', kws.length
     ? `<div class="kw-tags pf-kws">${kws.map(k =>
         `<a class="kw-tag" href="/results?q=${encodeURIComponent(k.keyword)}">${escapeHtml(k.keyword)}${k.banner ? ' ★' : ''}`
         + badgeHtml(k.badge, 'kw-lb')
         + `</a>`
-      ).join('')}</div>
-      <p class="pf-note">★ marks a Circuits-Keyword&trade; this company exclusively sponsors.</p>`
+      ).join('')}</div>`
+      + (anyBanner ? `<p class="pf-note">★ marks a Circuits-Keyword&trade; this company exclusively sponsors.</p>` : '')
     : '');
 
   /* ---- documents ---- */
