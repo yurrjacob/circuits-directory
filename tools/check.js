@@ -801,6 +801,83 @@ for (const trigger of ['renderQuote()']) {
     'renderQuote is not wired to every input that changes the price');
 }
 
+/* --- every handler must be able to reach the company it is for ---
+       A missing closing brace once swallowed the quote form, the review form
+       and the click tracking into wireCopyLink(), which has no `slug` or `co`.
+       Everything still rendered, so the render check passed and the page looked
+       perfect — but every quote request threw on `slug` before it was saved,
+       and the buyer was told "Sorry, that didn't send". Nothing caught it.
+
+       So: walk profile.js properly (strings, template literals and comments all
+       contain braces, so a line-by-line scan is not good enough), find the
+       top-level function each use of `slug` and `co` lands in, and fail if that
+       function cannot see them. */
+{
+  const src = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
+
+  /* Walk once, tracking what we are inside, so only real code counts. */
+  const code = [];                       // code[i] = src[i], or ' ' if inside a string/comment
+  let mode = 'code', tpl = 0;
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i], n = src[i + 1], keep = () => code.push(c), skip = () => code.push(c === '\n' ? '\n' : ' ');
+    if (mode === 'code') {
+      if (c === '/' && n === '/') { mode = 'line'; skip(); }
+      else if (c === '/' && n === '*') { mode = 'block'; skip(); }
+      else if (c === "'" || c === '"') { mode = c; skip(); }
+      else if (c === '`') { mode = 'tpl'; tpl = 0; skip(); }
+      else keep();
+    } else if (mode === 'line') { if (c === '\n') mode = 'code'; skip(); }
+    else if (mode === 'block') { if (c === '*' && n === '/') { mode = 'endblock'; } skip(); }
+    else if (mode === 'endblock') { mode = 'code'; skip(); }
+    else if (mode === "'" || mode === '"') { if (c === '\\') { code.push(' '); i++; code.push(' '); continue; } if (c === mode) mode = 'code'; skip(); }
+    else if (mode === 'tpl') {
+      // ${ ... } inside a template is real code, but we only need brace balance,
+      // and those braces balance among themselves, so blanking the lot is safe
+      if (c === '\\') { code.push(' '); i++; code.push(' '); continue; }
+      if (c === '`' && tpl === 0) mode = 'code';
+      else if (c === '$' && n === '{') tpl++;
+      else if (c === '}' && tpl > 0) tpl--;
+      skip();
+    }
+  }
+  const clean = code.join('');
+  const lineOf = idx => clean.slice(0, idx).split('\n').length;
+
+  const fns = [];
+  const decl = /^(?:async )?function ([A-Za-z0-9_$]+)\s*\(([^)]*)\)/gm;
+  let m;
+  while ((m = decl.exec(clean))) {
+    let d = 0, i = m.index;
+    for (; i < clean.length; i++) {
+      if (clean[i] === '{') d++;
+      else if (clean[i] === '}') { d--; if (d === 0) break; }
+    }
+    fns.push({ name: m[1], params: m[2].split(',').map(x => x.trim()).filter(Boolean),
+               from: lineOf(m.index), to: lineOf(i), body: clean.slice(m.index, i) });
+  }
+  const wp = fns.find(f => f.name === 'wireProfile');
+  assert.ok(wp, 'wireProfile is gone from profile.js');
+
+  for (const name of ['slug', 'co']) {
+    /* Only real variable reads. `entry.slug` is a property and `slug: x` is a
+       key — neither needs the variable to be in scope. */
+    const uses = new RegExp('(?<![.\\w$])' + name + '\\b(?!\\s*:)');
+    const declares = new RegExp('(?:const|let|var)\\s+' + name + '\\b');
+    for (const f of fns) {
+      if (!uses.test(f.body)) continue;
+      assert.ok(f.params.includes(name) || declares.test(f.body),
+        `${f.name}() (profile.js lines ${f.from}-${f.to}) uses \`${name}\` but never receives or declares it — ` +
+        `every handler bound in there throws the moment somebody uses it`);
+    }
+  }
+
+  // the three things a buyer or supplier actually does must live where they work
+  for (const call of ['submitInquiry(slug', 'notifySupplier(slug', 'submitReview(slug']) {
+    assert.ok(wp.body.includes(call),
+      `${call}...) is not inside wireProfile() any more — it cannot see the company it is for`);
+  }
+}
+
 require('./render-check.js');
 /* Renders the search and profile pages against a database that refuses every
    request, and fails if either tries to sell something as a result.
