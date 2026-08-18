@@ -69,3 +69,47 @@ assert.ok(!/NaN|Infinity|undefined/.test(allCases), `change label produced ${all
 assert.ok(/↑ 100%/.test(changeLabel('20', '10')), 'string counts from the database break the calculation');
 
 console.log('change-vs-previous OK — no NaN, no Infinity, no divide by zero');
+
+/* --- saved suppliers live in the visitor's own browser ---
+   No account, no server, so the whole thing rests on localStorage behaving.
+   It does not always: private mode throws on write, and anything can end up
+   in the key. Neither may break a profile page. */
+const profSrc = fs.readFileSync(path.join(__dirname, '..', 'profile.js'), 'utf8');
+const savedBlock = profSrc.slice(profSrc.indexOf('const SAVED_KEY'), profSrc.indexOf('function wireSave'));
+assert.ok(savedBlock, 'the saved-supplier code is gone from profile.js');
+
+const store = {};
+globalThis.localStorage = {
+  getItem: k => (k in store ? store[k] : null),
+  setItem: (k, v) => { store[k] = String(v); },
+  removeItem: k => { delete store[k]; }
+};
+(0, eval)(savedBlock
+  .replace('const SAVED_KEY', 'globalThis.SAVED_KEY')
+  .replace('function savedList', 'globalThis.savedList = function')
+  .replace('function isSaved', 'globalThis.isSaved = function')
+  .replace('function toggleSaved', 'globalThis.toggleSaved = function'));
+
+assert.deepStrictEqual(savedList(), [], 'a fresh browser should have nothing saved');
+assert.strictEqual(toggleSaved({ slug:'a', handle:'ah', name:'A' }), true, 'first click should save');
+assert.ok(isSaved('a'));
+assert.strictEqual(toggleSaved({ slug:'a', handle:'ah', name:'A' }), false, 'second click should unsave');
+assert.ok(!isSaved('a'), 'clicking twice left it saved');
+
+toggleSaved({ slug:'a', handle:'ah', name:'A' });
+toggleSaved({ slug:'b', handle:'bh', name:'B' });
+assert.strictEqual(savedList()[0].slug, 'b', 'the most recent save should be first');
+
+for (let i = 0; i < 80; i++) toggleSaved({ slug:'x'+i, handle:'x'+i, name:'X'+i });
+assert.ok(savedList().length <= 50, `the saved list is uncapped (${savedList().length})`);
+
+store['cx_saved'] = 'not json at all';
+assert.deepStrictEqual(savedList(), [], 'corrupt storage should read as empty rather than throw');
+store['cx_saved'] = '{"not":"an array"}';
+assert.deepStrictEqual(savedList(), [], 'a non-array in storage should read as empty');
+
+globalThis.localStorage.setItem = () => { throw new Error('QuotaExceededError'); };
+assert.doesNotThrow(() => toggleSaved({ slug:'z', handle:'z', name:'Z' }),
+  'a browser that blocks storage would crash the profile page');
+
+console.log('saved suppliers OK — no duplicates, capped, survives corrupt and blocked storage');
