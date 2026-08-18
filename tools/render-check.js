@@ -38,7 +38,21 @@ global.companyClaimed = async () => true;
 
 let captured = '';
 const el = (id) => ({ set innerHTML(v){ if(id==='profile-body') captured = v; },
-  addEventListener(){}, scrollIntoView(){}, focus(){}, style:{}, querySelectorAll:()=>[] });
+  addEventListener(){}, scrollIntoView(){}, focus(){}, style:{}, querySelectorAll:()=>[],
+  // the save control reads data- attributes and toggles classes
+  dataset:{ slug:'aaa', handle:'aaa_electronics', name:'AAA Electronics, Inc.' },
+  classList:{ toggle(){}, add(){}, remove(){}, contains(){ return false; } },
+  textContent:'', title:'' });
+
+/* Saved suppliers live in localStorage. Node has none, and the site must not
+   fall over in a browser that blocks it either — so stub it and let the real
+   try/catch in profile.js do its job. */
+global.localStorage = {
+  _v: {},
+  getItem(k){ return Object.prototype.hasOwnProperty.call(this._v, k) ? this._v[k] : null; },
+  setItem(k, v){ this._v[k] = String(v); },
+  removeItem(k){ delete this._v[k]; }
+};
 global.document = {
   querySelector: () => null, querySelectorAll: () => [],
   getElementById: id => el(id),
@@ -85,6 +99,10 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   // and the badge note must not send buyers to certifications as if those were checked
   assert.ok(!/listed under Certifications/.test(captured),
     'the badge note still implies the certifications list is verified');
+
+  // buyers compare several suppliers; saving one must not require an account
+  assert.ok(captured.includes('id="pf-save"'), 'the save-supplier control is missing');
+  assert.ok(captured.includes('data-slug="aaa"'), 'the save control does not identify the company');
 
   // the short link must be copyable — it is what goes on adverts
   assert.ok(captured.includes('id="pf-copy"'), 'copy-link control missing from the sidebar');
