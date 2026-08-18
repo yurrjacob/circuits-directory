@@ -609,6 +609,19 @@ tr.row-warn td{background:#fff3cd}
 .auth-staff a{color:var(--muted);text-decoration:underline}
 .auth-staff a:hover{color:var(--ink)}
 .auth-cta{display:block;text-align:center;text-decoration:none;padding:11px}
+/* 30-day insights: the funnel matters more than any single number */
+.ins-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.ins-num{font-size:1.7rem;font-weight:700;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.ins-lbl{font-size:.85rem;color:var(--muted);margin-top:2px}
+.delta{font-size:.72rem;font-weight:700;padding:2px 7px;border-radius:99px;white-space:nowrap}
+.delta.up{background:#eaf3de;color:#3b6d11}
+.delta.down{background:#fcebeb;color:#a32d2d}
+.delta.flat{background:var(--bg-soft);color:var(--muted)}
+.funnel{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:20px 0 6px;
+  padding:14px 16px;background:var(--bg-soft);border-radius:10px;font-size:.9rem}
+.funnel i{color:var(--muted);font-style:normal}
+@media(max-width:700px){ .ins-row{grid-template-columns:1fr;gap:20px} }
+
 /* "what should I do next" — the first thing on the dashboard */
 .pt-next{border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:0 0 20px;background:#fff}
 .pt-next.done{background:#f4faea;border-color:var(--green)}

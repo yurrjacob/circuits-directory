@@ -219,6 +219,52 @@ function markInquiriesSeen(){
   if(unseen.length) markUnread();
 }
 
+/* ---------- insights ----------
+   The number that matters to a paying supplier is not "views", it is how many
+   of those views turned into someone actually getting in touch. */
+async function renderInsights(){
+  const host = el('pt-insights');
+  if(!host || !PT.slug) return;
+  const d = await companyInsights(PT.slug, 30);
+  if(!d){
+    host.innerHTML = '<p class="pf-note">Your figures could not be loaded just now. '
+      + 'Nothing has been lost — reload the page to try again.</p>';
+    return;
+  }
+  const views = Number(d.views) || 0;
+  const contacts = Number(d.contacts) || 0;
+  const quotes = Number(d.quotes) || 0;
+  const pctOf = (a, b) => b ? Math.round(a / b * 100) : 0;
+
+  host.innerHTML = `
+    <div class="ins-row">
+      <div class="ins">
+        <div class="ins-num">${views}${changeLabel(views, d.prev_views)}</div>
+        <div class="ins-lbl">Profile views</div>
+        <div class="pf-note">${Number(d.unique_visitors) || 0} identified visitor(s)${
+          Number(d.anonymous_views) ? ` · ${d.anonymous_views} from visitors who declined analytics` : ''}</div>
+      </div>
+      <div class="ins">
+        <div class="ins-num">${contacts}${changeLabel(contacts, d.prev_contacts)}</div>
+        <div class="ins-lbl">Contact clicks</div>
+        <div class="pf-note">${pctOf(contacts, views)}% of everyone who looked</div>
+      </div>
+      <div class="ins">
+        <div class="ins-num">${quotes}${changeLabel(quotes, d.prev_quotes)}</div>
+        <div class="ins-lbl">Quote requests</div>
+        <div class="pf-note">${pctOf(quotes, views)}% of everyone who looked</div>
+      </div>
+    </div>
+    <div class="funnel">
+      <span><b>${views}</b> looked</span><i>→</i>
+      <span><b>${contacts}</b> got in touch</span><i>→</i>
+      <span><b>${quotes}</b> asked for a quote</span>
+    </div>
+    ${d.top_keyword ? `<p class="pf-note">Most of your views came from
+      <b>${escapeHtml(d.top_keyword)}</b> (${d.top_keyword_views}).</p>` : ''}
+    <p class="pf-note">Compared with the previous 30 days.</p>`;
+}
+
 /* ---------- what to do next ----------
    The dashboard used to open on five numbers and no answer to "so what should
    I do?". These are ordered by what actually costs the supplier money: an
@@ -288,6 +334,17 @@ function renderNextSteps(){
   };
 }
 
+/* "up 18%" only means something against the period before it. No previous
+   activity means there is no percentage to state — say "new" rather than
+   inventing a division by zero. */
+function changeLabel(now, before){
+  now = Number(now) || 0; before = Number(before) || 0;
+  if(!before) return now ? '<span class="delta up">new</span>' : '';
+  const pct = Math.round((now - before) / before * 100);
+  if(pct === 0) return '<span class="delta flat">no change</span>';
+  return `<span class="delta ${pct > 0 ? 'up' : 'down'}">${pct > 0 ? '↑' : '↓'} ${Math.abs(pct)}%</span>`;
+}
+
 /* ---------- overview ---------- */
 function renderOverview(stats){
   const sum = kind => stats.filter(s => s.kind === kind).reduce((a, s) => a + Number(s.hits), 0);
@@ -301,6 +358,7 @@ function renderOverview(stats){
     ['Unread requests', newq]
   ].map(([lbl, n]) => `<div class="stat"><div class="num">${n}</div><div class="lbl">${lbl}</div></div>`).join('');
 
+  renderInsights();
   renderNextSteps();
   wireViewRanges();
   drawViews();

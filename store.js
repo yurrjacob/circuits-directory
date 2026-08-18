@@ -496,6 +496,16 @@ async function setReviewStatus(id, status){
   if(error) console.error('setReviewStatus', error);
 }
 
+/* Current window, the window before it, and the view->contact->quote funnel,
+   in one round trip. Returns null on failure rather than zeros, so the portal
+   can say "unavailable" instead of quietly reporting a bad month. */
+async function companyInsights(slug, days){
+  if(!sb || !slug) return null;
+  const { data, error } = await sb.rpc('company_insights', { p_slug: slug, p_days: days || 30 });
+  if(error){ console.error('company_insights', error); return null; }
+  return (data && data[0]) || null;
+}
+
 /* ---- suspension ----
    Deliberately not deletion. A suspended company keeps every row it had, so a
    dispute can be reversed and a returning customer picks up where they left
