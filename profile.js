@@ -180,8 +180,6 @@ async function initProfile(){
         + `</a>`
       ).join('')}</div>
       <p class="pf-note">★ marks a Circuits-Keyword&trade; this company exclusively sponsors.</p>`
-      + (anyBadge ? `<p class="pf-note">Coloured labels are paid Trust Badges chosen by the
-         company &mdash; not certifications.</p>` : '')
     : '');
 
   /* ---- documents ---- */
@@ -214,8 +212,10 @@ async function initProfile(){
     .filter(c => c && (c.name || '').trim());
   const certDoc = name => docs.find(d =>
     (d.name || '').toLowerCase().includes((name || '').toLowerCase().slice(0, 12)) && (name || '').length > 3);
+  /* The tooltip carries the caveat instead of a paragraph under the list. The
+     full explanation lives in the Terms, linked once at the foot of the page. */
   html += section('Certifications & approvals', certs.length
-    ? `<ul class="pf-certs">${certs.map(c => {
+    ? `<ul class="pf-certs" title="Listed by the company. Circuits.com has not checked these.">${certs.map(c => {
         const doc = certDoc(c.name);
         return `<li><b>${escapeHtml(c.name.trim())}</b>`
           + (c.issuer ? ` — ${escapeHtml(c.issuer)}` : '')
@@ -224,8 +224,7 @@ async function initProfile(){
               ? ` <a class="doc-link" href="${escapeHtml(safeUrl(doc.url))}" target="_blank" rel="noopener nofollow">certificate</a>`
               : '')
           + `</li>`;
-      }).join('')}</ul>
-      <p class="pf-note">As stated by the company &mdash; not verified by Circuits.com.</p>` : '');
+      }).join('')}</ul>` : '');
 
   /* ---- team ---- */
   const team = Array.isArray(co.team) ? co.team : [];
@@ -294,7 +293,9 @@ async function initProfile(){
            details here have not been confirmed by the company.</p>
            <a class="btn btn-primary auth-cta" href="/claim?c=${encodeURIComponent(co.handle)}">Claim this listing</a>
          </div>`}
-  </aside></div>`;
+  </aside></div>
+  <p class="pf-source">Details, certifications and badges on this page are supplied by the company.
+    <a href="/terms#what-we-check">What Circuits.com checks</a></p>`;
 
   root.innerHTML = html;
   jsonLd(co, avg, reviews.length, site);
