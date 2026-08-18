@@ -172,6 +172,31 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
 
   // an ordinary company: badge on the listing, nothing beside the name
   assert.ok(!/lb-cx/.test(captured), 'an ordinary company is wearing the Circuits.com mark');
+  /* The star note explains a symbol. With no sponsored keyword there is no
+     symbol, and the line just advertises something the company has not bought. */
+  // the star lives on the keyword tags; the note explaining it is separate
+  const kwTags = () => (captured.match(/<div class="kw-tags[\s\S]*?<\/div>/) || [''])[0];
+  assert.ok(/★ marks a Circuits-Keyword/.test(captured),
+    'the star note is missing for a company that does sponsor a keyword');
+  assert.ok(/★/.test(kwTags()), 'the sponsored keyword lost its star');
+  {
+    const noBanner = [
+      { keyword:'analog ics', banner:false, badge:{text:'Authorized',color:'#c9a227'}, docs:[] },
+      { keyword:'voltage regulator', banner:false, badge:null, docs:[] }];
+    const saved = global.fetchCompanyKeywords;
+    global.fetchCompanyKeywords = async () => noBanner;
+    await initProfile();
+    assert.ok(!/★/.test(kwTags()),
+      'a company with no sponsored keyword is showing a star on a keyword');
+    assert.ok(!/marks a Circuits-Keyword/.test(captured),
+      'a company with no sponsor banner is still told what the star means');
+    // the section itself must survive — only the note goes
+    assert.ok(/Keyword Listings/.test(captured), 'the keyword section vanished with the note');
+    assert.ok(/kw-lb/.test(captured), 'the listing badges vanished with the note');
+    global.fetchCompanyKeywords = saved;
+    await initProfile();
+  }
+
   assert.ok(/kw-lb/.test(listings()), 'the keyword listing lost its Trust Badge');
   assert.ok(/Authorized/.test(listings()), 'the listing badge text is missing');
   assert.ok(!/Authorized/.test(heading()),
