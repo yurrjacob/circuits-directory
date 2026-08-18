@@ -258,6 +258,9 @@ async function initProfile(){
   html += `</div><aside class="pf-side">
     <div class="pf-side-card">
       <button class="btn btn-primary pf-cta" id="rfq-open">Request a Quote</button>
+      <button type="button" class="btn pf-save" id="pf-save"
+              data-slug="${escapeHtml(co.slug)}" data-handle="${escapeHtml(co.handle || '')}"
+              data-name="${escapeHtml(co.name)}">Save this supplier</button>
       <button type="button" class="pf-copy" id="pf-copy" data-url="https://circuits.com/${escapeHtml(co.handle)}">
         <span>circuits.com/${escapeHtml(co.handle)}</span><b>Copy</b>
       </button>
@@ -408,6 +411,46 @@ function wireProfile(slug, co){
   });
 
   wireCopyLink();
+  wireSave();
+}
+
+/* ---- saved suppliers ----
+   A buyer comparing five distributors needs somewhere to put them, and making
+   them create an account first would lose most of them. This lives in their
+   own browser: no account, no server, nothing sent to us, so it is not
+   tracking and needs no consent. The trade-off is honest and stated — it does
+   not follow them to another device. */
+const SAVED_KEY = 'cx_saved';
+
+function savedList(){
+  try { const v = JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'); return Array.isArray(v) ? v : []; }
+  catch(e){ return []; }
+}
+function isSaved(slug){ return savedList().some(c => c.slug === slug); }
+function toggleSaved(entry){
+  const list = savedList();
+  const i = list.findIndex(c => c.slug === entry.slug);
+  if(i >= 0) list.splice(i, 1);
+  else list.unshift({ slug: entry.slug, handle: entry.handle, name: entry.name, at: Date.now() });
+  try { localStorage.setItem(SAVED_KEY, JSON.stringify(list.slice(0, 50))); }
+  catch(e){ console.warn('could not save', e); }   // private mode, quota, etc.
+  return i < 0;
+}
+
+function wireSave(){
+  const btn = document.getElementById('pf-save');
+  if(!btn) return;
+  const entry = { slug: btn.dataset.slug, handle: btn.dataset.handle, name: btn.dataset.name };
+  const paint = () => {
+    const on = isSaved(entry.slug);
+    btn.textContent = on ? 'Saved ✓' : 'Save this supplier';
+    btn.classList.toggle('is-saved', on);
+    btn.title = on
+      ? 'Saved in this browser only. Click to remove.'
+      : 'Keeps this supplier in a list in this browser. No account needed.';
+  };
+  btn.addEventListener('click', () => { toggleSaved(entry); paint(); });
+  paint();
 }
 
 /* Copy the short link — this is what goes on adverts and email signatures.

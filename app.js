@@ -601,6 +601,30 @@ const msg = document.getElementById('msg');
     return true;
   }
 
+  /* Highlight whichever step is currently in view, and tick off the ones
+     behind it. Uses scroll position rather than IntersectionObserver so it
+     also settles correctly on first paint and after a jump-to-error. */
+  (function wireWizard(){
+    const wiz = document.getElementById('wiz');
+    if(!wiz) return;
+    const steps = [...document.querySelectorAll('.step')];
+    const items = [...wiz.querySelectorAll('li')];
+    if(!steps.length || !items.length) return;
+    function sync(){
+      const line = window.scrollY + wiz.offsetHeight + 80;   // just under the sticky bar
+      let cur = 0;
+      steps.forEach((s, i) => { if(s.offsetTop <= line) cur = i; });
+      items.forEach(li => {
+        const n = +li.dataset.step;
+        li.classList.toggle('here', n <= cur && (+items[items.indexOf(li) + 1]?.dataset.step > cur || items.indexOf(li) === items.length - 1));
+        li.classList.toggle('done', n < cur && !li.classList.contains('here'));
+      });
+    }
+    addEventListener('scroll', sync, { passive: true });
+    addEventListener('resize', sync);
+    sync();
+  })();
+
   armSpamTrap(form);
   if(form) form.addEventListener('submit', async e=>{
     e.preventDefault();

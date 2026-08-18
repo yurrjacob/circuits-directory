@@ -590,6 +590,31 @@ tr.row-warn td{background:#fff3cd}
   .cookie-bar-actions .mini-btn{flex:1}
 }
 
+/* Save a supplier — sits under the quote button, quieter than it */
+.pf-save{width:100%;margin-top:8px;font-size:.88rem}
+.pf-save.is-saved{background:#eaf3de;border-color:var(--green);color:#3b6d11;font-weight:700}
+
+/* ---- Get Listed progress ----
+   Sticky, so you always know how far in you are. It reports position; it does
+   not gate anything — hiding later steps would hide the price, and people are
+   entitled to see what it costs before filling in a form. */
+.wiz{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);
+  margin:0 0 26px;padding:10px 0}
+.wiz ol{list-style:none;display:flex;gap:6px;margin:0;padding:0;overflow-x:auto}
+.wiz li{display:flex;align-items:center;gap:7px;padding:5px 12px 5px 6px;border-radius:99px;
+  font-size:.82rem;color:var(--muted);white-space:nowrap;flex:none;transition:.15s}
+.wiz-n{width:21px;height:21px;border-radius:50%;background:var(--bg-soft);border:1px solid var(--line);
+  display:inline-flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex:none}
+.wiz li.done{color:var(--green-dark)}
+.wiz li.done .wiz-n{background:var(--green);border-color:var(--green);color:#0f0f0f}
+.wiz li.here{background:var(--bg-soft);color:var(--ink);font-weight:700}
+.wiz li.here .wiz-n{background:var(--ink);border-color:var(--ink);color:#fff}
+@media(max-width:640px){
+  .wiz{padding:8px 0;margin-bottom:18px}
+  .wiz-l{display:none}
+  .wiz li{padding:5px 6px}
+}
+
 /* Narrow phones. Everything above is fluid; these are the few components
    added later that need a hand. Verified by measurement, not by eye — see the
    fixed-width guard in tools/check.js. */
