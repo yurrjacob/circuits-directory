@@ -140,6 +140,35 @@ assert.ok(sitemap.includes('circuits.com/register'), 'sitemap is missing /regist
 assert.ok(!fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8').includes('/how-it-works'),
   'the sitemap generator would put /how-it-works back on the next build');
 
+/* --- nothing may be too wide for a phone ---
+       A single fixed width wider than the screen makes the whole page scroll
+       sideways, which is the difference between "works on mobile" and "looks
+       broken". Rules inside a media query are exempt; they are the fix. */
+{
+  const css = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
+  // remove @media bodies so only unconditional rules are inspected
+  let base = css;
+  const spans = [];
+  for (const m of css.matchAll(/@media[^{]*\{/g)) {
+    let d = 1, j = m.index + m[0].length;
+    while (j < css.length && d) { if (css[j] === '{') d++; else if (css[j] === '}') d--; j++; }
+    spans.push([m.index, j]);
+  }
+  for (const [a, b] of spans.reverse()) base = base.slice(0, a) + base.slice(b);
+
+  const BUDGET = 288;               // 320px phone, minus 16px page padding each side
+  const ALLOWED = ['.g-chart'];     // deliberately scrolls sideways inside .g-wrap
+  for (const rule of base.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
+    const sel = rule[1].replace(/\/\*[\s\S]*?\*\//g, '').trim().replace(/\s+/g, ' ');
+    if (ALLOWED.some(a => sel.includes(a))) continue;
+    // (?<![-a-z]) so max-width and min-width are not mistaken for width
+    for (const p of rule[2].matchAll(/(?<![-a-z])(min-width|width)\s*:\s*(\d+)px/g)) {
+      assert.ok(+p[2] <= BUDGET,
+        `${sel} sets ${p[1]}:${p[2]}px outside a media query — wider than a 320px phone`);
+    }
+  }
+}
+
 /* --- a paid badge must never read as a certification ---
        This is the one place where a $49 add-on could mislead a buyer into a
        purchasing decision. The database refuses the dangerous words outright;
