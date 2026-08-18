@@ -140,6 +140,38 @@ assert.ok(sitemap.includes('circuits.com/register'), 'sitemap is missing /regist
 assert.ok(!fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8').includes('/how-it-works'),
   'the sitemap generator would put /how-it-works back on the next build');
 
+/* --- the dashboard has to answer "what should I do next" ---
+       Weights are read out of portal.js rather than restated here, so this
+       tests the real numbers instead of a copy that can drift. */
+const dashSrc = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
+assert.ok(/function profileCompleteness/.test(dashSrc), 'the profile completeness meter is gone');
+assert.ok(/renderNextSteps\(\);/.test(dashSrc), 'the overview no longer renders the next-steps block');
+const fieldBlock = dashSrc.slice(dashSrc.indexOf('const PROFILE_FIELDS'), dashSrc.indexOf('function profileCompleteness'));
+const fields = [...fieldBlock.matchAll(/key:\s*'([a-z_]+)',\s*weight:\s*(\d+)/g)]
+  .map(m => ({ key: m[1], weight: +m[2] }));
+assert.ok(fields.length >= 6, `only ${fields.length} profile fields are scored`);
+const totalWeight = fields.reduce((a, f) => a + f.weight, 0);
+// an empty profile must read 0%, a full one exactly 100% — off-by-one here is
+// the difference between "you're done" and a meter that never reaches the end
+assert.strictEqual(Math.round(0 / totalWeight * 100), 0, 'an empty profile does not read 0%');
+assert.strictEqual(Math.round(totalWeight / totalWeight * 100), 100, 'a full profile never reaches 100%');
+for (const must of ['logo', 'description']) {
+  const f = fields.find(x => x.key === must);
+  assert.ok(f, `${must} is not counted towards profile completeness`);
+  assert.ok(f.weight >= Math.max(...fields.map(x => x.weight)),
+    `${must} should carry the heaviest weight — it is what a buyer judges the listing on`);
+}
+// unanswered buyers come before housekeeping
+const nextFn = dashSrc.slice(dashSrc.indexOf('function renderNextSteps'), dashSrc.indexOf('/* ---------- overview'));
+assert.ok(nextFn.indexOf('waiting for a reply') < nextFn.indexOf('missing.slice'),
+  'profile chores are listed above unanswered quote requests');
+assert.ok(/missing\.slice\(0, 3\)/.test(nextFn),
+  'the whole list of missing fields is shown at once, which just gets ignored');
+assert.ok(/\.pt-meter\{/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
+  'the completeness meter has no styling');
+assert.ok(fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8').includes('id="pt-next"'),
+  'portal.html has nowhere to put the next-steps block');
+
 /* --- a supplier's reply has to actually reach the buyer ---
        sendFounderEmail() reads fields.email to set _replyto and to address the
        auto-response. The reply payload once called that field buyer_email, so
@@ -493,6 +525,9 @@ require('./render-check.js');
    silently tested the wrong stubs. */
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'failure-check.js')], { stdio: 'inherit' });
+// same reason: it evaluates part of portal.js and must not share globals
+require('child_process').execFileSync(process.execPath,
+  [require('path').join(__dirname, 'completeness-check.js')], { stdio: 'inherit' });
 
 /* --- a profile field only renders when the value fits the field ---
        Junk in the phone box used to emit a dead tel: link, and a pasted URL in
