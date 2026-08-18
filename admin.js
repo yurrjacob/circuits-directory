@@ -21,12 +21,10 @@ const panels = {
 const approved = () => allApps.filter(a=>a.status==='Approved');
 const pending  = () => allApps.filter(a=>a.status==='Pending');
 /* Renders the same way the public site does: our own mark is distinct from a
-   paid Trust Badge, so staff see exactly what a buyer sees. */
-const isCxBadge = b => !!b && /^circuits\.com$/i.test((b.text || '').trim());
+   paid Trust Badge chosen for that one keyword, and there is no other kind:
+   our own team mark is not a badge and never sits on a listing. */
 const badgeTag = b => !b ? '—'
-  : isCxBadge(b)
-    ? `<span class="lb lb-cx" title="Circuits.com team"><img class="lb-cx-mark" src="/assets/favicon.png" alt="" aria-hidden="true">Circuits.com</span>`
-    : `<span class="lb" style="background:${esc(b.color)}">${esc(b.text)}</span>`;
+  : `<span class="lb" style="background:${esc(b.color)}">${esc(b.text)}</span>`;
 
 /* A keyword can only carry ONE live Exclusive Sponsor banner. An app conflicts
    when it wants a banner on a keyword that another APPROVED listing already
@@ -60,9 +58,8 @@ function actionsCell(l){
    Two things live here that the public form cannot do: free text of our
    choosing, and the Circuits.com mark itself. The database is what actually
    enforces that — guard_verified_badge() refuses "Circuits.com", "Verified"
-   and anything claiming a certification from a non-staff caller — so this is
-   the convenience, not the control. */
-const CX_BADGE = { text: 'Circuits.com', color: '#0f0f0f' };
+   and anything claiming a certification from ANY caller, staff included — so
+   this is the convenience, not the control. */
 
 async function editBadge(id){
   const l = all.find(a => a.id === id);
@@ -70,23 +67,19 @@ async function editBadge(id){
   const cur = l.badge && l.badge.text ? l.badge.text : '';
   const answer = prompt(
     'Badge for ' + l.company + (l.keyword ? ' — ' + l.keyword : '') + '\n\n'
-    + 'Type a label, or:\n'
-    + '  cx     the Circuits.com team badge (our mark, staff only)\n'
-    + '  blank  remove the badge\n\n'
-    + 'Anything claiming a certification (ISO, Certified, Approved…) will be refused.',
+    + 'Type a label, or leave it blank to remove the badge.\n\n'
+    + 'A Trust Badge is a paid label for this one keyword. Anything claiming a\n'
+    + 'certification (ISO, Certified, Approved…) will be refused, and so will\n'
+    + '"Circuits.com" — our mark belongs to the account, not to a listing.',
     cur);
   if(answer === null) return;
 
   const text = answer.trim();
   let badge = null;
   if(text){
-    if(/^cx$/i.test(text) || /^circuits\.com$/i.test(text)){
-      badge = { ...CX_BADGE };
-    } else {
-      const color = prompt('Badge colour (hex)', (l.badge && l.badge.color) || '#c9a227');
-      if(color === null) return;
-      badge = { text: text.slice(0, 18), color: /^#[0-9a-f]{6}$/i.test(color.trim()) ? color.trim() : '#c9a227' };
-    }
+    const color = prompt('Badge colour (hex)', (l.badge && l.badge.color) || '#c9a227');
+    if(color === null) return;
+    badge = { text: text.slice(0, 18), color: /^#[0-9a-f]{6}$/i.test(color.trim()) ? color.trim() : '#c9a227' };
   }
   const err = await updateApplication(id, { badge });
   if(err){

@@ -146,7 +146,7 @@ async function initProfile(){
   <div class="pf-head">
     <div class="pf-logo">${logo}</div>
     <div class="pf-id">
-      <h1>${escapeHtml(co.name)}${staffRun ? ' ' + badgeHtml({ text: 'Circuits.com' }) : ''}${claimed ? '' : ' <span class="lb lb-unclaimed">Unclaimed</span>'}</h1>
+      <h1>${escapeHtml(co.name)}${staffRun ? ' ' + teamMarkHtml() : ''}${claimed ? '' : ' <span class="lb lb-unclaimed">Unclaimed</span>'}</h1>
       ${co.tagline ? `<p class="pf-tagline">${escapeHtml(co.tagline)}</p>` : ''}
       <div class="pf-meta">
         ${reviews.length ? `<span class="pf-rating">${stars(avg)} ${avg.toFixed(1)} <i>(${reviews.length})</i></span>` : ''}
@@ -172,7 +172,7 @@ async function initProfile(){
      is deliberately plain; a subtle visual difference alone would not do it. */
   // the note is about PAID badges; our own mark is not one, so it must not
   // trigger a disclaimer saying the company chose and paid for it
-  const anyBadge = kws.some(k => k.badge && !isCircuitsBadge(k.badge));
+  const anyBadge = kws.some(k => k.badge && k.badge.text);
   html += section('Keyword Listings', kws.length
     ? `<div class="kw-tags pf-kws">${kws.map(k =>
         `<a class="kw-tag" href="/results?q=${encodeURIComponent(k.keyword)}">${escapeHtml(k.keyword)}${k.banner ? ' ★' : ''}`
