@@ -104,9 +104,10 @@ const MUST_REDIRECT = [
       const { body } = await get(p);
       if (!body.includes('<footer class="footer">')) { fail(`${p} has no footer`); continue; }
       const foot = body.slice(body.indexOf('<footer class="footer">'));
-      const links = ['/directory', '/terms', '/privacy', '/login'].filter(h => !foot.includes(`href="${h}"`));
-      if (links.length) fail(`${p} footer is missing ${links.join(', ')}`);
-      else pass(p);
+      const links = ['/directory', '/terms', '/privacy'].filter(h => !foot.includes(`href="${h}"`));
+      if (links.length) { fail(`${p} footer is missing ${links.join(', ')}`); continue; }
+      if (/Staff Login/i.test(foot)) { fail(`${p} footer advertises the staff login`); continue; }
+      pass(p);
     } catch (e) { fail(`${p} threw ${e.message}`); }
   }
 

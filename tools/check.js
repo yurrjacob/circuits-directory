@@ -390,9 +390,12 @@ for (const f of NAV_PAGES) {
   const foot = (src.match(/<footer class="footer">[\s\S]*?<\/footer>/) || [null])[0];
   if (!foot) continue;
   footChecked++;
-  for (const href of ['/terms', '/privacy', '/directory', '/login']) {
+  for (const href of ['/terms', '/privacy', '/directory']) {
     assert.ok(foot.includes(`href="${href}"`), `${f} footer is missing ${href}`);
   }
+  // staff sign-in is not advertised to the public; /login stays reachable directly
+  assert.ok(!foot.includes('href="/login"'), `${f} footer advertises the staff login`);
+  assert.ok(!/Staff Login/i.test(foot), `${f} footer still names Staff Login`);
   // the logo already goes home; a Home link here is dead weight
   assert.ok(!/>Home</.test(foot), `${f} footer still carries a redundant Home link`);
   assert.ok(!foot.includes('Profile Login'), `${f} footer still shows Profile Login`);
@@ -487,14 +490,21 @@ assert.ok(storeReset.includes('function companyClaimed'), 'store.js is missing c
 assert.ok(/return true;\s*\/\/ fail closed/.test(storeReset),
   'companyClaimed must fail closed, or an outage would label real listings unclaimed');
 
-/* --- the footer is the staff door; the header is everyone else's --- */
+/* --- the footer carries legal links only ---
+       Staff sign-in used to be advertised here. It is not any more: /login is
+       still reachable directly and staff bookmark it, but pointing every
+       visitor at an admin door invites people to rattle the handle. */
 for (const f of NAV_PAGES) {
   const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
   const foot = (src.match(/<footer class="footer">[\s\S]*?<\/footer>/) || [null])[0];
   if (!foot) continue;
   assert.ok(!foot.includes('Profile Login'), `${f} footer still shows Profile Login`);
-  assert.ok(foot.includes('Staff Login'), `${f} footer is missing Staff Login`);
+  assert.ok(!/Staff Login/i.test(foot), `${f} footer advertises the staff login`);
+  assert.ok(!foot.includes('href="/login"'), `${f} footer links to the staff login`);
 }
+// but the page itself must still exist, or staff cannot get in at all
+assert.ok(fs.readFileSync(path.join(ROOT, 'login.html'), 'utf8').includes('id="submit-btn"'),
+  'the staff login page is gone, so staff have no way in');
 
 /* --- the URL form of a handle must accept underscores, or circuits.com/aaa_electronics
        never resolves through the 404 fallback --- */
