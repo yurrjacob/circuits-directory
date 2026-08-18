@@ -57,7 +57,7 @@
     </div>
     <div class="auth-note" id="pt-none-staff" style="display:none;border-left:3px solid var(--green);padding-left:10px">
       This address is on the Circuits.com staff list. The supplier portal only ever shows companies you
-      personally own &mdash; to manage listings across the directory, use the <a href="/admin">admin console</a>.
+      personally own. If you are on the Circuits.com team, the Admin tab appears once you sign in.
     </div>
     <div class="auth-foot"><a href="#" onclick="signOut().then(()=>location.reload());return false">Sign out</a></div>
   </div>
@@ -85,6 +85,8 @@
     <button class="pt-tab" data-tab="inquiries">Quote requests</button>
     <button class="pt-tab" data-tab="promote">Promote</button>
     <button class="pt-tab" data-tab="reviews">Reviews</button>
+    <!-- shown by portal.js only when the signed-in account is a Circuits.com admin -->
+    <button class="pt-tab" data-tab="admin" id="pt-tab-admin" style="display:none">Admin</button>
   </div>
 
   <!-- overview -->
@@ -219,6 +221,198 @@
     <p class="pf-note" id="pt-reviews-note"></p>
     <div class="pt-list" id="pt-reviews"></div>
   </section>
+
+  <!-- admin: only rendered for staff, and every action behind it is enforced
+       by the database, not by this tab being hidden -->
+  <section class="pt-panel" id="tab-admin">
+  <div class="console-head admin-head">
+    <div>
+      <h1>Admin console</h1>
+      <p>Every keyword listing, banner and application across Circuits.com.</p>
+    </div>
+    <a class="mini-btn green" href="applications">View Website Applications →</a>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat"><div class="num" id="s-listings">0</div><div class="lbl">Keyword Listings</div></div>
+    <div class="stat"><div class="num" id="s-companies">0</div><div class="lbl">Companies</div></div>
+    <div class="stat"><div class="num" id="s-sponsored">0</div><div class="lbl">Sponsored Banners</div></div>
+    <div class="stat"><div class="num" id="s-pending">0</div><div class="lbl">Pending Applications</div></div>
+  </div>
+
+  <!-- Keyword Listings -->
+  <div class="panel">
+    <div class="panel-head"><h2>Keyword Listings</h2><span class="hint">Live Keywords List</span></div>
+    <div class="panel-body">
+      <div id="edit-form" class="listing-form" style="display:none">
+        <div class="form-row" style="margin-bottom:12px">
+          <div class="auth-field"><label>Company</label><input id="e-company" type="text" disabled></div>
+          <div class="auth-field"><label>Keyword</label><input id="e-keyword" type="text"></div>
+          <div class="auth-field"><label>Fee</label><input id="e-fee" type="text" placeholder="$49/mo"></div>
+          <div class="auth-field"><label>Status</label>
+            <select id="e-status"><option>Approved</option><option>Pending</option><option>Denied</option></select>
+          </div>
+        </div>
+        <div class="form-row" style="align-items:center">
+          <div class="auth-field"><label>Badge</label>
+            <!-- Certified and Verified were here; the database refuses both now,
+                 so offering them only produced an error. Circuits.com is ours
+                 and is staff-only, which is why it appears here and not on the
+                 public Get Listed form. -->
+            <select id="e-badge"><option value="">None</option><option>Circuits.com</option><option>Authorized</option><option>Featured</option><option>Preferred</option><option>Specialist</option><option>Premium</option></select>
+          </div>
+          <div class="auth-field"><label>Badge Color</label>
+            <select id="e-color">
+              <option value="#c9a227">Gold</option><option value="#b06c22">Bronze</option><option value="#5d6a7e">Steel</option>
+            </select>
+          </div>
+          <label class="terms" style="margin:0;align-self:center"><input id="e-banner" type="checkbox"> <span>Exclusive Circuits-Keyword™ Sponsor</span></label>
+          <div style="display:flex;gap:8px;align-self:flex-end">
+            <button class="mini-btn green" id="e-save" type="button" style="height:42px">Save Changes</button>
+            <button class="mini-btn" id="e-cancel" type="button" style="height:42px">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <div class="list-controls" data-panel="listings">
+        <span class="lc-label">Sort</span>
+        <button type="button" class="mini-btn sort-btn active" data-sort="company">Company</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="keyword">Keyword</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="fee">Fee</button>
+        <span class="lc-label">Show</span>
+        <input class="lc-limit" type="number" min="1" max="500" value="50">
+      </div>
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Keyword</th><th>Fee</th><th>Banner</th><th>Badge</th><th>Actions</th></tr></thead>
+          <tbody id="listings-body"></tbody>
+        </table>
+      </div>
+      <div id="listings-empty" class="empty-line" style="display:none">No keyword listings yet.</div>
+    </div>
+  </div>
+
+  <!-- Keywords With Banners -->
+  <div class="panel">
+    <div class="panel-head"><h2>Keywords With Banners</h2><span class="hint">Live Keywords Running A Sponsor Banner</span></div>
+    <div class="panel-body">
+      <div class="list-controls" data-panel="banners">
+        <span class="lc-label">Sort</span>
+        <button type="button" class="mini-btn sort-btn active" data-sort="company">Company</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="keyword">Keyword</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="fee">Fee</button>
+        <span class="lc-label">Show</span>
+        <input class="lc-limit" type="number" min="1" max="500" value="50">
+      </div>
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Keyword</th><th>Fee</th><th>Actions</th></tr></thead>
+          <tbody id="banners-body"></tbody>
+        </table>
+      </div>
+      <div id="banners-empty" class="empty-line" style="display:none">No keywords are running a banner.</div>
+    </div>
+  </div>
+
+  <!-- Keywords With Badges -->
+  <div class="panel">
+    <div class="panel-head"><h2>Keywords With Badges</h2><span class="hint">Live Keywords Showing A Trust Badge</span></div>
+    <div class="panel-body">
+      <div class="list-controls" data-panel="badges">
+        <span class="lc-label">Sort</span>
+        <button type="button" class="mini-btn sort-btn active" data-sort="company">Company</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="keyword">Keyword</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="fee">Fee</button>
+        <span class="lc-label">Show</span>
+        <input class="lc-limit" type="number" min="1" max="500" value="50">
+      </div>
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Keyword</th><th>Fee</th><th>Badge</th><th>Actions</th></tr></thead>
+          <tbody id="badges-body"></tbody>
+        </table>
+      </div>
+      <div id="badges-empty" class="empty-line" style="display:none">No keywords are showing a badge.</div>
+    </div>
+  </div>
+
+  <!-- Pending applications -->
+  <div class="panel">
+    <div class="panel-head"><h2>Pending Applications</h2><span class="hint">Each Keyword Awaiting Review</span></div>
+    <div class="panel-body">
+      <div class="list-controls" data-panel="pending">
+        <span class="lc-label">Sort</span>
+        <button type="button" class="mini-btn sort-btn active" data-sort="company">Company</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="keyword">Keyword</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="fee">Fee</button>
+        <span class="lc-label">Show</span>
+        <input class="lc-limit" type="number" min="1" max="500" value="50">
+      </div>
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Keyword</th><th>Email</th><th>Banner</th><th>Badge</th><th>Actions</th></tr></thead>
+          <tbody id="pending-body"></tbody>
+        </table>
+      </div>
+      <div id="pending-empty" class="empty-line" style="display:none">No Applications Pending. All Caught Up.</div>
+    </div>
+  </div>
+
+  <!-- Profile claims -->
+  <div class="panel">
+    <div class="panel-head"><h2>Profile Claims</h2><span class="hint">Approving A Claim Grants Portal Access</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Claimant</th><th>Email</th><th>Evidence</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="claims-body"></tbody>
+        </table>
+      </div>
+      <div id="claims-empty" class="empty-line" style="display:none">No Profile Claims.</div>
+    </div>
+  </div>
+
+  <!-- Companies: the only place suspension can be applied or lifted -->
+  <div class="panel">
+    <div class="panel-head"><h2>Companies</h2><span class="hint" id="companies-hint">Suspend Hides A Listing Without Deleting Anything</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Address</th><th>Email</th><th>State</th><th>Actions</th></tr></thead>
+          <tbody id="companies-body"></tbody>
+        </table>
+      </div>
+      <div id="companies-empty" class="empty-line" style="display:none">No Companies Yet.</div>
+    </div>
+  </div>
+
+  <!-- Audit log: append-only, including our own actions -->
+  <div class="panel">
+    <div class="panel-head"><h2>Staff Audit Log</h2><span class="hint">Append-Only &mdash; Cannot Be Edited Or Deleted, Including By Us</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>When</th><th>Who</th><th>Action</th><th>Target</th><th>Detail</th></tr></thead>
+          <tbody id="audit-body"></tbody>
+        </table>
+      </div>
+      <div id="audit-empty" class="empty-line" style="display:none">Nothing Logged Yet.</div>
+    </div>
+  </div>
+
+  <!-- Review moderation -->
+  <div class="panel">
+    <div class="panel-head"><h2>Buyer Reviews</h2><span class="hint">Companies Cannot Approve Their Own</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Rating</th><th>Author</th><th>Review</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="reviews-body"></tbody>
+        </table>
+      </div>
+      <div id="reviews-empty" class="empty-line" style="display:none">No Reviews Submitted.</div>
+    </div>
+  </div>
+  </section>
 </main>
 
 <footer class="footer">
@@ -240,6 +434,7 @@
 <script src="/store.js"></script>
 <script src="/app.js"></script>
 <script src="/portal.js"></script>
+<script src="/admin.js"></script>
 <script>
 document.getElementById('pt-save').addEventListener('click', saveProfile);
 initPortal();

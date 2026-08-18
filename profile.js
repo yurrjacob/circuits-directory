@@ -122,8 +122,8 @@ async function initProfile(){
   }
 
   const slug = co.slug;   // internal key: everything else still hangs off this
-  const [kws, reviews, claimed] = await Promise.all([
-    fetchCompanyKeywords(slug), fetchReviews(slug), companyClaimed(slug)
+  const [kws, reviews, claimed, staffRun] = await Promise.all([
+    fetchCompanyKeywords(slug), fetchReviews(slug), companyClaimed(slug), companyRunByStaff(slug)
   ]);
 
   const docs = [];
@@ -146,7 +146,7 @@ async function initProfile(){
   <div class="pf-head">
     <div class="pf-logo">${logo}</div>
     <div class="pf-id">
-      <h1>${escapeHtml(co.name)}${claimed ? '' : ' <span class="lb lb-unclaimed">Unclaimed</span>'}</h1>
+      <h1>${escapeHtml(co.name)}${staffRun ? ' ' + badgeHtml({ text: 'Circuits.com' }) : ''}${claimed ? '' : ' <span class="lb lb-unclaimed">Unclaimed</span>'}</h1>
       ${co.tagline ? `<p class="pf-tagline">${escapeHtml(co.tagline)}</p>` : ''}
       <div class="pf-meta">
         ${reviews.length ? `<span class="pf-rating">${stars(avg)} ${avg.toFixed(1)} <i>(${reviews.length})</i></span>` : ''}

@@ -371,6 +371,13 @@ tr.row-warn td{background:#fff3cd}
 .badge-cell .badge-color{width:26px;height:20px;border:1px solid var(--line);border-radius:4px;background:none;padding:0;vertical-align:middle;cursor:pointer}
 /* uploaded logo thumbnail in the applications sheet */
 .logo-thumb{width:30px;height:30px;object-fit:cover;border:1px solid var(--line);border-radius:6px;background:#fff;vertical-align:middle}
+/* An admin who runs no listing of their own gets the console on its own —
+   the company picker and the supplier tabs would have nothing to point at. */
+.pt-admin-only .pt-tab:not(#pt-tab-admin){display:none}
+.pt-admin-only .console-head p,
+.pt-admin-only #pt-company,
+.pt-admin-only #pt-view{display:none}
+.admin-head{margin-top:4px}
 /* one quiet line at the foot of a profile, in place of notes under each section */
 .pf-source{margin:22px 0 0;font-size:12px;color:var(--muted);text-align:center}
 .pf-source a{color:var(--muted);text-decoration:underline}

@@ -265,6 +265,16 @@ async function companyClaimed(slug){
   return !!data;
 }
 
+/* A profile run by a Circuits.com admin carries our own mark. Fail closed the
+   other way round from companyClaimed: if we cannot tell, do not award the
+   badge — wrongly claiming a listing is ours is worse than missing one. */
+async function companyRunByStaff(slug){
+  if(!sb || !slug) return false;
+  const { data, error } = await sb.rpc('company_run_by_staff', { p_slug: slug });
+  if(error){ console.error('company_run_by_staff', error); return false; }
+  return !!data;
+}
+
 /* ---- profiles: a person, separate from any company listing ---- */
 async function fetchProfileByHandle(handle){
   if(!sb || !handle) return null;
@@ -585,15 +595,16 @@ async function suspendProfile(handle, suspend, reason){
 /* ---- logo + gallery image storage (public bucket "logos") ---- */
 async function uploadImage(file){ return uploadLogo(file); }
 
-/* Redirect to login unless the visitor is a signed-in staff member. */
+/* Send anyone who is not a signed-in admin back to the portal. There is one
+   sign-in for the whole site now; admin is a property of the account. */
 async function requireStaff(){
   const user = await currentUser();
-  if(!user){ location.href = 'login'; return false; }
+  if(!user){ location.href = 'portal'; return false; }
   const staff = await checkStaff();
   if(!staff){
     document.body.innerHTML = '<div style="max-width:520px;margin:80px auto;font-family:Arial,sans-serif;text-align:center;color:#1a1a1a">'
       + '<h2>Not authorized</h2><p style="color:#5f6368">This account isn’t on the Circuits.com staff list. '
-      + 'Sign in with an approved staff email.</p><p><a href="login" style="color:#5f9b00;font-weight:600">Back to sign in</a></p></div>';
+      + 'Sign in with an account that has admin.</p><p><a href="portal" style="color:#5f9b00;font-weight:600">Back to your profile</a></p></div>';
     return false;
   }
   return true;

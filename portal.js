@@ -69,9 +69,16 @@ async function initPortal(){
     el('pt-none-email').textContent = user.email;
     renderMyProfile(me);
     renderAccount(user);
-    /* Staff are not suppliers. Without this they just see "no company linked"
-       and assume the portal is broken. */
-    if(await checkStaff()) show('pt-none-staff', true);
+    /* An admin does not have to run a listing. Give them the console on its
+       own rather than a "no company linked" page that looks broken. */
+    if(await checkStaff()){
+      show('pt-none', false); show('pt-app', true);
+      document.body.classList.add('pt-admin-only');
+      wireTabs();
+      await wireAdminTab();
+      const t = el('pt-tab-admin');
+      if(t) t.click();
+    }
     return;
   }
   show('pt-auth', false); show('pt-none', false); show('pt-app', true);
@@ -105,7 +112,17 @@ async function initPortal(){
   });
 
   wireTabs();
+  await wireAdminTab();
   await loadCompany(cos[0].slug);
+}
+
+/* Admin is something an account has, not a separate login. The tab is hidden
+   for everyone else — but hiding a tab is presentation, not security: every
+   action inside it is refused by the database unless is_staff() is true. */
+async function wireAdminTab(){
+  if(!(await checkStaff())) return false;
+  show('pt-tab-admin', true);
+  return true;
 }
 
 /* Sign in. Registration is open to anyone at /register (a listing still needs
@@ -157,6 +174,9 @@ function wireTabs(){
        New for ever unless the supplier remembers to touch the dropdown, so the
        unread count stops meaning anything and gets ignored. */
     if(b.dataset.tab === 'inquiries') markInquiriesSeen();
+    /* The console loads nothing until an admin actually opens it — a company
+       owner who never sees this tab never fetches a row of anyone else's data. */
+    if(b.dataset.tab === 'admin' && typeof initAdmin === 'function') initAdmin();
   }));
   el('pt-signout').addEventListener('click', async e => {
     e.preventDefault();
