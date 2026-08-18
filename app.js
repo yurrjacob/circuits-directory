@@ -56,6 +56,27 @@ function fakeSuccess(form, message){
   form.innerHTML = '<div class="success show">' + (message || 'Thanks — your message has been sent.') + '</div>';
 }
 
+/* ---- the Circuits.com badge ----
+   Our own mark, put on listings we run ourselves. It is not for sale at any
+   price: guard_verified_badge() in the database refuses the text "Circuits.com"
+   from anyone who is not staff, so this can only ever come from the admin
+   panel. Rendered with the C mark and a plain hover explanation, because a
+   buyer seeing our name against a listing is entitled to know why. */
+function isCircuitsBadge(badge){
+  return !!badge && /^circuits\.com$/i.test((badge.text || '').trim());
+}
+function badgeHtml(badge, extraClass){
+  if(!badge || !badge.text) return '';
+  const cls = 'lb' + (extraClass ? ' ' + extraClass : '');
+  if(isCircuitsBadge(badge)){
+    return `<span class="${cls} lb-cx" title="Circuits.com team — this listing is run by the Circuits.com team, not a paying advertiser.">`
+      + `<img class="lb-cx-mark" src="/assets/favicon.png" alt="" aria-hidden="true">Circuits.com</span>`;
+  }
+  return `<span class="${cls}" style="background:${escapeHtml(badge.color || '#c9a227')}"`
+    + ` title="Trust Badge — a paid label chosen by this company. It is not a certification and Circuits.com has not assessed it.">`
+    + `${escapeHtml(badge.text)}</span>`;
+}
+
 /* Shown when a lookup fails, as opposed to succeeding and finding nothing.
    Those two are very different messages and conflating them is how a visitor
    ends up being told a keyword is for sale when it is simply unreachable. */
@@ -244,7 +265,7 @@ async function initResults(forcedTerm){
           ${c.company_handle
             ? `<a href="${escapeHtml(profileUrl(c.company_handle))}">${escapeHtml(c.company)}</a>`
             : escapeHtml(c.company)}
-          ${c.badge ? `<span class="lb" style="background:${escapeHtml(c.badge.color)}">${escapeHtml(c.badge.text)}</span>` : ''}
+          ${badgeHtml(c.badge)}
           ${c.website ? `<a class="doc-link" href="${escapeHtml(c.website)}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
           ${docLinks(c)}
         </div>

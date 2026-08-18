@@ -48,7 +48,11 @@
         </div>
         <div class="form-row" style="align-items:center">
           <div class="auth-field"><label>Badge</label>
-            <select id="e-badge"><option value="">None</option><option>Authorized</option><option>Certified</option><option>Featured</option><option>Verified</option><option>Premium</option></select>
+            <!-- Certified and Verified were here; the database refuses both now,
+                 so offering them only produced an error. Circuits.com is ours
+                 and is staff-only, which is why it appears here and not on the
+                 public Get Listed form. -->
+            <select id="e-badge"><option value="">None</option><option>Circuits.com</option><option>Authorized</option><option>Featured</option><option>Preferred</option><option>Specialist</option><option>Premium</option></select>
           </div>
           <div class="auth-field"><label>Badge Color</label>
             <select id="e-color">
@@ -235,7 +239,13 @@ $('signout').addEventListener('click', async e=>{ e.preventDefault(); await sign
 
 const approved = () => allApps.filter(a=>a.status==='Approved');
 const pending  = () => allApps.filter(a=>a.status==='Pending');
-const badgeTag = b => b ? `<span class="lb" style="background:${esc(b.color)}">${esc(b.text)}</span>` : '—';
+/* Renders the same way the public site does: our own mark is distinct from a
+   paid Trust Badge, so staff see exactly what a buyer sees. */
+const isCxBadge = b => !!b && /^circuits\.com$/i.test((b.text || '').trim());
+const badgeTag = b => !b ? '—'
+  : isCxBadge(b)
+    ? `<span class="lb lb-cx" title="Circuits.com team"><img class="lb-cx-mark" src="/assets/favicon.png" alt="" aria-hidden="true">Circuits.com</span>`
+    : `<span class="lb" style="background:${esc(b.color)}">${esc(b.text)}</span>`;
 
 /* A keyword can only carry ONE live Exclusive Sponsor banner. An app conflicts
    when it wants a banner on a keyword that another APPROVED listing already
@@ -259,9 +269,51 @@ const view = (rows, panel) => sortRows(rows, panels[panel].sort).slice(0, panels
 function actionsCell(l){
   return `<td class="row-actions">
     <button class="mini-btn" onclick="editListing('${l.id}')">Edit</button>
+    <button class="mini-btn" onclick="editBadge('${l.id}')">Badge</button>
     <button class="mini-btn danger" onclick="removeListing('${l.id}')">Remove</button>
     <button class="mini-btn" onclick="togglePause('${l.id}')">${l.paused?'Unpause':'Pause'}</button>
   </td>`;
+}
+
+/* ---- badge editor (staff only) ----
+   Two things live here that the public form cannot do: free text of our
+   choosing, and the Circuits.com mark itself. The database is what actually
+   enforces that — guard_verified_badge() refuses "Circuits.com", "Verified"
+   and anything claiming a certification from a non-staff caller — so this is
+   the convenience, not the control. */
+const CX_BADGE = { text: 'Circuits.com', color: '#0f0f0f' };
+
+async function editBadge(id){
+  const l = all.find(a => a.id === id);
+  if(!l) return;
+  const cur = l.badge && l.badge.text ? l.badge.text : '';
+  const answer = prompt(
+    'Badge for ' + l.company + (l.keyword ? ' — ' + l.keyword : '') + '\n\n'
+    + 'Type a label, or:\n'
+    + '  cx     the Circuits.com team badge (our mark, staff only)\n'
+    + '  blank  remove the badge\n\n'
+    + 'Anything claiming a certification (ISO, Certified, Approved…) will be refused.',
+    cur);
+  if(answer === null) return;
+
+  const text = answer.trim();
+  let badge = null;
+  if(text){
+    if(/^cx$/i.test(text) || /^circuits\.com$/i.test(text)){
+      badge = { ...CX_BADGE };
+    } else {
+      const color = prompt('Badge colour (hex)', (l.badge && l.badge.color) || '#c9a227');
+      if(color === null) return;
+      badge = { text: text.slice(0, 18), color: /^#[0-9a-f]{6}$/i.test(color.trim()) ? color.trim() : '#c9a227' };
+    }
+  }
+  const err = await updateApplication(id, { badge });
+  if(err){
+    // the database refuses misleading badges even from staff-facing code paths
+    alert('Could not set that badge:\n\n' + (err.message || err));
+    return;
+  }
+  await reload();
 }
 
 function renderStats(){

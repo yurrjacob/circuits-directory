@@ -170,19 +170,18 @@ async function initProfile(){
      one. A buyer deciding who to trust must be able to tell the difference
      between this and a certification somebody actually assessed. The wording
      is deliberately plain; a subtle visual difference alone would not do it. */
-  const anyBadge = kws.some(k => k.badge);
+  // the note is about PAID badges; our own mark is not one, so it must not
+  // trigger a disclaimer saying the company chose and paid for it
+  const anyBadge = kws.some(k => k.badge && !isCircuitsBadge(k.badge));
   html += section('Keyword Listings', kws.length
     ? `<div class="kw-tags pf-kws">${kws.map(k =>
         `<a class="kw-tag" href="/results?q=${encodeURIComponent(k.keyword)}">${escapeHtml(k.keyword)}${k.banner ? ' ★' : ''}`
-        + (k.badge ? `<span class="lb kw-lb" style="background:${escapeHtml(k.badge.color)}"
-             title="Trust Badge — a paid label chosen by this company. It is not a certification and Circuits.com has not assessed it."
-             >${escapeHtml(k.badge.text)}</span>` : '')
+        + badgeHtml(k.badge, 'kw-lb')
         + `</a>`
       ).join('')}</div>
       <p class="pf-note">★ marks a Circuits-Keyword&trade; this company exclusively sponsors.</p>`
-      + (anyBadge ? `<p class="pf-note pf-badge-note">Coloured labels are <b>Trust Badges</b> &mdash;
-         paid labels chosen by the company. They are not certifications, and Circuits.com has not
-         assessed them.</p>` : '')
+      + (anyBadge ? `<p class="pf-note">Coloured labels are paid Trust Badges chosen by the
+         company &mdash; not certifications.</p>` : '')
     : '');
 
   /* ---- documents ---- */
@@ -207,13 +206,18 @@ async function initProfile(){
      when the company has actually attached a certificate. Presenting an
      unchecked claim as established fact would be the same mistake the Trust
      Badge used to make. */
-  const certs = Array.isArray(co.certifications) ? co.certifications : [];
+  /* section() escapes the title, so pass a plain ampersand — passing &amp;
+     here rendered literally as "Certifications &amp; approvals" on the page.
+     Rows with no name are dropped: the repeater leaves blanks behind, and an
+     empty <li> shows up as a stray bullet. */
+  const certs = (Array.isArray(co.certifications) ? co.certifications : [])
+    .filter(c => c && (c.name || '').trim());
   const certDoc = name => docs.find(d =>
     (d.name || '').toLowerCase().includes((name || '').toLowerCase().slice(0, 12)) && (name || '').length > 3);
-  html += section('Certifications &amp; approvals', certs.length
+  html += section('Certifications & approvals', certs.length
     ? `<ul class="pf-certs">${certs.map(c => {
         const doc = certDoc(c.name);
-        return `<li><b>${escapeHtml(c.name || '')}</b>`
+        return `<li><b>${escapeHtml(c.name.trim())}</b>`
           + (c.issuer ? ` — ${escapeHtml(c.issuer)}` : '')
           + (c.year ? ` (${escapeHtml(String(c.year))})` : '')
           + (doc && doc.url
@@ -221,8 +225,7 @@ async function initProfile(){
               : '')
           + `</li>`;
       }).join('')}</ul>
-      <p class="pf-note pf-claimed-note">Stated by ${escapeHtml(co.name)}. Circuits.com has not
-      independently verified these. Ask for the certificate before relying on one.</p>` : '');
+      <p class="pf-note">As stated by the company &mdash; not verified by Circuits.com.</p>` : '');
 
   /* ---- team ---- */
   const team = Array.isArray(co.team) ? co.team : [];
