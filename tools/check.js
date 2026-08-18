@@ -217,22 +217,49 @@ assert.ok(/paid label chosen by this company/i.test(badgeApp),
 assert.ok(/not a certification/i.test(badgeApp),
   'the badge no longer states that it is not a certification');
 
-/* The Circuits.com badge is ours, not a paid one. It must be visually distinct,
-   explain itself on hover, and never pick up the paid-label disclaimer. */
-assert.ok(/function isCircuitsBadge/.test(badgeApp), 'the Circuits.com badge helper is gone');
-assert.ok(/lb-cx-mark/.test(badgeApp), 'the Circuits.com badge no longer shows the logo mark');
+/* The Circuits.com mark is NOT a badge. A badge is a paid label a company
+   picks for one keyword listing, and the same company may pick a different one
+   on another keyword — so a badge only ever renders against a listing. Our mark
+   belongs to the account and renders beside the name. Keeping these two apart
+   is the whole point; badgeHtml() must not know about our mark at all. */
+assert.ok(/function teamMarkHtml/.test(badgeApp), 'the team mark renderer is gone');
+assert.ok(/lb-cx-mark/.test(badgeApp), 'the team mark no longer shows the logo mark');
 assert.ok(/Circuits\.com team/i.test(badgeApp),
-  'hovering the Circuits.com badge no longer identifies it as the Circuits.com team');
+  'hovering the team mark no longer identifies it as the Circuits.com team');
+{
+  // badgeHtml() must be paid-badge-only: no branch for our own mark
+  const from = badgeApp.indexOf('function badgeHtml');
+  const body = badgeApp.slice(from, badgeApp.indexOf('\n}', from));
+  assert.ok(!/lb-cx/.test(body), 'a Trust Badge can still render as the team mark');
+  assert.ok(!/\^circuits\\?\.com\$/i.test(body) && !/isCircuitsBadge/.test(body),
+    'badgeHtml() still branches on the badge text being our mark — it is not a badge');
+  assert.ok(!/favicon/.test(body), 'a Trust Badge can still render our logo');
+}
+assert.ok(!/function isCircuitsBadge/.test(badgeApp),
+  'isCircuitsBadge() is back — the team mark is not a kind of badge any more');
+
 const badgeProf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
-assert.ok(/!isCircuitsBadge\(k\.badge\)/.test(badgeProf),
-  'the paid-badge disclaimer would also appear for our own Circuits.com badge');
-// and it can only ever come from staff — the database refuses it from anyone else
+// the mark goes beside the name, and nothing else does
+assert.ok(/<h1>[^`]*teamMarkHtml\(\)/.test(badgeProf),
+  'the team mark is no longer rendered beside the company name');
+{
+  const h1 = (badgeProf.match(/<h1>.*<\/h1>/) || [''])[0];
+  assert.ok(!/badgeHtml/.test(h1),
+    'a paid Trust Badge is rendering beside the company name — badges belong on listings');
+}
+// ...and the badge goes beside the listing, and only there
+assert.ok(/badgeHtml\(k\.badge, 'kw-lb'\)/.test(badgeProf),
+  'the keyword listings no longer show their own badge');
+assert.ok(!/isCircuitsBadge/.test(badgeProf), 'profile.js still treats our mark as a badge');
+
+// nobody can buy it or be given it: not on Get Listed, not in the admin console
 assert.ok(!/data-text="Circuits\.com"/i.test(badgeJoin),
-  'the Circuits.com badge is being offered on the public Get Listed form');
-// it belongs in the admin console, where only staff can reach it
+  'the Circuits.com mark is being offered on the public Get Listed form');
 assert.ok(/function editBadge/.test(adminSrc), 'the admin badge editor is missing');
-assert.ok(/CX_BADGE/.test(adminSrc), 'the admin console cannot award the Circuits.com badge');
-assert.ok(/lb-cx-mark/.test(adminSrc), 'the admin console does not show the Circuits.com mark');
+assert.ok(!/CX_BADGE/.test(adminSrc),
+  'the admin console can still award Circuits.com as a badge');
+assert.ok(!/<option>Circuits\.com<\/option>/.test(adminSrc),
+  'the admin badge dropdown still offers Circuits.com');
 // and the admin dropdown must not offer badges the database will refuse
 const adminBadgeSelect = adminSrc.slice(adminSrc.indexOf('id="e-badge"'), adminSrc.indexOf('id="e-color"'));
 for (const dead of ['Certified', 'Verified']) {

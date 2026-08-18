@@ -19,16 +19,17 @@ global.looksLikeSpam = () => false;
 global.fakeSuccess = () => {};
 global.rateLimitMessage = () => null;
 
-/* The badge renderer is real code, not a stub: it decides whether a label is
-   our own Circuits.com mark or a paid Trust Badge, and getting that wrong is
-   exactly what this check exists to catch. */
+/* Real code, not stubs. Two separate renderers on purpose: teamMarkHtml() is
+   our mark and belongs to the account, badgeHtml() is a paid label belonging to
+   one keyword listing. Rendering either in the other's place is exactly what
+   this check exists to catch. */
 {
   const appSrc = require('fs').readFileSync(require('path').join(__dirname, '..', 'app.js'), 'utf8');
-  const from = appSrc.indexOf('function isCircuitsBadge');
+  const from = appSrc.indexOf('function teamMarkHtml');
   const to = appSrc.indexOf('/* Shown when a lookup fails');
   if (from < 0 || to < 0) throw new Error('could not find the badge helpers in app.js');
   (0, eval)(appSrc.slice(from, to)
-    .replace('function isCircuitsBadge', 'global.isCircuitsBadge = function')
+    .replace('function teamMarkHtml', 'global.teamMarkHtml = function')
     .replace('function badgeHtml', 'global.badgeHtml = function'));
 }
 
@@ -157,14 +158,37 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   assert.ok(captured.includes('/claim?c='), 'the unclaimed prompt does not link to the claim flow');
   global.companyClaimed = async () => true;
 
-  /* A profile run by the Circuits.com team wears our mark beside the name, and
-     no ordinary company's profile ever does. */
+  /* The two marks must never swap places.
+       - a Trust Badge is PAID and belongs to ONE keyword listing, because the
+         same company can pick a different one per keyword. It renders in the
+         Keyword Listings section and nowhere near the name.
+       - the Circuits.com mark belongs to the ACCOUNT and renders beside the
+         name. It is not a badge, cannot be bought, and never sits on a listing. */
+  const heading = () => (captured.match(/<h1>[\s\S]*?<\/h1>/) || [''])[0];
+  const listings = () => {
+    const i = captured.indexOf('Keyword Listings');
+    return i < 0 ? '' : captured.slice(i, captured.indexOf('</section>', i));
+  };
+
+  // an ordinary company: badge on the listing, nothing beside the name
   assert.ok(!/lb-cx/.test(captured), 'an ordinary company is wearing the Circuits.com mark');
+  assert.ok(/kw-lb/.test(listings()), 'the keyword listing lost its Trust Badge');
+  assert.ok(/Authorized/.test(listings()), 'the listing badge text is missing');
+  assert.ok(!/Authorized/.test(heading()),
+    'a paid Trust Badge is rendering beside the company name');
+  assert.ok(!/style="background:/.test(heading()),
+    'a coloured Trust Badge is rendering beside the company name');
+
+  // a Circuits.com-run profile: our mark beside the name, still no badge there
   global.companyRunByStaff = async () => true;
   await initProfile();
-  assert.ok(/<h1>[^<]*<span class="lb lb-cx"/.test(captured),
+  assert.ok(/<h1>[^<]*<span class="lb lb-cx"/.test(heading()),
     'an admin-run profile does not show the Circuits.com mark next to its name');
-  assert.ok(/Circuits\.com team/.test(captured), 'the mark on the name lost its hover text');
+  assert.ok(/Circuits\.com team/.test(heading()), 'the mark on the name lost its hover text');
+  assert.ok(!/lb-cx/.test(listings()),
+    'the Circuits.com mark is being rendered against a keyword listing — it is not a badge');
+  assert.ok(!/paid label/.test(heading()),
+    'the team mark is carrying the paid-badge disclaimer');
   global.companyRunByStaff = async () => false;
 
   console.log('render smoke test passed —', opens, 'balanced block tags, reviews and claim states OK');
