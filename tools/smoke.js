@@ -31,13 +31,13 @@ const MUST_LOAD = [
   ['/about',             ['<nav class="nav">']],
   ['/contact',           ['id="c-category"', 'id="contact-form"']],
   ['/join',              ['<nav class="nav">']],
-  ['/portal',            ['id="pt-auth-form"']],
+  ['/portal',            ['id="pt-auth-form"', 'id="pt-tab-admin"', 'id="tab-admin"', '/admin.js']],
   ['/register',          ['id="r-submit"']],
   ['/reset',             ['id="rq-form"']],
   ['/claim',             ['<nav class="nav">']],
   ['/terms',             ['<nav class="nav">']],
   ['/privacy',           ['Supabase', 'cookie-reset']],
-  ['/login',             ['id="submit-btn"']],
+  ['/admin.js',          ['window.initAdmin']],
   ['/results?q=test',    ['id="results-body"']],
   ['/robots.txt',        ['Sitemap']],
   ['/sitemap.xml',       ['<loc>https://circuits.com/']],
@@ -53,7 +53,9 @@ const MUST_LOAD = [
    That is not a leak — the repo is public and holds no secrets (check.js fails
    the build if a secret key ever appears). Not worth excluding. */
 const MUST_404 = ['/parts', '/search', '/data.js', '/server.js',
-                  '/buyers.html', '/check.js'];
+                  '/buyers.html', '/check.js',
+                  // there is one sign-in now, and admin is a property of the account
+                  '/login', '/admin'];
 
 /* Not dead — deliberately kept alive as redirects, so old links and anything
    Google still has indexed lands somewhere useful instead of on a 404. */
