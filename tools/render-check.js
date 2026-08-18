@@ -10,6 +10,7 @@ global.sendFounderEmail = () => {};
 global.trackEvent = () => {};
 global.submitInquiry = async () => {};
 global.submitReview = async () => {};
+global.notifySupplier = async () => true;
 /* profile.js runs after app.js on company.html; these come from there.
    check.js separately asserts app.js really defines them, so these stubs
    cannot quietly drift away from the real thing. */

@@ -140,6 +140,24 @@ assert.ok(sitemap.includes('circuits.com/register'), 'sitemap is missing /regist
 assert.ok(!fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8').includes('/how-it-works'),
   'the sitemap generator would put /how-it-works back on the next build');
 
+/* --- the supplier notification must not become a spam relay ---
+       The whole risk here is a caller naming its own recipient. The address is
+       looked up server-side from the company slug; the browser only ever sends
+       a slug. */
+const notifySrc = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+const notifyFn = notifySrc.slice(notifySrc.indexOf('async function notifySupplier'),
+                                notifySrc.indexOf('/* ---- suspension'));
+assert.ok(notifyFn, 'notifySupplier is gone');
+assert.ok(/company_slug: slug/.test(notifyFn), 'the notification no longer identifies the company by slug');
+assert.ok(!/\bto:|recipient|supplier_email/.test(notifyFn),
+  'the browser is naming the email recipient, which would make this an open relay');
+assert.ok(/catch/.test(notifyFn) && /return false/.test(notifyFn),
+  'a failed notification is not swallowed — it would break the quote form');
+const rfqSrc = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
+assert.ok(/notifySupplier\(slug,/.test(rfqSrc), 'the quote form no longer notifies the supplier');
+assert.ok(!/await notifySupplier/.test(rfqSrc),
+  'the quote form waits on the email; a slow send would stall the buyer');
+
 /* --- the documentation has to be true, and must not leak the wrong key --- */
 const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
 assert.ok(readme.length > 2000, `README.md is only ${readme.length} bytes`);
