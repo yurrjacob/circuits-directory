@@ -339,10 +339,35 @@ function initJoin(){
       customInput.focus();
     }
   }
+  /* A badge is a label the company picks for itself, so it must not be able to
+     claim an assessment nobody made. The database refuses these outright — see
+     guard_verified_badge() — but finding out at submit time, after filling in a
+     long form, is a miserable way to learn it. Same rule, said earlier. */
+  const BADGE_FORBIDDEN = [
+    [/verified|circuits\.com|official/i,
+     'is awarded by Circuits.com and cannot be bought'],
+    [/certif|accredit|approv|licens|registered|compliant|complianc|audited|endorsed/i,
+     'claims somebody else assessed you'],
+    [/iso[ -]?\d|as9100|iatf|nadcap|itar|rohs|reach|ce[ -]?mark|ul[ -]?listed|\bul\b|ansi|\bieee\b|\bipc\b|\bfda\b|mil[ -]?spec|nist|ukca/i,
+     'names a standard awarded by the body that runs it']
+  ];
+  function badgeProblem(text){
+    for(const [re, why] of BADGE_FORBIDDEN) if(re.test(text || '')) return why;
+    return '';
+  }
+  function showBadgeProblem(){
+    const box = document.getElementById('badge-custom-msg');
+    if(!box) return '';
+    const why = badgeProblem(curBadgeText);
+    box.style.display = why ? 'block' : 'none';
+    box.textContent = why ? 'That badge cannot be used: it ' + why + '.' : '';
+    return why;
+  }
   if(customBtn) customBtn.addEventListener('click', selectCustom);
   if(customInput) customInput.addEventListener('input', ()=>{
     curBadgeText = customInput.value.trim() || 'Your Badge';
     if(badgePreview) badgePreview.textContent = curBadgeText;
+    showBadgeProblem();
   });
   function selectColor(color){
     curBadgeColor = color;
@@ -560,6 +585,11 @@ const msg = document.getElementById('msg');
       check('f-email', isValidEmail(v('f-email')), 'Please enter a valid email address (e.g. sales@company.com).');
       check('f-pass', v('f-pass').length >= 8, 'Your password must be at least 8 characters.');
       check('f-pass2', v('f-pass') === v('f-pass2') && !!v('f-pass2'), 'The two passwords do not match.');
+    }
+    /* a badge that claims a certification never reaches the database anyway,
+       so stop it here rather than letting the whole application fail */
+    if(badgeCheck && badgeCheck.checked && showBadgeProblem() && !firstBad){
+      firstBad = document.getElementById('badge-custom') || document.getElementById('badge-builder');
     }
     /* terms must be accepted before the form can be submitted */
     const termsBox = document.getElementById('f-terms');

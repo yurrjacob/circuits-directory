@@ -260,15 +260,20 @@ listing, quote requests and reviews once it is approved.</p>
 <div class="badge-builder badge-gated" id="badge-builder">
 <div class="badge-build-controls">
 <span class="field-label">Badge</span>
-<p class="field-hint" style="margin:0 0 8px">&ldquo;Verified&rdquo; is not on this list on purpose. That badge is awarded by
-Circuits.com after we check a company, so it cannot be bought &mdash; which is what makes it worth anything.</p>
+<p class="field-hint" style="margin:0 0 8px">A Trust Badge is a label you choose, and it is shown as one. It cannot say
+anything that claims somebody else assessed you &mdash; not &ldquo;Certified&rdquo;, not
+&ldquo;ISO 9001&rdquo;, not &ldquo;Approved&rdquo;. Those belong to the bodies that award them.
+&ldquo;Verified&rdquo; is reserved for Circuits.com and cannot be bought, which is the only
+reason it means anything.</p>
 <div class="opt-row" id="badge-opts">
 <button type="button" class="opt-btn" data-text="Authorized">Authorized</button>
-<button type="button" class="opt-btn" data-text="Certified">Certified</button>
 <button type="button" class="opt-btn" data-text="Featured">Featured</button>
+<button type="button" class="opt-btn" data-text="Preferred">Preferred</button>
+<button type="button" class="opt-btn" data-text="Specialist">Specialist</button>
 <button type="button" class="opt-btn" id="badge-custom-btn">Custom</button>
 </div>
 <input id="badge-custom" type="text" maxlength="18" placeholder="Type your custom badge" style="display:none;max-width:240px;margin-bottom:4px">
+<div id="badge-custom-msg" class="field-hint" style="display:none;color:#b3261e"></div>
 <span class="field-label">Badge Color</span>
 <div class="swatches" id="swatches">
 <button type="button" class="swatch" data-color="#c9a227" style="background:linear-gradient(135deg,#e9c95c,#c9a227)" aria-label="gold"></button>

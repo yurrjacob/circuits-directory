@@ -163,15 +163,27 @@ async function initProfile(){
     ? `<p class="pf-prose">${escapeHtml(co.description).replace(/\n+/g, '</p><p class="pf-prose">')}</p>` : '');
 
   /* ---- keywords ----
-     The trust badge certifies a company for a particular keyword, so it belongs
-     against that keyword — "PCB Design (Certified)", not "Jacob (Certified)". */
+     The badge belongs against the keyword it applies to — "PCB Design
+     (Authorized)", not "Jacob (Authorized)".
+
+     It is also a PAID label the company chose for itself, so it is marked as
+     one. A buyer deciding who to trust must be able to tell the difference
+     between this and a certification somebody actually assessed. The wording
+     is deliberately plain; a subtle visual difference alone would not do it. */
+  const anyBadge = kws.some(k => k.badge);
   html += section('Keyword Listings', kws.length
     ? `<div class="kw-tags pf-kws">${kws.map(k =>
         `<a class="kw-tag" href="/results?q=${encodeURIComponent(k.keyword)}">${escapeHtml(k.keyword)}${k.banner ? ' ★' : ''}`
-        + (k.badge ? `<span class="lb kw-lb" style="background:${escapeHtml(k.badge.color)}">${escapeHtml(k.badge.text)}</span>` : '')
+        + (k.badge ? `<span class="lb kw-lb" style="background:${escapeHtml(k.badge.color)}"
+             title="Trust Badge — a paid label chosen by this company. It is not a certification and Circuits.com has not assessed it."
+             >${escapeHtml(k.badge.text)}</span>` : '')
         + `</a>`
       ).join('')}</div>
-      <p class="pf-note">★ marks a Circuits-Keyword&trade; this company exclusively sponsors.</p>` : '');
+      <p class="pf-note">★ marks a Circuits-Keyword&trade; this company exclusively sponsors.</p>`
+      + (anyBadge ? `<p class="pf-note pf-badge-note">Coloured labels are <b>Trust Badges</b> &mdash;
+         paid labels chosen by the company. They are not certifications, and Circuits.com has not
+         assessed them. Any certifications this company holds are listed under Certifications.</p>` : '')
+    : '');
 
   /* ---- documents ---- */
   html += section('Documentation', docs.length
