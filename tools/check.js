@@ -569,10 +569,31 @@ assert.ok(/Deliberately the same outcome|If that account exists/.test(
 const joinSrc = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
 assert.ok(!/data-text="Verified"/i.test(joinSrc),
   'Verified is on sale again — a bought badge would be indistinguishable from a real check');
-assert.ok(/Verified/.test(joinSrc), 'Get Listed no longer explains why Verified is not for sale');
+assert.ok(!/data-text="Circuits\.com"/i.test(joinSrc),
+  'our own mark is on sale — a bought badge would be indistinguishable from a real check');
+assert.ok(/cannot be bought/.test(joinSrc),
+  'Get Listed no longer explains which badge is not for sale');
 const termsHtml = fs.readFileSync(path.join(ROOT, 'terms.html'), 'utf8');
-assert.ok(/Verified/.test(termsHtml) && /applied only by Circuits\.com/i.test(termsHtml),
-  'the terms do not distinguish paid badges from the Verified badge');
+assert.ok(/Circuits\.com badge/.test(termsHtml) && /cannot be purchased/i.test(termsHtml),
+  'the terms do not distinguish paid Trust Badges from our own mark');
+
+/* --- the disclaimers moved off the profile, so the Terms must now carry them ---
+       Cutting the notes under each section only stayed honest because the same
+       information is one click away. If that section ever goes, the profile is
+       presenting a company's own claims with nothing saying so. */
+assert.ok(/id="what-we-check"/.test(termsHtml),
+  'the profile footer links to /terms#what-we-check but the terms have no such section');
+for(const phrase of ['not checked by us', 'Chosen and paid for by the company', 'Applied by Circuits.com']){
+  assert.ok(termsHtml.includes(phrase),
+    'the terms no longer set out what we check: missing "' + phrase + '"');
+}
+{
+  const profileSrc = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
+  assert.ok(/terms#what-we-check/.test(profileSrc),
+    'the profile no longer points anywhere for what Circuits.com checks');
+  assert.ok(/pf-certs" title="/.test(profileSrc),
+    'the certifications list lost the hover caveat that replaced its paragraph');
+}
 
 /* --- "permanent" must be tied to an active subscription, not sold outright --- */
 assert.ok(/subscription remains active/i.test(termsHtml),

@@ -100,16 +100,27 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
 
   // sidebar values must be single-line: the tooltip carries the untruncated text
   assert.ok(captured.includes('pf-row-v" title='), 'sidebar rows lost their full-value tooltip');
-  /* Everything a company asserts about itself must be labelled as its own
-     claim. A buyer picking a supplier on the strength of "ISO 9001" is making
-     a purchasing decision on something nobody checked. */
+  /* Everything a company asserts about itself must still be traceable to the
+     company rather than to us — a buyer picking a supplier on the strength of
+     "ISO 9001" is deciding on something nobody checked. The wording moved out
+     of a paragraph under every section and into one line at the foot of the
+     page plus hover text, but it must not disappear altogether. */
   assert.ok(captured.includes('ISO 9001'), 'the certifications section stopped rendering');
-  assert.ok(/As stated by the company/.test(captured),
-    "certifications are presented as fact rather than as the company's own claim");
-  assert.ok(/not verified by Circuits\.com/.test(captured),
-    'the certifications section no longer says it is unverified');
-  assert.ok(/paid Trust Badges chosen by the/.test(captured),
-    'the Trust Badge is no longer identified as a paid label');
+  assert.ok(/class="pf-source"/.test(captured),
+    'the profile no longer says where its details come from');
+  assert.ok(/supplied by the company/.test(captured),
+    'the footer line no longer attributes the details to the company');
+  assert.ok(/href="\/terms#what-we-check"/.test(captured),
+    'the footer line does not link to what Circuits.com actually checks');
+  assert.ok(/pf-certs" title="[^"]*not checked/.test(captured),
+    'the certifications list lost its hover caveat');
+  assert.ok(/paid label chosen by this company/.test(captured),
+    'the Trust Badge lost the hover text identifying it as a paid label');
+  // and the old paragraph clutter must be gone, or nothing was actually removed
+  assert.ok(!/<p class="pf-note">As stated by the company/.test(captured),
+    'the old certifications disclaimer paragraph is still on the page');
+  assert.ok(!/paid Trust Badges chosen by the/.test(captured),
+    'the old Trust Badge disclaimer paragraph is still on the page');
   // the heading must not render a raw HTML entity
   assert.ok(!/&amp;amp;/.test(captured), 'a section heading is double-escaping its ampersand');
   // a blank certification row must not leave a stray bullet
