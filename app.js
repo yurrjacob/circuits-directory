@@ -601,9 +601,6 @@ updatePreviews();
 const handleInput = document.getElementById('f-handle');
 const handleMsg = document.getElementById('handle-msg');
 let handleTimer = null, handleState = '';
-/* set when the form has been filled in from a company the signed-in user
-   already owns — their address is theirs, so it is never re-checked */
-let JOIN_ADOPTED = false;
 if(handleInput) handleInput.addEventListener('input', ()=>{
   if(JOIN_ADOPTED) return;
   handleInput.value = handleInput.value.toLowerCase().replace(/[^a-z0-9_-]/g,'');
@@ -691,7 +688,7 @@ const msg = document.getElementById('msg');
     check('f-website', !v('f-website') || isValidWebsite(v('f-website')), 'Please enter a valid website (e.g. www.company.com).');
     /* The account step only applies when there isn't one yet. Signed in, these
        fields are hidden and there is nothing to fill in. */
-    check('f-handle', handleFormatOk(v('f-handle')) && handleState !== 'bad',
+    check('f-handle', handleFormatOk(v('f-handle')) && (JOIN_ADOPTED || handleState !== 'bad'),
       handleState === 'bad' ? 'That Circuits.com address is not available.'
                             : 'Choose your Circuits.com username (3–32 letters, numbers, hyphens or underscores).');
     if(!JOIN_USER){
@@ -937,6 +934,12 @@ async function initReset(){
    =================================================================== */
 let JOIN_USER = null;      // the signed-in user, once we know
 
+/* True once the form has been filled in from a company the signed-in user
+   already owns. Lives here, not inside initJoin(), because both the form and
+   adoptExistingCompany() read it — assigning to it from the wrong scope would
+   just create a stray global that nothing checks. */
+let JOIN_ADOPTED = false;
+
 /* A supplier who already has a listing and comes back for a second keyword.
    Get Listed asks for a company name and a FREE username — and their own
    username is already taken, by them. Left alone they would be pushed into
@@ -971,13 +974,13 @@ async function adoptExistingCompany(){
   lock(handle, co.handle);
 
   /* Their own address is "taken" — by them. The availability checker would call
-     that unavailable and block the form, so stop it running on a locked field
-     and record the state the validator expects. */
+     that unavailable and block the form, so it is switched off for a locked
+     field. Reached by id: the checker's own variables belong to initJoin(). */
   JOIN_ADOPTED = true;
-  handleState = 'ok';
-  if(handleMsg){
-    handleMsg.textContent = 'circuits.com/' + co.handle + ' — your existing address.';
-    handleMsg.style.color = '#3f6300';
+  const msg = el('handle-msg');
+  if(msg){
+    msg.textContent = 'circuits.com/' + co.handle + ' — your existing address.';
+    msg.style.color = '#3f6300';
   }
 
   /* contact details are a convenience, not an identity — prefilled, still editable */
