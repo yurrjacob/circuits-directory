@@ -306,15 +306,19 @@ async function initResults(forcedTerm){
       <div class="premium-body">
         <h3>${featured.company_handle
           ? `<a href="${escapeHtml(profileUrl(featured.company_handle))}">${escapeHtml(featured.company)}</a>`
-          : escapeHtml(featured.company)}</h3>
-        <p>${escapeHtml(featured.description||'')}</p>
-        ${featured.website ? `<a class="doc-link" href="${escapeHtml(featured.website)}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
-        ${docLinks(featured)}
+          : escapeHtml(featured.company)}${badgeHtml(featured.badge)}</h3>
+        ${featured.description ? `<p>${escapeHtml(featured.description)}</p>` : ''}
+        <div class="premium-links">
+          ${featured.website ? `<a class="doc-link" href="${escapeHtml(featured.website)}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
+          ${docLinks(featured)}
+        </div>
       </div>
       <div class="premium-contact">
-        ${escapeHtml(featured.contact||'')}<br>
-        <a href="tel:${escapeHtml(featured.phone||'')}">${escapeHtml(featured.phone||'')}</a><br>
-        <a href="mailto:${escapeHtml(featured.email||'')}">${escapeHtml(featured.email||'')}</a>
+        <div class="pc-lines">
+          ${featured.contact ? `<span class="pc-name">${escapeHtml(featured.contact)}</span>` : ''}
+          ${featured.phone ? `<a href="tel:${escapeHtml(featured.phone)}">${escapeHtml(featured.phone)}</a>` : ''}
+          ${featured.email ? `<a href="mailto:${escapeHtml(featured.email)}">${escapeHtml(featured.email)}</a>` : ''}
+        </div>
         ${quoteBtn(featured)}
       </div>
     </div></div>`;
