@@ -62,7 +62,7 @@ function actionsCell(l){
    this is the convenience, not the control. */
 
 async function editBadge(id){
-  const l = all.find(a => a.id === id);
+  const l = allApps.find(a => a.id === id);
   if(!l) return;
   const cur = l.badge && l.badge.text ? l.badge.text : '';
   const answer = prompt(
