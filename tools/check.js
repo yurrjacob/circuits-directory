@@ -890,20 +890,35 @@ for (const trigger of ['renderQuote()']) {
        contain braces, so a line-by-line scan is not good enough), find the
        top-level function each use of `slug` and `co` lands in, and fail if that
        function cannot see them. */
-{
-  const src = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
+function scanFunctions(src) {
 
   /* Walk once, tracking what we are inside, so only real code counts. */
   const code = [];                       // code[i] = src[i], or ' ' if inside a string/comment
-  let mode = 'code', tpl = 0;
+  let mode = 'code', tpl = 0, prev = '';
   for (let i = 0; i < src.length; i++) {
-    const c = src[i], n = src[i + 1], keep = () => code.push(c), skip = () => code.push(c === '\n' ? '\n' : ' ');
+    const c = src[i], n = src[i + 1];
+    const keep = () => { code.push(c); if (!/\s/.test(c)) prev = c; };
+    const skip = () => code.push(c === '\n' ? '\n' : ' ');
     if (mode === 'code') {
       if (c === '/' && n === '/') { mode = 'line'; skip(); }
       else if (c === '/' && n === '*') { mode = 'block'; skip(); }
+      /* A regex literal, not division. Without this the `"` inside /[&<>"]/g
+         opens a phantom string and every brace after it is miscounted — which
+         is exactly how initJoin() appeared to run to the end of the file and
+         swallow every function defined after it. */
+      else if (c === '/' && /^$|[(,=:[!&|?{};+\-*%<>~^]/.test(prev)) { mode = 're'; skip(); }
       else if (c === "'" || c === '"') { mode = c; skip(); }
       else if (c === '`') { mode = 'tpl'; tpl = 0; skip(); }
       else keep();
+    } else if (mode === 're') {
+      if (c === '\\') { code.push(' '); i++; code.push(' '); continue; }
+      if (c === '[') mode = 'recls';
+      else if (c === '/') { mode = 'code'; prev = '/'; }
+      skip();
+    } else if (mode === 'recls') {
+      if (c === '\\') { code.push(' '); i++; code.push(' '); continue; }
+      if (c === ']') mode = 're';
+      skip();
     } else if (mode === 'line') { if (c === '\n') mode = 'code'; skip(); }
     else if (mode === 'block') { if (c === '*' && n === '/') { mode = 'endblock'; } skip(); }
     else if (mode === 'endblock') { mode = 'code'; skip(); }
@@ -933,6 +948,11 @@ for (const trigger of ['renderQuote()']) {
     fns.push({ name: m[1], params: m[2].split(',').map(x => x.trim()).filter(Boolean),
                from: lineOf(m.index), to: lineOf(i), body: clean.slice(m.index, i) });
   }
+  return fns;
+}
+
+{
+  const fns = scanFunctions(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8'));
   const wp = fns.find(f => f.name === 'wireProfile');
   assert.ok(wp, 'wireProfile is gone from profile.js');
 
@@ -953,6 +973,49 @@ for (const trigger of ['renderQuote()']) {
   for (const call of ['submitInquiry(slug', 'notifySupplier(slug', 'submitReview(slug']) {
     assert.ok(wp.body.includes(call),
       `${call}...) is not inside wireProfile() any more — it cannot see the company it is for`);
+  }
+}
+
+/* --- app.js: nothing outside initJoin() may touch its private variables ---
+       adoptExistingCompany() referenced handleMsg, which belongs to initJoin().
+       Reading it threw a ReferenceError and the function abandoned the rest of
+       its work silently; ASSIGNING to handleState did something worse — with no
+       'use strict' it created a brand new global that nothing reads, so the
+       code looked like it worked and changed nothing at all. */
+{
+  const fns = scanFunctions(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8'));
+  const join = fns.find(f => f.name === 'initJoin');
+  assert.ok(join, 'initJoin is gone from app.js');
+
+  /* Every name declared directly inside initJoin(). Declarations share a
+     statement — `const a = x, b = y;` — so the comma list has to be walked,
+     not just the name straight after const/let/var. */
+  const declaredIn = body => {
+    const names = new Set();
+    for (const m of body.matchAll(/(?:const|let|var)\s+([^;{}]+)/g)) {
+      for (const part of m[1].split(',')) {
+        /* only `name =` or a bare trailing `name` — this skips the fragments
+           that splitting on commas carves out of a call like el(a, b) */
+        const id = /^\s*([A-Za-z0-9_$]+)\s*(?:=[^=]|$)/.exec(part);
+        if (id) names.add(id[1]);
+      }
+    }
+    return names;
+  };
+  const privates = [...declaredIn(join.body)].filter(n => n.length > 3);   // skip v, el, id
+
+  for (const f of fns) {
+    /* Functions nested INSIDE initJoin() close over its variables quite
+       legitimately — only code declared outside it is the problem. */
+    if (f.from >= join.from && f.to <= join.to) continue;
+    for (const name of privates) {
+      const uses = new RegExp('(?<![.\\w$])' + name + '\\b(?!\\s*:)');
+      if (!uses.test(f.body)) continue;
+      assert.ok(f.params.includes(name) || declaredIn(f.body).has(name),
+        `${f.name}() (app.js lines ${f.from}-${f.to}) uses \`${name}\`, which is private to initJoin(). ` +
+        'Reading it throws and the rest of the function is silently skipped; writing to it just makes a ' +
+        'stray global. Reach the element by id instead.');
+    }
   }
 }
 
