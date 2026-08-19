@@ -289,7 +289,12 @@ async function initResults(forcedTerm){
     return;
   }
 
+  /* The Exclusive Sponsor is lifted OUT of the list, not shown twice. While the
+     banner is being paid for, that company IS the banner; when it lapses the
+     row returns to its permanent position, because the order is by created_at
+     and nothing about the position was given away. */
   const featured = listings.find(l => l.banner);
+  const listed = listings.filter(l => !l.banner);
   let html = '';
   if(featured){
     const fLogo = isLogoUrl(featured.logo)
@@ -310,12 +315,14 @@ async function initResults(forcedTerm){
         ${escapeHtml(featured.contact||'')}<br>
         <a href="tel:${escapeHtml(featured.phone||'')}">${escapeHtml(featured.phone||'')}</a><br>
         <a href="mailto:${escapeHtml(featured.email||'')}">${escapeHtml(featured.email||'')}</a>
+        ${quoteBtn(featured)}
       </div>
     </div></div>`;
   }
 
-  const rows = listings.map((c,i)=>`
+  const rows = listed.map((c,i)=>`
     <tr>
+      <td class="rank" data-label="#">${i+1}</td>
       <td>
         <div class="co">
           ${c.company_handle ? `<a class="co-logo-link" href="${escapeHtml(profileUrl(c.company_handle))}" aria-label="${escapeHtml(c.company)} profile">` : ''}
@@ -334,17 +341,33 @@ async function initResults(forcedTerm){
       <td class="cell-muted" data-label="Contact">${escapeHtml(c.contact||'—')}</td>
       <td class="cell-muted" data-label="Phone"><a href="tel:${escapeHtml(c.phone||'')}">${escapeHtml(c.phone||'—')}</a></td>
       <td class="cell-muted" data-label="Email"><a href="mailto:${escapeHtml(c.email||'')}">${escapeHtml(c.email||'—')}</a></td>
+      <td class="cell-quote">${quoteBtn(c)}</td>
     </tr>`).join('');
 
   body.innerHTML = html + `
     <div class="listings">
       <div class="table-wrap">
         <table class="listings-table">
-          <thead><tr><th>Company</th><th>Contact</th><th>Phone</th><th>Email</th></tr></thead>
+          <thead><tr><th class="rank">#</th><th>Company</th><th>Contact</th><th>Phone</th><th>Email</th><th></th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
     </div>`;
+}
+
+/* Request a Quote, on every listing.
+   Goes to that company's own quote form rather than opening a second one here:
+   the profile form is the one wired to the supplier's inbox and the notifier,
+   and two forms that both claim to send a quote is how one of them rots.
+   A listing with no profile page falls back to email, which is all we have. */
+function quoteBtn(c){
+  if(c.company_handle){
+    return `<a class="btn btn-primary btn-quote" href="${escapeHtml(profileUrl(c.company_handle))}#rfq">Request a Quote</a>`;
+  }
+  if(c.email){
+    return `<a class="btn btn-primary btn-quote" href="mailto:${escapeHtml(c.email)}?subject=${encodeURIComponent('Quote request via Circuits.com')}">Request a Quote</a>`;
+  }
+  return '';
 }
 
 /* Join form behavior */

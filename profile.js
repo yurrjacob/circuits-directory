@@ -432,6 +432,19 @@ function wireProfile(slug, co){
     document.getElementById('rq-name').focus({ preventScroll: true });
   });
 
+  /* The Request a Quote buttons on the results page link here as /handle#rfq.
+     The browser resolves that hash while the page is still empty — this profile
+     is rendered after the data arrives — so the jump silently does nothing.
+     Land the buyer on the form now that it exists. */
+  if(location.hash === '#rfq'){
+    const sec = document.getElementById('rfq');
+    if(sec){
+      sec.scrollIntoView({ block: 'start' });
+      const first = document.getElementById('rq-name');
+      if(first) first.focus({ preventScroll: true });
+    }
+  }
+
   const rf = document.getElementById('rfq-form');
   armSpamTrap(rf);
   if(rf) rf.addEventListener('submit', async e => {
