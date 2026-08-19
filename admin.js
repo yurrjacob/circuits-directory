@@ -232,13 +232,33 @@ async function rejectApp(id){ await updateAppStatus(id,'Denied'); await reload()
 
 /* ---- profile claims ---- */
 let allClaims = [];
+/* The claimant's own words, plus the one fact they cannot fake: where their
+   email actually comes from. Shown together so the typed justification is read
+   against the evidence rather than on its own. */
+const CLAIM_SIGNAL = {
+  'domain-match':    { label: 'Company domain',  cls: 'ok'   },
+  'listed-address':  { label: 'Listed address',  cls: 'ok'   },
+  'free-mailbox':    { label: 'Personal email',  cls: 'warn' },
+  'different-domain':{ label: 'Different domain',cls: 'warn' },
+  'unknown':         { label: 'No email',        cls: 'warn' }
+};
+function claimSignalHtml(ev){
+  if(!ev) return '';   // lookup failed: show nothing rather than a reassuring guess
+  const s = CLAIM_SIGNAL[ev.verdict] || CLAIM_SIGNAL.unknown;
+  return `<div class="claim-signal ${s.cls}" title="${esc(ev.detail)}">${esc(s.label)}</div>`;
+}
 async function reloadClaims(){
   allClaims = await fetchClaims();
+  /* only for claims still awaiting a decision — the rest are history */
+  await Promise.all(allClaims.map(async c => {
+    if(c.status === 'Pending') c._ev = await claimEvidence(c.company_slug, c.email);
+  }));
   const rows = allClaims.map(c=>`<tr>
     <td><a href="/${esc(c.company_slug)}" target="_blank" rel="noopener">${esc(c.company_slug)}</a></td>
     <td>${esc(c.name||'—')}${c.role_title?'<br><span class="cell-muted">'+esc(c.role_title)+'</span>':''}</td>
-    <td class="cell-muted">${esc(c.email)}</td>
-    <td class="cell-muted" style="max-width:280px">${esc(c.evidence||'—')}</td>
+    <td class="cell-muted">${esc(c.email)}${claimSignalHtml(c._ev)}</td>
+    <td class="cell-muted" style="max-width:280px">${esc(c.evidence||'—')}${
+      c._ev ? '<div class="claim-why">' + esc(c._ev.detail) + '</div>' : ''}</td>
     <td>${esc(c.status)}</td>
     <td class="row-actions">${c.status==='Pending'
       ? `<button class="mini-btn green" onclick="decide('${c.id}',true)">Approve</button>
@@ -248,6 +268,16 @@ async function reloadClaims(){
 }
 async function decide(id, approve){
   const c = allClaims.find(x=>x.id===id); if(!c) return;
+  /* Approving hands over the listing's quote requests, and taking that back
+     later does not un-send the ones that went to the wrong inbox. When the
+     email is not from the company, say so once before it happens. */
+  if(approve && c._ev && (c._ev.verdict === 'free-mailbox'
+      || c._ev.verdict === 'different-domain' || c._ev.verdict === 'unknown')){
+    const ok = confirm(c._ev.detail + '\n\nApproving gives ' + (c.email || 'this person')
+      + ' control of ' + c.company_slug + ', including every quote request sent to it.'
+      + '\n\nApprove anyway?');
+    if(!ok) return;
+  }
   const err = await decideClaim(c, approve);
   if(err){ alert('Could not update that claim: ' + err); return; }
   await reloadClaims();

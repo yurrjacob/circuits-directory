@@ -561,6 +561,18 @@ async function fetchClaims(){
   if(error){ console.error('fetchClaims', error); return []; }
   return data || [];
 }
+/* Whoever gets a claim approved receives that listing's quote requests, so the
+   question staff are really answering is "is this person actually from this
+   company". Until now they had only the claimant's own typed justification.
+   This compares the email domain against the company's website and its listed
+   contact address — in the database, so a claimant cannot influence the answer.
+   It never decides anything: it hands staff the one cheap fact worth knowing. */
+async function claimEvidence(slug, email){
+  if(!sb) return null;
+  const { data, error } = await sb.rpc('claim_evidence', { p_slug: slug, p_email: email || '' });
+  if(error){ console.error('claim_evidence', error); return null; }
+  return (data && data[0]) || null;
+}
 /* Staff approval of a claim is what actually grants access. The claimant has no
    account when they ask, so approval attaches the login by email — create it in
    Supabase Auth first if it does not exist yet. */

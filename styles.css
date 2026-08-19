@@ -162,6 +162,13 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.92rem}
 .cell-muted{color:var(--muted)}
 .cell-muted a{color:var(--muted);text-decoration:none}
 .cell-muted a:hover{color:var(--green-dark)}
+/* Where a claimant's email came from, next to the address itself. Deliberately
+   quiet: it is evidence for a person to weigh, not a verdict. */
+.claim-signal{display:inline-block;margin-top:4px;padding:1px 7px;border-radius:999px;
+  font-size:.72rem;font-weight:600;letter-spacing:.02em}
+.claim-signal.ok{background:#e6f4ea;color:#14632c}
+.claim-signal.warn{background:#fdf0e3;color:#8a4b08}
+.claim-why{margin-top:6px;font-size:.78rem;line-height:1.35;color:var(--muted)}
 .empty{max-width:var(--maxw);margin:40px auto;padding:0 24px;text-align:center;color:var(--muted)}
 .empty .big{font-size:1.3rem;color:var(--ink);margin-bottom:8px}
 @media(max-width:760px){
