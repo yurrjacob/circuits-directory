@@ -198,6 +198,15 @@ async function requestPasswordReset(identifier){
          existence stays hidden; the outage does not. */
       const status = error.status || error.code;
       if(status === 429 || /rate limit/i.test(error.message || '')){
+        /* Two different limits arrive as 429: a short per-address wait after a
+           request that DID send, and the project-wide hourly cap. Telling
+           someone to wait an hour when it is really 45 seconds sends them away
+           for no reason, so use the wait the server actually reports. */
+        const secs = (/after (\d+) seconds?/i.exec(error.message || '') || [])[1];
+        if(secs){
+          return 'A reset link was just sent. If it has not arrived, you can ask for another in '
+               + secs + ' seconds.';
+        }
         return 'Too many reset emails have been sent from Circuits.com in the last hour. '
              + 'Please try again shortly, or email support@circuits.com and we will reset it for you.';
       }
