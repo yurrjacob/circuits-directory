@@ -11,10 +11,10 @@
   --shadow:0 1px 6px rgba(32,33,36,.18);
   --radius:12px;
   --maxw:1080px;
-  /* surfaces that differ between themes; named so the dark block only has to
-     restate values, never re-describe the layout */
+  /* named surfaces — cards, inputs and the sponsor banner. Worth keeping as
+     variables even though they are all light: one place to change a surface,
+     rather than the ~35 rules that used to hardcode #fff. */
   --card:#ffffff;
-  --card-line:#e3e5e8;
   --input-bg:#ffffff;
   --sponsor-a:#f3f5f8;
   --sponsor-b:#ffffff;
@@ -22,52 +22,6 @@
   font-synthesis:none;
 }
 
-/* ---- dark mode ----
-   Set on <html> by theme.js before first paint. Only colours change here: if a
-   rule in this file needs to know the theme to lay itself out, that rule is
-   wrong. Backgrounds are near-black rather than pure black, and text is off
-   white rather than pure white, because maximum contrast on a large surface is
-   what makes dark themes tiring to read. */
-:root[data-theme="dark"]{
-  --green:#8ad219;
-  --green-dark:#a7e34a;      /* hover has to get BRIGHTER on a dark ground */
-  --ink:#e8eaed;
-  --muted:#9aa0a6;
-  --line:#2c2f33;
-  --bg:#15171a;
-  --bg-soft:#1c1f23;
-  --dark:#0c0d0f;
-  --shadow:0 1px 6px rgba(0,0,0,.55);
-  --card:#1c1f23;
-  --card-line:#2c2f33;
-  --input-bg:#212429;
-  --sponsor-a:#22262b;
-  --sponsor-b:#1a1d21;
-  --sponsor-line:#3a3f45;
-}
-
-/* Status tints. These are pale washes designed to sit on white — left alone
-   they glare on a dark page and the dark text inside them disappears. Each one
-   becomes a deep, low-saturation ground with light text instead. */
-:root[data-theme="dark"] .claim-signal.ok{background:#173a24;color:#8fd6a6}
-:root[data-theme="dark"] .claim-signal.warn{background:#3b2a14;color:#f0bc75}
-:root[data-theme="dark"] .badge.pending{background:#3b3113;color:#f0d488}
-:root[data-theme="dark"] .badge.denied{background:#3d1f1e;color:#f3a6a2}
-:root[data-theme="dark"] tr.row-warn td,
-:root[data-theme="dark"] .sheet-table tr.row-warn td:last-child{background:#38300f}
-:root[data-theme="dark"] .dash-table tr.row-waiting td{background:#322c10}
-:root[data-theme="dark"] .pt-suspended{background:#332b0d;color:#f0dfa0;border-color:#7a6612}
-:root[data-theme="dark"] .delta.down,
-:root[data-theme="dark"] .ac-danger:hover,
-:root[data-theme="dark"] .mini-btn.danger:hover{background:#3a2020;color:#f3a6a2}
-:root[data-theme="dark"] .ac-danger:hover{border-color:#7a4a4a}
-:root[data-theme="dark"] .promo-gold{background:#23272c;border-color:#3a3f45}
-:root[data-theme="dark"] .sheet-table .ce:hover{background:#262a2f}
-/* the sponsor card's left rail and its badge are mid-greys built for a white
-   card; darken them so the banner does not glow */
-:root[data-theme="dark"] .premium-card{border-left-color:#5d666f;box-shadow:0 2px 16px rgba(0,0,0,.5)}
-:root[data-theme="dark"] .premium-badge{background:linear-gradient(180deg,#4a5159,#2f353b);color:#e8eaed;
-  box-shadow:0 1px 4px rgba(0,0,0,.5)}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
@@ -168,16 +122,6 @@ img{max-width:100%}
 .footer .flinks{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .footer .flinks a{color:var(--muted);text-decoration:none}
 .footer .flinks a:hover{color:var(--ink)}
-/* Theme toggle — sits with Terms and Privacy, and reads as one of them rather
-   than as a call to action. The label says what a click will do. */
-.theme-toggle{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;
-  border:1px solid var(--line);border-radius:999px;background:var(--card);
-  color:var(--muted);font:inherit;font-size:.82rem;line-height:1;cursor:pointer;
-  transition:color .12s,border-color .12s,background .12s}
-.theme-toggle:hover{color:var(--ink);border-color:var(--muted)}
-.theme-toggle:focus-visible{outline:2px solid var(--green);outline-offset:2px}
-.theme-ico{width:15px;height:15px;flex:none;display:block}
-@media(max-width:480px){.theme-label{display:none}.theme-toggle{padding:6px 9px}}
 .footer .avatar{width:30px;height:30px;border-radius:50%;background:var(--green);color:#0f0f0f;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem}
 .footer-mark{width:30px;height:30px;border-radius:7px;display:block}
 
@@ -970,6 +914,25 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 .quote-line b{min-width:66px;text-align:right}
 .quote-total{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding-top:12px;font-weight:700}
 .quote-total b{font-size:1.35rem;color:var(--green-dark)}
+
+/* ---- portal: a supplier editing their own listing ---- */
+.pt-listing-sum{margin:8px 0 0;padding-top:8px;border-top:1px solid var(--line)}
+.pt-listing-sum p{margin:0 0 4px;font-size:.9rem;color:var(--ink)}
+.pt-listing-sum i{color:var(--muted)}
+.pt-listing-edit{margin:10px 0 0;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.pt-lbl{font-size:.82rem;font-weight:600;color:var(--ink);margin-top:6px}
+.pt-listing-edit textarea{font-family:inherit;font-size:.92rem;padding:10px 12px;border:1px solid var(--line);
+  border-radius:9px;outline:0;background:var(--input-bg);resize:vertical;color:var(--ink)}
+.pt-listing-edit textarea:focus{border-color:var(--green)}
+.pt-docs{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pt-doc{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;
+  padding:4px 6px 4px 12px;font-size:.82rem;background:var(--bg-soft)}
+.pt-doc a{color:var(--ink);text-decoration:none;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pt-doc a:hover{text-decoration:underline}
+.pt-doc-x{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:1.05rem;line-height:1;padding:0 4px}
+.pt-doc-x:hover{color:#b3261e}
+.pt-edit-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:8px}
+.pt-edit-actions .pf-note{flex:1 1 240px}
 
 /* ---- results: readable rows, and cards instead of a squashed table on phones ---- */
 .listings-table tbody tr{transition:background .12s}

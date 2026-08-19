@@ -196,6 +196,31 @@ async function updateApplication(id, fields){
   if(error) console.error('updateApplication', error);
   return error || null;
 }
+/* What a supplier may change on their own listing.
+   The database already enforces this — applications_lock_billing() silently
+   reverts keyword, banner, badge, price, fee and status for anyone who is not
+   staff. That silence is the danger: a form offering those fields would appear
+   to save and quietly change nothing. So the allowed set is named here too, and
+   anything else is dropped before the request rather than after.
+
+   Commercial terms stay with staff because they are what the company is billed
+   for. Its own words and its own datasheets are not. */
+const LISTING_OWNER_FIELDS = ['description', 'docs'];
+
+async function updateMyListing(id, fields){
+  if(!sb) return 'No connection';
+  const clean = {};
+  for(const k of LISTING_OWNER_FIELDS) if(k in fields) clean[k] = fields[k];
+  if(!Object.keys(clean).length) return null;
+  if(typeof clean.description === 'string'){
+    clean.description = clean.description.trim().slice(0, 300);   // matches the CHECK constraint
+    if(!clean.description) clean.description = null;
+  }
+  const { error } = await sb.from('applications').update(clean).eq('id', id);
+  if(error){ console.error('updateMyListing', error); return error.message; }
+  return null;
+}
+
 async function deleteApplication(id){
   if(!sb) return;
   const { error } = await sb.from('applications').delete().eq('id', id);

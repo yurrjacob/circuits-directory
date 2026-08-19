@@ -2,7 +2,7 @@
    Everything here is gated by RLS, not by this file. Hiding a button is a
    convenience; the database is what actually refuses the write. */
 
-let PT = { slug: null, co: null, listings: [], inquiries: [], reviews: [], openInquiry: null };
+let PT = { slug: null, co: null, listings: [], inquiries: [], reviews: [], openInquiry: null, editing: null };
 
 const HOUR_DAYS = [['mon','Mon'],['tue','Tue'],['wed','Wed'],['thu','Thu'],['fri','Fri'],['sat','Sat'],['sun','Sun']];
 const SOCIAL_KEYS = [['linkedin','LinkedIn'],['x','X / Twitter'],['facebook','Facebook'],['youtube','YouTube'],['instagram','Instagram'],['github','GitHub']];
@@ -1023,22 +1023,132 @@ function renderListings(){
         </div>
         <div>
           <span class="pf-note">${escapeHtml(l.fee || '')}</span>
+          <button class="mini-btn" data-edit="${l.id}">Edit</button>
           ${l.status === 'Approved'
             ? `<button class="mini-btn" data-pause="${l.id}" data-to="${l.paused ? '0' : '1'}">${l.paused ? 'Resume' : 'Pause'}</button>` : ''}
         </div>
       </div>
+      ${listingSummary(l)}
+      ${PT.editing === l.id ? listingEditor(l) : ''}
     </div>`).join('');
   el('pt-listings').innerHTML = rows || `<div class="pt-empty">
     <b>No listings yet</b>
     <p>Once Circuits.com approves a Circuits-Keyword™ for you, it appears here and you can pause or resume it.</p>
   </div>`;
-  el('pt-listings').onclick = async e => {
-    const b = e.target.closest('[data-pause]'); if(!b) return;
-    b.disabled = true;
-    await setPaused(b.dataset.pause, b.dataset.to === '1');
+  wireListings();
+}
+
+/* What the listing looks like to a buyer, shown closed. Suppliers could not see
+   their own description or documents from here at all — only the keyword and
+   its status — so there was no way to notice a stale datasheet. */
+function listingSummary(l){
+  if(PT.editing === l.id) return '';
+  const docs = Array.isArray(l.docs) ? l.docs : [];
+  return `<div class="pt-listing-sum">
+    <p>${l.description ? escapeHtml(l.description) : '<i>No description. Buyers see only your company name on this keyword.</i>'}</p>
+    <span class="pf-note">${docs.length ? docs.length + (docs.length === 1 ? ' document' : ' documents') : 'No documents'}</span>
+  </div>`;
+}
+
+function listingEditor(l){
+  const docs = Array.isArray(l.docs) ? l.docs : [];
+  return `<div class="pt-listing-edit">
+    <label class="pt-lbl" for="ed-desc-${l.id}">Description <span class="pf-note">— shown to buyers searching “${escapeHtml(l.keyword || '')}”</span></label>
+    <textarea id="ed-desc-${l.id}" maxlength="300" rows="3"
+      placeholder="What you supply under this keyword.">${escapeHtml(l.description || '')}</textarea>
+    <div class="pf-note" id="ed-count-${l.id}">${(l.description || '').length}/300</div>
+
+    <label class="pt-lbl">Documents <span class="pf-note">— datasheets and catalogues, shown as “View Docs”</span></label>
+    <div class="pt-docs" id="ed-docs-${l.id}">
+      ${docs.map((d, i) => `<span class="pt-doc">
+        <a href="${escapeHtml(d.url)}" target="_blank" rel="noopener">${escapeHtml(d.name || 'Document')}</a>
+        <button type="button" class="pt-doc-x" data-rmdoc="${l.id}" data-i="${i}" aria-label="Remove ${escapeHtml(d.name || 'document')}">×</button>
+      </span>`).join('') || '<span class="pf-note">None yet.</span>'}
+    </div>
+    <input type="file" id="ed-file-${l.id}" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg">
+
+    <div class="pt-edit-actions">
+      <button class="btn btn-primary" data-save="${l.id}">Save</button>
+      <button class="mini-btn" data-cancel="1">Cancel</button>
+      <span class="pf-note">Keyword, sponsorship, badge and price are set by Circuits.com — contact us to change those.</span>
+    </div>
+  </div>`;
+}
+
+function wireListings(){
+  const root = el('pt-listings');
+
+  root.onclick = async e => {
+    const pause = e.target.closest('[data-pause]');
+    if(pause){
+      pause.disabled = true;
+      await setPaused(pause.dataset.pause, pause.dataset.to === '1');
+      PT.listings = await fetchMyListings(PT.slug);
+      renderListings();
+      toast('Listing updated.', true);
+      return;
+    }
+
+    const edit = e.target.closest('[data-edit]');
+    if(edit){ PT.editing = (PT.editing === edit.dataset.edit) ? null : edit.dataset.edit; renderListings(); return; }
+
+    if(e.target.closest('[data-cancel]')){ PT.editing = null; renderListings(); return; }
+
+    const rm = e.target.closest('[data-rmdoc]');
+    if(rm){
+      const l = PT.listings.find(x => x.id === rm.dataset.rmdoc); if(!l) return;
+      const docs = (Array.isArray(l.docs) ? l.docs : []).slice();
+      docs.splice(+rm.dataset.i, 1);
+      /* saved immediately: a removed datasheet that reappears because the
+         supplier forgot to press Save is the wrong way round */
+      const err = await updateMyListing(l.id, { docs });
+      if(err){ toast('Could not remove that document: ' + err, false); return; }
+      PT.listings = await fetchMyListings(PT.slug);
+      renderListings();
+      toast('Document removed.', true);
+      return;
+    }
+
+    const save = e.target.closest('[data-save]');
+    if(save){
+      const id = save.dataset.save;
+      save.disabled = true;
+      const err = await updateMyListing(id, { description: val('ed-desc-' + id) });
+      save.disabled = false;
+      if(err){ toast('Could not save: ' + err, false); return; }
+      PT.editing = null;
+      PT.listings = await fetchMyListings(PT.slug);
+      renderListings();
+      toast('Listing saved.', true);
+    }
+  };
+
+  root.oninput = e => {
+    const t = e.target;
+    if(t.tagName === 'TEXTAREA' && t.id.startsWith('ed-desc-')){
+      const c = el('ed-count-' + t.id.slice(8));
+      if(c) c.textContent = t.value.length + '/300';
+    }
+  };
+
+  root.onchange = async e => {
+    const f = e.target;
+    if(f.type !== 'file' || !f.id.startsWith('ed-file-')) return;
+    const id = f.id.slice(8);
+    const file = f.files && f.files[0]; if(!file) return;
+    const l = PT.listings.find(x => x.id === id); if(!l) return;
+    if(file.size > 10 * 1024 * 1024){ toast('That file is over 10 MB.', false); return; }
+    f.disabled = true;
+    toast('Uploading…', true);
+    const doc = await uploadDoc(file);
+    f.disabled = false;
+    if(!doc){ toast('Upload failed.', false); return; }
+    const docs = (Array.isArray(l.docs) ? l.docs : []).concat([doc]);
+    const err = await updateMyListing(id, { docs });
+    if(err){ toast('Could not attach that document: ' + err, false); return; }
     PT.listings = await fetchMyListings(PT.slug);
     renderListings();
-    toast('Listing updated.', true);
+    toast('Document added.', true);
   };
 }
 
