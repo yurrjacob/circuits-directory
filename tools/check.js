@@ -136,8 +136,19 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   'the directory category pages are back');
 {
   const home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  assert.ok(!/class="popular"/.test(home),
-    'the homepage is advertising categories under the search box again');
+  assert.ok(/class="popular"/.test(home),
+    'the Popular line is gone from the homepage — it seeds the search box');
+  {
+    const strip = (home.match(/<div class="popular">[\s\S]*?<\/div>/) || [''])[0];
+    const links = strip.match(/href="([^"]+)"/g) || [];
+    assert.ok(links.length >= 10, 'the Popular line lost most of its suggestions');
+    for (const l of links) {
+      assert.ok(/href="\/results\?q=/.test(l),
+        `the Popular line links to ${l} — every item must run a search, not open a page`);
+    }
+    assert.ok(!/All Categories/.test(strip),
+      'the Popular line still offers All Categories, and there is no category page');
+  }
   for (const f of fs.readdirSync(ROOT).filter(x => x.endsWith('.html'))) {
     assert.ok(!/href="\/directory/.test(fs.readFileSync(path.join(ROOT, f), 'utf8')),
       `${f} still links to the removed directory`);
