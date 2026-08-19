@@ -59,6 +59,25 @@ vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'store.js'), 'utf8'), sandbox, { filename: 'store.js' });
 vm.runInContext(src, sandbox, { filename: 'admin.js' });
 
+/* Exclusive Sponsor exclusivity has to be expressed in the SAME terms search
+   uses. The database index was keyed on lower(keyword) while search matches on
+   the normalised form, so "oscillator" and "oscillators" were two sponsorships
+   to the index and one keyword to a buyer — sold twice, both banners on the
+   same page. The index is now on keyword_norm; this keeps the console honest
+   about it, since staff rely on its warning before promising exclusivity. */
+{
+  const from = src.indexOf('function bannerConflict');
+  const to = src.indexOf('function sortRows');
+  assert.ok(from >= 0 && to > from, 'bannerConflict is gone from admin.js');
+  const body = src.slice(from, to);
+  assert.ok(/normKw\(/.test(body),
+    'bannerConflict no longer normalises the keyword — it would miss the plural of a keyword ' +
+    'that is already sponsored, and staff would promise exclusivity the database then refuses');
+  assert.ok(!/\.toLowerCase\(\)\s*===/.test(body),
+    'bannerConflict compares raw lowercased keywords — that is the bug that let oscillator and ' +
+    'oscillators both be sold as exclusive');
+}
+
 (async () => {
   const missing = handlers.filter(h => typeof sandbox[h] !== 'function');
   assert.strictEqual(missing.join(', '), '',
