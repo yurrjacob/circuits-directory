@@ -26,8 +26,6 @@ async function get(pathname) {
    than merely returning 200 with an error page. */
 const MUST_LOAD = [
   ['/',                  ['id="home-search"', 'Claim Your Circuits-Keyword']],
-  ['/directory',         ['<nav class="nav">']],
-  ['/directory/buyers',  ['<nav class="nav">', 'href="/privacy"']],
   ['/about',             ['<nav class="nav">']],
   ['/contact',           ['id="c-category"', 'id="contact-form"']],
   ['/join',              ['<nav class="nav">']],
@@ -55,7 +53,10 @@ const MUST_LOAD = [
 const MUST_404 = ['/parts', '/search', '/data.js', '/server.js',
                   '/buyers.html', '/check.js',
                   // there is one sign-in now, and admin is a property of the account
-                  '/login', '/admin'];
+                  '/login', '/admin',
+                  // the browsable category tree was removed: it sat between the
+                  // search box and a search, so people browsed instead of searching
+                  '/directory', '/directory/buyers', '/directory/motion-control-ics'];
 
 /* Not dead — deliberately kept alive as redirects, so old links and anything
    Google still has indexed lands somewhere useful instead of on a 404. */
@@ -106,7 +107,7 @@ const MUST_REDIRECT = [
       const { body } = await get(p);
       if (!body.includes('<footer class="footer">')) { fail(`${p} has no footer`); continue; }
       const foot = body.slice(body.indexOf('<footer class="footer">'));
-      const links = ['/directory', '/terms', '/privacy'].filter(h => !foot.includes(`href="${h}"`));
+      const links = ['/terms', '/privacy'].filter(h => !foot.includes(`href="${h}"`));
       if (links.length) { fail(`${p} footer is missing ${links.join(', ')}`); continue; }
       if (/Staff Login/i.test(foot)) { fail(`${p} footer advertises the staff login`); continue; }
       pass(p);

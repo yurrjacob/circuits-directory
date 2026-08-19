@@ -103,8 +103,7 @@ for (const f of fs.readdirSync(ROOT)) {
 /* --- one header, everywhere ---
        Every public page must carry the same nav: where you can go, then the two
        account actions. Drift here is what made the old header inconsistent. */
-const NAV_PAGES = fs.readdirSync(ROOT).filter(f => f.endsWith('.html'))
-  .concat(fs.readdirSync(path.join(ROOT, 'directory')).map(f => 'directory/' + f));
+const NAV_PAGES = fs.readdirSync(ROOT).filter(f => f.endsWith('.html'));
 let navChecked = 0;
 for (const f of NAV_PAGES) {
   const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
@@ -117,7 +116,7 @@ for (const f of NAV_PAGES) {
   // merged away, and deliberately dropped from the header
   assert.ok(!nav.includes('/how-it-works'), `${f} nav still links the merged How It Works page`);
   assert.ok(!nav.includes('/directory'), `${f} nav still links Directory`);
-  // relative hrefs break on /directory/* and /company/*
+  // relative hrefs break on /company/*
   assert.ok(!/href="(?!\/|https?:|#)[^"]/.test(nav), `${f} nav uses a relative href`);
   // exactly one primary action, and the account link present
   assert.strictEqual((nav.match(/class="[^"]*\bcta\b/g) || []).length, 1,
@@ -126,7 +125,28 @@ for (const f of NAV_PAGES) {
   assert.ok((nav.match(/class="[^"]*\bactive\b/g) || []).length <= 1,
     `${f} nav marks more than one item active`);
 }
-assert.ok(navChecked >= 20, `only ${navChecked} pages carry the shared header`);
+assert.ok(navChecked >= 10, `only ${navChecked} pages carry the shared header`);
+
+/* --- the browsable directory is gone ---
+       Twelve category pages sat between the search box and a search. They were
+       the first thing on the homepage, so people browsed categories instead of
+       searching for what they actually wanted. The site is a search engine for
+       keywords; a category tree is a different product. */
+assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
+  'the directory category pages are back');
+{
+  const home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  assert.ok(!/class="popular"/.test(home),
+    'the homepage is advertising categories under the search box again');
+  for (const f of fs.readdirSync(ROOT).filter(x => x.endsWith('.html'))) {
+    assert.ok(!/href="\/directory/.test(fs.readFileSync(path.join(ROOT, f), 'utf8')),
+      `${f} still links to the removed directory`);
+  }
+  assert.ok(!/\/directory/.test(fs.readFileSync(path.join(ROOT, 'sitemap.xml'), 'utf8')),
+    'the sitemap still lists the removed directory pages');
+  assert.ok(!/\/directory/.test(fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8')),
+    'the next sitemap build would put the directory pages back');
+}
 
 /* How It Works was merged into About; the old URL must still point somewhere */
 const hiw = fs.readFileSync(path.join(ROOT, 'how-it-works.html'), 'utf8');
@@ -526,7 +546,7 @@ for (const f of NAV_PAGES) {
   const foot = (src.match(/<footer class="footer">[\s\S]*?<\/footer>/) || [null])[0];
   if (!foot) continue;
   footChecked++;
-  for (const href of ['/terms', '/privacy', '/directory']) {
+  for (const href of ['/terms', '/privacy']) {
     assert.ok(foot.includes(`href="${href}"`), `${f} footer is missing ${href}`);
   }
   // staff sign-in is not advertised to the public; /login stays reachable directly
@@ -536,7 +556,7 @@ for (const f of NAV_PAGES) {
   assert.ok(!/>Home</.test(foot), `${f} footer still carries a redundant Home link`);
   assert.ok(!foot.includes('Profile Login'), `${f} footer still shows Profile Login`);
 }
-assert.ok(footChecked >= 25, `only ${footChecked} pages carry the shared footer`);
+assert.ok(footChecked >= 12, `only ${footChecked} pages carry the shared footer`);
 
 /* --- analytics must not run before the visitor agrees ---
        GA used to load on page open, setting cookies with no consent, which is
@@ -595,6 +615,35 @@ for (const f of ['portal.html']) {
   assert.ok(fs.readFileSync(path.join(ROOT, f), 'utf8').includes('href="/reset"'),
     `${f} has no forgot-password link`);
 }
+/* --- a reset that could not be sent must say so ---
+       Supabase's built-in mailer allows two emails an hour for the whole
+       project, so the third visitor to forget their password used to be shown
+       "check your inbox" while the send had been refused outright. Whether an
+       ACCOUNT exists stays hidden; whether the SEND failed does not, because
+       that leaks nothing and silence sends people to wait for nothing. */
+{
+  const app = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+  assert.ok(/rate limit/i.test(storeReset) && /429/.test(storeReset),
+    'a rate-limited reset email is still reported to the visitor as sent');
+  assert.ok(/const err = await requestPasswordReset\(/.test(app),
+    'the reset form ignores what requestPasswordReset returns');
+  assert.ok(/if\(err\)\{[\s\S]{0,200}rq-msg|if\(err\)\{[\s\S]{0,200}msg\.textContent = err/.test(app),
+    'the reset form does not show a failed send to the visitor');
+  // ...but the outcome for a real and an unknown account is still identical
+  assert.ok(/same outcome|identical, deliberately/i.test(app),
+    'the reset form no longer documents that it hides whether an account exists');
+  const resetHandler = app.slice(app.indexOf("el('rq-form')"), app.indexOf("Get Listed, step 00"));
+  assert.ok(!/no account|not registered|unknown email|never been registered/i.test(resetHandler),
+    'the reset form now reveals whether an account exists');
+}
+
+// the separate staff login is gone; nothing may advertise or link to it
+for (const f of ['portal.html', 'reset.html', 'register.html', 'index.html']) {
+  const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+  assert.ok(!/href="\/login"/.test(src), `${f} still links to the deleted staff login`);
+  assert.ok(!/auth-staff/.test(src), `${f} still shows the staff sign-in prompt`);
+}
+
 // the reset form must not reveal whether an account exists
 assert.ok(/Deliberately the same outcome|If that account exists/.test(
   fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8') + resetHtml),

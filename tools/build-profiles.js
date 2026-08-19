@@ -21,13 +21,7 @@ const ROOT = path.join(__dirname, '..');
 const MANIFEST = path.join(__dirname, '.generated-profiles.json');
 
 const STATIC_PAGES = [
-  ['/', '1.0'], ['/join', '0.9'], ['/directory', '0.9'],
-  ['/directory/engineers', '0.7'], ['/directory/manufacturers', '0.7'],
-  ['/directory/distributors', '0.7'], ['/directory/buyers', '0.7'],
-  ['/directory/pcb-design', '0.7'], ['/directory/oscillators', '0.7'],
-  ['/directory/voltage-regulators', '0.7'], ['/directory/rf-transceivers', '0.7'],
-  ['/directory/test-equipment', '0.7'], ['/directory/ic-packaging', '0.7'],
-  ['/directory/clock-generators', '0.7'], ['/directory/motion-control-ics', '0.7'],
+  ['/', '1.0'], ['/join', '0.9'],
   ['/about', '0.8'], ['/contact', '0.6'], ['/register', '0.6'], ['/terms', '0.3'], ['/privacy', '0.3']
 ];
 
