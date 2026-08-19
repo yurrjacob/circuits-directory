@@ -92,10 +92,21 @@ for (const bad of ['ab', '-lead', 'trail-', '_lead', 'trail_', 'Upper', 'has spa
 const RESERVED_IN_DB = ['about','admin','applications','claim','companies','company','contact',
   'dashboard','data','directory','how-it-works','index','join','login','portal','profile',
   'privacy','register','reset','results','robots','search','server','sitemap','store','styles','terms','tools'];
+/* build-profiles.js writes one root page per live handle, so those files are
+   named after handles on purpose — that company already owns the name. Only
+   hand-written pages need reserving.
+
+   Generated pages are told apart by the marker build-profiles.js stamps into
+   every one of them, rather than by tools/.generated-profiles.json: that
+   manifest is a local build artefact, and relying on it made this check pass
+   or fail depending on whether someone had run the generator. */
+const isGeneratedProfile = f =>
+  f !== 'company.html' &&
+  /<meta name="company-handle"/.test(fs.readFileSync(path.join(ROOT, f), 'utf8'));
 for (const f of fs.readdirSync(ROOT)) {
   if (!f.endsWith('.html')) continue;
   const name = f.replace(/\.html$/, '');
-  if (name === '404') continue;
+  if (name === '404' || isGeneratedProfile(f)) continue;
   assert.ok(RESERVED_IN_DB.includes(name),
     `root page ${f} is not in the reserved handle list — a company could claim circuits.com/${name}`);
 }
@@ -989,6 +1000,9 @@ require('child_process').execFileSync(process.execPath,
 // and the claim evidence staff decide on — the false "verified" is the failure
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'claim-check.js')], { stdio: 'inherit' });
+// and the admin row buttons, actually clicked — a dead button looks like a live one
+require('child_process').execFileSync(process.execPath,
+  [require('path').join(__dirname, 'admin-check.js')], { stdio: 'inherit' });
 
 /* --- the logo cropper is wired up end to end ---
        A cropper that draws a nice preview and then uploads the original file

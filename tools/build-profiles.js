@@ -35,6 +35,12 @@ async function api(q) {
 
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+/* The test fixture under the keyword "sample". These profiles have to be
+   reachable — that is the whole point of test data — but they are fake
+   companies on a live domain, so they must never reach a search engine.
+   Keyed off the slug prefix the seed function uses. */
+const isSample = co => /^sample-/.test(co.slug || '') || /^sample-/.test(co.handle || '');
+
 function pageFor(template, co) {
   const title = co.name + ' — Supplier Profile | Circuits.com';
   const raw = co.tagline || co.description ||
@@ -42,6 +48,7 @@ function pageFor(template, co) {
   const desc = raw.replace(/\s+/g, ' ').trim().slice(0, 155);
   const og = /^https?:\/\//i.test(co.logo || '') ? co.logo : SITE + '/assets/logo-home.png';
   return template
+    .split('{{ROBOTS}}').join(isSample(co) ? '\n<meta name="robots" content="noindex,nofollow">' : '')
     .split('{{HANDLE}}').join(esc(co.handle))
     .split('{{TITLE}}').join(esc(title))
     .split('{{DESC}}').join(esc(desc))
@@ -93,7 +100,7 @@ function pageFor(template, co) {
   const urls = STATIC_PAGES.map(([loc, pri]) =>
     `  <url><loc>${SITE}${loc}</loc><lastmod>${today}</lastmod><priority>${pri}</priority></url>`
   ).concat(companies
-    .filter(c => written.includes(c.handle + '.html'))
+    .filter(c => written.includes(c.handle + '.html') && !isSample(c))   // test data stays out of the sitemap
     .map(co => `  <url><loc>${SITE}/${co.handle}</loc><lastmod>${(co.updated_at || today).slice(0, 10)}</lastmod><priority>0.6</priority></url>`));
 
   fs.writeFileSync(path.join(ROOT, 'sitemap.xml'),
