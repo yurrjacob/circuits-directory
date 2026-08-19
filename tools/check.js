@@ -986,6 +986,9 @@ require('child_process').execFileSync(process.execPath,
 // and the quote-request inbox, driven the way a supplier drives it
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'inbox-check.js')], { stdio: 'inherit' });
+// and the claim evidence staff decide on — the false "verified" is the failure
+require('child_process').execFileSync(process.execPath,
+  [require('path').join(__dirname, 'claim-check.js')], { stdio: 'inherit' });
 
 /* --- the logo cropper is wired up end to end ---
        A cropper that draws a nice preview and then uploads the original file

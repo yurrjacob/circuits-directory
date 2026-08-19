@@ -109,7 +109,19 @@ store['cx_saved'] = '{"not":"an array"}';
 assert.deepStrictEqual(savedList(), [], 'a non-array in storage should read as empty');
 
 globalThis.localStorage.setItem = () => { throw new Error('QuotaExceededError'); };
-assert.doesNotThrow(() => toggleSaved({ slug:'z', handle:'z', name:'Z' }),
-  'a browser that blocks storage would crash the profile page');
+/* the app logs this failure on purpose; swallow it so a passing run stays silent
+   — a healthy run that prints a stack trace teaches everyone to ignore output */
+{
+  const real = console.warn;
+  let warned = false;
+  console.warn = () => { warned = true; };
+  try{
+    assert.doesNotThrow(() => toggleSaved({ slug:'z', handle:'z', name:'Z' }),
+      'a browser that blocks storage would crash the profile page');
+  } finally { console.warn = real; }
+  /* silence is only safe if the swallow is still deliberate — if the app ever
+     stops noticing that the save failed, this should start failing */
+  assert.ok(warned, 'a blocked save is now silent in the app, so nobody would ever find out');
+}
 
 console.log('saved suppliers OK — no duplicates, capped, survives corrupt and blocked storage');
