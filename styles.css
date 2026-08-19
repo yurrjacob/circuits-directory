@@ -39,6 +39,13 @@ img{max-width:100%}
 .hero-link{display:inline-flex;align-items:flex-start;text-decoration:none}
 .hero-link .tm-mark{font-size:1.05rem;color:var(--ink);margin-top:2px}
 @media(max-width:640px){.hero-link .tm-mark{font-size:.8rem}}
+/* The same green as the primary buttons, shrunk to sit beside the wordmark.
+   .hero-link is a flex row aligned to flex-start, so it rides at the top of
+   the logo rather than the baseline. */
+.beta-tag{align-self:flex-start;background:var(--green);color:#0f0f0f;font-weight:700;
+  font-size:.62rem;letter-spacing:.12em;line-height:1;border-radius:6px;padding:4px 8px;
+  margin:6px 0 0 10px;text-transform:uppercase}
+@media(max-width:640px){.beta-tag{font-size:.55rem;padding:3px 6px;margin:4px 0 0 7px}}
 .tm-mark.tm-tagline{font-size:.72rem;color:var(--muted);vertical-align:top;margin-left:3px}
 .footer-brand{display:inline-flex;align-items:flex-start;gap:1px}
 
