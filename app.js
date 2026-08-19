@@ -601,7 +601,11 @@ updatePreviews();
 const handleInput = document.getElementById('f-handle');
 const handleMsg = document.getElementById('handle-msg');
 let handleTimer = null, handleState = '';
+/* set when the form has been filled in from a company the signed-in user
+   already owns — their address is theirs, so it is never re-checked */
+let JOIN_ADOPTED = false;
 if(handleInput) handleInput.addEventListener('input', ()=>{
+  if(JOIN_ADOPTED) return;
   handleInput.value = handleInput.value.toLowerCase().replace(/[^a-z0-9_-]/g,'');
   clearTimeout(handleTimer);
   handleState = 'checking';
@@ -933,6 +937,62 @@ async function initReset(){
    =================================================================== */
 let JOIN_USER = null;      // the signed-in user, once we know
 
+/* A supplier who already has a listing and comes back for a second keyword.
+   Get Listed asks for a company name and a FREE username — and their own
+   username is already taken, by them. Left alone they would be pushed into
+   inventing a second one, and because the database matches an existing company
+   by exact name, the smallest difference in spelling would hand them a second
+   company and a second profile page.
+
+   So: fill their details in and lock the identity fields. They are here to add
+   a keyword, not to re-introduce themselves. */
+async function adoptExistingCompany(){
+  const el = id => document.getElementById(id);
+  const name = el('f-company'), handle = el('f-handle');
+  if(!name || !handle || typeof myCompanies !== 'function') return;
+
+  /* my_companies() returns only slug and name, so the rest has to be read back
+     from the company itself. */
+  let co = null;
+  try{
+    const mine = await myCompanies();
+    if(!mine || !mine.length) return;                 // no company yet: normal first-time flow
+    co = await fetchCompany(mine[0].slug);
+  }catch(e){ return; }
+  if(!co || !co.handle) return;
+
+  const lock = (input, value) => {
+    if(!input || !value) return;
+    input.value = value;
+    input.readOnly = true;
+    input.classList.add('is-locked');
+  };
+  lock(name, co.name);
+  lock(handle, co.handle);
+
+  /* Their own address is "taken" — by them. The availability checker would call
+     that unavailable and block the form, so stop it running on a locked field
+     and record the state the validator expects. */
+  JOIN_ADOPTED = true;
+  handleState = 'ok';
+  if(handleMsg){
+    handleMsg.textContent = 'circuits.com/' + co.handle + ' — your existing address.';
+    handleMsg.style.color = '#3f6300';
+  }
+
+  /* contact details are a convenience, not an identity — prefilled, still editable */
+  const soft = (id, v) => { const f = el(id); if(f && !f.value && v) f.value = v; };
+  soft('f-contact', co.contact); soft('f-phone', co.phone); soft('f-website', co.website);
+
+  if(!el('f-adopted')){
+    const hint = document.createElement('p');
+    hint.className = 'pf-note';
+    hint.id = 'f-adopted';
+    hint.textContent = 'Adding a keyword to ' + co.name + '. Contact us if you need to list a different company.';
+    name.parentNode.appendChild(hint);
+  }
+}
+
 async function initJoinAccount(){
   const el = id => document.getElementById(id);
   const stepNew = el('acct-new'), stepLogin = el('acct-login'), done = el('acct-done');
@@ -945,6 +1005,7 @@ async function initJoinAccount(){
     if(JOIN_USER){
       el('acct-email').textContent = JOIN_USER.email;
       done.style.display = ''; stepNew.style.display = 'none'; stepLogin.style.display = 'none';
+      await adoptExistingCompany();
     }else{
       done.style.display = 'none'; stepNew.style.display = '';
     }

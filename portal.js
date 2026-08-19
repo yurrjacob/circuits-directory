@@ -1152,26 +1152,6 @@ function wireListings(){
   };
 }
 
-async function requestKeyword(){
-  const kw = cleanKw(val('pt-newkw'));
-  if(!kw){ toast('Enter a keyword first.', false); return; }
-  if(PT.listings.some(l => normKw(l.keyword) === normKw(kw))){ toast('You already have that keyword.', false); return; }
-  const err = await addApplicationKeywords({
-    company: PT.co.name, contact: PT.co.contact, email: PT.co.email,
-    phone: PT.co.phone, website: PT.co.website, logo: PT.co.logo || '',
-    banner: false, badge: null, message: 'Keyword requested from the supplier portal.',
-    terms: true, status: 'Pending'
-  }, [kw]).then(() => null, e => e.message || 'failed');
-  if(err){ toast('Could not send that request: ' + err, false); return; }
-  el('pt-newkw').value = '';
-  PT.listings = await fetchMyListings(PT.slug);
-  renderListings();
-  toast('Requested. Circuits.com will review it.', true);
-  sendFounderEmail('Keyword request — ' + PT.co.name, {
-    company: PT.co.name, keyword: kw, email: PT.co.email || '(none)', source: 'Supplier portal'
-  });
-}
-
 /* ---------- inquiries ---------- */
 /* ---------- quote requests: an inbox ----------
    These used to render every request fully expanded on one page — body, whole

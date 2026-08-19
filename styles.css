@@ -915,6 +915,16 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 .quote-total{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding-top:12px;font-weight:700}
 .quote-total b{font-size:1.35rem;color:var(--green-dark)}
 
+/* A field filled in from the company the signed-in supplier already owns.
+   Readable, obviously not editable, and not greyed into illegibility. */
+.is-locked{background:var(--bg-soft);color:var(--muted);cursor:default}
+
+/* "Want another keyword?" — a signpost to Get Listed, not a second form */
+.pt-addkw{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  gap:16px;margin-top:16px}
+.pt-addkw h3{margin:0 0 4px}
+.pt-addkw .pf-note{margin:0;max-width:62ch}
+
 /* ---- portal: a supplier editing their own listing ---- */
 .pt-listing-sum{margin:8px 0 0;padding-top:8px;border-top:1px solid var(--line)}
 .pt-listing-sum p{margin:0 0 4px;font-size:.9rem;color:var(--ink)}
