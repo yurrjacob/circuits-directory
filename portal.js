@@ -1281,6 +1281,12 @@ function renderInquiries(){
        buyer_email, which meant the reply had no recipient — the supplier was
        told "Reply sent", the buyer never heard anything, and the request just
        looked ignored. */
+    /* The buyer has no account, so a reply that only lands in this thread is a
+       reply nobody receives. This emails them and links back to the thread,
+       where they can answer — which is what "Reply in your portal" has been
+       promising suppliers all along. */
+    notifyBuyerOfReply(id, body);
+
     sendFounderEmail('Supplier reply — ' + PT.co.name, {
       supplier: PT.co.name, buyer: q.from_name, email: q.from_email, message: body
     }, 'Reply from ' + PT.co.name + ' via Circuits.com:\n\n' + body

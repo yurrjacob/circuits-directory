@@ -344,18 +344,28 @@ async function initResults(forcedTerm){
       </td>
       <td class="cell-muted" data-label="Contact">${escapeHtml(c.contact||'—')}</td>
       <td class="cell-muted" data-label="Phone"><a href="tel:${escapeHtml(c.phone||'')}">${escapeHtml(c.phone||'—')}</a></td>
-      <td class="cell-muted" data-label="Email"><a href="mailto:${escapeHtml(c.email||'')}">${escapeHtml(c.email||'—')}</a></td>
       <td class="cell-quote">${quoteBtn(c)}</td>
     </tr>`).join('');
 
+  /* The number is the order companies claimed this keyword, and it is the thing
+     they are paying to hold. Left as a bare "#" a buyer reads it as a ranking —
+     "1" meaning best — which is a claim we are not making and cannot support.
+     Naming it, and saying so under the table, keeps it honest without giving up
+     what makes the position worth buying. */
   body.innerHTML = html + `
     <div class="listings">
       <div class="table-wrap">
         <table class="listings-table">
-          <thead><tr><th class="rank">#</th><th>Company</th><th>Contact</th><th>Phone</th><th>Email</th><th></th></tr></thead>
+          <thead><tr>
+            <th class="rank" title="The order these companies claimed this keyword">Held</th>
+            <th>Company</th><th>Contact</th><th>Phone</th><th></th>
+          </tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
+      <p class="list-note">Listed in the order each company claimed
+      &ldquo;${escapeHtml(q)}&rdquo; &mdash; not a ranking, and not a recommendation.
+      Circuits.com has not assessed these suppliers.</p>
     </div>`;
 }
 

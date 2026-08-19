@@ -925,6 +925,31 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 .pt-addkw h3{margin:0 0 4px}
 .pt-addkw .pf-note{margin:0;max-width:62ch}
 
+/* ---- the buyer reading their own quote request ---- */
+.th-wrap{max-width:720px;margin:0 auto;padding:36px 24px 60px;width:100%}
+.th-head h1{margin:0 0 4px;font-size:1.5rem}
+.th-sub{margin:0 0 22px;color:var(--muted);font-size:.92rem}
+.th-sub a{color:var(--green-dark)}
+.th-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);
+  padding:20px;display:flex;flex-direction:column;gap:16px}
+.th-who{font-size:.8rem;font-weight:700;color:var(--ink);margin-bottom:4px;
+  display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.th-who span{font-weight:400;color:var(--muted);font-size:.78rem}
+.th-card p{margin:0;font-size:.94rem;line-height:1.6;white-space:pre-wrap}
+.th-meta{color:var(--muted);font-size:.84rem;margin:0 0 6px !important}
+.th-orig{border-bottom:1px solid var(--line);padding-bottom:16px}
+.th-msg{padding:14px 16px;border-radius:10px;background:var(--bg-soft)}
+/* the supplier's side is the one being waited on, so it carries the accent */
+.th-theirs{border-left:3px solid var(--green)}
+.th-mine{background:transparent;border-left:3px solid var(--line)}
+.th-waiting{color:var(--muted);font-size:.9rem;margin:0}
+.th-form{margin-top:20px;display:flex;flex-direction:column;gap:8px}
+.th-form textarea{font-family:inherit;font-size:.94rem;padding:12px 14px;border:1px solid var(--line);
+  border-radius:10px;outline:0;background:var(--input-bg);color:var(--ink);resize:vertical}
+.th-form textarea:focus{border-color:var(--green)}
+.th-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.th-foot{margin-top:22px}
+
 /* ---- portal: a supplier editing their own listing ---- */
 .pt-listing-sum{margin:8px 0 0;padding-top:8px;border-top:1px solid var(--line)}
 .pt-listing-sum p{margin:0 0 4px;font-size:.9rem;color:var(--ink)}
@@ -952,6 +977,7 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
    it is a fact about the listing, not a score. */
 .listings-table .rank{width:1%;white-space:nowrap;text-align:right;padding-right:4px;
   color:var(--muted);font-variant-numeric:tabular-nums;font-size:.86rem}
+.list-note{margin:10px 2px 0;font-size:.82rem;color:var(--muted);max-width:70ch}
 /* the action sits hard right and never wraps mid-phrase */
 .listings-table .cell-quote{width:1%;white-space:nowrap;text-align:right}
 .btn-quote{padding:6px 12px;font-size:.82rem;white-space:nowrap}

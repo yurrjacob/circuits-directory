@@ -16,5 +16,7 @@ Disallow: /results
 Disallow: /results.html
 Disallow: /company.html
 Disallow: /company
+Disallow: /thread
+Disallow: /thread.html
 
 Sitemap: https://circuits.com/sitemap.xml

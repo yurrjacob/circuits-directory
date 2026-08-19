@@ -449,17 +449,71 @@ async function submitReview(slug, r){
   });
   if(error){ console.error('submitReview', error); throw error; }
 }
+/* Returns { id, token }. The token is the buyer's only way back to this
+   conversation — they have no account, by design, and anon cannot read the
+   table. It goes in their confirmation email and nowhere else. */
 async function submitInquiry(slug, q){
   if(!sb) throw new Error('No connection');
-  const { data, error } = await sb.from('inquiries').insert({
-    company_slug: slug, from_name: q.name, from_email: q.email,
-    from_company: q.company || null, phone: q.phone || null,
-    subject: q.subject || null, body: q.body,
-    quantity: q.quantity || null, part_number: q.part_number || null,
-    status: 'New'
-  }).select('id').maybeSingle();
+  const { data, error } = await sb.rpc('create_inquiry', {
+    p_slug: slug, p_name: q.name, p_email: q.email, p_company: q.company || null,
+    p_phone: q.phone || null, p_subject: q.subject || null, p_body: q.body,
+    p_quantity: q.quantity || null, p_part_number: q.part_number || null
+  });
   if(error){ console.error('submitInquiry', error); throw error; }
-  return data;
+  return data || null;
+}
+
+/* ---- the buyer's side of the conversation ----
+   No account: the token in their emailed link is the credential. It reaches a
+   SECURITY DEFINER function that returns one thread and nothing else, so the
+   tables stay closed to anon. */
+async function fetchThreadByToken(token){
+  if(!sb || !token) return null;
+  const { data, error } = await sb.rpc('thread_by_token', { p_token: token });
+  if(error){ console.error('thread_by_token', error); throw error; }
+  return data || null;
+}
+async function postBuyerMessage(token, body){
+  if(!sb) return 'no-connection';
+  const { data, error } = await sb.rpc('post_buyer_message', { p_token: token, p_body: body });
+  if(error){ console.error('post_buyer_message', error); return error.message; }
+  return data;                       // 'ok' | 'empty' | 'closed' | 'rate-limited' | 'not-found'
+}
+
+/* Tells the buyer a reply is waiting. The supplier must be signed in: the
+   function checks they own the thread before it will email anyone. */
+async function notifyBuyerOfReply(inquiryId, body){
+  try{
+    const { data: s } = await sb.auth.getSession();
+    const jwt = s && s.session && s.session.access_token;
+    if(!jwt) return false;
+    const res = await fetch(SUPABASE_URL + '/functions/v1/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + jwt },
+      body: JSON.stringify({ kind: 'reply', inquiry_id: inquiryId, body: body })
+    });
+    const out = await res.json().catch(() => null);
+    if(!out || !out.ok) console.warn('buyer not notified:', out && out.error);
+    return !!(out && out.ok);
+  }catch(err){ console.warn('buyer notification failed', err); return false; }
+}
+
+/* Tells a supplier their listing was approved or denied. Staff only — checked
+   server-side against the staff table, not asked politely here. */
+async function notifyDecision(applicationId, reason){
+  try{
+    const { data: s } = await sb.auth.getSession();
+    const jwt = s && s.session && s.session.access_token;
+    if(!jwt) return false;
+    const res = await fetch(SUPABASE_URL + '/functions/v1/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + jwt },
+      body: JSON.stringify({ kind: 'decision', application_id: applicationId, reason: reason || '' })
+    });
+    const out = await res.json().catch(() => null);
+    if(!out || !out.ok) console.warn('decision not sent:', out && out.error);
+    return !!(out && out.ok);
+  }catch(err){ console.warn('decision email failed', err); return false; }
 }
 
 /* ---- analytics ----
@@ -644,12 +698,14 @@ async function companyInsights(slug, days){
    cannot name an address, or the site would be an open spam relay.
    Never throws: the request is already saved in the database and visible in
    the supplier's portal, so a failed notification must not fail the form. */
-async function notifySupplier(slug, quote){
+async function notifySupplier(slug, quote, token){
   try{
     const res = await fetch(SUPABASE_URL + '/functions/v1/notify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY },
-      body: JSON.stringify({ kind: 'quote', company_slug: slug, quote: quote })
+      /* the token lets the confirmation email link the buyer back to the
+         thread; without it they get a copy of their request and no way back */
+      body: JSON.stringify({ kind: 'quote', company_slug: slug, quote: quote, token: token || '' })
     });
     const out = await res.json().catch(() => null);
     if(!out || !out.ok) console.warn('supplier not notified:', out && out.error);

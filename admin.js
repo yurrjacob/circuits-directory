@@ -226,9 +226,25 @@ async function approveApp(id){
     alert('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword — remove the existing banner first.');
     return;
   }
-  const err = await updateAppStatus(id,'Approved'); if(err){ alert(bannerError(err)); return; } await reload();
+  const err = await updateAppStatus(id,'Approved'); if(err){ alert(bannerError(err)); return; }
+  /* Tell them. Until now a supplier applied and then refreshed the portal
+     hoping — the notifier only knew how to send quote requests. */
+  notifyDecision(id, '');
+  await reload();
 }
-async function rejectApp(id){ await updateAppStatus(id,'Denied'); await reload(); }
+async function rejectApp(id){
+  /* A denial with no reason reads as a shrug, and the supplier has no idea
+     whether to fix something and come back. Optional, but asked for every time
+     so it is the default rather than an afterthought. */
+  const reason = prompt(
+    'Why is this being denied?\n\n'
+    + 'This is sent to the supplier. Leave it blank to send the plain notice with no reason.',
+    '');
+  if(reason === null) return;                 // cancelled — change nothing
+  await updateAppStatus(id,'Denied');
+  notifyDecision(id, reason.trim());
+  await reload();
+}
 
 /* ---- profile claims ---- */
 let allClaims = [];

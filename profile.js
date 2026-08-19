@@ -456,7 +456,7 @@ function wireProfile(slug, co){
     const btn = document.getElementById('rq-submit');
     btn.disabled = true; msg.textContent = '';
     try{
-      await submitInquiry(slug, {
+      const sent = await submitInquiry(slug, {
         name: v('rq-name'), email: v('rq-email'), company: v('rq-company'), phone: v('rq-phone'),
         part_number: v('rq-pn'), quantity: v('rq-qty'), body: v('rq-body'),
         subject: 'Quote request via Circuits.com'
@@ -468,10 +468,12 @@ function wireProfile(slug, co){
          addresses that have confirmed themselves, which a customer's address
          has not. Deliberately not awaited: the request is already saved and
          will appear in their portal regardless. */
+      /* the token comes back from the insert and is the buyer's only route to
+         this conversation later — it goes into their confirmation email */
       notifySupplier(slug, {
         name: v('rq-name'), email: v('rq-email'), company: v('rq-company'),
         phone: v('rq-phone'), part_number: v('rq-pn'), quantity: v('rq-qty'), body: v('rq-body')
-      });
+      }, sent && sent.token);
 
       /* and the founders, so nothing is missed while the above beds in */
       sendFounderEmail('New quote request — ' + co.name, {
@@ -479,7 +481,13 @@ function wireProfile(slug, co){
         email: v('rq-email'), company: v('rq-company') || '(none)', phone: v('rq-phone') || '(none)',
         part_number: v('rq-pn') || '(none)', quantity: v('rq-qty') || '(none)', message: v('rq-body')
       }, 'Thanks — your quote request has been sent to ' + co.name + ' via Circuits.com. They typically reply directly to this email address.');
-      rf.innerHTML = '<div class="success show">Request sent. ' + escapeHtml(co.name) + ' will reply to you directly.</div>';
+      /* Say where the answer will arrive. "They will reply directly" was true
+         only if the supplier used their email client; a reply sent from the
+         portal now reaches the buyer too, and this is the page it lands on. */
+      rf.innerHTML = '<div class="success show">Request sent to ' + escapeHtml(co.name) + '.'
+        + ' We have emailed you a copy'
+        + (sent && sent.token ? ' with a link to follow the conversation' : '')
+        + '. Their reply arrives at ' + escapeHtml(v('rq-email')) + '.</div>';
     }catch(err){
       btn.disabled = false;
       msg.textContent = rateLimitMessage(err)
