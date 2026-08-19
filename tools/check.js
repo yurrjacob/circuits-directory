@@ -945,6 +945,27 @@ for (const trigger of ['renderQuote()']) {
   }
 }
 
+/* --- recording searches must stay anonymous, and be disclosed ---
+       The value of this data is the aggregate. The moment it carries a visitor
+       id, an IP or an account it stops being "what does the industry look for"
+       and becomes a record of what a named person searched for. */
+{
+  const store = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+  const logFn = store.slice(store.indexOf('function logSearch'), store.indexOf('async function registerWanted'));
+  assert.ok(/from\('searches'\)\.insert/.test(logFn), 'searches are no longer recorded');
+  for (const pii of ['visitor', 'auth.uid', 'ip', 'user_id', 'email']) {
+    assert.ok(!new RegExp('\\b' + pii.replace('.', '\\.') + '\\b').test(logFn),
+      `logSearch now records ${pii} — a search log must not identify anybody`);
+  }
+  const priv = fs.readFileSync(path.join(ROOT, 'privacy.html'), 'utf8');
+  assert.ok(/What people search for/i.test(priv),
+    'searches are recorded but the privacy policy does not say so');
+  assert.ok(/do\s*<b>not<\/b>\s*record who searched|not record who searched/i.test(priv),
+    'the privacy policy does not state that searches are anonymous');
+  assert.ok(/Telling us what you need|your email address, and anything you type/i.test(priv),
+    'the demand capture stores an email but the privacy policy does not mention it');
+}
+
 require('./render-check.js');
 /* Renders the search and profile pages against a database that refuses every
    request, and fails if either tries to sell something as a result.
@@ -959,6 +980,9 @@ require('child_process').execFileSync(process.execPath,
 // likewise — the logo cropper's arithmetic, checked without a browser
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'crop-check.js')], { stdio: 'inherit' });
+// and the search results page, driven the way a buyer drives it
+require('child_process').execFileSync(process.execPath,
+  [require('path').join(__dirname, 'search-check.js')], { stdio: 'inherit' });
 // and the quote-request inbox, driven the way a supplier drives it
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'inbox-check.js')], { stdio: 'inherit' });
