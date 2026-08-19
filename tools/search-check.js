@@ -123,6 +123,20 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
 
   /* --- every listing offers a way to ask for a quote --- */
   assert.ok(/Request a Quote/.test(captured), 'a listing has no Request a Quote button');
+
+  /* The raw email link is deliberately NOT in the table. It gave buyers a path
+     nobody can measure, sitting right next to the one we can, and left every
+     supplier's address in public for scrapers. It stays on the profile, where
+     the click is tracked and there is context around it. */
+  const tbodyEmail = captured.slice(captured.indexOf('<tbody>'));
+  assert.ok(!/mailto:/.test(tbodyEmail),
+    'the results table exposes supplier email addresses again — that is the unmeasurable path and a scraper target');
+
+  /* The position must not present itself as a ranking. */
+  assert.ok(!/<th class="rank"[^>]*>#</.test(captured),
+    'the position column is back to a bare "#", which buyers read as a ranking');
+  assert.ok(/not a ranking/.test(captured),
+    'the results page no longer says the order is not a ranking');
   assert.ok(/href="\/acme#rfq"/.test(captured),
     'the quote button does not point at that company\'s own quote form');
 

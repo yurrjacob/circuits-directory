@@ -91,7 +91,7 @@ for (const bad of ['ab', '-lead', 'trail-', '_lead', 'trail_', 'Upper', 'has spa
 // every root page name must be in the reserved list, or a company could take it
 const RESERVED_IN_DB = ['about','admin','applications','claim','companies','company','contact',
   'dashboard','data','directory','how-it-works','index','join','login','portal','profile',
-  'privacy','register','reset','results','robots','search','server','sitemap','store','styles','terms','tools'];
+  'privacy','register','reset','results','robots','search','server','sitemap','store','styles','terms','thread','tools'];
 /* build-profiles.js writes one root page per live handle, so those files are
    named after handles on purpose — that company already owns the name. Only
    hand-written pages need reserving.
@@ -1063,6 +1063,9 @@ require('child_process').execFileSync(process.execPath,
 // and the claim evidence staff decide on — the false "verified" is the failure
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'claim-check.js')], { stdio: 'inherit' });
+// and the buyer's side of a quote request — the reply used to reach nobody
+require('child_process').execFileSync(process.execPath,
+  [require('path').join(__dirname, 'thread-check.js')], { stdio: 'inherit' });
 // and the boundary on what a supplier may edit on their own listing
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'listing-edit-check.js')], { stdio: 'inherit' });
