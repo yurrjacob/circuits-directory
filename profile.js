@@ -376,7 +376,7 @@ function rfqForm(co){
 
 function notFound(handle){
   return `<div class="empty"><div class="big">No profile at circuits.com/${escapeHtml(handle)}</div>
-    <p>That name is not taken yet. <a href="/join">Claim it here</a>, or <a href="/directory">browse the directory</a>.</p></div>`;
+    <p>That name is not taken yet. <a href="/join">Claim it here</a>, or <a href="/">search for a company</a>.</p></div>`;
 }
 
 function setMeta(name, content){

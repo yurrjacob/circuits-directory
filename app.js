@@ -90,7 +90,7 @@ function loadErrorHtml(what, retryLabel){
        or Circuits.com may be briefly unavailable.</p>
     <div class="btn-row" style="justify-content:center">
       <button class="btn btn-primary" type="button" onclick="location.reload()">${escapeHtml(retryLabel || 'Try again')}</button>
-      <a class="btn" href="/directory">Browse the directory</a>
+      <a class="btn" href="/">Back to search</a>
     </div>
   </div>`;
 }
@@ -826,8 +826,16 @@ async function initReset(){
     const id = el('rq-id').value.trim();
     if(!id){ msg.textContent = 'Enter your email or username.'; msg.style.color = '#b3261e'; return; }
     btn.disabled = true; msg.style.color = ''; msg.textContent = 'Sending…';
-    await requestPasswordReset(id);
-    /* Deliberately the same outcome whether or not the account exists. */
+    const err = await requestPasswordReset(id);
+    /* An unknown account and a real one look identical, deliberately — but a
+       send that actually failed says so, rather than sending them to wait by
+       an inbox for a message that was never sent. */
+    if(err){
+      btn.disabled = false;
+      msg.style.color = '#b3261e';
+      msg.textContent = err;
+      return;
+    }
     show('rq-card', false); show('rq-sent', true);
   });
 }

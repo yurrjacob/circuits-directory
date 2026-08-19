@@ -190,7 +190,20 @@ async function requestPasswordReset(identifier){
     const { error } = await sb.auth.resetPasswordForEmail(email, {
       redirectTo: location.origin + '/reset'
     });
-    if(error) console.warn('resetPasswordForEmail', error.message);
+    if(error){
+      console.warn('resetPasswordForEmail', error.message);
+      /* Whether the send FAILED is not a secret — it says nothing about who is
+         registered — and swallowing it is worse than useless: the visitor is
+         told to check an inbox that will never receive anything. The account's
+         existence stays hidden; the outage does not. */
+      const status = error.status || error.code;
+      if(status === 429 || /rate limit/i.test(error.message || '')){
+        return 'Too many reset emails have been sent from Circuits.com in the last hour. '
+             + 'Please try again shortly, or email support@circuits.com and we will reset it for you.';
+      }
+      return 'We could not send the reset email just now. Please try again in a few minutes, '
+           + 'or email support@circuits.com.';
+    }
   }
   return '';
 }
