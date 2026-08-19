@@ -1000,6 +1000,9 @@ require('child_process').execFileSync(process.execPath,
 // and the claim evidence staff decide on — the false "verified" is the failure
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'claim-check.js')], { stdio: 'inherit' });
+// and the boundary on what a supplier may edit on their own listing
+require('child_process').execFileSync(process.execPath,
+  [require('path').join(__dirname, 'listing-edit-check.js')], { stdio: 'inherit' });
 // and the admin row buttons, actually clicked — a dead button looks like a live one
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'admin-check.js')], { stdio: 'inherit' });
