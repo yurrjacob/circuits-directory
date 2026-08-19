@@ -17,6 +17,15 @@ global.isLogoUrl = s => /^https?:\/\//i.test(s || '');
 global.profileUrl = h => '/' + h;
 global.docLinks = () => '';
 global.badgeHtml = () => '';
+/* the real quote button, not a stub — whether every listing gets one is the
+   thing being checked */
+{
+  const f = src.indexOf('function quoteBtn');
+  assert.ok(f >= 0, 'quoteBtn is gone from app.js');
+  let d = 0, i = f;
+  for(; i < src.length; i++){ if(src[i] === '{') d++; else if(src[i] === '}'){ d--; if(!d) break; } }
+  (0, eval)(src.slice(f, i + 1).replace('function quoteBtn', 'global.quoteBtn = function'));
+}
 global.armSpamTrap = () => {};
 global.looksLikeSpam = () => false;
 global.fakeSuccess = () => {};
@@ -112,5 +121,47 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   assert.deepStrictEqual(logged, { term: 'oscillators', hits: 1 },
     'a search that found something was not recorded with its hit count');
 
-  console.log('search results OK — buyer answered first, no fake company, outages never logged as misses');
+  /* --- every listing offers a way to ask for a quote --- */
+  assert.ok(/Request a Quote/.test(captured), 'a listing has no Request a Quote button');
+  assert.ok(/href="\/acme#rfq"/.test(captured),
+    'the quote button does not point at that company\'s own quote form');
+
+  /* --- and every listing is numbered --- */
+  assert.ok(/class="rank"[^>]*>1</.test(captured), 'listings are not numbered');
+
+  /* --- the sponsor is the banner, and is NOT also a row ---
+     Paying for the banner buys prominence, not a second appearance. Showing
+     both is the kind of duplicate that makes a directory look padded, and it
+     is what the sponsor is explicitly no longer supposed to get. */
+  listingsToReturn = [
+    { company: 'Sponsor Co', company_handle: 'sponsorco', keyword: 'oscillators',
+      contact: 'Lee', phone: '(555) 9', email: 's@b.co', docs: [], banner: true, description: 'x' },
+    { company: 'Acme', company_handle: 'acme', keyword: 'oscillators',
+      contact: 'Sam', phone: '(555) 2', email: 'a@b.co', docs: [] },
+    { company: 'Bell', company_handle: 'bell', keyword: 'oscillators',
+      contact: 'Dana', phone: '(555) 3', email: 'b@b.co', docs: [] }
+  ];
+  await initResults('oscillators');
+
+  assert.ok(/Exclusive Sponsor/.test(captured), 'the sponsor banner stopped rendering');
+  const tbody = captured.slice(captured.indexOf('<tbody>'));
+  assert.ok(!/Sponsor Co/.test(tbody),
+    'the Exclusive Sponsor is still listed in the table as well as in the banner — it is shown twice');
+  assert.ok(/Acme/.test(tbody) && /Bell/.test(tbody), 'the ordinary listings stopped rendering');
+
+  /* numbering runs over what is actually in the list, so pulling the sponsor
+     out must not leave a gap at the top */
+  const ranks = [...tbody.matchAll(/class="rank"[^>]*>(\d+)</g)].map(m => m[1]);
+  assert.deepStrictEqual(ranks, ['1', '2'],
+    `the list is numbered ${ranks.join(',')} — removing the sponsor left a hole in the sequence`);
+
+  assert.ok(/premium-contact[\s\S]*?Request a Quote/.test(captured),
+    'the sponsor banner has no Request a Quote button');
+
+  /* a listing with no profile page still has to be contactable */
+  assert.ok(/mailto:a@b\.co/.test(quoteBtn({ email: 'a@b.co' })),
+    'a listing without a profile page loses its quote button entirely');
+  assert.strictEqual(quoteBtn({}), '', 'a listing with no handle and no email should render no button');
+
+  console.log('search results OK — buyer answered first, numbered rows, sponsor not listed twice');
 })();
