@@ -90,6 +90,54 @@ async function fetchApprovedByKeyword(keyword){
   return out;
 }
 
+/* ---- what people look for ----
+   Logged for every search, found or not. Deliberately anonymous: the term, the
+   number of hits and the time, nothing that ties it to a person. The value is
+   the aggregate — which keywords are wanted and which ones we cannot answer.
+
+   Never awaited and never surfaced: a failure to log must not slow a search
+   down or show the searcher an error about our own bookkeeping. */
+function logSearch(term, hits){
+  if(!sb) return;
+  const q = (term || '').trim().slice(0, 120);
+  if(!q) return;
+  try{
+    sb.from('searches').insert({ q, q_norm: normKw(q).slice(0, 120), hits: hits | 0 })
+      .then(({ error }) => { if(error) console.warn('logSearch', error.message); });
+  }catch(err){ console.warn('logSearch failed', err); }
+}
+
+/* A buyer who found nothing, asking to be told when somebody lists. This one
+   the caller DOES wait on, because they are owed an answer. */
+async function registerWanted(keyword, email, note){
+  if(!sb) return 'No connection';
+  const { error } = await sb.from('wanted').insert({
+    keyword: (keyword || '').trim().slice(0, 120),
+    email: (email || '').trim().slice(0, 320),
+    note: (note || '').trim().slice(0, 1000) || null
+  });
+  if(error){ console.error('registerWanted', error); return error.message; }
+  return '';
+}
+
+/* Related listings when the exact keyword has none: split what they typed and
+   look for a listing on any single word of it, so "crystal oscillator" reaches
+   the company listed under "oscillators". Clearly labelled as related in the
+   page — an exact keyword is what companies pay for and must not be diluted. */
+async function fetchRelatedByKeyword(keyword){
+  if(!sb) return [];
+  const words = (keyword || '').toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 2);
+  const terms = [...new Set(words.map(normKw))].filter(Boolean).slice(0, 6);
+  if(!terms.length) return [];
+  const { data, error } = await sb.from('applications').select('*')
+    .eq('status','Approved').eq('paused', false).in('keyword_norm', terms)
+    .order('created_at', { ascending:true }).order('id', { ascending:true });
+  if(error){ console.warn('fetchRelatedByKeyword', error.message); return []; }
+  const seen = new Set(), out = [];
+  for(const a of (data || [])){ if(seen.has(a.company)) continue; seen.add(a.company); out.push(a); }
+  return out;
+}
+
 /* ---- company logo storage (Supabase Storage, public bucket "logos") ---- */
 async function uploadLogo(file){
   if(!sb || !file) return '';
@@ -581,6 +629,29 @@ async function fetchAllCompanies(){
     .order('name');
   if(error){ console.error('fetchAllCompanies', error); return []; }
   return data || [];
+}
+
+/* Staff reads for the demand data. Both are refused by the database for
+   anybody who is not staff, so this is convenience, not the control. */
+async function fetchTopSearches(days, missedOnly){
+  if(!sb) return [];
+  const { data, error } = await sb.rpc('top_searches',
+    { p_days: days || 30, p_missed_only: !!missedOnly });
+  if(error){ console.error('top_searches', error); return []; }
+  return data || [];
+}
+async function fetchWanted(){
+  if(!sb) return [];
+  const { data, error } = await sb.from('wanted').select('*')
+    .order('at', { ascending:false }).limit(200);
+  if(error){ console.error('fetchWanted', error); return []; }
+  return data || [];
+}
+async function setWantedHandled(id, handled){
+  if(!sb) return 'Not connected.';
+  const { error } = await sb.from('wanted').update({ handled: !!handled }).eq('id', id);
+  if(error){ console.error('setWantedHandled', error); return error.message; }
+  return '';
 }
 
 /* The staff audit trail. Append-only in the database, so this is a faithful

@@ -386,6 +386,47 @@
     </div>
   </div>
 
+  <!-- What people looked for, and who we could not answer -->
+  <div class="panel">
+    <div class="panel-head"><h2>What People Search For</h2>
+      <span class="hint">Anonymous &mdash; The Term And Whether It Landed, Nothing Else</span></div>
+    <div class="panel-body">
+      <div class="list-controls" data-panel="searches">
+        <span class="lc-label">Show</span>
+        <button type="button" class="mini-btn sort-btn active" data-searches="all">Everything</button>
+        <button type="button" class="mini-btn sort-btn" data-searches="missed">Found nothing</button>
+        <span class="lc-label">Last</span>
+        <select id="s-days" style="height:34px;border:1px solid var(--line);border-radius:8px;padding:0 8px">
+          <option value="7">7 days</option>
+          <option value="30" selected>30 days</option>
+          <option value="90">90 days</option>
+        </select>
+      </div>
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Keyword</th><th>Searches</th><th>Found nothing</th><th>Last seen</th><th>Actions</th></tr></thead>
+          <tbody id="searches-body"></tbody>
+        </table>
+      </div>
+      <div id="searches-empty" class="empty-line" style="display:none">Nothing searched yet.</div>
+    </div>
+  </div>
+
+  <!-- Buyers who asked to be told when somebody lists -->
+  <div class="panel">
+    <div class="panel-head"><h2>Buyers Waiting</h2>
+      <span class="hint">Left An Email On A Keyword Nobody Holds</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>When</th><th>Keyword</th><th>Email</th><th>What They Need</th><th>Actions</th></tr></thead>
+          <tbody id="wanted-body"></tbody>
+        </table>
+      </div>
+      <div id="wanted-empty" class="empty-line" style="display:none">Nobody waiting.</div>
+    </div>
+  </div>
+
   <!-- Audit log: append-only, including our own actions -->
   <div class="panel">
     <div class="panel-head"><h2>Staff Audit Log</h2><span class="hint">Append-Only &mdash; Cannot Be Edited Or Deleted, Including By Us</span></div>

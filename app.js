@@ -193,41 +193,99 @@ async function initResults(forcedTerm){
   const countEl = document.getElementById('result-count');
   if(countEl) countEl.textContent = listings.length;
 
+  /* Record the search and whether it landed. Only reached once the lookup has
+     actually succeeded — a failed request above returns early, so an outage is
+     never logged as "nobody wanted this keyword". */
+  logSearch(q, listings.length);
+
   if(!listings.length){
     const term = escapeHtml(q);
+
+    /* Somebody searched for a supplier and we have none. The page used to open
+       with "this keyword is available" and a mocked-up company card — an advert
+       aimed at the one person on the page who is not buying advertising. They
+       leave, and they are the demand the listings are sold on.
+
+       So: answer the buyer first, take their requirement, and put the pitch
+       underneath where it still does its job. */
+    const related = await fetchRelatedByKeyword(q);
+    const relatedHtml = related.length ? `
+      <div class="rel-wrap">
+        <h2 class="rel-h">Listed under a related keyword</h2>
+        <p class="rel-note">Nobody holds &ldquo;${term}&rdquo;. These companies are listed under a
+        word from your search &mdash; they may or may not cover what you need.</p>
+        <div class="listings"><div class="table-wrap">
+          <table class="listings-table">
+            <thead><tr><th>Company</th><th>Listed under</th><th>Contact</th><th>Phone</th></tr></thead>
+            <tbody>${related.map(c => `<tr>
+              <td><div class="co">
+                ${c.company_handle
+                  ? `<a href="${escapeHtml(profileUrl(c.company_handle))}">${escapeHtml(c.company)}</a>`
+                  : escapeHtml(c.company)}
+              </div></td>
+              <td class="cell-muted" data-label="Listed under"><a href="/results?q=${encodeURIComponent(c.keyword)}">${escapeHtml(c.keyword)}</a></td>
+              <td class="cell-muted" data-label="Contact">${escapeHtml(c.contact || '—')}</td>
+              <td class="cell-muted" data-label="Phone">${escapeHtml(c.phone || '—')}</td>
+            </tr>`).join('')}</tbody>
+          </table>
+        </div></div>
+      </div>` : '';
+
     body.innerHTML = `
-    <div class="empty" style="margin-bottom:4px">
-      <div class="big">This Circuits-Keyword&trade; is available</div>
+    <div class="miss">
+      <div class="big">No one is listed for &ldquo;${term}&rdquo; yet</div>
+      <p class="miss-sub">Circuits.com is new, and this keyword has not been claimed. Tell us what you
+      are looking for and we will email you the moment a supplier lists for it.</p>
+
+      <form class="miss-form" id="wanted-form" autocomplete="off">
+        <div class="miss-row">
+          <input id="wanted-email" type="email" required placeholder="you@company.com"
+                 autocomplete="email" spellcheck="false" aria-label="Your email">
+          <button class="btn btn-primary" type="submit" id="wanted-submit">Tell me when someone lists</button>
+        </div>
+        <textarea id="wanted-note" rows="2" maxlength="1000"
+          placeholder="Optional: what exactly do you need? Part numbers, quantities, where you are."></textarea>
+        <div id="wanted-msg" class="field-hint"></div>
+        <p class="field-hint">We use this to tell you about &ldquo;${term}&rdquo; and nothing else.
+        See our <a href="/privacy">privacy policy</a>.</p>
+      </form>
     </div>
-    <div class="premium"><div class="premium-card">
-      <span class="premium-badge">Exclusive Sponsor</span>
-      <div class="premium-logo">${avatarSvg()}</div>
-      <div class="premium-body">
-        <h3>Your Company or Name</h3>
-        <p>Own the Exclusive Circuits-Keyword™ Sponsor Banner for &ldquo;${term}&rdquo;.<br>Own the First Listing Every Viewer Sees.</p>
+
+    ${relatedHtml}
+
+    <div class="claim-strip">
+      <div>
+        <b>Do you supply ${term}?</b>
+        <p>This Circuits-Keyword&trade; is unclaimed. The first company listed for it holds the
+        top position permanently, for as long as the listing stays active.</p>
       </div>
-      <div class="premium-contact">Your Contact<br>(555) 123-4567<br>sales@yourcompany.com</div>
-    </div></div>
-    <div class="listings" style="margin-bottom:10px">
-      <div class="table-wrap">
-        <table class="listings-table">
-          <thead><tr><th>Company</th><th>Contact</th><th>Phone</th><th>Email</th></tr></thead>
-          <tbody><tr>
-            <td><div class="co">
-              <span class="co-logo" style="background:var(--dark)">${avatarSvg()}</span>
-              <a href="/join">Your Company or Name</a>
-              <span class="lb" style="background:#c9a227">Authorized</span>
-            </div></td>
-            <td class="cell-muted" data-label="Contact">Your Contact</td>
-            <td class="cell-muted" data-label="Phone">(555) 123-4567</td>
-            <td class="cell-muted" data-label="Email">sales@yourcompany.com</td>
-          </tr></tbody>
-        </table>
-      </div>
-    </div>
-    <div class="empty" style="margin:10px auto 60px">
-      <a class="btn btn-primary" href="/join" style="padding:14px 28px;font-size:1rem;display:inline-block;font-weight:700">Be The First Listed For &ldquo;${term}&rdquo;</a>
+      <a class="btn btn-primary" href="/join">Claim &ldquo;${term}&rdquo;</a>
     </div>`;
+
+    /* The demand capture is a public form, so it gets the same two traps as the
+       others, and the database rate-limits it per IP regardless. */
+    const wf = document.getElementById('wanted-form');
+    armSpamTrap(wf);
+    wf.addEventListener('submit', async e => {
+      e.preventDefault();
+      const msg = document.getElementById('wanted-msg');
+      const btn = document.getElementById('wanted-submit');
+      const email = document.getElementById('wanted-email').value.trim();
+      if(looksLikeSpam(wf)){ fakeSuccess(wf, 'Thanks — we will be in touch.'); return; }
+      if(!isValidEmail(email)){ msg.style.color = '#b3261e'; msg.textContent = 'Please enter a valid email address.'; return; }
+      btn.disabled = true; msg.style.color = ''; msg.textContent = 'Saving…';
+      const err = await registerWanted(q, email, document.getElementById('wanted-note').value);
+      if(err){
+        btn.disabled = false;
+        msg.style.color = '#b3261e';
+        msg.textContent = rateLimitMessage({ message: err })
+          || 'We could not save that just now. Please try again in a moment.';
+        return;
+      }
+      wf.innerHTML = '<div class="success show">Thanks. We will email you when a supplier lists for &ldquo;'
+        + term + '&rdquo;.</div>';
+    });
+
     return;
   }
 

@@ -385,6 +385,37 @@ tr.row-warn td{background:#fff3cd}
 .pt-admin-only #pt-company,
 .pt-admin-only #pt-view{display:none}
 .admin-head{margin-top:4px}
+/* ---- a search that found nobody ----
+   The buyer is answered first and given something to do; the pitch to claim the
+   keyword sits underneath, where it still works but is not the whole page. */
+.miss{max-width:620px;margin:38px auto 8px;text-align:center}
+.miss .big{font-size:1.45rem;font-weight:700;margin-bottom:8px}
+.miss-sub{color:var(--muted);font-size:.95rem;line-height:1.6;margin:0 auto 20px;max-width:520px}
+.miss-form{text-align:left;background:var(--bg-soft);border:1px solid var(--line);
+  border-radius:var(--radius);padding:16px}
+.miss-row{display:flex;gap:8px;flex-wrap:wrap}
+.miss-row input{flex:1 1 240px;min-width:0;padding:11px 13px;border:1px solid var(--line);
+  border-radius:8px;font:inherit;background:#fff}
+.miss-row input:focus{outline:2px solid var(--green);outline-offset:-1px;border-color:var(--green)}
+.miss-row .btn{flex:0 0 auto}
+.miss-form textarea{width:100%;margin-top:8px;padding:10px 13px;border:1px solid var(--line);
+  border-radius:8px;font:inherit;background:#fff;resize:vertical}
+.miss-form textarea:focus{outline:2px solid var(--green);outline-offset:-1px;border-color:var(--green)}
+.miss-form .field-hint{margin-top:8px}
+
+/* listings found on a word from the search rather than the whole phrase */
+.rel-wrap{max-width:1100px;margin:34px auto 0}
+.rel-h{font-size:1.05rem;margin:0 0 4px}
+.rel-note{color:var(--muted);font-size:.86rem;margin:0 0 12px}
+
+/* the pitch, now below the buyer's answer instead of instead of it */
+.claim-strip{max-width:1100px;margin:34px auto 60px;display:flex;gap:18px;align-items:center;
+  justify-content:space-between;flex-wrap:wrap;padding:18px 20px;border:1px solid var(--line);
+  border-radius:var(--radius);background:#fff}
+.claim-strip b{display:block;margin-bottom:4px}
+.claim-strip p{margin:0;color:var(--muted);font-size:.88rem;max-width:640px;line-height:1.55}
+@media(max-width:640px){ .claim-strip{flex-direction:column;align-items:flex-start} }
+
 /* one quiet line at the foot of a profile, in place of notes under each section */
 .pf-source{margin:22px 0 0;font-size:12px;color:var(--muted);text-align:center}
 .pf-source a{color:var(--muted);text-decoration:underline}

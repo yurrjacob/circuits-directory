@@ -342,6 +342,56 @@ async function reloadAudit(){
   $('audit-empty').style.display = rows.length ? 'none' : 'block';
 }
 
+/* ---- demand: what people looked for, and who is waiting ----
+   The whole reason for logging searches. A list of terms nobody could be sold
+   is the sales list, and the ones with a buyer attached are warm. */
+let searchView = { days: 30, missedOnly: false };
+
+async function reloadSearches(){
+  const rows = await fetchTopSearches(searchView.days, searchView.missedOnly);
+  $('searches-body').innerHTML = rows.map(r => `
+    <tr>
+      <td><b>${esc(r.term)}</b></td>
+      <td>${r.searches}</td>
+      <td>${r.misses > 0 ? '<b>' + r.misses + '</b>' : '0'}</td>
+      <td class="cell-muted nowrap">${new Date(r.last_seen).toLocaleDateString()}</td>
+      <td><a class="mini-btn" href="/results?q=${encodeURIComponent(r.term)}" target="_blank" rel="noopener">See it</a></td>
+    </tr>`).join('');
+  $('searches-empty').style.display = rows.length ? 'none' : 'block';
+}
+
+async function reloadWanted(){
+  const rows = await fetchWanted();
+  $('wanted-body').innerHTML = rows.map(w => `
+    <tr${w.handled ? ' style="opacity:.5"' : ''}>
+      <td class="cell-muted nowrap">${new Date(w.at).toLocaleDateString()}</td>
+      <td><b>${esc(w.keyword)}</b></td>
+      <td><a href="mailto:${esc(w.email)}?subject=${encodeURIComponent('Your Circuits.com request for "' + w.keyword + '"')}">${esc(w.email)}</a></td>
+      <td class="cell-muted" style="max-width:340px">${esc(w.note || '')}</td>
+      <td><button class="mini-btn" onclick="markWanted('${w.id}', ${w.handled ? 'false' : 'true'})">${w.handled ? 'Reopen' : 'Mark done'}</button></td>
+    </tr>`).join('');
+  $('wanted-empty').style.display = rows.length ? 'none' : 'block';
+}
+
+async function markWanted(id, handled){
+  const err = await setWantedHandled(id, handled);
+  if(err){ alert('Could not update:\n\n' + err); return; }
+  reloadWanted();
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-searches]');
+  if(!b) return;
+  searchView.missedOnly = b.dataset.searches === 'missed';
+  document.querySelectorAll('[data-searches]').forEach(x => x.classList.toggle('active', x === b));
+  reloadSearches();
+});
+document.addEventListener('change', e => {
+  if(e.target.id !== 's-days') return;
+  searchView.days = +e.target.value || 30;
+  reloadSearches();
+});
+
 function syncControls(){ document.querySelectorAll('.list-controls').forEach(bar=>{ const p = panels[bar.dataset.panel]; bar.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active', b.dataset.sort===p.sort)); bar.querySelector('.lc-limit').value = p.limit; }); } /* Opened from the Admin tab in the portal, not on page load: a company owner
    who is not staff never runs any of this, and never fetches any of it. */
 let started = false;
@@ -350,6 +400,7 @@ window.initAdmin = async function(){
   if(!(await checkStaff())) return;        // belt and braces; the database is the real gate
   started = true;
   reloadClaims(); reloadReviews(); reloadCompanies(); reloadAudit();
+  reloadSearches(); reloadWanted();
   const saved = await loadPrefs('admin');
   if(saved) for(const k in panels){
     if(saved[k] && saved[k].sort) panels[k].sort = saved[k].sort;
@@ -365,6 +416,6 @@ window.initAdmin = async function(){
    tools/check.js fails if a new onclick appears without being listed here. */
 Object.assign(window, {
   editListing, editBadge, removeListing, togglePause,
-  approveApp, rejectApp, decide, modReview, setSuspended
+  approveApp, rejectApp, decide, modReview, setSuspended, markWanted
 });
 })();
