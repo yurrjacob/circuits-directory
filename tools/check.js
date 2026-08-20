@@ -614,15 +614,16 @@ assert.ok(/do not sell/i.test(priv), 'privacy policy omits the no-sale statement
 assert.ok(priv.includes('cookie-reset'), 'privacy policy has no way to change a cookie choice');
 assert.ok(priv.includes('/contact'), 'privacy policy gives no route for a data request');
 
-/* --- contact form triage --- */
+/* --- contact form ---
+   The category dropdown was REMOVED on 2026-08-20 at Jacob's direction — a
+   short form beats pre-sorted triage. It must stay gone, and the essentials
+   must stay present. */
 const contactHtml = fs.readFileSync(path.join(ROOT, 'contact.html'), 'utf8');
-assert.ok(contactHtml.includes('id="c-category"'), 'contact form lost its category dropdown');
-const opts = (contactHtml.match(/<option[^>]*>[^<]+<\/option>/g) || []).length;
-assert.ok(opts >= 8, `contact form has only ${opts} category options`);
-assert.ok(/Choose a category/.test(contactHtml),
-  'the category dropdown has no unselected placeholder, so it would default to a real value');
-assert.ok(contactHtml.includes("'Contact: ' + category"),
-  'the chosen category never reaches the email subject, where triage happens');
+assert.ok(!contactHtml.includes('id="c-category"'),
+  'the category dropdown is back on the contact form — it was removed on purpose');
+for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
+  assert.ok(contactHtml.includes(`id="${id}"`), `contact form is missing ${id}`);
+}
 
 /* --- somebody who forgets their password must not be locked out forever --- */
 const resetHtml = fs.readFileSync(path.join(ROOT, 'reset.html'), 'utf8');

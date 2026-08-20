@@ -91,9 +91,17 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
 
   for(const need of ['pf-layout','pf-main','pf-side','pf-side-card','pf-cta','pf-rows',
                      'id="rfq-open"','id="pf-phone"','id="pf-email"','id="pf-site"',
-                     'Opening hours','pf-claim','aaa_electronics']){
+                     'pf-claim','aaa_electronics']){
     assert.ok(captured.includes(need), 'missing from render: ' + need);
   }
+  /* Opening hours were removed from profiles on 2026-08-20 at Jacob's
+     direction — stored hours data must no longer render. */
+  assert.ok(!captured.includes('Opening hours'), 'the removed Opening hours section is back');
+  /* Listing documents must not get their own profile section either; the
+     keyword tags now carry the visitor to the listing page instead. */
+  assert.ok(!/pf-docs/.test(captured), 'the removed Documentation section is back');
+  assert.ok(/results\?q=.*&(amp;)?hl=/.test(captured),
+    'keyword tags no longer point at the results page with the highlight param');
   // the CTA must appear exactly once, or wireProfile binds the wrong node
   assert.strictEqual((captured.match(/id="rfq-open"/g)||[]).length, 1, 'rfq-open must be unique');
   // contact details must not be duplicated in the main column any more

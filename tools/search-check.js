@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /* The search results page, driven without a browser.
 
-   The thing worth protecting here is who the page is FOR. A search that finds
-   nobody used to open with "this keyword is available" and a mocked-up company
-   card — an advert aimed at the one person on the page who is not buying
-   advertising. The buyer left, and the buyer is the demand the listings are
-   sold on. So these assert the empty result answers the searcher first, and
-   that a failed lookup is never mistaken for an unclaimed keyword. */
+   An empty keyword opens with the keyword-available pitch (mocked-up sponsor
+   card and listing row — Jacob's chosen layout, restored 2026-08-20), with the
+   buyer's "tell me when someone lists" capture at the bottom. The other
+   invariants stand: every search logged, empty pages noindexed, and a failed
+   lookup never mistaken for an unclaimed keyword — that would sell a keyword
+   twice. */
 const fs = require('fs'), path = require('path'), assert = require('assert');
 
 const src = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
@@ -72,6 +72,8 @@ global.URLSearchParams = class { constructor(){} get(){ return 'oscillators'; } 
 /* suggestions and typo help lean on the keyword index; empty is a valid answer */
 global.fetchKeywordIndex = async () => [];
 global.normKw = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+/* browsers define CSS.escape; Node does not, and the stub selector ignores it */
+global.CSS = { escape: s => s };
 
 const from = src.indexOf('async function initResults');
 const to = src.indexOf('/* ===================================================================');
@@ -79,26 +81,26 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
 (0, eval)(src.slice(from, to).replace('async function initResults', 'global.initResults = async function'));
 
 (async () => {
-  /* --- nothing listed: the buyer is answered first --- */
+  /* --- nothing listed: the keyword-available pitch, wanted-form at the
+         bottom (restored to the pre-redesign layout on 2026-08-20 at Jacob's
+         direction: pitch first, "tell me when someone lists" last) --- */
   listingsToReturn = []; relatedToReturn = [];
   await initResults('oscillators');
 
-  assert.ok(/No one is listed for/.test(captured),
-    'the empty result does not tell the searcher plainly that nobody is listed');
+  assert.ok(/This Circuits-Keyword&trade; is available/.test(captured),
+    'the empty result no longer opens with the keyword-available pitch');
+  for (const ghost of ['Your Company or Name', 'sales@yourcompany.com', '(555) 123-4567', 'Your Contact']) {
+    assert.ok(captured.includes(ghost),
+      `the mocked-up example listing is missing its "${ghost}" placeholder`);
+  }
+  assert.ok(/Be The First Listed For/.test(captured),
+    'the pitch lost its call to action');
   assert.ok(/id="wanted-form"/.test(captured),
     'there is no way for a buyer to say what they were looking for');
   assert.ok(/type="email"/.test(captured), 'the demand form takes no email address');
   assert.ok(/privacy/.test(captured), 'the email capture does not link the privacy policy');
-
-  // the pitch may still be there, but must not be the opening line
-  assert.ok(captured.indexOf('No one is listed for') < captured.indexOf('claim-strip'),
-    'the keyword pitch still comes before the answer to the buyer');
-
-  /* --- and the fake company is gone --- */
-  for (const ghost of ['Your Company or Name', 'sales@yourcompany.com', '(555) 123-4567', 'Your Contact']) {
-    assert.ok(!captured.includes(ghost),
-      `the mocked-up listing is back on the page: "${ghost}" reads as a real company`);
-  }
+  assert.ok(captured.indexOf('This Circuits-Keyword&trade; is available') < captured.indexOf('wanted-form'),
+    'the buyer capture is not at the bottom — the pitch should come first');
 
   /* --- every search is recorded, hit or miss --- */
   assert.deepStrictEqual(logged, { term: 'oscillators', hits: 0 },
@@ -107,16 +109,6 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   /* --- an empty page must not invite Google in --- */
   assert.ok(headMeta && /noindex/.test(headMeta.content),
     'a keyword with no listings is left indexable — Google would fill up with empty pages');
-
-  /* --- related listings when the exact keyword is unclaimed --- */
-  relatedToReturn = [{ company: 'Bell Components', company_handle: 'bell', keyword: 'oscillator',
-                       contact: 'Dana', phone: '(555) 1' }];
-  await initResults('crystal oscillator');
-  assert.ok(/Listed under a related keyword/.test(captured),
-    'a near-miss search does not offer the related listings it found');
-  assert.ok(/Bell Components/.test(captured), 'the related listing is missing');
-  assert.ok(/may or may not cover/.test(captured),
-    'related listings are presented as if they were exact matches');
 
   /* --- a lookup that FAILED must never look like an unclaimed keyword --- */
   lookupThrows = true; logged = null;
@@ -158,13 +150,14 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   /* --- every listing offers a way to ask for a quote --- */
   assert.ok(/Request a Quote/.test(captured), 'a listing has no Request a Quote button');
 
-  /* The raw email link is deliberately NOT in the table. It gave buyers a path
-     nobody can measure, sitting right next to the one we can, and left every
-     supplier's address in public for scrapers. It stays on the profile, where
-     the click is tracked and there is context around it. */
+  /* Phone and email sit directly in the table — put back on 2026-08-20 at
+     Jacob's direction: a buyer should be able to reach a supplier without a
+     detour through the profile. */
   const tbodyEmail = captured.slice(captured.indexOf('<tbody>'));
-  assert.ok(!/mailto:/.test(tbodyEmail),
-    'the results table exposes supplier email addresses again — that is the unmeasurable path and a scraper target');
+  assert.ok(/mailto:a@b\.co/.test(tbodyEmail),
+    'the results table lost its email column — buyers cannot email straight from the list');
+  assert.ok(/tel:/.test(tbodyEmail),
+    'the results table lost its phone links');
 
   /* The position must not present itself as a ranking. */
   assert.ok(!/<th class="rank"[^>]*>#</.test(captured),
@@ -211,5 +204,5 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
     'a listing without a profile page loses its quote button entirely');
   assert.strictEqual(quoteBtn({}), '', 'a listing with no handle and no email should render no button');
 
-  console.log('search results OK — buyer answered first, numbered rows, sponsor not listed twice');
+  console.log('search results OK — pitch page with buyer capture at the bottom, numbered rows, sponsor not listed twice');
 })();
