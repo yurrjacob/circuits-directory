@@ -682,6 +682,23 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   }
 }
 
+/* --- admins are visibly ours, and never lose their own settings ---
+   (Jacob, 2026-08-20) A staff member's PERSON profile carries the Circuits.com
+   mark, decided by the database like the company version. And a staff account
+   with no company listing gets the console PLUS their profile/account card —
+   Mike was left with nothing but the admin panel. */
+{
+  const storeSrc2 = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+  const profSrc = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
+  const portalSrc2 = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
+  assert.ok(storeSrc2.includes("rpc('profile_run_by_staff'"),
+    'store.js no longer asks the database whether a person profile is staff-run');
+  assert.ok(/personProfile\(p, staffRun\)/.test(profSrc) && /staffRun \? ' ' \+ teamMarkHtml\(\)/.test(profSrc),
+    'a staff-run person profile no longer shows the Circuits.com mark');
+  assert.ok(portalSrc2.includes("insertAdjacentElement('afterend', el('pt-none'))"),
+    'a staff account with no listing is back to seeing only the admin console');
+}
+
 /* --- somebody who forgets their password must not be locked out forever --- */
 const resetHtml = fs.readFileSync(path.join(ROOT, 'reset.html'), 'utf8');
 for (const id of ['rq-form', 'rq-id', 'rs-form', 'rs-pass', 'rs-pass2', 'rs-bad', 'rs-done']) {
