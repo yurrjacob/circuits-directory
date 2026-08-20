@@ -416,8 +416,11 @@ assert.ok(/missing\.slice\(0, 3\)/.test(nextFn),
   'the whole list of missing fields is shown at once, which just gets ignored');
 assert.ok(/\.pt-meter\{/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
   'the completeness meter has no styling');
-assert.ok(fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8').includes('id="pt-next"'),
-  'portal.html has nowhere to put the next-steps block');
+/* The overview tab (and its pt-next block) is OFF the live dashboard since
+   2026-08-20 — the markup lives in backups/dashboard-2026-08-20/portal.html,
+   and everything above guards the dormant code so a restore still works. */
+assert.ok(fs.readFileSync(path.join(ROOT, 'backups', 'dashboard-2026-08-20', 'portal.html'), 'utf8').includes('id="pt-next"'),
+  'the backed-up portal.html lost the next-steps block — the overview would be unrestorable');
 
 /* --- a supplier's reply has to actually reach the buyer ---
        sendFounderEmail() reads fields.email to set _replyto and to address the
@@ -649,6 +652,34 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     'the contact form no longer validates the email address');
   assert.ok(read('profile.js').includes("isValidPhone(v('rq-phone'))"),
     'the quote-request form accepts a non-phone in the phone field');
+}
+
+/* --- the dashboard, after 2026-08-20 (Jacob's direction) ---
+   Overview, Quote requests and Reviews are OFF the dashboard for now — backed
+   up in backups/dashboard-2026-08-20/ — and Profile settings is split into
+   three tabs. The profile form spans all three, so every field must still be
+   in the page and each tab needs its own working Save. */
+{
+  const portalHtml = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
+  for (const gone of ['data-tab="overview"', 'data-tab="inquiries"', 'data-tab="reviews"']) {
+    assert.ok(!portalHtml.includes(gone),
+      `${gone} is back on the dashboard — it was removed on purpose (restore notes in backups/)`);
+  }
+  for (const tab of ['data-tab="company"', 'data-tab="branding"', 'data-tab="showcase"']) {
+    assert.ok(portalHtml.includes(tab), `the dashboard lost its ${tab} tab`);
+  }
+  // every profile field still present somewhere across the three tabs
+  for (const id of ['f-handle', 'f-name', 'f-contact', 'f-email', 'f-phone', 'f-website',
+                    'f-founded', 'f-employees', 'f-desc', 'f-socials', 'f-certs', 'f-team',
+                    'f-gallery', 'f-reviews-on']) {
+    assert.ok(portalHtml.includes(`id="${id}"`), `the profile form lost ${id} in the tab split`);
+  }
+  assert.strictEqual((portalHtml.match(/class="btn btn-primary pt-save"/g) || []).length, 3,
+    'each of the three profile tabs needs its own Save profile button');
+  for (const f of ['portal.html', 'portal.js', 'README.md']) {
+    assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'dashboard-2026-08-20', f)),
+      `the dashboard backup is missing ${f} — the removed tabs would be unrestorable`);
+  }
 }
 
 /* --- somebody who forgets their password must not be locked out forever --- */
