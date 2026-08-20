@@ -387,6 +387,15 @@ async function companyRunByStaff(slug){
   return !!data;
 }
 
+/* Same mark, same rule, for a PERSON profile: an admin's own page carries the
+   Circuits.com badge. Decided by the database, and fails closed. */
+async function profileRunByStaff(handle){
+  if(!sb || !handle) return false;
+  const { data, error } = await sb.rpc('profile_run_by_staff', { p_handle: handle });
+  if(error){ console.error('profile_run_by_staff', error); return false; }
+  return !!data;
+}
+
 /* ---- profiles: a person, separate from any company listing ---- */
 async function fetchProfileByHandle(handle){
   if(!sb || !handle) return null;

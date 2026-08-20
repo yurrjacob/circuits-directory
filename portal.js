@@ -94,12 +94,16 @@ async function initPortal(){
     /* An admin does not have to run a listing. Give them the console on its
        own rather than a "no company linked" page that looks broken. */
     if(await checkStaff()){
-      show('pt-none', false); show('pt-app', true);
+      show('pt-app', true);
       document.body.classList.add('pt-admin-only');
       wireTabs();
       await wireAdminTab();
       const t = el('pt-tab-admin');
       if(t) t.click();
+      /* The console leads, but an admin with no listing must not LOSE their
+         own profile and account settings (Jacob, 2026-08-20 — Mike saw only
+         the admin panel). The card moves below the console instead. */
+      el('pt-app').insertAdjacentElement('afterend', el('pt-none'));
     }
     return;
   }

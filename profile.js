@@ -71,7 +71,7 @@ function row(label, value, opts){
 
 /* A person's profile. Deliberately thin: a profile is an identity and a link,
    not a listing. Anything commercial lives on a company listing they claim. */
-function personProfile(p){
+function personProfile(p, staffRun){
   const name = p.display_name || p.handle;
   document.title = name + ' — Profile | Circuits.com';
   setMeta('description', name + ' on Circuits.com.');
@@ -79,7 +79,7 @@ function personProfile(p){
   <div class="pf-head">
     <div class="pf-logo">${avatarSvg()}</div>
     <div class="pf-id">
-      <h1>${escapeHtml(name)}</h1>
+      <h1>${escapeHtml(name)}${staffRun ? ' ' + teamMarkHtml() : ''}</h1>
       <p class="pf-tagline">circuits.com/${escapeHtml(p.handle)}</p>
     </div>
   </div>
@@ -116,7 +116,12 @@ async function initProfile(){
     return false;
   }
   if(!co){
-    if(person){ root.innerHTML = personProfile(person); wireCopyLink(); return true; }
+    if(person){
+      /* the Circuits.com mark on an admin's own page — same database-decided
+         rule as on staff-run company profiles */
+      const staffRun = await profileRunByStaff(person.handle).catch(() => false);
+      root.innerHTML = personProfile(person, staffRun); wireCopyLink(); return true;
+    }
     root.innerHTML = notFound(handle);
     return false;
   }
