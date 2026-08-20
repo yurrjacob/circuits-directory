@@ -444,6 +444,7 @@ function wireProfile(slug, co){
     const v = id => (document.getElementById(id).value || '').trim();
     const msg = document.getElementById('rq-msg');
     if(!isValidEmail(v('rq-email'))){ msg.textContent = 'Please enter a valid email address.'; return; }
+    if(v('rq-phone') && !isValidPhone(v('rq-phone'))){ msg.textContent = 'Please enter a valid phone number (at least 10 digits), or leave it blank.'; return; }
     const btn = document.getElementById('rq-submit');
     btn.disabled = true; msg.textContent = '';
     try{

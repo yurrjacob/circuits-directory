@@ -540,6 +540,7 @@ function initJoin(){
     const v = (typeof cleanKw==='function') ? cleanKw(kwInput.value) : (kwInput.value||'').trim().toLowerCase();
     if(!v || keywords.includes(v)) return;
     keywords.push(v); kwInput.value=''; renderKw(); renderQuote(); kwInput.focus();
+    setErr(kwInput, ''); // the "add at least one keyword" message, once satisfied
   }
   function checkKw(){
     // preview the keyword's live listing page without touching the form
@@ -828,6 +829,9 @@ const msg = document.getElementById('msg');
       setErr(el, ok ? '' : errText);
       if(!ok && !firstBad) firstBad = el;
     };
+    /* a typed-but-never-Added keyword still counts — people forget the button */
+    if(kwInput && kwInput.value.trim()) addKw();
+    check('kw-input', keywords.length > 0, 'Add at least one keyword — that is what buyers search to find you.');
     check('f-company', !!v('f-company'), 'Please enter your company name.');
     check('f-contact', !!v('f-contact'), 'Please enter a contact person.');
     check('f-phone', isValidPhone(v('f-phone')), 'Please enter a phone number (at least 10 digits) — buyers need a way to call you.');
@@ -1085,6 +1089,7 @@ async function initReset(){
     const btn = el('rq-submit'), msg = el('rq-msg');
     const id = el('rq-id').value.trim();
     if(!id){ msg.textContent = 'Enter your email or username.'; msg.style.color = '#b3261e'; return; }
+    if(id.includes('@') && !isValidEmail(id)){ msg.textContent = 'That email address looks incomplete — check it and try again.'; msg.style.color = '#b3261e'; return; }
     btn.disabled = true; msg.style.color = ''; msg.textContent = 'Sending…';
     const err = await requestPasswordReset(id);
     /* An unknown account and a real one look identical, deliberately — but a
@@ -1265,7 +1270,7 @@ function initRegister(){
     const handle = v('r-handle'), email = v('r-email');
 
     if(!handle) return fail('Choose the username that will be your circuits.com address.');
-    if(!email)  return fail('We need an email address so you can sign in.');
+    if(!isValidEmail(email)) return fail('Please enter a valid email address (e.g. you@company.com) — it is how you sign in.');
     if(passEl.value.length < 8) return fail('Your password must be at least 8 characters.');
     if(passEl.value !== pass2El.value) return fail('The two passwords do not match.');
     if(!el('r-terms').checked) return fail('Please accept the Terms to continue.');

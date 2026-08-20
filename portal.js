@@ -1056,6 +1056,26 @@ async function saveProfile(){
   SOCIAL_KEYS.forEach(([k]) => { const v = val('s-' + k); if(v) socials[k] = v; });
   const clean = key => (el('f-' + key).__list || []).filter(o => Object.values(o).some(v => (v || '').trim()));
 
+  /* every optional field still has a shape when filled in — nothing that is
+     not an email/phone/website/year gets saved as one (Jacob, 2026-08-20) */
+  const certs = clean('certs'), team = clean('team');
+  let bad =
+    (val('f-email')   && !isValidEmail(val('f-email')))     ? 'Public email is not a valid email address.' :
+    (val('f-phone')   && !isValidPhone(val('f-phone')))     ? 'Phone needs to be a real phone number (at least 10 digits).' :
+    (val('f-website') && !isValidWebsite(val('f-website'))) ? 'Website needs to be a web address (e.g. www.company.com).' :
+    (val('f-founded') && !isValidYear(val('f-founded')))    ? 'Founded needs to be a 4-digit year (e.g. 1998).' : null;
+  if(!bad) for(const [k, label] of SOCIAL_KEYS){
+    const v = val('s-' + k);
+    if(v && !isValidWebsite(v)){ bad = label + ' needs to be a link (https://…).'; break; }
+  }
+  if(!bad) for(const m of team){
+    if((m.email || '').trim() && !isValidEmail(m.email)){ bad = `Team member "${m.name || m.email}" has an invalid email address.`; break; }
+  }
+  if(!bad) for(const c of certs){
+    if((c.year || '').trim() && !isValidYear(c.year)){ bad = `Certification "${c.name || '(unnamed)'}" needs a 4-digit year.`; break; }
+  }
+  if(bad){ btn.disabled = false; toast('Not saved: ' + bad, false); return; }
+
   const fields = {
     name: val('f-name') || PT.co.name,   // never let the company lose its name
     tagline: val('f-tagline') || null,

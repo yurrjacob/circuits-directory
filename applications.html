@@ -209,9 +209,20 @@ async function resetRow(id){
 /* ---------- inline editing ---------- */
 function updateTotalCell(tr, a){ tr.querySelector('[data-cell="total"]').innerHTML = `<b>$${totalPrice(a)}/mo</b>`; }
 
+/* format gates for inline edits: a blank clears the field, but a filled-in
+   value has to be the thing the column says it is (Jacob, 2026-08-20) */
+const FIELD_RULES = {
+  company: [v => !!v, 'A listing cannot lose its company name.'],
+  email:   [v => !v || isValidEmail(v), 'That is not a valid email address.'],
+  phone:   [v => !v || isValidPhone(v), 'That is not a valid phone number (needs at least 10 digits).'],
+  website: [v => !v || isValidWebsite(v), 'That is not a valid website address.'],
+  logo:    [v => !v || isLogoUrl(v), 'The logo needs a full image URL starting with https://.']
+};
 async function saveField(id, field, value){
   const a = apps.find(x=>x.id===id); if(!a) return;
   if((a[field]==null?'':String(a[field]))===value) return;
+  const rule = FIELD_RULES[field];
+  if(rule && !rule[0](value)){ alert('Not saved: ' + rule[1]); draw(); return; }
   const err = await updateApplication(id, { [field]: value });
   if(err){ alert(errMsg(err)); draw(); return; }
   if(field==='keyword'){ a.keyword = cleanKw(value); a.keywords = a.keyword ? [a.keyword] : []; draw(); }

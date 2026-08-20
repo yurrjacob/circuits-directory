@@ -129,6 +129,7 @@ document.getElementById('contact-form').addEventListener('submit',async function
   if(looksLikeSpam(this)){ fakeSuccess(this, 'Thanks! Your message has been sent.'); return; }
   const v = id => document.getElementById(id).value.trim();
   const phone = v('c-phone');
+  if(!isValidEmail(v('c-email'))){ alert('Please enter a valid email address (e.g. you@company.com).'); return; }
   if(phone && !isValidPhone(phone)){ alert('Please enter a valid phone number (at least 10 digits).'); return; }
   const btn = this.querySelector('.submit');
   btn.disabled = true; btn.textContent = 'Sending…';

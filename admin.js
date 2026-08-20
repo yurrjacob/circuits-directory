@@ -200,6 +200,8 @@ $('e-save').addEventListener('click', async ()=>{
     banner: $('e-banner').checked,
     badge: badgeText ? { text: badgeText, color: $('e-color').value } : null
   };
+  if(!patch.keyword){ alert('The listing needs a keyword — that is what buyers search for.'); return; }
+  if(patch.fee && !/\d/.test(patch.fee)){ alert('The fee needs an amount, e.g. $49/mo.'); return; }
   if(patch.banner && patch.status==='Approved'
      && bannerConflict({ id: editId, banner: true, keyword: patch.keyword })){
     alert('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword — remove the existing banner first.');

@@ -151,6 +151,14 @@ async function uploadLogo(file){
 }
 function isLogoUrl(s){ return /^https?:\/\//i.test(s||''); }
 
+/* Field-format validators. app.js declares the same three (contact and index
+   load app.js without store.js); keep both copies identical. Here so pages
+   that load only store.js — the admin dashboard — can gate their saves too. */
+function isValidEmail(s){ return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test((s||'').trim()); }
+function isValidPhone(s){ const d=(s||'').replace(/\D/g,''); return d.length>=10 && d.length<=15; }
+function isValidWebsite(s){ return /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}([\/?#]\S*)?$/i.test((s||'').trim()); }
+function isValidYear(s){ return /^(18|19|20)\d{2}$/.test((s||'').trim()); }
+
 /* ---- listing documentation storage (Supabase Storage, public bucket "docs") ---- */
 async function uploadDoc(file){
   if(!sb || !file) return null;
