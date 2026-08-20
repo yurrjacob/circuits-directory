@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supplier Portal — Circuits.com</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/assets/favicon.png">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="inner">
+    <div class="brand"><a href="/"><img class="logo-nav" src="/assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-slogan">Connecting The Circuits Industry</span></div>
+    <a class="signout" href="#" id="pt-signout">Sign out</a>
+  </div>
+</header>
+
+<!-- signed out -->
+<div class="auth-wrap" id="pt-auth" style="display:none">
+  <div class="auth-card">
+    <h1 id="pt-auth-title">Profile sign in</h1>
+    <p class="sub">Manage your Circuits.com profile, listings, quote requests and reviews.</p>
+    <form id="pt-auth-form" autocomplete="off">
+      <div class="auth-field"><label>Email or username</label>
+        <input id="pt-email" type="text" required placeholder="you@company.com or yourname" autocomplete="username" spellcheck="false"></div>
+      <div class="auth-field"><label>Password</label><input id="pt-password" type="password" required placeholder="••••••••" autocomplete="current-password"></div>
+      <div id="pt-auth-msg" style="font-size:.85rem;margin-bottom:12px;color:#b3261e"></div>
+      <button class="submit" type="submit" id="pt-auth-submit">Sign in</button>
+    </form>
+    <p class="auth-forgot"><a href="/reset">Forgot your password?</a></p>
+    <div class="auth-foot">
+      <a class="btn btn-primary auth-cta" href="/register">Create your profile</a>
+    </div>
+    <div class="auth-note">
+      Your username is your Circuits.com address &mdash; sign in with either that or your email.
+      <br><br>
+      Want a company in the directory? <a href="/join">Get it listed</a>.
+      Already listed but not linked to you? <a href="/claim">Claim the listing</a>.
+    </div>
+    <!-- The separate staff login is gone: admin is a property of an account,
+         so the team signs in with this same form and gets an Admin tab. -->
+  </div>
+</div>
+
+<!-- signed in, but no company attached -->
+<div class="auth-wrap" id="pt-none" style="display:none">
+  <div class="auth-card">
+    <h1>Your profile</h1>
+    <p class="sub">Signed in as <b id="pt-none-email"></b>. This account does not manage a company listing.</p>
+    <!-- Filled by initPortal for the applicant who has not confirmed their
+         email yet: their application exists, and saying nothing here made the
+         portal look like it had lost it. -->
+    <div id="pt-pending"></div>
+    <div id="pt-me" class="pf-form"></div>
+    <div id="pt-account"></div>
+    <div class="auth-note">
+      A profile and a company listing are separate. If your company is already in the directory,
+      <a href="/claim">claim the listing</a> and our team will connect it to this profile.
+      If it is not listed yet, <a href="/join">get it listed</a>.
+    </div>
+    <div class="auth-note" id="pt-none-staff" style="display:none;border-left:3px solid var(--green);padding-left:10px">
+      This address is on the Circuits.com staff list. The supplier portal only ever shows companies you
+      personally own. If you are on the Circuits.com team, the Admin tab appears once you sign in.
+    </div>
+    <div class="auth-foot"><a href="#" onclick="signOut().then(()=>location.reload());return false">Sign out</a></div>
+  </div>
+</div>
+
+<!-- signed in with a company -->
+<main class="console console-wide" id="pt-app" style="display:none">
+  <div class="console-head">
+    <div>
+      <h1>Your Circuits.com profile</h1>
+      <p>Everything a buyer sees for <b id="pt-name"></b>, and every request they send you.</p>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select id="pt-company" style="height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px"></select>
+      <a class="mini-btn" id="pt-view" href="#" target="_blank" rel="noopener">View public profile ↗</a>
+    </div>
+  </div>
+
+  <div id="pt-toast" style="display:none;font-weight:600;margin-bottom:10px"></div>
+
+  <div class="pt-tabs">
+    <button class="pt-tab active" data-tab="overview">Overview</button>
+    <button class="pt-tab" data-tab="profile">Profile</button>
+    <button class="pt-tab" data-tab="listings">Listings</button>
+    <button class="pt-tab" data-tab="inquiries">Quote requests</button>
+    <button class="pt-tab" data-tab="promote">Promote</button>
+    <button class="pt-tab" data-tab="reviews">Reviews</button>
+    <!-- shown by portal.js only when the signed-in account is a Circuits.com admin -->
+    <button class="pt-tab" data-tab="admin" id="pt-tab-admin" style="display:none">Admin</button>
+  </div>
+
+  <!-- overview -->
+  <section class="pt-panel active" id="tab-overview">
+    <div id="pt-next"></div>
+    <div class="stat-grid" id="pt-stats"></div>
+    <div class="panel">
+      <div class="panel-head"><h2>Last 30 days</h2></div>
+      <div class="panel-body" id="pt-insights"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Profile views</h2></div>
+      <div class="panel-body">
+        <div class="range-bar" id="pt-range"></div>
+        <div class="range-custom" id="pt-range-custom" style="display:none">
+          <label>From <input type="date" id="pt-from"></label>
+          <label>To <input type="date" id="pt-to"></label>
+          <button type="button" class="mini-btn green" id="pt-range-apply">Apply</button>
+        </div>
+        <div class="g-wrap" id="pt-chart"></div>
+        <p class="pf-note" id="pt-chart-note"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- profile -->
+  <section class="pt-panel" id="tab-profile">
+    <div class="pf-form">
+      <div class="auth-field" style="max-width:520px">
+        <label>Your Circuits.com address</label>
+        <div class="handle-row">
+          <span class="handle-prefix">circuits.com/</span>
+          <input id="f-handle" type="text" maxlength="32" spellcheck="false" placeholder="aaa_electronics">
+        </div>
+        <div id="handle-msg" class="pf-note"></div>
+        <p class="pf-note">Short and memorable &mdash; this is the link you put on adverts, business cards and
+        email signatures. Changing it breaks any link already printed with the old one.</p>
+      </div>
+
+      <div class="pt-row">
+        <div class="auth-field"><label>Company name</label><input id="f-name" type="text" maxlength="120">
+          <p class="pf-note">Your heading on your profile and the name buyers see in search results.</p></div>
+        <div class="auth-field"><label>Contact person</label><input id="f-contact" type="text">
+          <p class="pf-note">The person a buyer asks for.</p></div>
+        <div class="auth-field"><label>Public email</label><input id="f-email" type="email"></div>
+      </div>
+      <div class="pt-row">
+        <div class="auth-field"><label>Tagline</label><input id="f-tagline" type="text" maxlength="160" placeholder="Authorised distributor of analog and power ICs"></div>
+      </div>
+      <div class="pt-row">
+        <div class="auth-field"><label>Phone</label><input id="f-phone" type="text"></div>
+        <div class="auth-field"><label>Website</label><input id="f-website" type="text" placeholder="https://…"></div>
+        <div class="auth-field"><label>Address</label><input id="f-address" type="text"></div>
+      </div>
+      <div class="pt-row">
+        <div class="auth-field"><label>Founded</label><input id="f-founded" type="text" placeholder="1998"></div>
+        <div class="auth-field"><label>Employees</label><input id="f-employees" type="text" placeholder="50–200"></div>
+        <div class="auth-field"><label>Logo</label>
+          <div style="display:flex;gap:10px;align-items:center">
+            <span class="logo-thumb" id="pt-logo-prev" style="width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center"></span>
+            <input id="pt-logo" type="file" accept="image/png,image/jpeg,image/webp">
+            <button type="button" class="mini-btn" id="pt-logo-rm" style="display:none">Remove</button>
+          </div>
+          <div class="crop" id="pt-crop" style="display:none">
+            <canvas id="pt-crop-c" width="260" height="260"></canvas>
+            <label class="crop-zoom">Zoom
+              <input id="pt-crop-z" type="range" min="1" max="4" step="0.01" value="1">
+            </label>
+            <p class="pf-note">Drag the image to move it. Your logo is saved as a square.</p>
+            <div class="crop-btns">
+              <button type="button" class="mini-btn" id="pt-crop-ok">Use this</button>
+              <button type="button" class="mini-btn" id="pt-crop-no">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="auth-field"><label>About your company</label>
+        <textarea id="f-desc" rows="6" maxlength="2000" placeholder="What you supply, which lines you carry, who you serve."></textarea>
+        <p class="pf-note">Shown on your profile page. The blurb in your Exclusive Sponsor banner on
+        search results is written by Circuits.com and is not changed here.</p>
+      </div>
+      <p class="pf-note">Contact person, phone, email, website and logo update everywhere &mdash; your profile,
+      every keyword listing and your sponsor banner.</p>
+
+      <h3>Social profiles</h3>
+      <div class="pt-row" id="f-socials"></div>
+
+      <!-- The list editors below used to sit fully expanded and swallowed the
+           whole page. Folded until opened; the summary says what is inside. -->
+      <details class="pt-fold">
+        <summary>Certifications <span class="pf-note" id="fold-certs-n"></span></summary>
+        <div class="pt-list" id="f-certs"></div>
+      </details>
+
+      <details class="pt-fold">
+        <summary>Team <span class="pf-note" id="fold-team-n"></span></summary>
+        <div class="pt-list" id="f-team"></div>
+      </details>
+
+      <details class="pt-fold">
+        <summary>Gallery <span class="pf-note" id="fold-gallery-n"></span></summary>
+        <div class="pt-list" id="f-gallery"></div>
+      </details>
+
+      <!-- Was a bare terms-style checkbox stranded between sections — looked
+           broken. A setting gets a setting's presentation: name, consequence,
+           switch. Same input id, so portal.js needed no change to read it. -->
+      <div class="pt-setting">
+        <div class="pt-setting-text">
+          <b>Buyer reviews</b>
+          <p class="pf-note">Let buyers leave a review on your public profile. Circuits.com checks
+          every review before it appears, and you can reply publicly. Saved with the profile.</p>
+        </div>
+        <label class="switch">
+          <input id="f-reviews-on" type="checkbox">
+          <span class="knob" aria-hidden="true"></span>
+          <span class="sr-only">Allow buyers to leave reviews on my profile</span>
+        </label>
+      </div>
+      <div><button class="btn btn-primary" id="pt-save" type="button">Save profile</button></div>
+    </div>
+  </section>
+
+  <!-- listings -->
+  <section class="pt-panel" id="tab-listings">
+    <div class="pt-list" id="pt-listings"></div>
+    <div class="pf-form pt-addkw">
+      <div>
+        <h3>Want another Circuits-Keyword&trade;?</h3>
+        <p class="pf-note">Pick the keyword, see the price, and add a sponsor banner or a Trust Badge in the same place you set up your first listing.</p>
+      </div>
+      <a class="btn btn-primary" href="/join">Get Listed</a>
+    </div>
+  </section>
+
+  <!-- inquiries -->
+  <section class="pt-panel" id="tab-inquiries">
+    <div class="pt-list" id="pt-inquiries"></div>
+  </section>
+
+  <!-- promote -->
+  <section class="pt-panel" id="tab-promote">
+    <p class="kit-intro">Print these and put your listing in front of people.
+    They pull your logo and link from your profile, so update it once and these follow.</p>
+    <div class="kit" id="promo-kit"></div>
+  </section>
+
+  <!-- reviews -->
+  <section class="pt-panel" id="tab-reviews">
+    <p class="pf-note" id="pt-reviews-note"></p>
+    <div class="pt-list" id="pt-reviews"></div>
+  </section>
+
+  <!-- admin: only rendered for staff, and every action behind it is enforced
+       by the database, not by this tab being hidden -->
+  <section class="pt-panel" id="tab-admin">
+  <div class="console-head admin-head">
+    <div>
+      <h1>Admin console</h1>
+      <p>Every keyword listing, banner and application across Circuits.com.</p>
+    </div>
+    <a class="mini-btn green" href="applications">View Website Applications →</a>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat"><div class="num" id="s-listings">0</div><div class="lbl">Keyword Listings</div></div>
+    <div class="stat"><div class="num" id="s-companies">0</div><div class="lbl">Companies</div></div>
+    <div class="stat"><div class="num" id="s-sponsored">0</div><div class="lbl">Sponsored Banners</div></div>
+    <div class="stat"><div class="num" id="s-pending">0</div><div class="lbl">Pending Applications</div></div>
+    <div class="stat"><div class="num" id="s-unanswered">0</div><div class="lbl">Unanswered Requests</div></div>
+  </div>
+
+  <!-- Keyword Listings -->
+  <div class="panel">
+    <div class="panel-head"><h2>Keyword Listings</h2><span class="hint">Live Keywords List</span></div>
+    <div class="panel-body">
+      <div id="edit-form" class="listing-form" style="display:none">
+        <div class="form-row" style="margin-bottom:12px">
+          <div class="auth-field"><label>Company</label><input id="e-company" type="text" disabled></div>
+          <div class="auth-field"><label>Keyword</label><input id="e-keyword" type="text"></div>
+          <div class="auth-field"><label>Fee</label><input id="e-fee" type="text" placeholder="$49/mo"></div>
+          <div class="auth-field"><label>Status</label>
+            <select id="e-status"><option>Approved</option><option>Pending</option><option>Denied</option></select>
+          </div>
+        </div>
+        <div class="form-row" style="align-items:center">
+          <div class="auth-field"><label>Badge</label>
+            <!-- Certified and Verified were here; the database refuses both now,
+                 so offering them only produced an error. "Circuits.com" is not
+                 on this list either: our mark belongs to the account and shows
+                 beside the company name, it is not a label for a listing. -->
+            <select id="e-badge"><option value="">None</option><option>Authorized</option><option>Featured</option><option>Preferred</option><option>Specialist</option><option>Premium</option></select>
+          </div>
+          <div class="auth-field"><label>Badge Color</label>
+            <select id="e-color">
+              <option value="#c9a227">Gold</option><option value="#b06c22">Bronze</option><option value="#5d6a7e">Steel</option>
+            </select>
+          </div>
+          <label class="terms" style="margin:0;align-self:center"><input id="e-banner" type="checkbox"> <span>Exclusive Circuits-Keyword™ Sponsor</span></label>
+          <div style="display:flex;gap:8px;align-self:flex-end">
+            <button class="mini-btn green" id="e-save" type="button" style="height:42px">Save Changes</button>
+            <button class="mini-btn" id="e-cancel" type="button" style="height:42px">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <div class="list-controls" data-panel="listings">
+        <span class="lc-label">Sort</span>
+        <button type="button" class="mini-btn sort-btn active" data-sort="company">Company</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="keyword">Keyword</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="fee">Fee</button>
+        <span class="lc-label">Show</span>
+        <input class="lc-limit" type="number" min="1" max="500" value="50">
+      </div>
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Keyword</th><th>Fee</th><th>Banner</th><th>Badge</th><th>Actions</th></tr></thead>
+          <tbody id="listings-body"></tbody>
+        </table>
+      </div>
+      <div id="listings-empty" class="empty-line" style="display:none">No keyword listings yet.</div>
+    </div>
+  </div>
+
+  <!-- Keywords With Banners -->
+  <div class="panel">
+    <div class="panel-head"><h2>Keywords With Banners</h2><span class="hint">Live Keywords Running A Sponsor Banner</span></div>
+    <div class="panel-body">
+      <div class="list-controls" data-panel="banners">
+        <span class="lc-label">Sort</span>
+        <button type="button" class="mini-btn sort-btn active" data-sort="company">Company</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="keyword">Keyword</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="fee">Fee</button>
+        <span class="lc-label">Show</span>
+        <input class="lc-limit" type="number" min="1" max="500" value="50">
+      </div>
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Keyword</th><th>Fee</th><th>Actions</th></tr></thead>
+          <tbody id="banners-body"></tbody>
+        </table>
+      </div>
+      <div id="banners-empty" class="empty-line" style="display:none">No keywords are running a banner.</div>
+    </div>
+  </div>
+
+  <!-- Keywords With Badges -->
+  <div class="panel">
+    <div class="panel-head"><h2>Keywords With Badges</h2><span class="hint">Live Keywords Showing A Trust Badge</span></div>
+    <div class="panel-body">
+      <div class="list-controls" data-panel="badges">
+        <span class="lc-label">Sort</span>
+        <button type="button" class="mini-btn sort-btn active" data-sort="company">Company</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="keyword">Keyword</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="fee">Fee</button>
+        <span class="lc-label">Show</span>
+        <input class="lc-limit" type="number" min="1" max="500" value="50">
+      </div>
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Keyword</th><th>Fee</th><th>Badge</th><th>Actions</th></tr></thead>
+          <tbody id="badges-body"></tbody>
+        </table>
+      </div>
+      <div id="badges-empty" class="empty-line" style="display:none">No keywords are showing a badge.</div>
+    </div>
+  </div>
+
+  <!-- Pending applications -->
+  <div class="panel">
+    <div class="panel-head"><h2>Pending Applications</h2><span class="hint">Each Keyword Awaiting Review</span></div>
+    <div class="panel-body">
+      <div class="list-controls" data-panel="pending">
+        <span class="lc-label">Sort</span>
+        <button type="button" class="mini-btn sort-btn active" data-sort="company">Company</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="keyword">Keyword</button>
+        <button type="button" class="mini-btn sort-btn" data-sort="fee">Fee</button>
+        <span class="lc-label">Show</span>
+        <input class="lc-limit" type="number" min="1" max="500" value="50">
+      </div>
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Keyword</th><th>Email</th><th>Banner</th><th>Badge</th><th>Actions</th></tr></thead>
+          <tbody id="pending-body"></tbody>
+        </table>
+      </div>
+      <div id="pending-empty" class="empty-line" style="display:none">No Applications Pending. All Caught Up.</div>
+    </div>
+  </div>
+
+  <!-- Quote requests a supplier has left hanging. Until now, silence here was
+       invisible: the buyer concluded the directory does not work, and nobody
+       on staff found out. Counts only threads with no supplier reply. -->
+  <div class="panel">
+    <div class="panel-head"><h2>Unanswered Quote Requests</h2>
+      <span class="hint">Waiting 3+ Days With No Reply From The Supplier</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Waiting</th><th>Oldest Request</th><th>Actions</th></tr></thead>
+          <tbody id="unanswered-body"></tbody>
+        </table>
+      </div>
+      <div id="unanswered-empty" class="empty-line" style="display:none">Nothing Waiting On A Supplier.</div>
+    </div>
+  </div>
+
+  <!-- Profile claims -->
+  <div class="panel">
+    <div class="panel-head"><h2>Profile Claims</h2><span class="hint">Approving A Claim Grants Portal Access</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Claimant</th><th>Email</th><th>Evidence</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="claims-body"></tbody>
+        </table>
+      </div>
+      <div id="claims-empty" class="empty-line" style="display:none">No Profile Claims.</div>
+    </div>
+  </div>
+
+  <!-- Companies: the only place suspension can be applied or lifted -->
+  <div class="panel">
+    <div class="panel-head"><h2>Companies</h2><span class="hint" id="companies-hint">Suspend Hides A Listing Without Deleting Anything</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Address</th><th>Email</th><th>State</th><th>Actions</th></tr></thead>
+          <tbody id="companies-body"></tbody>
+        </table>
+      </div>
+      <div id="companies-empty" class="empty-line" style="display:none">No Companies Yet.</div>
+    </div>
+  </div>
+
+  <!-- What people looked for, and who we could not answer -->
+  <div class="panel">
+    <div class="panel-head"><h2>What People Search For</h2>
+      <span class="hint">Anonymous &mdash; The Term And Whether It Landed, Nothing Else</span></div>
+    <div class="panel-body">
+      <div class="list-controls" data-panel="searches">
+        <span class="lc-label">Show</span>
+        <button type="button" class="mini-btn sort-btn active" data-searches="all">Everything</button>
+        <button type="button" class="mini-btn sort-btn" data-searches="missed">Found nothing</button>
+        <span class="lc-label">Last</span>
+        <select id="s-days" style="height:34px;border:1px solid var(--line);border-radius:8px;padding:0 8px">
+          <option value="7">7 days</option>
+          <option value="30" selected>30 days</option>
+          <option value="90">90 days</option>
+        </select>
+      </div>
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Keyword</th><th>Searches</th><th>Found nothing</th><th>Last seen</th><th>Actions</th></tr></thead>
+          <tbody id="searches-body"></tbody>
+        </table>
+      </div>
+      <div id="searches-empty" class="empty-line" style="display:none">Nothing searched yet.</div>
+    </div>
+  </div>
+
+  <!-- Buyers who asked to be told when somebody lists -->
+  <div class="panel">
+    <div class="panel-head"><h2>Buyers Waiting</h2>
+      <span class="hint">Left An Email On A Keyword Nobody Holds</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>When</th><th>Keyword</th><th>Email</th><th>What They Need</th><th>Actions</th></tr></thead>
+          <tbody id="wanted-body"></tbody>
+        </table>
+      </div>
+      <div id="wanted-empty" class="empty-line" style="display:none">Nobody waiting.</div>
+    </div>
+  </div>
+
+  <!-- Audit log: append-only, including our own actions -->
+  <div class="panel">
+    <div class="panel-head"><h2>Staff Audit Log</h2><span class="hint">Append-Only &mdash; Cannot Be Edited Or Deleted, Including By Us</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>When</th><th>Who</th><th>Action</th><th>Target</th><th>Detail</th></tr></thead>
+          <tbody id="audit-body"></tbody>
+        </table>
+      </div>
+      <div id="audit-empty" class="empty-line" style="display:none">Nothing Logged Yet.</div>
+    </div>
+  </div>
+
+  <!-- Review moderation -->
+  <div class="panel">
+    <div class="panel-head"><h2>Buyer Reviews</h2><span class="hint">Companies Cannot Approve Their Own</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Rating</th><th>Author</th><th>Review</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="reviews-body"></tbody>
+        </table>
+      </div>
+      <div id="reviews-empty" class="empty-line" style="display:none">No Reviews Submitted.</div>
+    </div>
+  </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="inner">
+    <div class="flinks">
+      <a href="/terms">Terms</a>
+      <a href="/privacy">Privacy</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span>© 2026 Circuits.com</span>
+      <span class="footer-brand"><img class="footer-mark" src="/assets/favicon.png" alt="Circuits.com"></span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="/store.js"></script>
+<script src="/app.js"></script>
+<script src="/portal.js"></script>
+<script src="/admin.js"></script>
+<script>
+document.getElementById('pt-save').addEventListener('click', saveProfile);
+initPortal();
+</script>
+</body>
+</html>
