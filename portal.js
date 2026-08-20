@@ -190,13 +190,19 @@ let PT_DIRTY = false;
 function markDirty(){ PT_DIRTY = true; }
 function markClean(){ PT_DIRTY = false; }
 function wireDirtyTracking(){
-  const panel = el('tab-profile');
-  if(!panel || panel.__dirtyWired) return;
+  /* the profile form spans three tabs since 2026-08-20; edits in any of them
+     count, and one Save saves them all */
+  for(const id of ['tab-company', 'tab-branding', 'tab-showcase']){
+  const panel = el(id);
+  if(!panel || panel.__dirtyWired) continue;
   panel.__dirtyWired = true;
   panel.addEventListener('input', markDirty);
   panel.addEventListener('change', markDirty);
   // adding or removing a certification/team/gallery row is an edit too
   panel.addEventListener('click', e => { if(e.target.closest('[data-add],[data-del]')) markDirty(); });
+  }
+  if(wireDirtyTracking.__unloadWired) return;
+  wireDirtyTracking.__unloadWired = true;
   window.addEventListener('beforeunload', e => {
     if(!PT_DIRTY) return;
     e.preventDefault();
@@ -208,12 +214,6 @@ function wireTabs(){
   document.querySelectorAll('.pt-tab').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('.pt-tab').forEach(x => x.classList.toggle('active', x === b));
     document.querySelectorAll('.pt-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + b.dataset.tab));
-    /* Opening the tab is what "seen" means. Without this every request stays
-       New for ever unless the supplier remembers to touch the dropdown, so the
-       unread count stops meaning anything and gets ignored. */
-    /* Opening the tab shows the list; it does not mean any request was read.
-       markInquirySeen() fires when one is actually opened. */
-    if(b.dataset.tab === 'inquiries'){ PT.openInquiry = null; renderInquiries(); }
     /* The console loads nothing until an admin actually opens it — a company
        owner who never sees this tab never fetches a row of anyone else's data. */
     if(b.dataset.tab === 'admin' && typeof initAdmin === 'function') initAdmin();
@@ -233,19 +233,16 @@ async function loadCompany(slug){
   if(!PT.co){ toast('Could not load that company.', false); return; }
   el('pt-name').textContent = PT.co.name;
   el('pt-view').href = profileUrl(PT.co.handle) || '#';
-  const [listings, inquiries, reviews, stats] = await Promise.all([
-    fetchMyListings(slug), fetchInquiries(slug), fetchMyReviews(slug), companyStats(slug, 30)
-  ]);
-  PT.listings = listings; PT.inquiries = inquiries; PT.reviews = reviews;
+  /* Overview, Quote requests and Reviews are off the dashboard for now
+     (Jacob, 2026-08-20 — full copies in backups/dashboard-2026-08-20/), so
+     their data is not fetched either. Their render functions stay below,
+     dormant, for an easy restore. */
+  PT.listings = await fetchMyListings(slug);
   renderReviewStatus();
-  markUnread();
-  renderOverview(stats);
   renderProfileForm();
   wireDirtyTracking();
   markClean();
   renderListings();
-  renderInquiries();
-  renderReviews();
   renderPromote();
 }
 
@@ -500,7 +497,7 @@ function renderNextSteps(){
 
   const go = el('pt-next-go');
   if(go) go.onclick = () => {
-    const tab = document.querySelector('.pt-tab[data-tab="profile"]');
+    const tab = document.querySelector('.pt-tab[data-tab="company"]'); // profile split into tabs 2026-08-20
     if(tab) tab.click();
   };
 }
@@ -1042,7 +1039,9 @@ function renderRepeater(key, items, fields, labels, types){
 }
 
 async function saveProfile(){
-  const btn = el('pt-save'); btn.disabled = true;
+  const btns = [...document.querySelectorAll('.pt-save')];
+  const btn = { set disabled(v){ btns.forEach(b => b.disabled = v); } }; // every tab's Save moves together
+  btn.disabled = true;
   /* The address is optional on save. It used to abort the whole save when the
      field was empty or invalid, which silently threw away every other edit —
      change your contact person with a blank address and nothing persisted. */

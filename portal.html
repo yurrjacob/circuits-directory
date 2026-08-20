@@ -83,42 +83,25 @@
 
   <div id="pt-toast" style="display:none;font-weight:600;margin-bottom:10px"></div>
 
+  <!-- Overview, Quote requests and Reviews were removed 2026-08-20 at Jacob's
+       direction ("back them up, then remove them for now"). Their markup and
+       wiring live in backups/dashboard-2026-08-20/ ready to restore. -->
   <div class="pt-tabs">
-    <button class="pt-tab active" data-tab="overview">Overview</button>
-    <button class="pt-tab" data-tab="profile">Profile</button>
+    <button class="pt-tab active" data-tab="company">Company Details</button>
+    <button class="pt-tab" data-tab="branding">About &amp; Branding</button>
+    <button class="pt-tab" data-tab="showcase">Showcase</button>
     <button class="pt-tab" data-tab="listings">Listings</button>
-    <button class="pt-tab" data-tab="inquiries">Quote requests</button>
     <button class="pt-tab" data-tab="promote">Promote</button>
-    <button class="pt-tab" data-tab="reviews">Reviews</button>
     <!-- shown by portal.js only when the signed-in account is a Circuits.com admin -->
     <button class="pt-tab" data-tab="admin" id="pt-tab-admin" style="display:none">Admin</button>
   </div>
 
-  <!-- overview -->
-  <section class="pt-panel active" id="tab-overview">
-    <div id="pt-next"></div>
-    <div class="stat-grid" id="pt-stats"></div>
-    <div class="panel">
-      <div class="panel-head"><h2>Last 30 days</h2></div>
-      <div class="panel-body" id="pt-insights"></div>
-    </div>
-    <div class="panel">
-      <div class="panel-head"><h2>Profile views</h2></div>
-      <div class="panel-body">
-        <div class="range-bar" id="pt-range"></div>
-        <div class="range-custom" id="pt-range-custom" style="display:none">
-          <label>From <input type="date" id="pt-from"></label>
-          <label>To <input type="date" id="pt-to"></label>
-          <button type="button" class="mini-btn green" id="pt-range-apply">Apply</button>
-        </div>
-        <div class="g-wrap" id="pt-chart"></div>
-        <p class="pf-note" id="pt-chart-note"></p>
-      </div>
-    </div>
-  </section>
+  <!-- Profile settings, split across three tabs. All three are parts of the
+       SAME saved profile: every field stays in the page whichever tab shows,
+       and any Save profile button saves all of them together. -->
 
-  <!-- profile -->
-  <section class="pt-panel" id="tab-profile">
+  <!-- company details -->
+  <section class="pt-panel active" id="tab-company">
     <div class="pf-form">
       <div class="auth-field" style="max-width:520px">
         <label>Your Circuits.com address</label>
@@ -149,6 +132,17 @@
       <div class="pt-row">
         <div class="auth-field"><label>Founded</label><input id="f-founded" type="text" placeholder="1998"></div>
         <div class="auth-field"><label>Employees</label><input id="f-employees" type="text" placeholder="50–200"></div>
+      </div>
+      <p class="pf-note">Contact person, phone, email, website and logo update everywhere &mdash; your profile,
+      every keyword listing and your sponsor banner.</p>
+      <div><button class="btn btn-primary pt-save" type="button">Save profile</button></div>
+    </div>
+  </section>
+
+  <!-- about & branding -->
+  <section class="pt-panel" id="tab-branding">
+    <div class="pf-form">
+      <div class="pt-row">
         <div class="auth-field"><label>Logo</label>
           <div style="display:flex;gap:10px;align-items:center">
             <span class="logo-thumb" id="pt-logo-prev" style="width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center"></span>
@@ -173,12 +167,16 @@
         <p class="pf-note">Shown on your profile page. The blurb in your Exclusive Sponsor banner on
         search results is written by Circuits.com and is not changed here.</p>
       </div>
-      <p class="pf-note">Contact person, phone, email, website and logo update everywhere &mdash; your profile,
-      every keyword listing and your sponsor banner.</p>
 
       <h3>Social profiles</h3>
       <div class="pt-row" id="f-socials"></div>
+      <div><button class="btn btn-primary pt-save" type="button">Save profile</button></div>
+    </div>
+  </section>
 
+  <!-- showcase: certifications, team, gallery -->
+  <section class="pt-panel" id="tab-showcase">
+    <div class="pf-form">
       <!-- The list editors below used to sit fully expanded and swallowed the
            whole page. Folded until opened; the summary says what is inside. -->
       <details class="pt-fold">
@@ -211,7 +209,7 @@
           <span class="sr-only">Allow buyers to leave reviews on my profile</span>
         </label>
       </div>
-      <div><button class="btn btn-primary" id="pt-save" type="button">Save profile</button></div>
+      <div><button class="btn btn-primary pt-save" type="button">Save profile</button></div>
     </div>
   </section>
 
@@ -227,22 +225,11 @@
     </div>
   </section>
 
-  <!-- inquiries -->
-  <section class="pt-panel" id="tab-inquiries">
-    <div class="pt-list" id="pt-inquiries"></div>
-  </section>
-
   <!-- promote -->
   <section class="pt-panel" id="tab-promote">
     <p class="kit-intro">Print these and put your listing in front of people.
     They pull your logo and link from your profile, so update it once and these follow.</p>
     <div class="kit" id="promo-kit"></div>
-  </section>
-
-  <!-- reviews -->
-  <section class="pt-panel" id="tab-reviews">
-    <p class="pf-note" id="pt-reviews-note"></p>
-    <div class="pt-list" id="pt-reviews"></div>
   </section>
 
   <!-- admin: only rendered for staff, and every action behind it is enforced
@@ -517,7 +504,8 @@
 <script src="/portal.js"></script>
 <script src="/admin.js"></script>
 <script>
-document.getElementById('pt-save').addEventListener('click', saveProfile);
+/* three Save profile buttons, one per profile tab — all save the whole profile */
+document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));
 initPortal();
 </script>
 </body>
