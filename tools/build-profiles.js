@@ -20,8 +20,10 @@ const ROOT = path.join(__dirname, '..');
    without it, a stale handle could take about.html with it on cleanup. */
 const MANIFEST = path.join(__dirname, '.generated-profiles.json');
 
+// /browse exists but is hidden for now (no links, noindexed) — keep it out of
+// the sitemap until Jacob decides to switch it on.
 const STATIC_PAGES = [
-  ['/', '1.0'], ['/join', '0.9'], ['/browse', '0.8'],
+  ['/', '1.0'], ['/join', '0.9'],
   ['/about', '0.8'], ['/contact', '0.6'], ['/register', '0.6'], ['/terms', '0.3'], ['/privacy', '0.3']
 ];
 
