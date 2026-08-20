@@ -98,23 +98,6 @@
         <input id="c-phone" type="tel" placeholder="(555) 123-4567">
       </div>
       <div class="field">
-        <label>What is this about? <span class="req">*</span></label>
-        <select id="c-category" required>
-          <option value="" selected disabled>Choose a category…</option>
-          <option>Getting listed</option>
-          <option>Pricing and billing</option>
-          <option>My existing listing</option>
-          <option>Claiming a listing</option>
-          <option>Sponsor banner or Trust Badge</option>
-          <option>Account or sign-in problem</option>
-          <option>Report a listing or review</option>
-          <option>Privacy or data request</option>
-          <option>Press or partnerships</option>
-          <option>Something else</option>
-        </select>
-        <p class="field-hint">This tells us who should pick it up, so you get a faster answer.</p>
-      </div>
-      <div class="field">
         <label>Message <span class="req">*</span></label>
         <textarea id="c-message" required placeholder="Tell Us What You're Thinking..."></textarea>
       </div>
@@ -147,14 +130,9 @@ document.getElementById('contact-form').addEventListener('submit',async function
   const v = id => document.getElementById(id).value.trim();
   const phone = v('c-phone');
   if(phone && !isValidPhone(phone)){ alert('Please enter a valid phone number (at least 10 digits).'); return; }
-  const category = v('c-category');
-  if(!category){ alert('Please choose what your message is about.'); return; }
   const btn = this.querySelector('.submit');
   btn.disabled = true; btn.textContent = 'Sending…';
-  /* category goes in the subject as well as the body — it is the only part
-     visible in an inbox list, which is where triage actually happens */
-  await sendFounderEmail('Contact: ' + category + ' - Circuits.com', {
-    category: category,
+  await sendFounderEmail('Contact - Circuits.com', {
     name: v('c-name'),
     company: v('c-company'),
     email: v('c-email'),
@@ -162,7 +140,6 @@ document.getElementById('contact-form').addEventListener('submit',async function
     message: v('c-message')
   }, 'Hi ' + v('c-name') + ',\n\nThanks for reaching out to Circuits.com! We received your message and will respond within 1 business day.\n\n'
     + 'Here is a copy of what you sent:\n'
-    + '- About: ' + category + '\n'
     + '- Name: ' + v('c-name') + '\n'
     + '- Company: ' + v('c-company') + '\n'
     + '- Email: ' + v('c-email') + '\n'

@@ -176,20 +176,25 @@
       <p class="pf-note">Contact person, phone, email, website and logo update everywhere &mdash; your profile,
       every keyword listing and your sponsor banner.</p>
 
-      <h3>Opening hours</h3>
-      <div class="pt-row" id="f-hours"></div>
-
       <h3>Social profiles</h3>
       <div class="pt-row" id="f-socials"></div>
 
-      <h3>Certifications</h3>
-      <div class="pt-list" id="f-certs"></div>
+      <!-- The list editors below used to sit fully expanded and swallowed the
+           whole page. Folded until opened; the summary says what is inside. -->
+      <details class="pt-fold">
+        <summary>Certifications <span class="pf-note" id="fold-certs-n"></span></summary>
+        <div class="pt-list" id="f-certs"></div>
+      </details>
 
-      <h3>Team</h3>
-      <div class="pt-list" id="f-team"></div>
+      <details class="pt-fold">
+        <summary>Team <span class="pf-note" id="fold-team-n"></span></summary>
+        <div class="pt-list" id="f-team"></div>
+      </details>
 
-      <h3>Gallery</h3>
-      <div class="pt-list" id="f-gallery"></div>
+      <details class="pt-fold">
+        <summary>Gallery <span class="pf-note" id="fold-gallery-n"></span></summary>
+        <div class="pt-list" id="f-gallery"></div>
+      </details>
 
       <!-- Was a bare terms-style checkbox stranded between sections — looked
            broken. A setting gets a setting's presentation: name, consequence,

@@ -1291,3 +1291,32 @@ body.nav-open .nav-burger .x{display:block}
 .resend-line{margin-top:10px;font-size:.88rem}
 .resend-line button{background:none;border:0;padding:0;color:var(--green-dark);font-weight:700;
   cursor:pointer;font-family:inherit;font-size:inherit;text-decoration:underline}
+
+/* ---- show/hide password eye ---- */
+.pw-wrap{position:relative;display:block}
+.pw-wrap input{width:100%;padding-right:44px;box-sizing:border-box}
+.pw-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:inline-flex;
+  align-items:center;justify-content:center;width:34px;height:34px;border:0;background:none;
+  color:var(--muted);cursor:pointer;border-radius:8px}
+.pw-eye:hover{color:var(--ink);background:var(--bg-soft)}
+
+/* ---- the row a profile's keyword tag points at ---- */
+@keyframes hl-pulse{0%{background:#eaf6d4}70%{background:#eaf6d4}100%{background:transparent}}
+tr.hl-flash td{animation:hl-pulse 3s ease-out;box-shadow:inset 3px 0 0 var(--green)}
+.premium-card.hl-flash{animation:hl-pulse 3s ease-out;outline:2px solid var(--green)}
+
+/* ---- portal: certifications / team / gallery fold away until opened ---- */
+.pt-fold{border:1px solid var(--line);border-radius:12px;margin:14px 0;background:var(--card)}
+.pt-fold>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;
+  padding:13px 16px;font-weight:700;font-size:.95rem;color:var(--ink)}
+.pt-fold>summary::-webkit-details-marker{display:none}
+.pt-fold>summary::before{content:"";width:8px;height:8px;border-right:2px solid var(--muted);
+  border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s;flex:0 0 auto}
+.pt-fold[open]>summary::before{transform:rotate(45deg)}
+.pt-fold>summary .pf-note{font-weight:400;margin:0}
+.pt-fold>.pt-list,.pt-fold>.pt-row{padding:0 16px 14px;margin:0}
+/* tighter repeater rows inside the folds */
+.pt-fold .pt-item{padding:10px 12px;margin:0 0 10px}
+.pt-fold .pt-row{gap:10px}
+.pt-fold .auth-field{margin-bottom:6px}
+.pt-fold .rp-img img{width:44px;height:44px;object-fit:cover}

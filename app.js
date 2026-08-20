@@ -165,6 +165,41 @@ function attachSuggestions(input){
   });
 }
 
+/* ---- show/hide on every password box ----
+   Typing a password blind is how typos get confirmed twice and locked in.
+   Runs over whatever exists at load, and again for anything rendered later
+   (the portal's account card builds its fields after sign-in). */
+function wirePasswordToggles(root){
+  const eye = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const eyeOff = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  (root || document).querySelectorAll('input[type="password"]').forEach(inp => {
+    if(inp.__eye) return;
+    inp.__eye = true;
+    const wrap = document.createElement('div');
+    wrap.className = 'pw-wrap';
+    inp.parentNode.insertBefore(wrap, inp);
+    wrap.appendChild(inp);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pw-eye';
+    btn.tabIndex = -1;                 // Tab goes field to field; the eye is a mouse affordance
+    btn.setAttribute('aria-label', 'Show password');
+    btn.innerHTML = eye;
+    btn.addEventListener('click', () => {
+      const showing = inp.type === 'password';
+      inp.type = showing ? 'text' : 'password';
+      btn.setAttribute('aria-label', showing ? 'Hide password' : 'Show password');
+      btn.innerHTML = showing ? eyeOff : eye;
+      inp.focus();
+    });
+    wrap.appendChild(btn);
+  });
+}
+if(typeof document !== 'undefined' && document.addEventListener){
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => wirePasswordToggles());
+  else wirePasswordToggles();
+}
+
 /* The database raises this when someone trips the per-IP limit. Turn it into
    something a real person who genuinely sent three quotes can understand. */
 function rateLimitMessage(err){
@@ -274,14 +309,6 @@ async function initResults(forcedTerm){
   if(!listings.length){
     const term = escapeHtml(q);
 
-    /* Somebody searched for a supplier and we have none. The page used to open
-       with "this keyword is available" and a mocked-up company card — an advert
-       aimed at the one person on the page who is not buying advertising. They
-       leave, and they are the demand the listings are sold on.
-
-       So: answer the buyer first, take their requirement, and put the pitch
-       underneath where it still does its job. */
-
     /* A misspelling should not read as "nobody sells this". Checked against
        the live keyword index; shown only when something is genuinely close. */
     let didYouMean = '';
@@ -292,38 +319,55 @@ async function initResults(forcedTerm){
           `<a href="/results?q=${encodeURIComponent(k.keyword)}">${escapeHtml(k.keyword)}</a>`
         ).join(' or ')}?</p>`;
       }
-    }catch(e){ /* suggestions are a nicety; the miss page must render without them */ }
+    }catch(e){ /* suggestions are a nicety; the page must render without them */ }
 
-    const related = await fetchRelatedByKeyword(q);
-    const relatedHtml = related.length ? `
-      <div class="rel-wrap">
-        <h2 class="rel-h">Listed under a related keyword</h2>
-        <p class="rel-note">Nobody holds &ldquo;${term}&rdquo;. These companies are listed under a
-        word from your search &mdash; they may or may not cover what you need.</p>
-        <div class="listings"><div class="table-wrap">
-          <table class="listings-table">
-            <thead><tr><th>Company</th><th>Listed under</th><th>Contact</th><th>Phone</th></tr></thead>
-            <tbody>${related.map(c => `<tr>
-              <td><div class="co">
-                ${c.company_handle
-                  ? `<a href="${escapeHtml(profileUrl(c.company_handle))}">${escapeHtml(c.company)}</a>`
-                  : escapeHtml(c.company)}
-              </div></td>
-              <td class="cell-muted" data-label="Listed under"><a href="/results?q=${encodeURIComponent(c.keyword)}">${escapeHtml(c.keyword)}</a></td>
-              <td class="cell-muted" data-label="Contact">${escapeHtml(c.contact || '—')}</td>
-              <td class="cell-muted" data-label="Phone">${escapeHtml(c.phone || '—')}</td>
-            </tr>`).join('')}</tbody>
-          </table>
-        </div></div>
-      </div>` : '';
-
+    /* The keyword-available pitch, back by request: the mocked-up sponsor
+       card and listing row show a supplier exactly what they would be buying.
+       The buyer's "tell me when someone lists" capture stays — at the bottom. */
     body.innerHTML = `
-    <div class="miss">
-      <div class="big">No one is listed for &ldquo;${term}&rdquo; yet</div>
+    <div class="empty" style="margin-bottom:4px">
+      <div class="big">This Circuits-Keyword&trade; is available</div>
       ${didYouMean}
-      <p class="miss-sub">Circuits.com is new, and this keyword has not been claimed. Tell us what you
-      are looking for and we will email you the moment a supplier lists for it.</p>
+    </div>
+    <div class="premium"><div class="premium-card">
+      <span class="premium-badge">Exclusive Sponsor</span>
+      <div class="premium-logo">${avatarSvg()}</div>
+      <div class="premium-body">
+        <h3>Your Company or Name</h3>
+        <p>Own the Exclusive Circuits-Keyword&trade; Sponsor Banner for &ldquo;${term}&rdquo;.<br>Own the First Listing Every Viewer Sees.</p>
+      </div>
+      <div class="premium-contact">
+        <div class="pc-lines">
+          <span class="pc-name">Your Contact</span>
+          <span>(555) 123-4567</span>
+          <span>sales@yourcompany.com</span>
+        </div>
+      </div>
+    </div></div>
+    <div class="listings" style="margin-bottom:10px">
+      <div class="table-wrap">
+        <table class="listings-table">
+          <thead><tr><th>Company</th><th>Contact</th><th>Phone</th><th>Email</th></tr></thead>
+          <tbody><tr>
+            <td><div class="co">
+              <span class="co-logo" style="background:var(--dark)">${avatarSvg()}</span>
+              <a href="/join">Your Company or Name</a>
+              <span class="lb" style="background:#c9a227">Authorized</span>
+            </div></td>
+            <td class="cell-muted" data-label="Contact">Your Contact</td>
+            <td class="cell-muted" data-label="Phone">(555) 123-4567</td>
+            <td class="cell-muted" data-label="Email">sales@yourcompany.com</td>
+          </tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="empty" style="margin:10px auto 26px">
+      <a class="btn btn-primary" href="/join" style="padding:14px 28px;font-size:1rem;display:inline-block;font-weight:700">Be The First Listed For &ldquo;${term}&rdquo;</a>
+    </div>
 
+    <div class="miss" style="margin-top:34px">
+      <p class="miss-sub"><b>Looking to buy ${term}?</b> Leave your email and we will
+      tell you the moment a supplier lists for it.</p>
       <form class="miss-form" id="wanted-form" autocomplete="off">
         <div class="miss-row">
           <input id="wanted-email" type="email" required placeholder="you@company.com"
@@ -336,17 +380,6 @@ async function initResults(forcedTerm){
         <p class="field-hint">We use this to tell you about &ldquo;${term}&rdquo; and nothing else.
         See our <a href="/privacy">privacy policy</a>.</p>
       </form>
-    </div>
-
-    ${relatedHtml}
-
-    <div class="claim-strip">
-      <div>
-        <b>Do you supply ${term}?</b>
-        <p>This Circuits-Keyword&trade; is unclaimed. The first company listed for it holds the
-        top position permanently, for as long as the listing stays active.</p>
-      </div>
-      <a class="btn btn-primary" href="/join">Claim &ldquo;${term}&rdquo;</a>
     </div>`;
 
     /* The demand capture is a public form, so it gets the same two traps as the
@@ -391,7 +424,7 @@ async function initResults(forcedTerm){
     const fLogo = isLogoUrl(featured.logo)
       ? `<img src="${escapeHtml(featured.logo)}" alt="${escapeHtml(featured.company)} logo">`
       : avatarSvg();
-    html += `<div class="premium"><div class="premium-card">
+    html += `<div class="premium"><div class="premium-card" data-slug="${escapeHtml(featured.company_slug || '')}">
       <span class="premium-badge">Exclusive Sponsor</span>
       <div class="premium-logo">${fLogo}</div>
       <div class="premium-body">
@@ -416,7 +449,7 @@ async function initResults(forcedTerm){
   }
 
   const rows = listed.map((c,i)=>`
-    <tr>
+    <tr data-slug="${escapeHtml(c.company_slug || '')}">
       <td class="rank" data-label="#">${i+1}</td>
       <td>
         <div class="co">
@@ -434,7 +467,8 @@ async function initResults(forcedTerm){
         </div>
       </td>
       <td class="cell-muted" data-label="Contact">${escapeHtml(c.contact||'—')}</td>
-      <td class="cell-muted" data-label="Phone"><a href="tel:${escapeHtml(c.phone||'')}">${escapeHtml(c.phone||'—')}</a></td>
+      <td class="cell-muted" data-label="Phone">${c.phone ? `<a href="tel:${escapeHtml(c.phone)}">${escapeHtml(c.phone)}</a>` : '—'}</td>
+      <td class="cell-muted" data-label="Email">${c.email ? `<a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>` : '—'}</td>
       <td class="cell-quote">${quoteBtn(c)}</td>
     </tr>`).join('');
 
@@ -449,7 +483,7 @@ async function initResults(forcedTerm){
         <table class="listings-table">
           <thead><tr>
             <th class="rank" title="The order these companies claimed this keyword">Held</th>
-            <th>Company</th><th>Contact</th><th>Phone</th><th></th>
+            <th>Company</th><th>Contact</th><th>Phone</th><th>Email</th><th></th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
@@ -458,6 +492,17 @@ async function initResults(forcedTerm){
       &ldquo;${escapeHtml(q)}&rdquo; &mdash; not a ranking, and not a recommendation.
       Circuits.com has not assessed these suppliers.</p>
     </div>`;
+
+  /* Arriving from a profile's keyword tag (?hl=<slug>): walk the buyer to that
+     company's row — or its sponsor banner — and flash it so the eye lands. */
+  const hl = params.get('hl');
+  if(hl){
+    const target = body.querySelector(`[data-slug="${CSS.escape(hl)}"]`);
+    if(target){
+      target.classList.add('hl-flash');
+      setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
+    }
+  }
 }
 
 /* Request a Quote, on every listing.
@@ -785,7 +830,7 @@ const msg = document.getElementById('msg');
     };
     check('f-company', !!v('f-company'), 'Please enter your company name.');
     check('f-contact', !!v('f-contact'), 'Please enter a contact person.');
-    check('f-phone', !v('f-phone') || isValidPhone(v('f-phone')), 'Please enter a valid phone number (at least 10 digits).');
+    check('f-phone', isValidPhone(v('f-phone')), 'Please enter a phone number (at least 10 digits) — buyers need a way to call you.');
     check('f-website', !v('f-website') || isValidWebsite(v('f-website')), 'Please enter a valid website (e.g. www.company.com).');
     /* The account step only applies when there isn't one yet. Signed in, these
        fields are hidden and there is nothing to fill in. */
@@ -993,6 +1038,19 @@ async function initReset(){
       if(!user) await new Promise(r => setTimeout(r, 250));
     }
     if(!user){ show('rs-bad', true); return; }
+
+    /* An email-CONFIRMATION link is not a password reset. Someone who just
+       confirmed their address already chose a password minutes ago — showing
+       them the set-a-new-password sheet reads as "your password is gone".
+       Only a recovery link or a staff invite (no password yet) gets that
+       sheet; a confirmation gets a plain "you're confirmed" and the portal. */
+    if(/type=(signup|email_change|magiclink)/.test(location.hash || '')){
+      const rc = el('rs-confirmed-email');
+      if(rc) rc.textContent = user.email || 'your account';
+      show('rs-confirmed', true);
+      return;
+    }
+
     el('rs-email').textContent = user.email || 'your account';
     show('rs-card', true);
 

@@ -2,7 +2,7 @@
    Renders circuits.com/<handle>. See profileHandle() for where the handle
    comes from; profiles are reached from search results, not a browsable list. */
 
-const DAYS = [['mon','Monday'],['tue','Tuesday'],['wed','Wednesday'],['thu','Thursday'],['fri','Friday'],['sat','Saturday'],['sun','Sunday']];
+/* (opening hours removed 2026-08-20 — the DAYS table went with them) */
 const SOCIALS = [['linkedin','LinkedIn'],['x','X'],['facebook','Facebook'],['youtube','YouTube'],['instagram','Instagram'],['github','GitHub']];
 
 /* Where the handle comes from, in order:
@@ -173,21 +173,22 @@ async function initProfile(){
   /* Only explain the star when there is a star to explain. fetchCompanyKeywords
      already drops paused and unapproved listings, so a banner here is a live
      sponsorship — a company with none never sees a note about one. */
+  /* Each tag walks the visitor to the results page for that keyword and
+     highlights this company's row there (?hl= picks it out) — the listing is
+     where the position, the sponsor banner and the quote button live. */
   const anyBanner = kws.some(k => k.banner);
   html += section('Keyword Listings', kws.length
     ? `<div class="kw-tags pf-kws">${kws.map(k =>
-        `<a class="kw-tag" href="/results?q=${encodeURIComponent(k.keyword)}">${escapeHtml(k.keyword)}${k.banner ? ' ★' : ''}`
+        `<a class="kw-tag" href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}">${escapeHtml(k.keyword)}${k.banner ? ' ★' : ''}`
         + badgeHtml(k.badge, 'kw-lb')
         + `</a>`
       ).join('')}</div>`
       + (anyBanner ? `<p class="pf-note">★ marks a Circuits-Keyword&trade; this company exclusively sponsors.</p>` : '')
     : '');
 
-  /* ---- documents ---- */
-  html += section('Documentation', docs.length
-    ? `<ul class="pf-docs">${docs.map(d =>
-        `<li><a href="${escapeHtml(d.url)}" target="_blank" rel="noopener" data-doc>${escapeHtml(d.name || 'Document')}</a></li>`
-      ).join('')}</ul>` : '');
+  /* Listing documents deliberately do NOT get their own section here — they
+     belong to the keyword listing, not the profile. The only place one may
+     surface is as evidence behind a certification below. */
 
   /* ---- gallery ---- */
   const gallery = Array.isArray(co.gallery) ? co.gallery : [];
@@ -255,9 +256,6 @@ async function initProfile(){
   html += rfqForm(co);
 
   /* ---- sidebar: one place for everything a buyer needs to act ---- */
-  const hours = co.hours && typeof co.hours === 'object' ? co.hours : {};
-  const openDays = DAYS.filter(([k]) => hours[k]);
-
   html += `</div><aside class="pf-side">
     <div class="pf-side-card">
       <button class="btn btn-primary pf-cta" id="rfq-open">Request a Quote</button>
@@ -276,13 +274,6 @@ async function initProfile(){
       </div>
       ${socialLinks(co.socials)}
     </div>
-
-    ${openDays.length ? `<div class="pf-side-card">
-      <h2 class="pf-sec-h">Opening hours</h2>
-      <div class="pf-rows">${openDays.map(([k, label]) =>
-        `<div class="pf-row"><span class="pf-row-l">${label}</span><span class="pf-row-v">${escapeHtml(hours[k])}</span></div>`
-      ).join('')}</div>
-    </div>` : ''}
 
     ${claimed
       ? `<p class="pf-claim">Is this your company's listing?

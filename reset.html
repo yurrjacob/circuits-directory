@@ -77,6 +77,14 @@
     <div class="auth-foot"><a class="btn btn-primary auth-cta" href="/portal">Go to your profile →</a></div>
   </div>
 
+  <!-- an email-confirmation link landed here: they are confirmed and already
+       have a password — no reset sheet, just the way onward -->
+  <div class="auth-card" id="rs-confirmed" style="display:none">
+    <h1>Email confirmed</h1>
+    <p class="sub"><b id="rs-confirmed-email">Your email</b> is confirmed and you are signed in.</p>
+    <div class="auth-foot"><a class="btn btn-primary auth-cta" href="/portal">Go to your portal →</a></div>
+  </div>
+
   <!-- the link was bad or had already been used -->
   <div class="auth-card" id="rs-bad" style="display:none">
     <h1>That link has expired</h1>

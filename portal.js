@@ -4,7 +4,6 @@
 
 let PT = { slug: null, co: null, listings: [], inquiries: [], reviews: [], openInquiry: null, editing: null };
 
-const HOUR_DAYS = [['mon','Mon'],['tue','Tue'],['wed','Wed'],['thu','Thu'],['fri','Fri'],['sat','Sat'],['sun','Sun']];
 const SOCIAL_KEYS = [['linkedin','LinkedIn'],['x','X / Twitter'],['facebook','Facebook'],['youtube','YouTube'],['instagram','Instagram'],['github','GitHub']];
 
 function el(id){ return document.getElementById(id); }
@@ -349,6 +348,9 @@ async function renderAccount(user){
       <div id="ac-del-msg" class="pf-note"></div>
     </div>`;
 
+  /* these fields render after the page-load pass, so wire their eyes here */
+  if(typeof wirePasswordToggles === 'function') wirePasswordToggles(host);
+
   el('ac-save').onclick = async () => {
     const msg = el('ac-msg'), a = el('ac-pass').value, b = el('ac-pass2').value;
     msg.style.color = '#b3261e';
@@ -561,8 +563,14 @@ function bucketSeries(rows, from, to, bucket){
     } else { x.setHours(0, 0, 0, 0); }
     return x.getTime();
   };
+  /* Two clocks, one chart. Postgres truncates buckets in UTC; key() truncates
+     in the viewer's timezone. A UTC Monday-midnight lands on Sunday evening
+     locally and used to truncate into the WEEK BEFORE, so every point missed
+     its grid slot. Anchoring each database bucket at its midpoint first makes
+     it truncate into the same local period it actually covers. */
+  const anchor = { hour: 18e5, day: 432e5, week: 3.5 * 864e5, month: 15 * 864e5 }[bucket] || 0;
   const got = {};
-  for(const r of rows) got[key(r.bucket)] = Number(r.hits) || 0;
+  for(const r of rows) got[key(new Date(new Date(r.bucket).getTime() + anchor))] = Number(r.hits) || 0;
 
   const out = [];
   let cur = new Date(key(from));
@@ -571,8 +579,15 @@ function bucketSeries(rows, from, to, bucket){
   while(cur.getTime() <= end && guard++ < 800){
     const t = cur.getTime();
     out.push([new Date(t), got[t] || 0]);
-    if(bucket === 'month'){ cur = new Date(cur); cur.setMonth(cur.getMonth() + 1); }
-    else cur = new Date(t + step);
+    /* Step by calendar, not by fixed milliseconds: adding 7×24h walks off
+       local midnight the first time the range crosses a DST change, after
+       which no grid key matches and the chart flatlines at zero — which is
+       exactly what "6 months" did every spring. */
+    cur = new Date(t);
+    if(bucket === 'month')     cur.setMonth(cur.getMonth() + 1);
+    else if(bucket === 'week') cur.setDate(cur.getDate() + 7);
+    else if(bucket === 'day')  cur.setDate(cur.getDate() + 1);
+    else                       cur = new Date(t + step);
   }
   return out;
 }
@@ -930,11 +945,6 @@ function renderProfileForm(){
   }
   wireLogoCrop();
 
-  const hours = c.hours && typeof c.hours === 'object' ? c.hours : {};
-  el('f-hours').innerHTML = HOUR_DAYS.map(([k, label]) =>
-    `<div class="auth-field"><label>${label}</label><input id="h-${k}" type="text" placeholder="8:00–17:00" value="${escapeHtml(hours[k] || '')}"></div>`
-  ).join('');
-
   const soc = c.socials && typeof c.socials === 'object' ? c.socials : {};
   el('f-socials').innerHTML = SOCIAL_KEYS.map(([k, label]) =>
     `<div class="auth-field"><label>${label}</label><input id="s-${k}" type="text" placeholder="https://…" value="${escapeHtml(soc[k] || '')}"></div>`
@@ -996,6 +1006,9 @@ function renderRepeater(key, items, fields, labels, types){
       `<div class="pt-item"><div class="pt-row">${fields.map((f, j) => cell(it, i, f, labels[j])).join('')}</div>
        <button type="button" class="mini-btn" data-del="${i}">Remove</button></div>`
     ).join('') + `<button type="button" class="mini-btn green" data-add="1">+ Add</button>`;
+    /* the fold's summary line says what is inside without opening it */
+    const n = el('fold-' + key + '-n');
+    if(n) n.textContent = list.length ? '· ' + list.length : '· none yet';
   }
 
   box.onclick = e => {
@@ -1039,8 +1052,7 @@ async function saveProfile(){
     const why = await handleAvailable(wantHandle, PT.slug);
     if(why){ btn.disabled = false; toast('Address not saved: ' + why + ' Your other changes were not saved either — fix the address or put the old one back.', false); return; }
   }
-  const hours = {}, socials = {};
-  HOUR_DAYS.forEach(([k]) => { const v = val('h-' + k); if(v) hours[k] = v; });
+  const socials = {};
   SOCIAL_KEYS.forEach(([k]) => { const v = val('s-' + k); if(v) socials[k] = v; });
   const clean = key => (el('f-' + key).__list || []).filter(o => Object.values(o).some(v => (v || '').trim()));
 
@@ -1056,7 +1068,7 @@ async function saveProfile(){
     founded: val('f-founded') || null,
     employees: val('f-employees') || null,
     reviews_enabled: el('f-reviews-on').checked,
-    hours, socials,
+    socials,
     certifications: clean('certs'), team: clean('team'), gallery: clean('gallery')
   };
   /* only touch the address when it actually changed and is non-empty, so a

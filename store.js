@@ -246,7 +246,14 @@ async function signIn(identifier, password){
   }
   return sb.auth.signInWithPassword({ email, password });
 }
-async function signUp(email, password){ return sb.auth.signUp({ email, password }); }
+/* The confirmation link lands on /portal — the signed-in session in the URL is
+   picked up there and the new account sees its own portal. Without this it fell
+   back to whatever page the project's Site URL points at, which was the
+   password-reset sheet — alarming for someone who just set a password. */
+async function signUp(email, password){
+  return sb.auth.signUp({ email, password,
+    options: { emailRedirectTo: location.origin + '/portal' } });
+}
 
 /* ---- password reset ----
    Accepts an email OR a username, the same as signing in. Always reports
@@ -404,7 +411,10 @@ async function registerProfile(email, password, handle, displayName){
   if(!sb) return 'No connection';
   const { error } = await sb.auth.signUp({
     email, password,
-    options: { data: { handle: (handle||'').toLowerCase().trim(), display_name: displayName || '' } }
+    options: {
+      data: { handle: (handle||'').toLowerCase().trim(), display_name: displayName || '' },
+      emailRedirectTo: location.origin + '/portal'   // confirmation lands on the portal, not the reset sheet
+    }
   });
   return error ? error.message : '';
 }
@@ -848,7 +858,8 @@ async function resendConfirmation(email){
   if(!sb) return 'No connection';
   const addr = (email || '').trim();
   if(!addr.includes('@')) return 'That does not look like an email address.';
-  const { error } = await sb.auth.resend({ type: 'signup', email: addr });
+  const { error } = await sb.auth.resend({ type: 'signup', email: addr,
+    options: { emailRedirectTo: location.origin + '/portal' } });
   if(error){
     console.warn('resendConfirmation', error.message);
     const secs = (/after (\d+) seconds?/i.exec(error.message || '') || [])[1];
