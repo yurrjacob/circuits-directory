@@ -96,14 +96,17 @@ async function initPortal(){
     if(await checkStaff()){
       show('pt-app', true);
       document.body.classList.add('pt-admin-only');
+      /* An admin with no listing gets TWO tabs: the console, and their own
+         profile + account settings as a "Your Profile" tab (Jacob,
+         2026-08-20 — Mike and John were left with the admin panel and
+         nothing else). The pt-none card simply moves into the tab. */
+      show('pt-tab-me', true);
+      el('tab-me').appendChild(el('pt-none').querySelector('.auth-card'));
+      show('pt-none', false);
       wireTabs();
       await wireAdminTab();
       const t = el('pt-tab-admin');
       if(t) t.click();
-      /* The console leads, but an admin with no listing must not LOSE their
-         own profile and account settings (Jacob, 2026-08-20 — Mike saw only
-         the admin panel). The card moves below the console instead. */
-      el('pt-app').insertAdjacentElement('afterend', el('pt-none'));
     }
     return;
   }

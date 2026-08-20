@@ -416,7 +416,10 @@ tr.row-warn td{background:#fff3cd}
 .logo-thumb{width:30px;height:30px;object-fit:cover;border:1px solid var(--line);border-radius:6px;background:#fff;vertical-align:middle}
 /* An admin who runs no listing of their own gets the console on its own —
    the company picker and the supplier tabs would have nothing to point at. */
-.pt-admin-only .pt-tab:not(#pt-tab-admin){display:none}
+.pt-admin-only .pt-tab:not(#pt-tab-admin):not(#pt-tab-me){display:none}
+/* the profile card, when it lives in the Your Profile tab, sits like content
+   rather than a centered sign-in sheet */
+#tab-me .auth-card{margin:8px 0}
 .pt-admin-only .console-head p,
 .pt-admin-only #pt-company,
 .pt-admin-only #pt-view{display:none}

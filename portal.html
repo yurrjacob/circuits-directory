@@ -92,9 +92,16 @@
     <button class="pt-tab" data-tab="showcase">Showcase</button>
     <button class="pt-tab" data-tab="listings">Listings</button>
     <button class="pt-tab" data-tab="promote">Promote</button>
+    <!-- shown by portal.js for an account with no company listing: their own
+         profile and account settings as a real tab, not a card lost under the
+         admin console -->
+    <button class="pt-tab" data-tab="me" id="pt-tab-me" style="display:none">Your Profile</button>
     <!-- shown by portal.js only when the signed-in account is a Circuits.com admin -->
     <button class="pt-tab" data-tab="admin" id="pt-tab-admin" style="display:none">Admin</button>
   </div>
+
+  <!-- filled by portal.js with the profile/account card when it is shown -->
+  <section class="pt-panel" id="tab-me"></section>
 
   <!-- Profile settings, split across three tabs. All three are parts of the
        SAME saved profile: every field stays in the page whichever tab shows,
