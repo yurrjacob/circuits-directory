@@ -49,6 +49,10 @@
   <div class="auth-card">
     <h1>Your profile</h1>
     <p class="sub">Signed in as <b id="pt-none-email"></b>. This account does not manage a company listing.</p>
+    <!-- Filled by initPortal for the applicant who has not confirmed their
+         email yet: their application exists, and saying nothing here made the
+         portal look like it had lost it. -->
+    <div id="pt-pending"></div>
     <div id="pt-me" class="pf-form"></div>
     <div id="pt-account"></div>
     <div class="auth-note">
@@ -187,7 +191,21 @@
       <h3>Gallery</h3>
       <div class="pt-list" id="f-gallery"></div>
 
-      <label class="terms" style="margin:14px 0"><input id="f-reviews-on" type="checkbox"> <span>Allow buyers to leave reviews on my profile</span></label>
+      <!-- Was a bare terms-style checkbox stranded between sections — looked
+           broken. A setting gets a setting's presentation: name, consequence,
+           switch. Same input id, so portal.js needed no change to read it. -->
+      <div class="pt-setting">
+        <div class="pt-setting-text">
+          <b>Buyer reviews</b>
+          <p class="pf-note">Let buyers leave a review on your public profile. Circuits.com checks
+          every review before it appears, and you can reply publicly. Saved with the profile.</p>
+        </div>
+        <label class="switch">
+          <input id="f-reviews-on" type="checkbox">
+          <span class="knob" aria-hidden="true"></span>
+          <span class="sr-only">Allow buyers to leave reviews on my profile</span>
+        </label>
+      </div>
       <div><button class="btn btn-primary" id="pt-save" type="button">Save profile</button></div>
     </div>
   </section>
@@ -238,6 +256,7 @@
     <div class="stat"><div class="num" id="s-companies">0</div><div class="lbl">Companies</div></div>
     <div class="stat"><div class="num" id="s-sponsored">0</div><div class="lbl">Sponsored Banners</div></div>
     <div class="stat"><div class="num" id="s-pending">0</div><div class="lbl">Pending Applications</div></div>
+    <div class="stat"><div class="num" id="s-unanswered">0</div><div class="lbl">Unanswered Requests</div></div>
   </div>
 
   <!-- Keyword Listings -->
@@ -354,6 +373,23 @@
         </table>
       </div>
       <div id="pending-empty" class="empty-line" style="display:none">No Applications Pending. All Caught Up.</div>
+    </div>
+  </div>
+
+  <!-- Quote requests a supplier has left hanging. Until now, silence here was
+       invisible: the buyer concluded the directory does not work, and nobody
+       on staff found out. Counts only threads with no supplier reply. -->
+  <div class="panel">
+    <div class="panel-head"><h2>Unanswered Quote Requests</h2>
+      <span class="hint">Waiting 3+ Days With No Reply From The Supplier</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Waiting</th><th>Oldest Request</th><th>Actions</th></tr></thead>
+          <tbody id="unanswered-body"></tbody>
+        </table>
+      </div>
+      <div id="unanswered-empty" class="empty-line" style="display:none">Nothing Waiting On A Supplier.</div>
     </div>
   </div>
 

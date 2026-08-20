@@ -61,3 +61,57 @@
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
   else mount();
 })();
+
+/* ===== phone menu + skip link ==============================================
+   Injected here because every page already loads nav.js in <head> — one file
+   gives every header the same behaviour, with no per-page editing to forget.
+
+   The burger only appears below 720px (styles.css hides it otherwise). The
+   skip link is for keyboards and screen readers: first Tab lands on it, and
+   it jumps past the header to the page's main content. */
+(function(){
+  'use strict';
+
+  function mount(){
+    var bar = document.querySelector('.topbar .inner');
+    if(bar && !bar.querySelector('.nav-burger') && bar.querySelector('.nav')){
+      var b = document.createElement('button');
+      b.className = 'nav-burger';
+      b.setAttribute('aria-label', 'Menu');
+      b.setAttribute('aria-expanded', 'false');
+      b.innerHTML =
+        '<svg class="bars" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>' +
+        '<svg class="x" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>';
+      b.addEventListener('click', function(){
+        var open = document.body.classList.toggle('nav-open');
+        b.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      /* picking a destination should also close the panel */
+      var nav = bar.querySelector('.nav');
+      nav.addEventListener('click', function(e){
+        if(e.target.closest('a')) document.body.classList.remove('nav-open');
+      });
+      bar.appendChild(b);
+    }
+
+    if(!document.querySelector('.skip-link')){
+      var s = document.createElement('a');
+      s.className = 'skip-link';
+      s.href = '#';
+      s.textContent = 'Skip to content';
+      s.addEventListener('click', function(e){
+        e.preventDefault();
+        var main = document.querySelector('main')
+          || document.querySelector('.form-wrap, .auth-wrap, .browse-wrap, #results-body, .page, .console');
+        if(!main) return;
+        main.setAttribute('tabindex', '-1');
+        main.focus({ preventScroll: false });
+        main.scrollIntoView({ block: 'start' });
+      });
+      document.body.insertBefore(s, document.body.firstChild);
+    }
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
+  else mount();
+})();

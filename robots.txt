@@ -12,8 +12,6 @@ Disallow: /portal
 Disallow: /portal.html
 Disallow: /claim
 Disallow: /claim.html
-Disallow: /results
-Disallow: /results.html
 Disallow: /company.html
 Disallow: /company
 Disallow: /thread

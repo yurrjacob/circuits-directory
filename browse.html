@@ -3,20 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="company-handle" content="sample-orchard">
-<title>Orchard Micro — Supplier Profile | Circuits.com</title>
-<meta name="description" content="Sample data — not a real company. Used to test Circuits.com.">
-<link rel="canonical" href="https://circuits.com/sample-orchard">
-<meta name="robots" content="noindex,nofollow">
+<title>Browse Circuits-Keywords™ – Every Supplier Category | Circuits.com</title>
+<meta name="description" content="Browse every claimed Circuits-Keyword™ A to Z and find suppliers across the circuits and electronics industry — or claim an open keyword for your company.">
+<link rel="canonical" href="https://circuits.com/browse">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Circuits.com">
-<meta property="og:title" content="Orchard Micro — Supplier Profile | Circuits.com">
-<meta property="og:description" content="Sample data — not a real company. Used to test Circuits.com.">
-<meta property="og:url" content="https://circuits.com/sample-orchard">
+<meta property="og:title" content="Browse Circuits-Keywords™ – Every Supplier Category | Circuits.com">
+<meta property="og:description" content="Browse every claimed Circuits-Keyword™ A to Z and find suppliers across the circuits and electronics industry — or claim an open keyword for your company.">
+<meta property="og:url" content="https://circuits.com/browse">
 <meta property="og:image" content="https://circuits.com/assets/og-card.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Orchard Micro — Supplier Profile | Circuits.com">
-<meta name="twitter:description" content="Sample data — not a real company. Used to test Circuits.com.">
+<meta name="twitter:title" content="Browse Circuits-Keywords™ – Every Supplier Category | Circuits.com">
+<meta name="twitter:description" content="Browse every claimed Circuits-Keyword™ A to Z and find suppliers across the circuits and electronics industry — or claim an open keyword for your company.">
 <meta name="twitter:image" content="https://circuits.com/assets/og-card.png">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="stylesheet" href="/styles.css">
@@ -30,7 +28,7 @@
     <div class="brand"><a href="/"><img class="logo-nav" src="/assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-slogan">Connecting The Circuits Industry</span></div>
     <nav class="nav">
       <a href="/">Home</a>
-      <a href="/browse">Browse</a>
+      <a class="active" href="/browse">Browse</a>
       <a href="/about">About</a>
       <a href="/contact">Contact</a>
       <a class="nav-auth" href="/portal">Sign In</a>
@@ -39,11 +37,11 @@
   </div>
 </header>
 
-<main class="page pf-page">
-  <p class="crumb" style="font-size:.85rem;opacity:.7;margin-bottom:6px">
-    <a href="/">&lsaquo; Search Circuits.com</a>
-  </p>
-  <div id="profile-body"><div class="empty"><div class="big"><span class="spin" aria-hidden="true"></span>Loading…</div></div></div>
+<main class="browse-wrap">
+  <h1>Browse Circuits-Keywords&trade;</h1>
+  <p class="browse-sub">Every keyword a company is listed under, A to Z, with how many suppliers
+  hold each one. Know what you need? <a href="/">Search it</a> instead.</p>
+  <div id="browse-body"></div>
 </main>
 
 <footer class="footer">
@@ -62,7 +60,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/store.js"></script>
 <script src="/app.js"></script>
-<script src="/profile.js"></script>
-<script>initProfile();</script>
+<script>initBrowse();</script>
 </body>
 </html>

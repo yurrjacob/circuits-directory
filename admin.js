@@ -372,6 +372,26 @@ async function setSuspended(slug, suspend){
   await reloadAudit();
 }
 
+/* ---- quote requests the supplier is sitting on ----
+   The database counts New/Open inquiries older than three days with no
+   supplier-authored message. The "Nudge" action is a plain mailto from the
+   staff member's own mail client — it works today, with no sending key. */
+async function reloadUnanswered(){
+  const rows = await adminUnansweredInquiries(3);
+  const total = rows.reduce((a, r) => a + Number(r.waiting), 0);
+  if($('s-unanswered')) $('s-unanswered').textContent = total;
+  $('unanswered-body').innerHTML = rows.map(r => `
+    <tr class="row-waiting">
+      <td>${esc(r.company)}</td>
+      <td><b>${r.waiting}</b> request${Number(r.waiting) === 1 ? '' : 's'}</td>
+      <td class="cell-muted nowrap">${new Date(r.oldest).toLocaleDateString()}</td>
+      <td class="row-actions">${r.email
+        ? `<a class="mini-btn" href="mailto:${esc(r.email)}?subject=${encodeURIComponent('Buyers are waiting on you at Circuits.com')}&body=${encodeURIComponent('Hi,\n\nQuote requests are waiting in your Circuits.com portal with no reply yet. Buyers usually move on after a few days.\n\nSign in at https://circuits.com/portal to answer them.\n\n- The Circuits.com team')}">Nudge by email</a>`
+        : '<span class="cell-muted">no email on file</span>'}</td>
+    </tr>`).join('');
+  $('unanswered-empty').style.display = rows.length ? 'none' : 'block';
+}
+
 /* ---- audit log ---- */
 async function reloadAudit(){
   const rows = await fetchSecurityLog(100);
@@ -446,7 +466,7 @@ window.initAdmin = async function(){
   if(!(await checkStaff())) return;        // belt and braces; the database is the real gate
   started = true;
   reloadClaims(); reloadReviews(); reloadCompanies(); reloadAudit();
-  reloadSearches(); reloadWanted();
+  reloadSearches(); reloadWanted(); reloadUnanswered();
   const saved = await loadPrefs('admin');
   if(saved) for(const k in panels){
     if(saved[k] && saved[k].sort) panels[k].sort = saved[k].sort;

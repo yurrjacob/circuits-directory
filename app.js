@@ -95,6 +95,76 @@ function loadErrorHtml(what, retryLabel){
   </div>`;
 }
 
+/* A wait with a spinner reads as deliberate; bare text reads as broken. */
+function loadingHtml(label){
+  return `<div class="empty"><div class="big"><span class="spin" aria-hidden="true"></span>${escapeHtml(label)}</div></div>`;
+}
+
+/* ---- search-page head management ----
+   The results page ships with NO robots meta: a static noindex would stop
+   Google from ever rendering the page, so the decision is made here instead.
+   A keyword with at least one real (non-sample) listing is indexable; an
+   empty page, an outage, or the test fixture is not. Google honours a
+   JS-set noindex, and this also gives every result page a real title. */
+function setResultsMeta(q, indexable){
+  document.title = q ? (q + ' suppliers — Circuits.com') : 'Search — Circuits.com';
+  let m = document.querySelector('meta[name="robots"]');
+  if(!m){ m = document.createElement('meta'); m.name = 'robots'; document.head.appendChild(m); }
+  m.content = indexable ? 'index, follow' : 'noindex, follow';
+  let c = document.querySelector('link[rel="canonical"]');
+  if(!c){ c = document.createElement('link'); c.rel = 'canonical'; document.head.appendChild(c); }
+  c.href = 'https://circuits.com/results?q=' + encodeURIComponent(q || '');
+}
+
+/* ---- typo tolerance ----
+   Exact-match keywords are the product, so search itself never fuzzes. But a
+   buyer who typed "oscilator" deserves "did you mean oscillators?" instead of
+   a dead end. Edit distance capped at 2, and only against the live index. */
+function editDistance(a, b){
+  if(Math.abs(a.length - b.length) > 2) return 3;
+  const m = a.length, n = b.length;
+  let prev = Array.from({length: n + 1}, (_, j) => j);
+  for(let i = 1; i <= m; i++){
+    const cur = [i];
+    for(let j = 1; j <= n; j++){
+      cur[j] = Math.min(prev[j] + 1, cur[j-1] + 1, prev[j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+function nearestKeywords(term, index, max){
+  const t = normKw(term);
+  if(!t) return [];
+  return index
+    .map(k => ({ k, d: editDistance(t, k.norm) }))
+    .filter(x => x.d > 0 && x.d <= (t.length > 5 ? 2 : 1))
+    .sort((a, b) => a.d - b.d || b.k.companies - a.k.companies)
+    .slice(0, max || 3)
+    .map(x => x.k);
+}
+
+/* One <datalist> shared by the search boxes that live on data-loaded pages.
+   Native, so there is nothing to style or break; filled lazily on first
+   focus so pages that never touch the box never fetch the index. */
+function attachSuggestions(input){
+  if(!input || input.__suggested || typeof fetchKeywordIndex !== 'function') return;
+  input.__suggested = true;
+  input.addEventListener('focus', async function once(){
+    input.removeEventListener('focus', once);
+    const index = await fetchKeywordIndex();
+    if(!index.length) return;
+    let dl = document.getElementById('kw-suggestions');
+    if(!dl){
+      dl = document.createElement('datalist');
+      dl.id = 'kw-suggestions';
+      dl.innerHTML = index.map(k => `<option value="${escapeHtml(k.keyword)}"></option>`).join('');
+      document.body.appendChild(dl);
+    }
+    input.setAttribute('list', 'kw-suggestions');
+  });
+}
+
 /* The database raises this when someone trips the per-IP limit. Turn it into
    something a real person who genuinely sent three quotes can understand. */
 function rateLimitMessage(err){
@@ -166,17 +236,20 @@ async function initResults(forcedTerm){
   const miniForm = document.getElementById('mini-form');
   if(mini) mini.value = q;
   if(miniForm) miniForm.addEventListener('submit', e=>{ e.preventDefault(); gotoSearch(mini.value); });
+  attachSuggestions(mini);
   document.querySelectorAll('[data-term]').forEach(el=> el.textContent = q || '…');
 
   const body = document.getElementById('results-body');
 
   if(!q){
+    setResultsMeta('', false);
     body.innerHTML = `<div class="empty"><div class="big">Type a keyword to see suppliers</div>
-      <p>Try <a href="/results?q=circuits">circuits</a>, <a href="/results?q=microcontrollers">microcontrollers</a>, or <a href="/results?q=sensors">sensors</a>.</p></div>`;
+      <p>Try <a href="/results?q=circuits">circuits</a>, <a href="/results?q=microcontrollers">microcontrollers</a>, or <a href="/results?q=sensors">sensors</a>, or <a href="/browse">browse every keyword</a>.</p></div>`;
     return;
   }
 
-  body.innerHTML = `<div class="empty"><div class="big">Searching…</div></div>`;
+  setResultsMeta(q, false);   // flipped to indexable only once real listings render
+  body.innerHTML = loadingHtml('Searching…');
 
   let listings = [];
   try {
@@ -208,6 +281,19 @@ async function initResults(forcedTerm){
 
        So: answer the buyer first, take their requirement, and put the pitch
        underneath where it still does its job. */
+
+    /* A misspelling should not read as "nobody sells this". Checked against
+       the live keyword index; shown only when something is genuinely close. */
+    let didYouMean = '';
+    try{
+      const near = nearestKeywords(q, await fetchKeywordIndex(), 3);
+      if(near.length){
+        didYouMean = `<p class="didyoumean">Did you mean ${near.map(k =>
+          `<a href="/results?q=${encodeURIComponent(k.keyword)}">${escapeHtml(k.keyword)}</a>`
+        ).join(' or ')}?</p>`;
+      }
+    }catch(e){ /* suggestions are a nicety; the miss page must render without them */ }
+
     const related = await fetchRelatedByKeyword(q);
     const relatedHtml = related.length ? `
       <div class="rel-wrap">
@@ -234,6 +320,7 @@ async function initResults(forcedTerm){
     body.innerHTML = `
     <div class="miss">
       <div class="big">No one is listed for &ldquo;${term}&rdquo; yet</div>
+      ${didYouMean}
       <p class="miss-sub">Circuits.com is new, and this keyword has not been claimed. Tell us what you
       are looking for and we will email you the moment a supplier lists for it.</p>
 
@@ -288,6 +375,10 @@ async function initResults(forcedTerm){
 
     return;
   }
+
+  /* Real listings make this page worth indexing; the sample fixture and an
+     empty page are not Google's business. */
+  setResultsMeta(q, listings.some(l => !/^sample-/.test(l.company_slug || '')));
 
   /* The Exclusive Sponsor is lifted OUT of the list, not shown twice. While the
      banner is being paid for, that company IS the banner; when it lapses the
@@ -847,6 +938,21 @@ const msg = document.getElementById('msg');
     const okHandle = document.getElementById('success-handle');
     if(okHandle) okHandle.innerHTML = '<b>circuits.com/' + escapeHtml(base.requested_handle)
       + '</b> is reserved for you. ';
+    /* A typo'd address or a spam filter used to be a dead end — the password is
+       set once, here, and nothing could resend the confirmation. Now it can. */
+    const okResend = document.getElementById('success-resend');
+    if(okResend && !JOIN_USER && typeof resendConfirmation === 'function'){
+      const addr = base.email;
+      okResend.innerHTML = '<br><span class="resend-line">Nothing arrived at ' + escapeHtml(addr)
+        + '? Check spam first, then <button type="button" id="success-resend-btn">send it again</button>.'
+        + ' <span id="success-resend-msg"></span></span>';
+      document.getElementById('success-resend-btn').addEventListener('click', async () => {
+        const m = document.getElementById('success-resend-msg');
+        m.textContent = 'Sending…';
+        const err = await resendConfirmation(addr);
+        m.textContent = err || 'Sent — give it a minute, and check spam.';
+      });
+    }
     ok.classList.add('show');
     form.reset();
     keywords = []; renderKw();
@@ -1133,5 +1239,52 @@ function initRegister(){
     if(ok) ok.style.display = 'block';
     window.scrollTo({ top:0, behavior:'smooth' });
   });
+}
+/* ===================================================================
+   Browse — every claimed Circuits-Keyword™, A to Z.
+   The homepage stays a bare search box on purpose; this is the page for
+   the buyer who does not know the exact word yet. Test fixtures are
+   filtered out in fetchKeywordIndex, so fake companies never show here.
+   =================================================================== */
+async function initBrowse(){
+  const host = document.getElementById('browse-body');
+  if(!host) return;
+  host.innerHTML = loadingHtml('Loading keywords…');
+
+  let index = [];
+  try{ index = await fetchKeywordIndex(); }
+  catch(e){ /* fetchKeywordIndex already returns [] on failure */ }
+
+  if(!index.length){
+    host.innerHTML = `<div class="empty">
+      <div class="big">No keywords to browse yet</div>
+      <p>Circuits.com is new. <a href="/join">Be the first company listed</a> —
+      the first to claim a Circuits-Keyword&trade; holds its top position permanently.</p>
+    </div>`;
+    return;
+  }
+
+  const groups = new Map();
+  for(const k of index){
+    const letter = /^[a-z]/i.test(k.keyword) ? k.keyword[0].toUpperCase() : '#';
+    if(!groups.has(letter)) groups.set(letter, []);
+    groups.get(letter).push(k);
+  }
+
+  host.innerHTML = [...groups.entries()].map(([letter, kws]) => `
+    <section class="kw-group">
+      <h2 class="kw-letter">${escapeHtml(letter)}</h2>
+      <div class="kw-links">${kws.map(k =>
+        `<a href="/results?q=${encodeURIComponent(k.keyword)}">${escapeHtml(k.keyword)}<span class="n">${k.companies}</span></a>`
+      ).join('')}</div>
+    </section>`).join('') + `
+    <div class="claim-strip browse-cta">
+      <div>
+        <b>Don&rsquo;t see your keyword?</b>
+        <p>Unclaimed Circuits-Keywords&trade; are first come, first served — the first company
+        listed for one holds the top position permanently, for as long as the listing stays active.</p>
+      </div>
+      <a class="btn btn-primary" href="/join">Claim your keyword</a>
+    </div>`;
 }
 /* end */

@@ -1207,3 +1207,87 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 
 /* the logo tile in search results is part of the link to the profile */
 .co-logo-link{display:inline-flex;text-decoration:none}
+
+/* ===================================================================
+   Added 2026-08-20: skip link, loading spinner, phone menu, the
+   reviews switch, the Browse page, "did you mean", under-review note.
+   =================================================================== */
+
+/* ---- skip to content: invisible until a keyboard reaches it ---- */
+.skip-link{position:absolute;left:-9999px;top:0;z-index:200;background:var(--green);color:#0f0f0f;
+  font-weight:700;padding:10px 16px;border-radius:0 0 10px 0;text-decoration:none}
+.skip-link:focus{left:0}
+
+/* ---- a quiet spinner so waiting looks deliberate, not broken ---- */
+.spin{display:inline-block;width:20px;height:20px;border:3px solid var(--line);border-top-color:var(--green);
+  border-radius:50%;animation:cx-spin .8s linear infinite;vertical-align:-3px;margin-right:9px}
+@keyframes cx-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spin{animation:none;border-top-color:var(--green)}}
+
+/* ---- phone menu ----
+   Five links plus the brand never fit a narrow screen. Below 720px the links
+   fold into a panel under the bar; the button is injected by nav.js so every
+   page gets it without editing each header. */
+.nav-burger{display:none;background:none;border:1px solid rgba(255,255,255,.25);border-radius:8px;
+  color:#e8eaed;width:40px;height:36px;cursor:pointer;align-items:center;justify-content:center;flex:0 0 auto}
+.nav-burger svg{display:block}
+.nav-burger .x{display:none}
+body.nav-open .nav-burger .bars{display:none}
+body.nav-open .nav-burger .x{display:block}
+@media(max-width:720px){
+  .nav-burger{display:inline-flex}
+  .topbar .nav{display:none;position:absolute;top:100%;left:0;right:0;z-index:60;
+    flex-direction:column;align-items:stretch;gap:6px;
+    background:var(--dark);border-bottom:1px solid #2a2a2a;padding:12px 20px 18px;
+    box-shadow:0 12px 24px rgba(0,0,0,.28)}
+  body.nav-open .topbar .nav{display:flex}
+  .topbar .nav a{padding:12px 14px;font-size:1rem}
+  .topbar .nav a.nav-auth{margin-left:0;border-top:1px solid rgba(255,255,255,.14);border-radius:0;padding-top:14px}
+  .topbar .nav a.nav-auth::before{display:none}
+  .topbar .nav a.cta{margin-left:0;text-align:center}
+}
+
+/* ---- the reviews on/off control, as a proper setting ----
+   Was a bare terms-style checkbox floating between form sections. */
+.pt-setting{display:flex;align-items:center;justify-content:space-between;gap:18px;
+  border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:18px 0;background:var(--bg-soft)}
+.pt-setting-text b{font-size:.95rem}
+.pt-setting-text .pf-note{margin:3px 0 0}
+.switch{position:relative;display:inline-block;flex:0 0 auto}
+.switch input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.switch .knob{display:block;width:46px;height:26px;border-radius:999px;background:#c6cad1;
+  transition:background .18s;position:relative}
+.switch .knob::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;
+  background:#fff;transition:left .18s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.switch input:checked + .knob{background:var(--green)}
+.switch input:checked + .knob::after{left:23px}
+.switch input:focus-visible + .knob{box-shadow:0 0 0 3px rgba(118,192,0,.35)}
+
+/* ---- Browse: every claimed keyword, A to Z ---- */
+.browse-wrap{max-width:var(--maxw);margin:0 auto;padding:36px 24px 72px}
+.browse-wrap h1{font-size:1.7rem;margin:0 0 6px}
+.browse-sub{color:var(--muted);margin:0 0 8px;max-width:70ch}
+.kw-group{margin:28px 0 0}
+.kw-letter{font-size:.85rem;font-weight:800;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;
+  border-bottom:1px solid var(--line);padding-bottom:6px;margin:0 0 12px}
+.kw-links{display:flex;flex-wrap:wrap;gap:10px}
+.kw-links a{border:1px solid var(--line);border-radius:999px;padding:8px 15px;text-decoration:none;
+  color:var(--ink);font-size:.9rem;font-weight:600;background:var(--card);transition:.15s}
+.kw-links a:hover{border-color:var(--green);color:var(--green-dark)}
+.kw-links a .n{color:var(--muted);font-weight:400;font-size:.8rem;margin-left:7px}
+.browse-cta{margin-top:40px}
+
+/* ---- a near-miss for a misspelled keyword ---- */
+.didyoumean{margin:0 0 16px;font-size:1.02rem}
+.didyoumean a{color:var(--green-dark);font-weight:700;text-decoration:none}
+.didyoumean a:hover{text-decoration:underline}
+
+/* ---- listing under review: same shape as the suspension notice, calmer ---- */
+.pt-underreview{border:1px solid var(--green);background:#f1fae0;color:#2f4a00;
+  border-radius:var(--radius);padding:14px 18px;margin:0 0 18px;font-size:.92rem}
+.pt-underreview b{color:#2f4a00}
+
+/* resend-confirmation link, wherever an unconfirmed email blocks someone */
+.resend-line{margin-top:10px;font-size:.88rem}
+.resend-line button{background:none;border:0;padding:0;color:var(--green-dark);font-weight:700;
+  cursor:pointer;font-family:inherit;font-size:inherit;text-decoration:underline}

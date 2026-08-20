@@ -74,7 +74,9 @@ function cleanKw(s){
    with every listing sold. Still oldest-first: earlier claims keep the higher
    permanent position. */
 async function fetchApprovedByKeyword(keyword){
-  if(!sb) return [];
+  /* No client (CDN blocked, offline) is a FAILED lookup, not an empty one —
+     returning [] here showed "no one is listed" for keywords already sold. */
+  if(!sb) throw new Error('no connection');
   const k = normKw(keyword);
   if(!k) return [];
   const { data, error } = await sb.from('applications').select('*')
@@ -662,7 +664,14 @@ async function decideClaim(claim, approve){
       { p_slug: claim.company_slug, p_email: claim.email });
     if(error){ console.error('decideClaim attach', error); return error.message; }
     if(data === 'no-account'){
-      return 'No login exists for ' + claim.email + ' yet. Create that user in Supabase Auth, then approve again.';
+      /* No login yet — the notify function invites one (Supabase Auth sends
+         that email itself, so this works before Resend is configured) and
+         attaches the company to it. Staff-checked server-side. */
+      const out = await inviteClaimant(claim.id);
+      if(!out.ok){
+        return 'No login exists for ' + claim.email + ' and the automatic invitation failed'
+          + (out.error ? ' (' + out.error + ')' : '') + '. Create that user in Supabase Auth, then approve again.';
+      }
     }
   }
   const { error } = await sb.from('claims').update({ status: approve ? 'Approved' : 'Denied' }).eq('id', claim.id);
@@ -794,4 +803,92 @@ async function requireStaff(){
     return false;
   }
   return true;
+}
+
+/* ===================================================================
+   Added 2026-08-20: keyword index (Browse + search suggestions),
+   confirmation resend, claim invitations, unanswered-request report.
+   =================================================================== */
+
+/* Every live keyword, deduped on the same normalization search uses, with how
+   many companies hold it. The sample fixture never leaves the database here —
+   fake companies must not appear as suggestions or on Browse. Cached for the
+   page's lifetime: the list changes when staff approve something, not mid-visit. */
+let KW_INDEX = null;
+async function fetchKeywordIndex(){
+  if(KW_INDEX) return KW_INDEX;
+  if(!sb) return [];
+  try{
+    const { data, error } = await sb.from('applications')
+      .select('keyword, keyword_norm, company_slug, company')
+      .eq('status', 'Approved').eq('paused', false).limit(2000);
+    if(error) throw error;
+    const byNorm = new Map();
+    for(const r of (data || [])){
+      if(!r.keyword || !r.keyword_norm) continue;
+      if(r.keyword_norm === 'sample' || /^sample-/.test(r.company_slug || '')) continue;
+      const cur = byNorm.get(r.keyword_norm) || { keyword: r.keyword, norm: r.keyword_norm, companies: new Set() };
+      cur.companies.add(r.company);
+      byNorm.set(r.keyword_norm, cur);
+    }
+    KW_INDEX = [...byNorm.values()]
+      .map(k => ({ keyword: k.keyword, norm: k.norm, companies: k.companies.size }))
+      .sort((a, b) => a.keyword.localeCompare(b.keyword));
+  }catch(err){
+    console.warn('fetchKeywordIndex', err);
+    return [];   // a failed load must not break search; suggestions just stay off
+  }
+  return KW_INDEX;
+}
+
+/* The confirmation email goes out once at sign-up; a typo or a spam filter
+   used to be a dead end. Always reports success the same way — whether an
+   account exists behind an address is not this button's to reveal. */
+async function resendConfirmation(email){
+  if(!sb) return 'No connection';
+  const addr = (email || '').trim();
+  if(!addr.includes('@')) return 'That does not look like an email address.';
+  const { error } = await sb.auth.resend({ type: 'signup', email: addr });
+  if(error){
+    console.warn('resendConfirmation', error.message);
+    const secs = (/after (\d+) seconds?/i.exec(error.message || '') || [])[1];
+    if(secs) return 'An email was sent recently — you can ask for another in ' + secs + ' seconds.';
+    if(error.status === 429 || /rate limit/i.test(error.message || '')){
+      return 'Too many emails have gone out in the last hour. Please try again shortly.';
+    }
+    /* "already confirmed" arrives as an error, but it is good news */
+    if(/already confirmed/i.test(error.message || '')) return 'That email is already confirmed — just sign in.';
+    return 'We could not send the email just now. Please try again in a few minutes.';
+  }
+  return '';
+}
+
+/* Staff only, checked server-side: asks the notify function to invite the
+   claimant (Supabase Auth sends the invitation, not Resend) and attach the
+   company to the new login. Returns { ok, invited?, error? }. */
+async function inviteClaimant(claimId){
+  try{
+    const { data: s } = await sb.auth.getSession();
+    const jwt = s && s.session && s.session.access_token;
+    if(!jwt) return { ok: false, error: 'sign in required' };
+    const res = await fetch(SUPABASE_URL + '/functions/v1/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + jwt },
+      body: JSON.stringify({ kind: 'claim-invite', claim_id: claimId })
+    });
+    const out = await res.json().catch(() => null);
+    return out || { ok: false, error: 'no response' };
+  }catch(err){
+    console.warn('inviteClaimant failed', err);
+    return { ok: false, error: 'network' };
+  }
+}
+
+/* Quote requests that have sat for days with no supplier reply — the silence
+   the admin tab could not see. Staff only, enforced in the function. */
+async function adminUnansweredInquiries(days){
+  if(!sb) return [];
+  const { data, error } = await sb.rpc('admin_unanswered_inquiries', { p_days: days || 3 });
+  if(error){ console.error('admin_unanswered_inquiries', error); return []; }
+  return data || [];
 }

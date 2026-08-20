@@ -67,6 +67,29 @@ async function initPortal(){
   if(!cos.length){
     show('pt-auth', false); show('pt-app', false); show('pt-none', true);
     el('pt-none-email').textContent = user.email;
+    /* An applicant who has not clicked the confirmation link yet lands here,
+       because ownership is keyed on the CONFIRMED email. "This account does
+       not manage a company listing" read like their application was lost.
+       Say what is actually happening, and hand them the fix. */
+    const confirmed = !!(user.email_confirmed_at || user.confirmed_at);
+    const pend = el('pt-pending');
+    if(pend && !confirmed){
+      pend.innerHTML = `<div class="pt-underreview">
+        <b>One step left: confirm your email.</b>
+        We sent a link to <b>${escapeHtml(user.email || '')}</b> when this account was created.
+        If you submitted a listing application, it is safe — it appears here the moment
+        your email is confirmed.
+        <div class="resend-line">Nothing arrived? Check spam, then
+          <button type="button" id="pt-pending-resend">send the link again</button>.
+          <span id="pt-pending-resend-msg"></span></div>
+      </div>`;
+      el('pt-pending-resend').addEventListener('click', async () => {
+        const m = el('pt-pending-resend-msg');
+        m.textContent = 'Sending…';
+        const err = await resendConfirmation(user.email);
+        m.textContent = err || 'Sent — give it a minute.';
+      });
+    }
     renderMyProfile(me);
     renderAccount(user);
     /* An admin does not have to run a listing. Give them the console on its
@@ -135,6 +158,22 @@ function wireAuth(){
     try{
       const { error } = await signIn(val('pt-email'), val('pt-password'));
       if(error){
+        /* An unconfirmed email is fixable on the spot — offer the fix rather
+           than parroting the raw error and leaving them stuck. */
+        if(/not confirmed/i.test(error.message || '')){
+          msg.innerHTML = 'Your email has not been confirmed yet — the sign-in works as soon as '
+            + 'you click the link we sent you. <span class="resend-line">Nothing arrived? '
+            + '<button type="button" id="pt-auth-resend">Send it again</button> '
+            + '<span id="pt-auth-resend-msg"></span></span>';
+          el('pt-auth-resend').addEventListener('click', async () => {
+            const m = el('pt-auth-resend-msg');
+            m.textContent = 'Sending…';
+            const err2 = await resendConfirmation(val('pt-email'));
+            m.textContent = err2 || 'Sent — check spam too.';
+          });
+          el('pt-auth-submit').disabled = false;
+          return;
+        }
         msg.textContent = /invalid login/i.test(error.message || '')
           ? 'That email and password do not match an account. If you have not made one yet, create your profile below.'
           : error.message;
@@ -199,6 +238,7 @@ async function loadCompany(slug){
     fetchMyListings(slug), fetchInquiries(slug), fetchMyReviews(slug), companyStats(slug, 30)
   ]);
   PT.listings = listings; PT.inquiries = inquiries; PT.reviews = reviews;
+  renderReviewStatus();
   markUnread();
   renderOverview(stats);
   renderProfileForm();
@@ -208,6 +248,40 @@ async function loadCompany(slug){
   renderInquiries();
   renderReviews();
   renderPromote();
+}
+
+/* Applying used to end in silence: the supplier refreshed the portal hoping,
+   with nothing anywhere saying "we have it, we are looking at it". One banner
+   above the tabs answers the only question they have while they wait. */
+function renderReviewStatus(){
+  const host = el('pt-app');
+  if(!host) return;
+  let note = document.getElementById('pt-review-note');
+  if(!note){
+    note = document.createElement('div');
+    note.id = 'pt-review-note';
+    const tabs = host.querySelector('.pt-tabs');
+    if(!tabs) return;
+    host.insertBefore(note, tabs);
+  }
+  const live = PT.listings.filter(l => l.status === 'Approved');
+  const waiting = PT.listings.filter(l => l.status === 'Pending');
+  const kws = waiting.map(l => l.keyword).filter(Boolean).map(escapeHtml);
+
+  if(waiting.length && !live.length){
+    note.className = 'pt-underreview';
+    note.style.display = '';
+    note.innerHTML = '<b>Your application is under review</b> — usually one business day. '
+      + (kws.length ? 'Keyword' + (kws.length > 1 ? 's' : '') + ' requested: <b>' + kws.join('</b>, <b>') + '</b>. ' : '')
+      + 'Nothing is public yet. We email you the decision, and this page updates as soon as it is made.';
+  } else if(waiting.length){
+    note.className = 'pt-underreview';
+    note.style.display = '';
+    note.innerHTML = '<b>Still under review:</b> ' + kws.join(', ')
+      + '. Your live listing' + (live.length > 1 ? 's are' : ' is') + ' unaffected.';
+  } else {
+    note.style.display = 'none';
+  }
 }
 
 /* A supplier should not have to open the tab to discover a new quote request.
@@ -627,7 +701,7 @@ async function drawViews(){
          : (d => (d.getMonth() + 1) + '/' + d.getDate());
   }
 
-  host.innerHTML = '<p class="pf-note">Loading…</p>';
+  host.innerHTML = '<p class="pf-note"><span class="spin" aria-hidden="true"></span>Loading…</p>';
   const rows = await companyViews(PT.co.slug, from.toISOString(), to.toISOString(), bucket);
   const series = bucketSeries(rows, from, to, bucket);
   const total = series.reduce((a, s) => a + s[1], 0);
