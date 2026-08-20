@@ -21,7 +21,7 @@ const ROOT = path.join(__dirname, '..');
 const MANIFEST = path.join(__dirname, '.generated-profiles.json');
 
 const STATIC_PAGES = [
-  ['/', '1.0'], ['/join', '0.9'],
+  ['/', '1.0'], ['/join', '0.9'], ['/browse', '0.8'],
   ['/about', '0.8'], ['/contact', '0.6'], ['/register', '0.6'], ['/terms', '0.3'], ['/privacy', '0.3']
 ];
 
@@ -46,7 +46,7 @@ function pageFor(template, co) {
   const raw = co.tagline || co.description ||
     (co.name + ' is listed on Circuits.com, the integrated circuits directory. See documentation and contact details, or request a quote.');
   const desc = raw.replace(/\s+/g, ' ').trim().slice(0, 155);
-  const og = /^https?:\/\//i.test(co.logo || '') ? co.logo : SITE + '/assets/logo-home.png';
+  const og = /^https?:\/\//i.test(co.logo || '') ? co.logo : SITE + '/assets/og-card.png';
   return template
     .split('{{ROBOTS}}').join(isSample(co) ? '\n<meta name="robots" content="noindex,nofollow">' : '')
     .split('{{HANDLE}}').join(esc(co.handle))
@@ -60,8 +60,18 @@ function pageFor(template, co) {
   const template = fs.readFileSync(path.join(ROOT, 'company.html'), 'utf8');
   const previous = fs.existsSync(MANIFEST) ? JSON.parse(fs.readFileSync(MANIFEST, 'utf8')) : [];
 
-  const live = await api('applications?status=eq.Approved&select=company_slug,paused');
+  const live = await api('applications?status=eq.Approved&select=company_slug,paused,keyword,keyword_norm');
   const slugs = [...new Set(live.filter(r => r.company_slug && !r.paused).map(r => r.company_slug))];
+
+  /* Keyword result pages worth indexing: at least one live, non-sample listing.
+     robots.txt allows /results and app.js noindexes empty pages, so the sitemap
+     is what tells Google which keyword pages actually answer a search. */
+  const kwSeen = new Map();
+  for (const r of live) {
+    if (r.paused || !r.keyword || !r.keyword_norm) continue;
+    if (r.keyword_norm === 'sample' || /^sample-/.test(r.company_slug || '')) continue;
+    if (!kwSeen.has(r.keyword_norm)) kwSeen.set(r.keyword_norm, r.keyword);
+  }
 
   let companies = [];
   if (slugs.length) {
@@ -101,7 +111,9 @@ function pageFor(template, co) {
     `  <url><loc>${SITE}${loc}</loc><lastmod>${today}</lastmod><priority>${pri}</priority></url>`
   ).concat(companies
     .filter(c => written.includes(c.handle + '.html') && !isSample(c))   // test data stays out of the sitemap
-    .map(co => `  <url><loc>${SITE}/${co.handle}</loc><lastmod>${(co.updated_at || today).slice(0, 10)}</lastmod><priority>0.6</priority></url>`));
+    .map(co => `  <url><loc>${SITE}/${co.handle}</loc><lastmod>${(co.updated_at || today).slice(0, 10)}</lastmod><priority>0.6</priority></url>`)
+  ).concat([...kwSeen.values()].sort()
+    .map(kw => `  <url><loc>${SITE}/results?q=${encodeURIComponent(kw)}</loc><lastmod>${today}</lastmod><priority>0.7</priority></url>`));
 
   fs.writeFileSync(path.join(ROOT, 'sitemap.xml'),
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +

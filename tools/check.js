@@ -89,7 +89,7 @@ for (const bad of ['ab', '-lead', 'trail-', '_lead', 'trail_', 'Upper', 'has spa
   assert.ok(!handleFormatOk(bad), `handle ${bad} should be rejected`);
 }
 // every root page name must be in the reserved list, or a company could take it
-const RESERVED_IN_DB = ['about','admin','applications','claim','companies','company','contact',
+const RESERVED_IN_DB = ['about','admin','applications','browse','claim','companies','company','contact',
   'dashboard','data','directory','how-it-works','index','join','login','portal','profile',
   'privacy','register','reset','results','robots','search','server','sitemap','store','styles','terms','thread','tools'];
 /* build-profiles.js writes one root page per live handle, so those files are

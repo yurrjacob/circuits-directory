@@ -53,14 +53,25 @@ const node = () => ({
   addEventListener(){}, value: '', textContent: '', dataset: {}, style: {},
   querySelector: () => null, querySelectorAll: () => []
 });
+/* the page head, because initResults now decides indexability per keyword:
+   real listings → index; empty, outage or the sample fixture → noindex */
+let headMeta = null, headCanon = null;
 global.document = {
+  title: '',
+  head: { appendChild(n){ if(n.name === 'robots') headMeta = n; else if(n.rel === 'canonical') headCanon = n; } },
+  body: { appendChild(){} },
+  createElement: tag => ({ tagName: tag }),
   getElementById: id => (id === 'results-body' ? body : node()),
-  querySelector: () => null, querySelectorAll: () => []
+  querySelector: sel => (/robots/.test(sel) ? headMeta : /canonical/.test(sel) ? headCanon : null),
+  querySelectorAll: () => []
 };
 const body = { set innerHTML(v){ captured = String(v); }, get innerHTML(){ return captured; },
                addEventListener(){}, style: {}, querySelector: () => null, querySelectorAll: () => [] };
 global.location = { search: '?q=oscillators' };
 global.URLSearchParams = class { constructor(){} get(){ return 'oscillators'; } };
+/* suggestions and typo help lean on the keyword index; empty is a valid answer */
+global.fetchKeywordIndex = async () => [];
+global.normKw = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
 const from = src.indexOf('async function initResults');
 const to = src.indexOf('/* ===================================================================');
@@ -93,6 +104,10 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   assert.deepStrictEqual(logged, { term: 'oscillators', hits: 0 },
     'a search that found nothing was not recorded');
 
+  /* --- an empty page must not invite Google in --- */
+  assert.ok(headMeta && /noindex/.test(headMeta.content),
+    'a keyword with no listings is left indexable — Google would fill up with empty pages');
+
   /* --- related listings when the exact keyword is unclaimed --- */
   relatedToReturn = [{ company: 'Bell Components', company_handle: 'bell', keyword: 'oscillator',
                        contact: 'Dana', phone: '(555) 1' }];
@@ -120,6 +135,25 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   assert.ok(!/wanted-form/.test(captured), 'the demand form shows even when results were found');
   assert.deepStrictEqual(logged, { term: 'oscillators', hits: 1 },
     'a search that found something was not recorded with its hit count');
+
+  /* --- a page with real listings is the page we WANT found --- */
+  assert.ok(headMeta && /^index/.test(headMeta.content),
+    'a keyword with live listings is still hidden from Google');
+  assert.ok(/oscillators suppliers/.test(document.title),
+    'the results page title does not name the keyword');
+  assert.ok(headCanon && /\/results\?q=oscillators/.test(headCanon.href),
+    'the results page has no canonical URL');
+
+  /* --- but the sample fixture never is --- */
+  listingsToReturn = [{ company: 'Northbridge Components', company_slug: 'sample-northbridge',
+                        company_handle: 'sample-northbridge', keyword: 'sample',
+                        contact: 'Pat', phone: '(555) 4', email: 'n@b.co', docs: [] }];
+  await initResults('sample');
+  assert.ok(headMeta && /noindex/.test(headMeta.content),
+    'the sample fixture page is indexable — fake companies would reach Google');
+  listingsToReturn = [{ company: 'Acme', company_handle: 'acme', keyword: 'oscillators',
+                        contact: 'Sam', phone: '(555) 2', email: 'a@b.co', docs: [] }];
+  await initResults('oscillators');
 
   /* --- every listing offers a way to ask for a quote --- */
   assert.ok(/Request a Quote/.test(captured), 'a listing has no Request a Quote button');
