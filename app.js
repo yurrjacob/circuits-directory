@@ -244,7 +244,7 @@ async function initResults(forcedTerm){
   if(!q){
     setResultsMeta('', false);
     body.innerHTML = `<div class="empty"><div class="big">Type a keyword to see suppliers</div>
-      <p>Try <a href="/results?q=circuits">circuits</a>, <a href="/results?q=microcontrollers">microcontrollers</a>, or <a href="/results?q=sensors">sensors</a>, or <a href="/browse">browse every keyword</a>.</p></div>`;
+      <p>Try <a href="/results?q=circuits">circuits</a>, <a href="/results?q=microcontrollers">microcontrollers</a>, or <a href="/results?q=sensors">sensors</a>.</p></div>`;
     return;
   }
 
