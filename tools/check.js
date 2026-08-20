@@ -625,6 +625,32 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   assert.ok(contactHtml.includes(`id="${id}"`), `contact form is missing ${id}`);
 }
 
+/* --- every form gates its fields on format (Jacob, 2026-08-20) ---
+   A value that is not the thing the field says it is must not reach the
+   database — on the public forms AND on the admin/portal editing surfaces. */
+{
+  const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
+  const appSrc = read('app.js'), portalSrc = read('portal.js'), storeSrc = read('store.js');
+  // one canonical set of validators, available to pages that load only store.js
+  for (const fn of ['isValidEmail', 'isValidPhone', 'isValidWebsite', 'isValidYear']) {
+    assert.ok(storeSrc.includes(`function ${fn}`), `store.js lost ${fn} — the admin dashboard cannot validate without it`);
+  }
+  assert.ok(/isValidEmail\(email\)/.test(appSrc),
+    'registration no longer validates the email address format');
+  assert.ok(/keywords\.length > 0/.test(appSrc),
+    'Get Listed no longer requires at least one keyword');
+  assert.ok(/isValidEmail\(val\('f-email'\)\)/.test(portalSrc) && /isValidYear\(val\('f-founded'\)\)/.test(portalSrc),
+    'portal profile save no longer validates its fields');
+  assert.ok(read('applications.html').includes('FIELD_RULES'),
+    'the admin dashboard saves inline edits without format checks');
+  assert.ok(read('admin.js').includes('needs a keyword'),
+    'the portal admin sheet can save a listing without a keyword');
+  assert.ok(read('contact.html').includes('isValidEmail'),
+    'the contact form no longer validates the email address');
+  assert.ok(read('profile.js').includes("isValidPhone(v('rq-phone'))"),
+    'the quote-request form accepts a non-phone in the phone field');
+}
+
 /* --- somebody who forgets their password must not be locked out forever --- */
 const resetHtml = fs.readFileSync(path.join(ROOT, 'reset.html'), 'utf8');
 for (const id of ['rq-form', 'rq-id', 'rs-form', 'rs-pass', 'rs-pass2', 'rs-bad', 'rs-done']) {
