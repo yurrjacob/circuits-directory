@@ -257,13 +257,18 @@ async function initProfile(){
       </div>`).join('')}</div>` : '<p class="empty-line">No reviews yet. Be the first to review this supplier.</p>'}
     ${co.reviews_enabled ? reviewForm() : ''}`) : '';
 
-  /* ---- RFQ ---- */
-  html += rfqForm(co);
+  /* The in-page quote form is OFF (Jacob, 2026-08-21: "Request a quote part
+     of the profile should be removed. Just make it provide their emails and
+     stuff"). rfqForm() and its wiring stay below, dormant, in case it comes
+     back — buyers now reach the company by the contact details themselves. */
 
   /* ---- sidebar: one place for everything a buyer needs to act ---- */
   html += `</div><aside class="pf-side">
     <div class="pf-side-card">
-      <button class="btn btn-primary pf-cta" id="rfq-open">Request a Quote</button>
+      ${looksEmail(co.email)
+        ? `<a class="btn btn-primary pf-cta" id="pf-email-cta"
+             href="mailto:${escapeHtml(co.email.trim())}?subject=${encodeURIComponent('Quote request via Circuits.com — ' + co.name)}">Email ${escapeHtml(co.name)}</a>`
+        : ''}
       <button type="button" class="btn pf-save" id="pf-save"
               data-slug="${escapeHtml(co.slug)}" data-handle="${escapeHtml(co.handle || '')}"
               data-name="${escapeHtml(co.name)}">Save this supplier</button>
@@ -420,6 +425,7 @@ function wireProfile(slug, co){
      every request threw on `slug` and the buyer was told it had not sent. */
   const hit = (id, kind) => { const el = document.getElementById(id); if(el) el.addEventListener('click', () => trackEvent(slug, kind)); };
   hit('pf-site', 'website'); hit('pf-phone', 'phone'); hit('pf-email', 'email');
+  hit('pf-email-cta', 'email');
   document.querySelectorAll('[data-doc]').forEach(a => a.addEventListener('click', () => trackEvent(slug, 'doc')));
 
   const open = document.getElementById('rfq-open');

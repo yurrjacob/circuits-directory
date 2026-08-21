@@ -1323,3 +1323,9 @@ tr.hl-flash td{animation:hl-pulse 3s ease-out;box-shadow:inset 3px 0 0 var(--gre
 .pt-fold .pt-row{gap:10px}
 .pt-fold .auth-field{margin-bottom:6px}
 .pt-fold .rp-img img{width:44px;height:44px;object-fit:cover}
+
+/* --- phones: the portal tab row reads as a compact two-line strip --- */
+@media(max-width:640px){
+  .pt-tabs{gap:2px}
+  .pt-tab{padding:7px 10px;font-size:.85rem}
+}

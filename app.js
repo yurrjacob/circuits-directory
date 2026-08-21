@@ -511,11 +511,15 @@ async function initResults(forcedTerm){
    and two forms that both claim to send a quote is how one of them rots.
    A listing with no profile page falls back to email, which is all we have. */
 function quoteBtn(c){
-  if(c.company_handle){
-    return `<a class="btn btn-primary btn-quote" href="${escapeHtml(profileUrl(c.company_handle))}#rfq">Request a Quote</a>`;
-  }
+  /* The profile's in-page quote form is off (2026-08-21), so email leads:
+     the button opens the buyer's own mail client addressed to the supplier.
+     A listing with no email still points somewhere useful — the profile,
+     where phone and website live. */
   if(c.email){
     return `<a class="btn btn-primary btn-quote" href="mailto:${escapeHtml(c.email)}?subject=${encodeURIComponent('Quote request via Circuits.com')}">Request a Quote</a>`;
+  }
+  if(c.company_handle){
+    return `<a class="btn btn-primary btn-quote" href="${escapeHtml(profileUrl(c.company_handle))}">View Contact Info</a>`;
   }
   return '';
 }

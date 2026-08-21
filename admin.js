@@ -163,7 +163,11 @@ document.querySelectorAll('.list-controls').forEach(bar=>{
     bar.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active', b===btn));
     renderPanel(panel); savePrefs('admin', panels);
   }));
-  bar.querySelector('.lc-limit').addEventListener('change', e=>{
+  /* the "What People Search For" bar has no limit box — a missing one must
+     not crash this whole file at load (it did: initAdmin was never defined
+     and the admin tab sat empty) */
+  const lcLimit = bar.querySelector('.lc-limit');
+  if(lcLimit) lcLimit.addEventListener('change', e=>{
     let n = parseInt(e.target.value,10); if(isNaN(n)||n<1) n=1; if(n>500) n=500;
     e.target.value = n; panels[panel].limit = n; renderPanel(panel); savePrefs('admin', panels);
   });
@@ -460,7 +464,7 @@ document.addEventListener('change', e => {
   reloadSearches();
 });
 
-function syncControls(){ document.querySelectorAll('.list-controls').forEach(bar=>{ const p = panels[bar.dataset.panel]; bar.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active', b.dataset.sort===p.sort)); bar.querySelector('.lc-limit').value = p.limit; }); } /* Opened from the Admin tab in the portal, not on page load: a company owner
+function syncControls(){ document.querySelectorAll('.list-controls').forEach(bar=>{ const p = panels[bar.dataset.panel]; if(!p) return; /* the searches bar keeps its own controls */ bar.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active', b.dataset.sort===p.sort)); const l = bar.querySelector('.lc-limit'); if(l) l.value = p.limit; }); } /* Opened from the Admin tab in the portal, not on page load: a company owner
    who is not staff never runs any of this, and never fetches any of it. */
 let started = false;
 window.initAdmin = async function(){
