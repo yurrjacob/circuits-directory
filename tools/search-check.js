@@ -164,8 +164,12 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
     'the position column is back to a bare "#", which buyers read as a ranking');
   assert.ok(/not a ranking/.test(captured),
     'the results page no longer says the order is not a ranking');
-  assert.ok(/href="\/acme#rfq"/.test(captured),
-    'the quote button does not point at that company\'s own quote form');
+  /* The in-page quote form is off (2026-08-21) — the quote button now opens
+     the buyer's own mail client addressed to the supplier. */
+  assert.ok(/btn-quote" href="mailto:a@b\.co/.test(captured),
+    'the quote button no longer opens an email to the supplier');
+  assert.ok(!/#rfq/.test(captured),
+    'something still links to the removed in-page quote form');
 
   /* --- and every listing is numbered --- */
   assert.ok(/class="rank"[^>]*>1</.test(captured), 'listings are not numbered');
@@ -202,6 +206,9 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   /* a listing with no profile page still has to be contactable */
   assert.ok(/mailto:a@b\.co/.test(quoteBtn({ email: 'a@b.co' })),
     'a listing without a profile page loses its quote button entirely');
+  /* and one with no email still points the buyer somewhere useful */
+  assert.ok(/href="\/acme"/.test(quoteBtn({ company_handle: 'acme' })),
+    'a listing with no email no longer links to the profile for contact info');
   assert.strictEqual(quoteBtn({}), '', 'a listing with no handle and no email should render no button');
 
   console.log('search results OK — pitch page with buyer capture at the bottom, numbered rows, sponsor not listed twice');

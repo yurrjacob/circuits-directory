@@ -90,10 +90,14 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   assert.strictEqual(opens, closes, `unbalanced block tags: ${opens} open vs ${closes} close`);
 
   for(const need of ['pf-layout','pf-main','pf-side','pf-side-card','pf-cta','pf-rows',
-                     'id="rfq-open"','id="pf-phone"','id="pf-email"','id="pf-site"',
+                     'id="pf-email-cta"','id="pf-phone"','id="pf-email"','id="pf-site"',
                      'pf-claim','aaa_electronics']){
     assert.ok(captured.includes(need), 'missing from render: ' + need);
   }
+  /* The in-page quote form was removed 2026-08-21 (Jacob) — the profile
+     provides contact details instead, and nothing may render or link it. */
+  assert.ok(!/id="rfq-form"|id="rfq-open"|#rfq/.test(captured),
+    'the removed Request a Quote form (or a link to it) is back on the profile');
   /* Opening hours were removed from profiles on 2026-08-20 at Jacob's
      direction — stored hours data must no longer render. */
   assert.ok(!captured.includes('Opening hours'), 'the removed Opening hours section is back');
@@ -103,7 +107,7 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   assert.ok(/results\?q=.*&(amp;)?hl=/.test(captured),
     'keyword tags no longer point at the results page with the highlight param');
   // the CTA must appear exactly once, or wireProfile binds the wrong node
-  assert.strictEqual((captured.match(/id="rfq-open"/g)||[]).length, 1, 'rfq-open must be unique');
+  assert.strictEqual((captured.match(/id="pf-email-cta"/g)||[]).length, 1, 'pf-email-cta must be unique');
   // contact details must not be duplicated in the main column any more
   assert.ok(!captured.includes('pf-contact'), 'old duplicate contact block still rendering');
   assert.ok(!captured.includes('pf-actions'), 'old hero action column still rendering');
