@@ -27,7 +27,7 @@ async function get(pathname) {
 const MUST_LOAD = [
   ['/',                  ['id="home-search"', 'Claim Your Circuits-Keyword']],
   ['/about',             ['<nav class="nav">']],
-  ['/contact',           ['id="c-category"', 'id="contact-form"']],
+  ['/contact',           ['id="contact-form"', 'id="c-email"']],
   ['/join',              ['<nav class="nav">']],
   ['/portal',            ['id="pt-auth-form"', 'id="pt-tab-admin"', 'id="tab-admin"', '/admin.js']],
   ['/register',          ['id="r-submit"']],

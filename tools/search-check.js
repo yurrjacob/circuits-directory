@@ -12,6 +12,7 @@ const fs = require('fs'), path = require('path'), assert = require('assert');
 const src = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
 
 global.escapeHtml = s => (s || '').replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+global.safeUrl = u => { const s = (u || '').trim(); if(!s) return ''; if(/^https?:\/\//i.test(s)) return s; if(/^[a-z0-9-]+(\.[a-z0-9-]+)+/i.test(s)) return 'https://' + s; return ''; };
 global.avatarSvg = () => '<svg class="silhouette"></svg>';
 global.isLogoUrl = s => /^https?:\/\//i.test(s || '');
 global.profileUrl = h => '/' + h;
