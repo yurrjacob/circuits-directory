@@ -3,11 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Search Results - Circuits.com</title>
+<title>Search Results — Circuits.com</title>
 <!-- No robots meta here on purpose: a static noindex stops Google from ever
      rendering the page. app.js decides per keyword — index when real listings
-     exist, noindex for empty pages, outages and the sample fixture. -->
+     exist, noindex for empty pages, outages and the sample fixture.
+     Canonical is likewise set per keyword by app.js (setResultsMeta), so none
+     is hard-coded here. -->
 <meta name="description" content="Suppliers listed under this Circuits-Keyword™ on Circuits.com, the circuits industry directory. Contact them directly or request a quote.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Circuits.com">
+<meta property="og:title" content="Search Circuits.com">
+<meta property="og:description" content="Find suppliers listed under a Circuits-Keyword™ on Circuits.com, the circuits industry directory.">
+<meta property="og:image" content="https://circuits.com/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Search Circuits.com">
+<meta name="twitter:description" content="Find suppliers listed under a Circuits-Keyword™ on Circuits.com, the circuits industry directory.">
+<meta name="twitter:image" content="https://circuits.com/assets/og-card.png">
 <link rel="icon" href="assets/favicon.png">
 <link rel="stylesheet" href="styles.css">
 <script src="/nav.js"></script>
@@ -40,6 +51,8 @@
     </div>
   </div>
 </div>
+
+<div id="saved-strip" class="saved-strip" hidden></div>
 
 <div id="results-body"></div>
 

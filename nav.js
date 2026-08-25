@@ -75,21 +75,36 @@
   function mount(){
     var bar = document.querySelector('.topbar .inner');
     if(bar && !bar.querySelector('.nav-burger') && bar.querySelector('.nav')){
+      var nav = bar.querySelector('.nav');
+      /* the button names the panel it controls, so a screen reader announces
+         the relationship and its open/closed state */
+      if(!nav.id) nav.id = 'primary-nav';
       var b = document.createElement('button');
       b.className = 'nav-burger';
       b.setAttribute('aria-label', 'Menu');
       b.setAttribute('aria-expanded', 'false');
+      b.setAttribute('aria-controls', nav.id);
+      b.setAttribute('aria-haspopup', 'true');
       b.innerHTML =
         '<svg class="bars" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>' +
         '<svg class="x" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>';
-      b.addEventListener('click', function(){
-        var open = document.body.classList.toggle('nav-open');
+      function setOpen(open){
+        document.body.classList.toggle('nav-open', open);
         b.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+      b.addEventListener('click', function(){
+        setOpen(!document.body.classList.contains('nav-open'));
       });
       /* picking a destination should also close the panel */
-      var nav = bar.querySelector('.nav');
       nav.addEventListener('click', function(e){
-        if(e.target.closest('a')) document.body.classList.remove('nav-open');
+        if(e.target.closest('a')) setOpen(false);
+      });
+      /* Escape closes the panel and returns focus to the button, the standard
+         keyboard contract for a disclosure menu */
+      document.addEventListener('keydown', function(e){
+        if(e.key === 'Escape' && document.body.classList.contains('nav-open')){
+          setOpen(false); b.focus();
+        }
       });
       bar.appendChild(b);
     }

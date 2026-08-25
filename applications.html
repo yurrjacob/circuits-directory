@@ -345,8 +345,15 @@ body.addEventListener('click', async e=>{
       return;
     }
     const err = await updateAppStatus(id,'Approved'); if(err){ alert(errMsg(err)); return; }
+    /* Tell the supplier they are live — the Admin-tab path already did this,
+       and approving from this sheet used to leave them refreshing the portal
+       with no idea anything happened. */
+    if(typeof notifyDecision === 'function') notifyDecision(id, '');
   }
-  else if(btn.dataset.act==='deny'){ await updateAppStatus(id,'Denied'); }
+  else if(btn.dataset.act==='deny'){
+    await updateAppStatus(id,'Denied');
+    if(typeof notifyDecision === 'function') notifyDecision(id, '');
+  }
   else if(btn.dataset.act==='reset'){ await resetRow(id); return; }
   await reload();
 });

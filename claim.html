@@ -5,9 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Request Access To Your Profile — Circuits.com</title>
 <meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Request access to manage your company's Circuits.com listing.">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="stylesheet" href="/styles.css">
 <script src="/nav.js"></script>
+<script async src="/analytics.js"></script>
 </head>
 <body>
 
@@ -111,7 +113,9 @@ function noCompany(){
     }
     const err = await submitClaim(co.slug, { name, email, role_title: role, evidence: ev });
     if(err){ document.getElementById('cm').textContent = err; btn.disabled = false; return; }
-    sendFounderEmail('Profile access request — ' + co.name, {
+    /* Best-effort notification: the claim is already saved above and staff see
+       it in the admin console, so this must not block the confirmation. */
+    await sendFounderEmail('Profile access request — ' + co.name, {
       company: co.name, circuits_address: 'circuits.com/' + co.handle,
       claimant: name, role: role || '(none)', email, evidence: ev || '(none)'
     }, 'Thanks — we received your request for ' + co.name + ' on Circuits.com. We will verify it and '

@@ -1329,3 +1329,15 @@ tr.hl-flash td{animation:hl-pulse 3s ease-out;box-shadow:inset 3px 0 0 var(--gre
   .pt-tabs{gap:2px}
   .pt-tab{padding:7px 10px;font-size:.85rem}
 }
+
+/* --- saved suppliers strip (buyer's per-browser shortlist, shown on results) --- */
+.saved-strip{border-bottom:1px solid var(--line);background:var(--bg-soft)}
+.saved-inner{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0}
+.saved-label{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;white-space:nowrap}
+.saved-chips{display:flex;gap:8px;flex-wrap:wrap}
+.saved-chip{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px}
+.saved-chip a{color:var(--ink);text-decoration:none;font-weight:600;font-size:.86rem}
+.saved-chip a:hover{color:var(--green-dark)}
+.saved-x{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1;padding:0 4px;border-radius:50%}
+.saved-x:hover{color:#b3261e}
+.saved-x:focus-visible{outline:2px solid var(--green-dark);outline-offset:1px}

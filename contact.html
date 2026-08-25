@@ -82,26 +82,27 @@
     <form id="contact-form" autocomplete="off">
       <h2 class="contact-h">Have A Question?</h2>
       <div class="field">
-        <label>Name <span class="req">*</span></label>
+        <label for="c-name">Name <span class="req">*</span></label>
         <input id="c-name" type="text" required placeholder="Your name">
       </div>
       <div class="field">
-        <label>Company or Organization Name <span class="req">*</span></label>
+        <label for="c-company">Company or Organization Name <span class="req">*</span></label>
         <input id="c-company" type="text" required placeholder="Your company">
       </div>
       <div class="field">
-        <label>Email <span class="req">*</span></label>
+        <label for="c-email">Email <span class="req">*</span></label>
         <input id="c-email" type="email" required placeholder="you@company.com">
       </div>
       <div class="field">
-        <label>Phone #</label>
+        <label for="c-phone">Phone #</label>
         <input id="c-phone" type="tel" placeholder="(555) 123-4567">
       </div>
       <div class="field">
-        <label>Message <span class="req">*</span></label>
+        <label for="c-message">Message <span class="req">*</span></label>
         <textarea id="c-message" required placeholder="Tell Us What You're Thinking..."></textarea>
       </div>
       <div id="contact-success" class="success">Thanks! Your message has been sent. We’ll reply shortly.</div>
+      <div id="contact-error" class="err-msg" role="alert" style="display:none;margin-bottom:8px"></div>
       <button class="submit" type="submit" style="margin-top:6px">Send to John &amp; Mike</button>
       <p style="margin-top:18px;font-size:.9rem;color:var(--muted)">Looking To Get Listed? <a href="join" style="color:var(--green-dark);font-weight:600;text-decoration:none">Start Your Directory Listing Here</a></p>
     </form>
@@ -128,28 +129,38 @@ document.getElementById('contact-form').addEventListener('submit',async function
   e.preventDefault();
   if(looksLikeSpam(this)){ fakeSuccess(this, 'Thanks! Your message has been sent.'); return; }
   const v = id => document.getElementById(id).value.trim();
+  const err = document.getElementById('contact-error');
+  const showErr = m => { err.textContent = m; err.style.display = 'block'; };
+  err.style.display = 'none';
   const phone = v('c-phone');
-  if(!isValidEmail(v('c-email'))){ alert('Please enter a valid email address (e.g. you@company.com).'); return; }
-  if(phone && !isValidPhone(phone)){ alert('Please enter a valid phone number (at least 10 digits).'); return; }
+  if(!isValidEmail(v('c-email'))){ showErr('Please enter a valid email address (e.g. you@company.com).'); return; }
+  if(phone && !isValidPhone(phone)){ showErr('Please enter a valid phone number (at least 10 digits).'); return; }
   const btn = this.querySelector('.submit');
   btn.disabled = true; btn.textContent = 'Sending…';
-  await sendFounderEmail('Contact - Circuits.com', {
-    name: v('c-name'),
-    company: v('c-company'),
-    email: v('c-email'),
-    phone: phone || '(not provided)',
-    message: v('c-message')
-  }, 'Hi ' + v('c-name') + ',\n\nThanks for reaching out to Circuits.com! We received your message and will respond within 1 business day.\n\n'
-    + 'Here is a copy of what you sent:\n'
-    + '- Name: ' + v('c-name') + '\n'
-    + '- Company: ' + v('c-company') + '\n'
-    + '- Email: ' + v('c-email') + '\n'
-    + '- Phone: ' + (phone || '(not provided)') + '\n'
-    + '- Message: ' + v('c-message') + '\n\n'
-    + '- John & Mike, Circuits.com');
+  let ok = false;
+  try{
+    ok = await sendFounderEmail('Contact - Circuits.com', {
+      name: v('c-name'),
+      company: v('c-company'),
+      email: v('c-email'),
+      phone: phone || '(not provided)',
+      message: v('c-message')
+    }, 'Hi ' + v('c-name') + ',\n\nThanks for reaching out to Circuits.com! We received your message and will respond within 1 business day.\n\n'
+      + 'Here is a copy of what you sent:\n'
+      + '- Name: ' + v('c-name') + '\n'
+      + '- Company: ' + v('c-company') + '\n'
+      + '- Email: ' + v('c-email') + '\n'
+      + '- Phone: ' + (phone || '(not provided)') + '\n'
+      + '- Message: ' + v('c-message') + '\n\n'
+      + '- John & Mike, Circuits.com');
+  }catch(e){ ok = false; }
   btn.disabled = false; btn.textContent = 'Send to John & Mike';
-  document.getElementById('contact-success').classList.add('show');
-  this.reset();
+  if(ok){
+    document.getElementById('contact-success').classList.add('show');
+    this.reset();
+  }else{
+    showErr('We couldn’t send your message just now. Please email us directly at john@circuits.com or mike@circuits.com, or try again in a few minutes.');
+  }
 });
 </script>
 </body>

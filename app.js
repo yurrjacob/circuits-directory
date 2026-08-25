@@ -245,27 +245,81 @@ async function sendFounderEmail(subject, fields, autoresponse){
      Attach the confirmation to EVERY founder send: as long as at least one
      address is activated, the applicant gets their confirmation. (If both are
      activated the applicant may get two copies — acceptable vs. getting none.) */
-  await Promise.all(FOUNDER_EMAILS.map(to => sendOne(to, true)));
+  const results = await Promise.all(FOUNDER_EMAILS.map(to => sendOne(to, true)));
+  /* True only if at least one founder address actually accepted the message.
+     Callers use this to decide between a real "sent" confirmation and an
+     honest error, instead of always claiming success — a FormSubmit endpoint
+     that was never activated silently drops mail, and telling someone their
+     message went through when it did not is worse than telling them to try
+     another way. */
+  return results.some(Boolean);
 }
 
 /* Results page rendering */
 function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+/* A URL safe to put in an href. These values (a listing's website and its
+   uploaded-doc links) are supplied by the listing owner, so escaping alone is
+   not enough — escapeHtml leaves `javascript:`/`data:` schemes intact. Only
+   http(s) is allowed through; a bare domain is upgraded to https, anything
+   else becomes empty. Mirrors safeUrl() in profile.js. */
+function safeUrl(u){
+  const s = (u || '').trim();
+  if(!s) return '';
+  if(/^https?:\/\//i.test(s)) return s;
+  if(/^[a-z0-9-]+(\.[a-z0-9-]+)+/i.test(s)) return 'https://' + s;
+  return '';
+}
 /* "View Documentation" link(s) for a listing's uploaded documents */
 function docLinks(c){
   const docs = Array.isArray(c && c.docs) ? c.docs : [];
-  if(!docs.length) return '';
-  if(docs.length === 1) return `<a class="doc-link" href="${escapeHtml(docs[0].url)}" target="_blank" rel="noopener">View Docs</a>`;
-  return `<span class="doc-link">View Docs:${docs.map((d,i)=>` <a href="${escapeHtml(d.url)}" target="_blank" rel="noopener" title="${escapeHtml(d.name)}">${i+1}</a>`).join('')}</span>`;
+  const usable = docs.filter(d => d && safeUrl(d.url));
+  if(!usable.length) return '';
+  if(usable.length === 1) return `<a class="doc-link" href="${escapeHtml(safeUrl(usable[0].url))}" target="_blank" rel="noopener nofollow">View Docs</a>`;
+  return `<span class="doc-link">View Docs:${usable.map((d,i)=>` <a href="${escapeHtml(safeUrl(d.url))}" target="_blank" rel="noopener nofollow" title="${escapeHtml(d.name)}">${i+1}</a>`).join('')}</span>`;
 }
 function initials(name){return name.split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
 /* default logo placeholder: a generic person silhouette (white on the tile's
    varying color) shown whenever a listing has no uploaded logo */
 function avatarSvg(){return '<svg class="silhouette" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.2" r="4.2"/><path d="M12 13.6c-4.5 0-7.7 2.4-7.7 5.4V21h15.4v-2c0-3-3.2-5.4-7.7-5.4z"/></svg>';}
 
+/* ---- saved suppliers (buyer side) ----
+   A buyer saves suppliers from a profile page (see wireSave in profile.js);
+   the list lives in this browser only, under the same 'cx_saved' key. This is
+   where they get to SEE that list — without it the Save button wrote to
+   nowhere. The key is used as a literal (not a shared const): profile.js
+   already declares its own SAVED_KEY, and both files share global scope. */
+function savedSuppliers(){
+  try{ const v = JSON.parse(localStorage.getItem('cx_saved') || '[]'); return Array.isArray(v) ? v : []; }
+  catch(e){ return []; }
+}
+function removeSaved(slug){
+  try{
+    const list = savedSuppliers().filter(c => c.slug !== slug);
+    localStorage.setItem('cx_saved', JSON.stringify(list));
+  }catch(e){ /* private mode / quota — nothing else to do */ }
+}
+function renderSavedStrip(){
+  const strip = document.getElementById('saved-strip');
+  if(!strip) return;
+  const list = savedSuppliers();
+  if(!list.length){ strip.hidden = true; strip.innerHTML = ''; return; }
+  strip.hidden = false;
+  strip.innerHTML = `<div class="inner saved-inner">
+    <span class="saved-label">Saved suppliers</span>
+    <div class="saved-chips">${list.map(c => `<span class="saved-chip">
+      <a href="/${escapeHtml(c.handle || '')}">${escapeHtml(c.name || c.handle || 'Supplier')}</a>
+      <button type="button" class="saved-x" data-unsave="${escapeHtml(c.slug)}" aria-label="Remove ${escapeHtml(c.name || 'supplier')} from saved">×</button>
+    </span>`).join('')}</div>
+  </div>`;
+  strip.querySelectorAll('[data-unsave]').forEach(btn =>
+    btn.addEventListener('click', () => { removeSaved(btn.dataset.unsave); renderSavedStrip(); }));
+}
+
 async function initResults(forcedTerm){
   const params = new URLSearchParams(location.search);
   const q = forcedTerm || params.get('q') || '';
   const COLORS = ['#76c000','#0f6fff','#ff7a00','#9b51e0','#e02d5b','#00a8a8','#444b54','#c9a400'];
+  if(typeof renderSavedStrip === 'function') renderSavedStrip();
 
   const mini = document.getElementById('mini-search');
   const miniForm = document.getElementById('mini-form');
@@ -433,7 +487,7 @@ async function initResults(forcedTerm){
           : escapeHtml(featured.company)}${badgeHtml(featured.badge)}</h3>
         ${featured.description ? `<p>${escapeHtml(featured.description)}</p>` : ''}
         <div class="premium-links">
-          ${featured.website ? `<a class="doc-link" href="${escapeHtml(featured.website)}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
+          ${safeUrl(featured.website) ? `<a class="doc-link" href="${escapeHtml(safeUrl(featured.website))}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
           ${docLinks(featured)}
         </div>
       </div>
@@ -462,7 +516,7 @@ async function initResults(forcedTerm){
             ? `<a href="${escapeHtml(profileUrl(c.company_handle))}">${escapeHtml(c.company)}</a>`
             : escapeHtml(c.company)}
           ${badgeHtml(c.badge)}
-          ${c.website ? `<a class="doc-link" href="${escapeHtml(c.website)}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
+          ${safeUrl(c.website) ? `<a class="doc-link" href="${escapeHtml(safeUrl(c.website))}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
           ${docLinks(c)}
         </div>
       </td>
@@ -489,7 +543,7 @@ async function initResults(forcedTerm){
         </table>
       </div>
       <p class="list-note">Listed in the order each company claimed
-      &ldquo;${escapeHtml(q)}&rdquo; &mdash; not a ranking, and not a recommendation.
+      &ldquo;${escapeHtml(q)}&rdquo;. This is not a ranking or a recommendation.
       Circuits.com has not assessed these suppliers.</p>
     </div>`;
 
@@ -760,9 +814,15 @@ if(handleInput) handleInput.addEventListener('input', ()=>{
   if(!handleInput.value){ handleMsg.textContent=''; handleState=''; return; }
   handleMsg.textContent = 'Checking…'; handleMsg.style.color = '';
   handleTimer = setTimeout(async ()=>{
-    const why = await handleAvailable(handleInput.value, null);
+    /* The debounce cancels a pending timer, but not a fetch already in flight.
+       A slow answer for an earlier prefix could otherwise land after the user
+       has typed more and overwrite the verdict for what is now in the box.
+       Capture the value we asked about and ignore the answer if it moved on. */
+    const asked = handleInput.value;
+    const why = await handleAvailable(asked, null);
+    if(handleInput.value !== asked) return;
     handleState = why ? 'bad' : 'ok';
-    handleMsg.textContent = why || ('circuits.com/' + handleInput.value + ' is yours to reserve.');
+    handleMsg.textContent = why || ('circuits.com/' + asked + ' is yours to reserve.');
     handleMsg.style.color = why ? '#b3261e' : '#3f6300';
   }, 400);
 });
@@ -957,9 +1017,13 @@ const msg = document.getElementById('msg');
       alert('Sorry, we couldn’t submit your application right now. Please try again.');
       return;
     }
-    /* notify the founders + send the applicant a confirmation email with a copy of what they submitted */
+    /* notify the founders + send the applicant a confirmation email with a copy
+       of what they submitted. Best-effort: the application itself is already
+       saved above, and staff see every pending application in the admin
+       console, so a failed notification must not fail the submission — but we
+       await it (rather than fire-and-forget) so it completes and logs. */
     const kwList = keywords.map(cleanKw).join(', ') || '(none)';
-    sendFounderEmail('New Listing Application - ' + base.company, {
+    const founderNotified = await sendFounderEmail('New Listing Application - ' + base.company, {
       company: base.company,
       contact: base.contact,
       email: base.email,
@@ -986,6 +1050,7 @@ const msg = document.getElementById('msg');
       + '- Documentation: ' + (base.docs.length ? base.docs.map(d=>d.name).join(', ') : '(none)') + '\n'
       + '- Ideas: ' + (base.message || '(none)') + '\n\n'
       + '- John & Mike, Circuits.com');
+    if(!founderNotified) console.warn('founder notification not delivered; application is still saved and visible in the admin console');
     if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
     const ok = document.getElementById('success');
     const okHandle = document.getElementById('success-handle');
@@ -1007,7 +1072,19 @@ const msg = document.getElementById('msg');
       });
     }
     ok.classList.add('show');
+    /* form.reset() blanks EVERY field, including the company name and handle
+       that adoptExistingCompany() locked for a returning supplier — leaving
+       them empty and still readOnly (uneditable), with JOIN_ADOPTED stuck on.
+       Snapshot the locked values and put them back so a second listing can be
+       added straight away. */
+    const lockedCompany = JOIN_ADOPTED ? (document.getElementById('f-company') || {}).value : null;
+    const lockedHandle  = JOIN_ADOPTED ? (document.getElementById('f-handle') || {}).value : null;
     form.reset();
+    if(JOIN_ADOPTED){
+      const c = document.getElementById('f-company'), h = document.getElementById('f-handle');
+      if(c && lockedCompany != null) c.value = lockedCompany;
+      if(h && lockedHandle != null) h.value = lockedHandle;
+    }
     keywords = []; renderKw();
     resetBadge();
     renderQuote();
@@ -1249,9 +1326,12 @@ function initRegister(){
     if(!handleInput.value){ handleMsg.textContent = ''; return; }
     handleMsg.textContent = 'Checking…'; handleMsg.style.color = '';
     handleTimer = setTimeout(async ()=>{
-      const why = await handleAvailable(handleInput.value);
+      /* Ignore a slow answer for a prefix the user has already typed past. */
+      const asked = handleInput.value;
+      const why = await handleAvailable(asked);
+      if(handleInput.value !== asked) return;
       handleState = why ? 'bad' : 'ok';
-      handleMsg.textContent = why || ('circuits.com/' + handleInput.value + ' is available.');
+      handleMsg.textContent = why || ('circuits.com/' + asked + ' is available.');
       handleMsg.style.color = why ? '#b3261e' : '#3f6300';
     }, 400);
   });

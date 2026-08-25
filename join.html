@@ -79,7 +79,7 @@ Check your inbox to confirm your email address &mdash; then you can sign in at
 </div>
 
 <div class="field" id="acct-handle">
-<label>Claim Your Circuits.com Username <span class="req">*</span></label>
+<label for="f-handle">Claim Your Circuits.com Username <span class="req">*</span></label>
 <div class="handle-row" style="max-width:420px">
 <span class="handle-prefix">circuits.com/</span>
 <input id="f-handle" type="text" maxlength="32" spellcheck="false" placeholder="aaa_electronics" required autocomplete="username">
@@ -93,16 +93,16 @@ Put it straight on your adverts, cards and email signature.</p>
 <div id="acct-new">
 <div class="grid2">
 <div class="field">
-<label>Email <span class="req">*</span></label>
+<label for="f-email">Email <span class="req">*</span></label>
 <input id="f-email" type="email" required placeholder="sales@company.com" autocomplete="email">
 </div>
 <div class="field"></div>
 <div class="field">
-<label>Create a Password <span class="req">*</span></label>
+<label for="f-pass">Create a Password <span class="req">*</span></label>
 <input id="f-pass" type="password" minlength="8" required placeholder="At least 8 characters" autocomplete="new-password">
 </div>
 <div class="field">
-<label>Confirm Password <span class="req">*</span></label>
+<label for="f-pass2">Confirm Password <span class="req">*</span></label>
 <input id="f-pass2" type="password" minlength="8" required placeholder="Re-enter your password" autocomplete="new-password">
 <div id="pass-msg" class="field-hint"></div>
 </div>
@@ -116,11 +116,11 @@ listing, quote requests and reviews once it is approved.</p>
 <div id="acct-login" style="display:none">
 <div class="grid2">
 <div class="field">
-<label>Email or username</label>
+<label for="li-id">Email or username</label>
 <input id="li-id" type="text" placeholder="you@company.com or yourname" autocomplete="username" spellcheck="false">
 </div>
 <div class="field">
-<label>Password</label>
+<label for="li-pass">Password</label>
 <input id="li-pass" type="password" placeholder="••••••••" autocomplete="current-password">
 </div>
 </div>
@@ -138,23 +138,23 @@ listing, quote requests and reviews once it is approved.</p>
 </div>
 <div class="grid2">
 <div class="field">
-<label>Company or Organization Name <span class="req">*</span></label>
+<label for="f-company">Company or Organization Name <span class="req">*</span></label>
 <input id="f-company" type="text" required placeholder="AAA Electronics, Inc.">
 </div>
 <div class="field">
-<label>Contact Person <span class="req">*</span></label>
+<label for="f-contact">Contact Person <span class="req">*</span></label>
 <input id="f-contact" type="text" required placeholder="Jane Doe, VP Sales">
 </div>
 <div class="field">
-<label>Phone # <span class="req">*</span></label>
+<label for="f-phone">Phone # <span class="req">*</span></label>
 <input id="f-phone" type="tel" required placeholder="(555) 123-4567">
 </div>
 <div class="field">
-<label>Website</label>
+<label for="f-website">Website</label>
 <input id="f-website" type="url" placeholder="https://www.company.com">
 </div>
 <div class="field" style="grid-column:1 / -1">
-<label>Logo or Headshot <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
+<label for="logo-input">Logo or Headshot <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
 <input id="logo-input" type="file" accept="image/png,image/jpeg,image/webp">
 <p class="field-hint">PNG, JPG or WebP up to 5 MB.</p>
 <div id="logo-preview" class="logo-preview" style="display:none">
@@ -163,7 +163,7 @@ listing, quote requests and reviews once it is approved.</p>
 </div>
 </div>
 <div class="field" style="grid-column:1 / -1">
-<label>Add Docs <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
+<label for="docs-input">Add Docs <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
 <input id="docs-input" type="file" accept="application/pdf,image/png,image/jpeg,image/webp" multiple>
 <p class="field-hint">Upload up to 5 files (PDF, PNG, or JPEG): spec sheets, line cards, certifications, and more. People who find your profile can open them through a "View Docs" link on your listing.</p>
 <div id="docs-list" class="docs-list"></div>
@@ -326,7 +326,7 @@ for as long as they keep an active subscription.</p>
 <div><h2>Have Any Ideas? Tell Us What You're Thinking</h2></div>
 </div>
 <div class="field">
-<label>Message (Optional)</label>
+<label for="msg">Message (Optional)</label>
 <textarea id="msg" maxlength="600" placeholder="Tell us about your needs to reach viewers or any other questions."></textarea>
 <div class="charcount" id="msg-count">0 / 600</div>
 </div>

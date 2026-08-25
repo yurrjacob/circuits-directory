@@ -193,11 +193,17 @@ async function approveCompany(company){
   const { error } = await sb.from('applications').update({ status:'Approved', paused:false }).eq('company', company);
   if(error) console.error('approveCompany', error);
 }
+/* Returns null on a real change, or a truthy value when nothing changed.
+   A row that RLS refuses comes back as an UPDATE affecting zero rows with NO
+   error (a PostgREST/Postgres quirk), so a plain "no error" check reported
+   success on a change that never happened — e.g. a suspended listing. Asking
+   for the changed row back and checking it is the only reliable signal. */
 async function setPaused(id, paused){
-  if(!sb) return null;
-  const { error } = await sb.from('applications').update({ paused }).eq('id', id);
-  if(error) console.error('setPaused', error);
-  return error || null;
+  if(!sb) return { message: 'No connection' };
+  const { data, error } = await sb.from('applications').update({ paused }).eq('id', id).select('id');
+  if(error){ console.error('setPaused', error); return error; }
+  if(!data || !data.length){ console.warn('setPaused changed no rows (blocked?)', id); return { message: 'not-updated' }; }
+  return null;
 }
 async function updateApplication(id, fields){
   if(!sb) return null;
@@ -240,25 +246,47 @@ async function deleteApplication(id){
 /* ---- auth (staff) ---- */
 async function currentUser(){ if(!sb) return null; const { data } = await sb.auth.getUser(); return data ? data.user : null; }
 async function checkStaff(){ if(!sb) return false; const { data, error } = await sb.rpc('is_staff'); if(error){ console.error('is_staff', error); return false; } return !!data; }
-/* Sign in with an email OR a Circuits.com username. Supabase only knows
-   emails, so a username is resolved first. A failed lookup still calls
-   signInWithPassword so a wrong username and a wrong password come back
-   with the same error, rather than confirming which usernames exist. */
+/* Sign in with an email OR a Circuits.com username.
+   Supabase only knows emails, so a username has to become one. That
+   resolution used to happen in the browser via email_for_login(), which
+   handed anyone who knew a handle the account's email — a harvesting oracle.
+   It now happens inside the `auth` edge function (service role): the function
+   resolves the handle, performs the password grant, and returns only the
+   session — the address never comes back to the page. A wrong username and a
+   wrong password are answered identically, so the endpoint still cannot be
+   used to discover who is registered. */
 async function signIn(identifier, password){
-  let email = (identifier || '').trim();
-  if(email && !email.includes('@')){
+  const id = (identifier || '').trim();
+  if(!sb) return { error: { message: 'We could not reach the sign-in service. Check your connection and try again.' } };
+  if(id && !id.includes('@')){
     try{
-      const { data } = await sb.rpc('email_for_login', { p_id: email });
-      if(data) email = data;
-    }catch(e){ console.warn('username lookup failed', e); }
+      const res = await fetch(SUPABASE_URL + '/functions/v1/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY },
+        body: JSON.stringify({ action: 'signin', identifier: id, password })
+      });
+      const out = await res.json().catch(() => ({}));
+      if(out && out.session && out.session.access_token){
+        const { error } = await sb.auth.setSession({
+          access_token: out.session.access_token,
+          refresh_token: out.session.refresh_token
+        });
+        return { error };
+      }
+      return { error: (out && out.error) ? out.error : { message: 'Invalid login credentials' } };
+    }catch(e){
+      console.warn('username sign-in failed', e);
+      return { error: { message: 'We could not reach the sign-in service. Check your connection and try again.' } };
+    }
   }
-  return sb.auth.signInWithPassword({ email, password });
+  return sb.auth.signInWithPassword({ email: id, password });
 }
 /* The confirmation link lands on /portal — the signed-in session in the URL is
    picked up there and the new account sees its own portal. Without this it fell
    back to whatever page the project's Site URL points at, which was the
    password-reset sheet — alarming for someone who just set a password. */
 async function signUp(email, password){
+  if(!sb) return { error: { message: 'We could not reach the sign-up service. Check your connection and try again.' } };
   return sb.auth.signUp({ email, password,
     options: { emailRedirectTo: location.origin + '/portal' } });
 }
@@ -271,10 +299,17 @@ async function requestPasswordReset(identifier){
   if(!sb) return 'No connection';
   let email = (identifier || '').trim();
   if(email && !email.includes('@')){
+    /* A username is resolved and the recovery email sent server-side, so the
+       address is never exposed. The answer is always the same whether or not
+       the username exists — see the `auth` edge function. */
     try{
-      const { data } = await sb.rpc('email_for_login', { p_id: email });
-      if(data) email = data;
-    }catch(e){ console.warn('username lookup failed', e); }
+      await fetch(SUPABASE_URL + '/functions/v1/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY },
+        body: JSON.stringify({ action: 'reset', identifier: email })
+      });
+    }catch(e){ console.warn('username reset lookup failed', e); }
+    return '';
   }
   if(email.includes('@')){
     const { error } = await sb.auth.resetPasswordForEmail(email, {

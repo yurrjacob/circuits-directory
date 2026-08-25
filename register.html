@@ -6,9 +6,20 @@
 <title>Create Your Circuits.com Profile</title>
 <meta name="description" content="Claim your circuits.com address. Your username is your link — circuits.com/yourname.">
 <link rel="canonical" href="https://circuits.com/register">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Circuits.com">
+<meta property="og:title" content="Create Your Circuits.com Profile">
+<meta property="og:description" content="Claim your circuits.com address. Your username is your link — circuits.com/yourname.">
+<meta property="og:url" content="https://circuits.com/register">
+<meta property="og:image" content="https://circuits.com/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Create Your Circuits.com Profile">
+<meta name="twitter:description" content="Claim your circuits.com address. Your username is your link — circuits.com/yourname.">
+<meta name="twitter:image" content="https://circuits.com/assets/og-card.png">
 <link rel="icon" href="assets/favicon.png">
 <link rel="stylesheet" href="styles.css">
 <script src="/nav.js"></script>
+<script async src="/analytics.js"></script>
 </head>
 <body>
 
@@ -49,7 +60,7 @@ Check your inbox to confirm your email address, then sign in at
 </div>
 
 <div class="field">
-<label>Choose Your Username <span class="req">*</span></label>
+<label for="r-handle">Choose Your Username <span class="req">*</span></label>
 <div class="handle-row" style="max-width:420px">
 <span class="handle-prefix">circuits.com/</span>
 <input id="r-handle" type="text" maxlength="32" spellcheck="false" placeholder="jacob" required autocomplete="username">
@@ -62,19 +73,19 @@ hyphens or underscores between them.</p>
 
 <div class="grid2">
 <div class="field">
-<label>Display Name <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
+<label for="r-name">Display Name <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
 <input id="r-name" type="text" maxlength="120" placeholder="Jacob Kennedy">
 </div>
 <div class="field">
-<label>Email <span class="req">*</span></label>
+<label for="r-email">Email <span class="req">*</span></label>
 <input id="r-email" type="email" required placeholder="you@company.com" autocomplete="email">
 </div>
 <div class="field">
-<label>Create a Password <span class="req">*</span></label>
+<label for="r-pass">Create a Password <span class="req">*</span></label>
 <input id="r-pass" type="password" minlength="8" required placeholder="At least 8 characters" autocomplete="new-password">
 </div>
 <div class="field">
-<label>Confirm Password <span class="req">*</span></label>
+<label for="r-pass2">Confirm Password <span class="req">*</span></label>
 <input id="r-pass2" type="password" minlength="8" required placeholder="Re-enter your password" autocomplete="new-password">
 <div id="r-pass-msg" class="field-hint"></div>
 </div>

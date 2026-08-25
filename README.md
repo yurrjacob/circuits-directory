@@ -37,12 +37,13 @@ JavaScript is a convenience layer over rules the database imposes anyway.
 | `store.js` | Every call to Supabase. The only file that talks to the database. |
 | `app.js` | Shared helpers: search, the Get Listed form, sign-in, anti-spam, email. |
 | `profile.js` | Renders a public company or person profile. |
-| `portal.js` | The customer portal: profile editing, quote requests, analytics, account. |
+| `portal.js` | The customer portal: profile editing, listings, and account settings. |
+| `admin.js` | The staff Admin tab inside the portal (listings, banners, applications). |
+| `nav.js` | Shared header behaviour: signed-in relabel, phone menu, skip link. |
 | `analytics.js` | Cookie consent gate. Google Analytics loads only after acceptance. |
 | `index.html` | Homepage. Deliberately a bare search page — see below. |
-| `directory/*.html` | Hand-written category pages, each with real copy for search engines. |
 | `company.html` | Template the profile generator fills in. |
-| `admin.html`, `applications.html` | Staff console. |
+| `applications.html` | The staff sheet for reviewing incoming listing applications. |
 | `tools/` | Checks and the profile/sitemap generator. |
 
 **The homepage is intentionally sparse.** Logo, one search box, popular

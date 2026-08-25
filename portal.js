@@ -142,6 +142,11 @@ async function initPortal(){
 
   wireTabs();
   await wireAdminTab();
+  /* A company owner gets a real Account tab (password, sign-out-everywhere).
+     Before this, changing a password meant the forgot-password email loop —
+     there was no account UI once you owned a listing. */
+  show('pt-tab-account', true);
+  renderAccount(user, 'pt-account-owner', false);
   await loadCompany(cos[0].slug);
 }
 
@@ -320,8 +325,17 @@ function markInquirySeen(q){
    Change your password, end every session, leave. Boring, and the absence of
    any of it is the kind of thing that gets a site refused by a buyer's IT
    department. */
-async function renderAccount(user){
-  const host = el('pt-account');
+/* renderAccount(user, hostId, canDelete)
+   hostId lets the same panel serve both the no-listing page (#pt-account) and a
+   company owner's new Account tab (#pt-account-owner). canDelete is false for a
+   listing owner, whose delete is refused server-side anyway (delete_own_account
+   returns 'still_owns_listing'); showing them a button that always fails is
+   worse than not showing it, so the section is omitted and they are pointed at
+   us instead. */
+async function renderAccount(user, hostId, canDelete){
+  hostId = hostId || 'pt-account';
+  if(canDelete === undefined) canDelete = true;
+  const host = el(hostId);
   if(!host || !user) return;
   const confirmed = !!(user.email_confirmed_at || user.confirmed_at);
 
@@ -344,12 +358,16 @@ async function renderAccount(user){
       <hr class="ac-rule">
       <button class="mini-btn" type="button" id="ac-signout-all">Sign out on every device</button>
       <p class="pf-note">Use this if you have signed in on a shared or lost computer.</p>
-
+      ${canDelete ? `
       <hr class="ac-rule">
       <button class="mini-btn ac-danger" type="button" id="ac-delete">Delete my account</button>
       <p class="pf-note">Permanent. Your Circuits.com address is released and can be taken by
         someone else. Company listings are not deleted this way &mdash; contact us for those.</p>
-      <div id="ac-del-msg" class="pf-note"></div>
+      <div id="ac-del-msg" class="pf-note"></div>` : `
+      <hr class="ac-rule">
+      <p class="pf-note">Need to close this account or hand the listing to a colleague?
+        <a href="/contact">Contact us</a> — company listings are paid for and may be shared,
+        so we sort those out with you directly.</p>`}
     </div>`;
 
   /* these fields render after the page-load pass, so wire their eyes here */
@@ -374,7 +392,7 @@ async function renderAccount(user){
     location.href = '/';
   };
 
-  el('ac-delete').onclick = async () => {
+  if(canDelete && el('ac-delete')) el('ac-delete').onclick = async () => {
     const msg = el('ac-del-msg');
     // typing the address is deliberate friction; this cannot be undone
     const typed = prompt('This cannot be undone.\n\nType your Circuits.com email address to confirm:');
@@ -1173,7 +1191,7 @@ function listingEditor(l){
     <label class="pt-lbl">Documents <span class="pf-note">— datasheets and catalogues, shown as “View Docs”</span></label>
     <div class="pt-docs" id="ed-docs-${l.id}">
       ${docs.map((d, i) => `<span class="pt-doc">
-        <a href="${escapeHtml(d.url)}" target="_blank" rel="noopener">${escapeHtml(d.name || 'Document')}</a>
+        <a href="${escapeHtml(safeUrl(d.url))}" target="_blank" rel="noopener nofollow">${escapeHtml(d.name || 'Document')}</a>
         <button type="button" class="pt-doc-x" data-rmdoc="${l.id}" data-i="${i}" aria-label="Remove ${escapeHtml(d.name || 'document')}">×</button>
       </span>`).join('') || '<span class="pf-note">None yet.</span>'}
     </div>
@@ -1194,10 +1212,14 @@ function wireListings(){
     const pause = e.target.closest('[data-pause]');
     if(pause){
       pause.disabled = true;
-      await setPaused(pause.dataset.pause, pause.dataset.to === '1');
+      const perr = await setPaused(pause.dataset.pause, pause.dataset.to === '1');
       PT.listings = await fetchMyListings(PT.slug);
       renderListings();
-      toast('Listing updated.', true);
+      if(perr){
+        toast('That listing could not be updated. If it is under review or suspended, contact us and we will sort it out.', false);
+      }else{
+        toast(pause.dataset.to === '1' ? 'Listing paused.' : 'Listing resumed.', true);
+      }
       return;
     }
 

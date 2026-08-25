@@ -24,6 +24,13 @@
   </div>
 </header>
 
+<noscript>
+  <div style="max-width:560px;margin:60px auto;padding:0 20px;text-align:center;font-family:system-ui,sans-serif">
+    <h1>This page needs JavaScript</h1>
+    <p>Resetting your password happens in the browser, so it needs JavaScript switched on. Please enable it and reload. If it is already on, your connection may be blocking part of the page — try again shortly, or <a href="/contact">contact us</a>.</p>
+  </div>
+</noscript>
+
 <div class="auth-wrap">
 
   <!-- step 1: ask for the reset email -->
@@ -32,7 +39,7 @@
     <p class="sub">Enter your email or username and we will send you a link to set a new one.</p>
     <form id="rq-form" autocomplete="off">
       <div class="auth-field">
-        <label>Email or username</label>
+        <label for="rq-id">Email or username</label>
         <input id="rq-id" type="text" required placeholder="you@company.com or yourname" autocomplete="username" spellcheck="false">
       </div>
       <div id="rq-msg" class="field-hint"></div>
@@ -57,11 +64,11 @@
     <p class="sub">Set a new password for <b id="rs-email">your account</b>.</p>
     <form id="rs-form" autocomplete="off">
       <div class="auth-field">
-        <label>New password</label>
+        <label for="rs-pass">New password</label>
         <input id="rs-pass" type="password" minlength="8" required placeholder="At least 8 characters" autocomplete="new-password">
       </div>
       <div class="auth-field">
-        <label>Confirm new password</label>
+        <label for="rs-pass2">Confirm new password</label>
         <input id="rs-pass2" type="password" minlength="8" required placeholder="Re-enter your password" autocomplete="new-password">
         <div id="rs-match" class="field-hint"></div>
       </div>

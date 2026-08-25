@@ -17,15 +17,22 @@
   </div>
 </header>
 
+<noscript>
+  <div style="max-width:560px;margin:60px auto;padding:0 20px;text-align:center;font-family:system-ui,sans-serif">
+    <h1>The portal needs JavaScript</h1>
+    <p>Your Circuits.com portal loads in the browser, so it needs JavaScript switched on. Please enable it and reload this page. If it is already on and you still see this, your connection may be blocking part of the page — try again in a moment, or <a href="/contact">contact us</a>.</p>
+  </div>
+</noscript>
+
 <!-- signed out -->
 <div class="auth-wrap" id="pt-auth" style="display:none">
   <div class="auth-card">
     <h1 id="pt-auth-title">Profile sign in</h1>
     <p class="sub">Manage your Circuits.com profile, listings, quote requests and reviews.</p>
     <form id="pt-auth-form" autocomplete="off">
-      <div class="auth-field"><label>Email or username</label>
+      <div class="auth-field"><label for="pt-email">Email or username</label>
         <input id="pt-email" type="text" required placeholder="you@company.com or yourname" autocomplete="username" spellcheck="false"></div>
-      <div class="auth-field"><label>Password</label><input id="pt-password" type="password" required placeholder="••••••••" autocomplete="current-password"></div>
+      <div class="auth-field"><label for="pt-password">Password</label><input id="pt-password" type="password" required placeholder="••••••••" autocomplete="current-password"></div>
       <div id="pt-auth-msg" style="font-size:.85rem;margin-bottom:12px;color:#b3261e"></div>
       <button class="submit" type="submit" id="pt-auth-submit">Sign in</button>
     </form>
@@ -92,6 +99,10 @@
     <button class="pt-tab" data-tab="showcase">Showcase</button>
     <button class="pt-tab" data-tab="listings">Listings</button>
     <button class="pt-tab" data-tab="promote">Promote</button>
+    <!-- shown by portal.js for a company owner: password change, sign-out-
+         everywhere and account help. Hidden for the admin-only view, which
+         carries the same controls under its "Your Profile" tab. -->
+    <button class="pt-tab" data-tab="account" id="pt-tab-account" style="display:none">Account</button>
     <!-- shown by portal.js for an account with no company listing: their own
          profile and account settings as a real tab, not a card lost under the
          admin console -->
@@ -102,6 +113,8 @@
 
   <!-- filled by portal.js with the profile/account card when it is shown -->
   <section class="pt-panel" id="tab-me"></section>
+  <!-- filled by portal.js with a company owner's account settings -->
+  <section class="pt-panel" id="tab-account"><div id="pt-account-owner"></div></section>
 
   <!-- Profile settings, split across three tabs. All three are parts of the
        SAME saved profile: every field stays in the page whichever tab shows,
@@ -111,7 +124,7 @@
   <section class="pt-panel active" id="tab-company">
     <div class="pf-form">
       <div class="auth-field" style="max-width:520px">
-        <label>Your Circuits.com address</label>
+        <label for="f-handle">Your Circuits.com address</label>
         <div class="handle-row">
           <span class="handle-prefix">circuits.com/</span>
           <input id="f-handle" type="text" maxlength="32" spellcheck="false" placeholder="aaa_electronics">
@@ -122,23 +135,23 @@
       </div>
 
       <div class="pt-row">
-        <div class="auth-field"><label>Company name</label><input id="f-name" type="text" maxlength="120">
+        <div class="auth-field"><label for="f-name">Company name</label><input id="f-name" type="text" maxlength="120">
           <p class="pf-note">Your heading on your profile and the name buyers see in search results.</p></div>
-        <div class="auth-field"><label>Contact person</label><input id="f-contact" type="text">
+        <div class="auth-field"><label for="f-contact">Contact person</label><input id="f-contact" type="text">
           <p class="pf-note">The person a buyer asks for.</p></div>
-        <div class="auth-field"><label>Public email</label><input id="f-email" type="email"></div>
+        <div class="auth-field"><label for="f-email">Public email</label><input id="f-email" type="email"></div>
       </div>
       <div class="pt-row">
-        <div class="auth-field"><label>Tagline</label><input id="f-tagline" type="text" maxlength="160" placeholder="Authorised distributor of analog and power ICs"></div>
+        <div class="auth-field"><label for="f-tagline">Tagline</label><input id="f-tagline" type="text" maxlength="160" placeholder="Authorised distributor of analog and power ICs"></div>
       </div>
       <div class="pt-row">
-        <div class="auth-field"><label>Phone</label><input id="f-phone" type="text"></div>
-        <div class="auth-field"><label>Website</label><input id="f-website" type="text" placeholder="https://…"></div>
-        <div class="auth-field"><label>Address</label><input id="f-address" type="text"></div>
+        <div class="auth-field"><label for="f-phone">Phone</label><input id="f-phone" type="text"></div>
+        <div class="auth-field"><label for="f-website">Website</label><input id="f-website" type="text" placeholder="https://…"></div>
+        <div class="auth-field"><label for="f-address">Address</label><input id="f-address" type="text"></div>
       </div>
       <div class="pt-row">
-        <div class="auth-field"><label>Founded</label><input id="f-founded" type="text" placeholder="1998"></div>
-        <div class="auth-field"><label>Employees</label><input id="f-employees" type="text" placeholder="50–200"></div>
+        <div class="auth-field"><label for="f-founded">Founded</label><input id="f-founded" type="text" placeholder="1998"></div>
+        <div class="auth-field"><label for="f-employees">Employees</label><input id="f-employees" type="text" placeholder="50–200"></div>
       </div>
       <p class="pf-note">Contact person, phone, email, website and logo update everywhere &mdash; your profile,
       every keyword listing and your sponsor banner.</p>
@@ -150,7 +163,7 @@
   <section class="pt-panel" id="tab-branding">
     <div class="pf-form">
       <div class="pt-row">
-        <div class="auth-field"><label>Logo</label>
+        <div class="auth-field"><label for="pt-logo">Logo</label>
           <div style="display:flex;gap:10px;align-items:center">
             <span class="logo-thumb" id="pt-logo-prev" style="width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center"></span>
             <input id="pt-logo" type="file" accept="image/png,image/jpeg,image/webp">
@@ -169,7 +182,7 @@
           </div>
         </div>
       </div>
-      <div class="auth-field"><label>About your company</label>
+      <div class="auth-field"><label for="f-desc">About your company</label>
         <textarea id="f-desc" rows="6" maxlength="2000" placeholder="What you supply, which lines you carry, who you serve."></textarea>
         <p class="pf-note">Shown on your profile page. The blurb in your Exclusive Sponsor banner on
         search results is written by Circuits.com and is not changed here.</p>
@@ -264,10 +277,10 @@
     <div class="panel-body">
       <div id="edit-form" class="listing-form" style="display:none">
         <div class="form-row" style="margin-bottom:12px">
-          <div class="auth-field"><label>Company</label><input id="e-company" type="text" disabled></div>
-          <div class="auth-field"><label>Keyword</label><input id="e-keyword" type="text"></div>
-          <div class="auth-field"><label>Fee</label><input id="e-fee" type="text" placeholder="$49/mo"></div>
-          <div class="auth-field"><label>Status</label>
+          <div class="auth-field"><label for="e-company">Company</label><input id="e-company" type="text" disabled></div>
+          <div class="auth-field"><label for="e-keyword">Keyword</label><input id="e-keyword" type="text"></div>
+          <div class="auth-field"><label for="e-fee">Fee</label><input id="e-fee" type="text" placeholder="$49/mo"></div>
+          <div class="auth-field"><label for="e-status">Status</label>
             <select id="e-status"><option>Approved</option><option>Pending</option><option>Denied</option></select>
           </div>
         </div>
@@ -279,7 +292,7 @@
                  beside the company name, it is not a label for a listing. -->
             <select id="e-badge"><option value="">None</option><option>Authorized</option><option>Featured</option><option>Preferred</option><option>Specialist</option><option>Premium</option></select>
           </div>
-          <div class="auth-field"><label>Badge Color</label>
+          <div class="auth-field"><label for="e-color">Badge Color</label>
             <select id="e-color">
               <option value="#c9a227">Gold</option><option value="#b06c22">Bronze</option><option value="#5d6a7e">Steel</option>
             </select>
