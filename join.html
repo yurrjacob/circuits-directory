@@ -43,98 +43,25 @@
 <!-- Progress: the form is long, and a wall of fields with no sense of
      position is what makes people abandon it. Purely an indicator — it does
      not gate anything, because hiding later steps hides the price. -->
-<nav class="wiz" id="wiz" aria-label="Application progress">
+<nav class="wiz" id="wiz" aria-label="Request progress">
   <ol>
-    <li data-step="0"><span class="wiz-n">1</span><span class="wiz-l">Account</span></li>
-    <li data-step="1"><span class="wiz-n">2</span><span class="wiz-l">Company</span></li>
-    <li data-step="2"><span class="wiz-n">3</span><span class="wiz-l">Keyword</span></li>
-    <li data-step="3"><span class="wiz-n">4</span><span class="wiz-l">Upgrades</span></li>
-    <li data-step="5"><span class="wiz-n">5</span><span class="wiz-l">Review</span></li>
+    <li data-step="0"><span class="wiz-n">1</span><span class="wiz-l">Details</span></li>
+    <li data-step="1"><span class="wiz-n">2</span><span class="wiz-l">Keywords</span></li>
+    <li data-step="2"><span class="wiz-n">3</span><span class="wiz-l">Submit</span></li>
   </ol>
 </nav>
 
 <div id="success" class="success">
-<b>Application received.</b> Thanks! Our team will review your listing and reach out within one business day.
-<br><span id="success-handle"></span>
-Check your inbox to confirm your email address &mdash; then you can sign in at
-<a href="/portal">circuits.com/portal</a> to follow your application while it is reviewed.
-<span id="success-resend"></span>
+<b>Request received.</b> Thanks! Our team will review your listing request and reach out within one business day.
 </div>
 
 <form id="join-form" autocomplete="off" novalidate>
 
-<!-- Step 0: the account. You cannot submit a listing without one. -->
-<section class="step" id="acct-step">
-<div class="step-head">
-<span class="step-num">00</span>
-<div>
-<h2>Create Your Account</h2>
-<p>Listing a company needs an account. Browsing the directory never does.</p>
-</div>
-</div>
-
-<div id="acct-done" class="acct-done" style="display:none">
-<b>Signed in as <span id="acct-email"></span>.</b> Carry straight on to your listing below.
-<a href="#" id="acct-signout">Use a different account</a>
-</div>
-
-<div class="field" id="acct-handle">
-<label for="f-handle">Claim Your Circuits.com Username <span class="req">*</span></label>
-<div class="handle-row" style="max-width:420px">
-<span class="handle-prefix">circuits.com/</span>
-<input id="f-handle" type="text" maxlength="32" spellcheck="false" placeholder="aaa_electronics" required autocomplete="username">
-</div>
-<div id="handle-msg" class="field-hint"></div>
-<p class="field-hint">Your username is your link. Pick <b>aaa_electronics</b> and your listing lives at
-<b>circuits.com/aaa_electronics</b> &mdash; reserved the moment you apply and held while we review it.
-Put it straight on your adverts, cards and email signature.</p>
-</div>
-
-<div id="acct-new">
-<div class="grid2">
-<div class="field">
-<label for="f-email">Email <span class="req">*</span></label>
-<input id="f-email" type="email" required placeholder="sales@company.com" autocomplete="email">
-</div>
-<div class="field"></div>
-<div class="field">
-<label for="f-pass">Create a Password <span class="req">*</span></label>
-<input id="f-pass" type="password" minlength="8" required placeholder="At least 8 characters" autocomplete="new-password">
-</div>
-<div class="field">
-<label for="f-pass2">Confirm Password <span class="req">*</span></label>
-<input id="f-pass2" type="password" minlength="8" required placeholder="Re-enter your password" autocomplete="new-password">
-<div id="pass-msg" class="field-hint"></div>
-</div>
-</div>
-<p class="field-hint">This email and password become your sign-in at
-<a href="/portal" target="_blank" rel="noopener">circuits.com/portal</a>, where you manage your
-listing, quote requests and reviews once it is approved.</p>
-<p class="field-hint">Already have an account? <a href="#" id="acct-login-toggle">Log in instead</a></p>
-</div>
-
-<div id="acct-login" style="display:none">
-<div class="grid2">
-<div class="field">
-<label for="li-id">Email or username</label>
-<input id="li-id" type="text" placeholder="you@company.com or yourname" autocomplete="username" spellcheck="false">
-</div>
-<div class="field">
-<label for="li-pass">Password</label>
-<input id="li-pass" type="password" placeholder="••••••••" autocomplete="current-password">
-</div>
-</div>
-<div id="li-msg" class="field-hint"></div>
-<button type="button" class="mini-btn green" id="li-submit">Log in &amp; continue →</button>
-<p class="field-hint">Need an account? <a href="#" id="acct-new-toggle">Create one instead</a></p>
-</div>
-</section>
-
-<!-- Step 1 -->
+<!-- Section 1: who you are. Free listing request — no account, no password. -->
 <section class="step">
 <div class="step-head">
 <span class="step-num">01</span>
-<div><h2>Your Company</h2></div>
+<div><h2>Create Your Account</h2></div>
 </div>
 <div class="grid2">
 <div class="field">
@@ -146,6 +73,10 @@ listing, quote requests and reviews once it is approved.</p>
 <input id="f-contact" type="text" required placeholder="Jane Doe, VP Sales">
 </div>
 <div class="field">
+<label for="f-email">Email <span class="req">*</span></label>
+<input id="f-email" type="email" required placeholder="sales@company.com" autocomplete="email">
+</div>
+<div class="field">
 <label for="f-phone">Phone # <span class="req">*</span></label>
 <input id="f-phone" type="tel" required placeholder="(555) 123-4567">
 </div>
@@ -153,6 +84,7 @@ listing, quote requests and reviews once it is approved.</p>
 <label for="f-website">Website</label>
 <input id="f-website" type="url" placeholder="https://www.company.com">
 </div>
+<div class="field"></div>
 <div class="field" style="grid-column:1 / -1">
 <label for="logo-input">Logo or Headshot <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
 <input id="logo-input" type="file" accept="image/png,image/jpeg,image/webp">
@@ -176,153 +108,33 @@ listing, quote requests and reviews once it is approved.</p>
 <div class="step-head">
 <span class="step-num">02</span>
 <div>
-<h2>Claim Your Circuits-Keyword™</h2>
-<p>Tell us which Circuits-Keyword™ you’d like to be listed under. Each keyword carries its own listing fee.</p>
+<h2>Claim Your Circuits-Keywords™</h2>
+<p>Tell us which Circuits-Keywords™ you’d like to be listed under.</p>
 </div>
 </div>
 <p class="benefits-h">Benefits</p>
 <ul class="promo-benefits" style="margin:0 0 20px">
-<li>Ranked Listing Position Held While Your Subscription Is Active</li>
+<li>Ranked Listing Position Held While Your Listing Is Active</li>
 <li>Higher Placement For Early Participants</li>
 <li>Create Lasting Digital Real Estate</li>
 </ul>
 <div class="field"><!-- the .field wrapper is what lets the keyword requirement show its error -->
 <div class="kw-input-row">
-<input id="kw-input" type="text" placeholder="e.g. semiconductors (one listing fee per keyword)" maxlength="40">
+<input id="kw-input" type="text" placeholder="e.g. semiconductors" maxlength="40">
 <button type="button" class="mini-btn" id="kw-check">Check</button>
 <button type="button" class="mini-btn green" id="kw-add">Add</button>
 </div>
+<p class="field-hint"><b>Choose up to 10 keywords to be Listed Under… For Free!</b></p>
 <p class="field-hint">Not sure if a keyword is taken? <b>Check</b> it to preview its live listing page in a new tab. Your form stays exactly as you left off. Added keywords are clickable to check too.</p>
 <div class="kw-tags" id="kw-tags"></div>
 </div>
-<div class="cat-count" id="kw-count"><b>0</b> keywords</div>
+<div class="cat-count" id="kw-count"><b>0</b> of 10 keywords</div>
 </section>
 
-<!-- Step 3: Premium banner -->
+<!-- Section 3 -->
 <section class="step">
 <div class="step-head">
 <span class="step-num">03</span>
-<div>
-<h2>Dominate Your Circuits-Keyword™ Listing</h2>
-<p>Optional. Get featured as an Exclusive Circuits-Keyword™ Sponsor.</p>
-</div>
-</div>
-<p class="benefits-h">Benefits</p>
-<ul class="promo-benefits" style="margin:0 0 20px">
-<li>Top Banner Placement</li>
-<li>Prominent Logo, Profile Description, And Exclusive Sponsor Badge</li>
-<li>Hold Your Position Ahead Of Competitors</li>
-</ul>
-
-<div class="badge-preview-box banner-preview" style="margin-bottom:20px">
-<span class="preview-label">Live Preview</span>
-<div class="premium-card">
-<span class="premium-badge">Exclusive Sponsor</span>
-<div class="premium-logo logo-ph" id="bp-logo">Your Logo</div>
-<div class="premium-body">
-<h3 id="bp-company">AAA Electronics, Inc.</h3>
-<p id="bp-message">Prominent profile description shown to every viewer.</p>
-</div>
-<div class="premium-contact">
-<span id="bp-contact">Jane Doe, VP Sales</span><br>
-<span id="bp-phone">(555) 123-4567</span><br>
-<span id="bp-email">sales@company.com</span>
-</div>
-</div>
-<p class="preview-hint">This Is How Your Exclusive Sponsor Banner Would Look Live!</p>
-</div>
-
-<label class="promo promo-gold">
-<input type="checkbox" id="promo-check">
-<div class="promo-body">
-<div class="promo-title">Yes, Showcase My Listing As An Exclusive Sponsor</div>
-<p class="promo-sub" style="margin:4px 0 0">The Exclusive Circuits-Keyword™ Sponsor Banner is a paid add-on, separate from your keyword listing. Check the box to include in your application.</p>
-</div>
-</label>
-</section>
-
-<!-- Step 4: Supplier trust badge -->
-<section class="step">
-<div class="step-head">
-<span class="step-num">04</span>
-<div>
-<h2>Add Trust Upgrade</h2>
-<p>Optional. Assign a Trust Badge To Display Next To Your Listing On Every Keyword List.</p>
-</div>
-</div>
-<p class="benefits-h">Benefits</p>
-<ul class="promo-benefits" style="margin:0 0 20px">
-<li>Build Instant Trust With Viewers</li>
-<li>Make Your Listing Stand Out From Competitors</li>
-<li>Highlight Your Status At A Glance</li>
-</ul>
-
-<div class="badge-preview-box" style="margin:0 0 20px">
-<span class="preview-label">Live Preview</span>
-<div class="preview-stage">
-<span class="co-logo logo-ph" id="preview-logo" style="background:var(--dark)">Your Logo</span>
-<span class="preview-name" id="preview-name">AAA Electronics</span>
-<span class="lb" id="badge-preview" style="background:#c9a227">Authorized</span>
-</div>
-<p class="preview-hint">This Is How Your Trust Badge Would Look Live!</p>
-</div>
-
-<label class="promo promo-gold" style="margin-bottom:20px">
-<input type="checkbox" id="badge-check">
-<div class="promo-body">
-<div class="promo-title">Yes, Add A Circuits.com Trust Badge To My Listings</div>
-<p class="promo-sub" style="margin:4px 0 0">The Circuits.com Trust Badge is a paid add-on. Check the box to include in your application, then pick your badge below.</p>
-</div>
-</label>
-<div class="badge-builder badge-gated" id="badge-builder">
-<div class="badge-build-controls">
-<span class="field-label">Badge</span>
-<p class="field-hint" style="margin:0 0 8px">A Trust Badge is a label you choose, and it is shown as one. It cannot say
-anything that claims somebody else assessed you &mdash; not &ldquo;Certified&rdquo;, not
-&ldquo;ISO 9001&rdquo;, not &ldquo;Approved&rdquo;, not &ldquo;Verified&rdquo;. Those belong to the
-bodies that award them. The Circuits.com badge is reserved for listings our own team runs and
-cannot be bought, which is the only reason it means anything.</p>
-<div class="opt-row" id="badge-opts">
-<button type="button" class="opt-btn" data-text="Authorized">Authorized</button>
-<button type="button" class="opt-btn" data-text="Featured">Featured</button>
-<button type="button" class="opt-btn" data-text="Preferred">Preferred</button>
-<button type="button" class="opt-btn" data-text="Specialist">Specialist</button>
-<button type="button" class="opt-btn" id="badge-custom-btn">Custom</button>
-</div>
-<input id="badge-custom" type="text" maxlength="18" placeholder="Type your custom badge" style="display:none;max-width:240px;margin-bottom:4px">
-<div id="badge-custom-msg" class="field-hint" style="display:none;color:#b3261e"></div>
-<span class="field-label">Badge Color</span>
-<div class="swatches" id="swatches">
-<button type="button" class="swatch" data-color="#c9a227" style="background:linear-gradient(135deg,#e9c95c,#c9a227)" aria-label="gold"></button>
-<button type="button" class="swatch" data-color="#b06c22" style="background:linear-gradient(135deg,#d99a52,#b06c22)" aria-label="bronze"></button>
-<button type="button" class="swatch" data-color="#5d6a7e" style="background:linear-gradient(135deg,#8f9cb0,#5d6a7e)" aria-label="steel"></button>
-<button type="button" class="swatch" data-color="#9aa0a8" style="background:linear-gradient(135deg,#e4e7ea,#9aa0a8)" aria-label="silver"></button>
-<button type="button" class="swatch" data-color="#b76e79" style="background:linear-gradient(135deg,#e8b4bc,#b76e79)" aria-label="rose gold"></button>
-</div>
-</div>
-</div>
-</section>
-
-<!-- Step 5 -->
-<section class="step" id="quote-step">
-<div class="step-head">
-<span class="step-num">05</span>
-<div><h2>Pricing Estimate</h2>
-<p>Updates as you choose keywords and extras. Nothing is charged now &mdash; we confirm pricing when we approve your listing.</p></div>
-</div>
-<div class="quote" id="quote">
-<div class="quote-lines" id="quote-lines"></div>
-<div class="quote-total"><span>Estimated monthly total</span><b id="quote-total">$0</b></div>
-<div class="quote-total quote-total-alt"><span>Or paid yearly</span><b id="quote-total-year">$0</b></div>
-<p class="field-hint" id="quote-note"></p>
-<p class="field-hint beta-note"><b>Beta pricing.</b> Original owners lock in these beta fees
-for as long as they keep an active subscription.</p>
-</div>
-</section>
-
-<section class="step">
-<div class="step-head">
-<span class="step-num">06</span>
 <div><h2>Have Any Ideas? Tell Us What You're Thinking</h2></div>
 </div>
 <div class="field">
@@ -339,7 +151,7 @@ for as long as they keep an active subscription.</p>
 
 <div class="form-foot">
 <span class="help">Have questions? <a href="contact">Contact us</a></span>
-<button class="submit" type="submit">Submit Application →</button>
+<button class="submit" type="submit">Submit Request</button>
 </div>
 </form>
 </div>

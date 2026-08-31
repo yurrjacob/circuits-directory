@@ -11,6 +11,16 @@ const sb = (window.supabase && window.supabase.createClient)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
   : null;
 
+/* Column lists for the PUBLIC (logged-out) reads. Anonymous visitors are
+   granted SELECT on every column EXCEPT the private account email
+   (applications.owner_email / reviews.author_email), which is why these reads
+   must NOT use select('*') — `*` references the ungranted column and Postgres
+   denies the whole query, which once made every listing vanish for logged-out
+   visitors. Signed-in reads (portal, admin) keep select('*'); they have the
+   full grant. Keep these in sync with the table columns. */
+const APP_PUBLIC_COLS = 'id, created_at, company, contact, email, phone, website, logo, keywords, banner, badge, message, terms, fee, status, keyword, paused, listing_price, banner_price, badge_price, docs, description, company_slug, company_handle, requested_handle, keyword_norm';
+const REVIEW_PUBLIC_COLS = 'id, company_slug, author_name, rating, body, reply, status, created_at';
+
 /* ---- pricing ----
    Beta rates. Original owners keep these for as long as their subscription
    stays active, so these numbers are a floor we honour, not a list price.
@@ -79,7 +89,7 @@ async function fetchApprovedByKeyword(keyword){
   if(!sb) throw new Error('no connection');
   const k = normKw(keyword);
   if(!k) return [];
-  const { data, error } = await sb.from('applications').select('*')
+  const { data, error } = await sb.from('applications').select(APP_PUBLIC_COLS)
     .eq('status','Approved').eq('paused', false).eq('keyword_norm', k)
     .order('created_at', { ascending:true }).order('id', { ascending:true });
   /* Throw, don't return []. An empty array here means "nobody owns this
@@ -131,7 +141,7 @@ async function fetchRelatedByKeyword(keyword){
   const words = (keyword || '').toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 2);
   const terms = [...new Set(words.map(normKw))].filter(Boolean).slice(0, 6);
   if(!terms.length) return [];
-  const { data, error } = await sb.from('applications').select('*')
+  const { data, error } = await sb.from('applications').select(APP_PUBLIC_COLS)
     .eq('status','Approved').eq('paused', false).in('keyword_norm', terms)
     .order('created_at', { ascending:true }).order('id', { ascending:true });
   if(error){ console.warn('fetchRelatedByKeyword', error.message); return []; }
@@ -490,7 +500,7 @@ async function fetchCompanyByHandle(handle){
 /* Live keywords for a company, in the permanent order they were claimed. */
 async function fetchCompanyKeywords(slug){
   if(!sb || !slug) return [];
-  const { data, error } = await sb.from('applications').select('*')
+  const { data, error } = await sb.from('applications').select(APP_PUBLIC_COLS)
     .eq('company_slug', slug).eq('status','Approved')
     .order('created_at', { ascending:true });
   if(error){ console.error('fetchCompanyKeywords', error); return []; }
@@ -498,7 +508,7 @@ async function fetchCompanyKeywords(slug){
 }
 async function fetchReviews(slug){
   if(!sb || !slug) return [];
-  const { data, error } = await sb.from('reviews').select('*')
+  const { data, error } = await sb.from('reviews').select(REVIEW_PUBLIC_COLS)
     .eq('company_slug', slug).eq('status','Approved')
     .order('created_at', { ascending:false });
   if(error){ console.error('fetchReviews', error); return []; }

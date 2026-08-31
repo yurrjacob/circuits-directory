@@ -497,7 +497,6 @@ async function initResults(forcedTerm){
           ${featured.phone ? `<a href="tel:${escapeHtml(featured.phone)}">${escapeHtml(featured.phone)}</a>` : ''}
           ${featured.email ? `<a href="mailto:${escapeHtml(featured.email)}">${escapeHtml(featured.email)}</a>` : ''}
         </div>
-        ${quoteBtn(featured)}
       </div>
     </div></div>`;
   }
@@ -523,7 +522,6 @@ async function initResults(forcedTerm){
       <td class="cell-muted" data-label="Contact">${escapeHtml(c.contact||'—')}</td>
       <td class="cell-muted" data-label="Phone">${c.phone ? `<a href="tel:${escapeHtml(c.phone)}">${escapeHtml(c.phone)}</a>` : '—'}</td>
       <td class="cell-muted" data-label="Email">${c.email ? `<a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>` : '—'}</td>
-      <td class="cell-quote">${quoteBtn(c)}</td>
     </tr>`).join('');
 
   /* The number is the order companies claimed this keyword, and it is the thing
@@ -537,7 +535,7 @@ async function initResults(forcedTerm){
         <table class="listings-table">
           <thead><tr>
             <th class="rank" title="The order these companies claimed this keyword">Held</th>
-            <th>Company</th><th>Contact</th><th>Phone</th><th>Email</th><th></th>
+            <th>Company</th><th>Contact</th><th>Phone</th><th>Email</th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
@@ -559,24 +557,11 @@ async function initResults(forcedTerm){
   }
 }
 
-/* Request a Quote, on every listing.
-   Goes to that company's own quote form rather than opening a second one here:
-   the profile form is the one wired to the supplier's inbox and the notifier,
-   and two forms that both claim to send a quote is how one of them rots.
-   A listing with no profile page falls back to email, which is all we have. */
-function quoteBtn(c){
-  /* The profile's in-page quote form is off (2026-08-21), so email leads:
-     the button opens the buyer's own mail client addressed to the supplier.
-     A listing with no email still points somewhere useful — the profile,
-     where phone and website live. */
-  if(c.email){
-    return `<a class="btn btn-primary btn-quote" href="mailto:${escapeHtml(c.email)}?subject=${encodeURIComponent('Quote request via Circuits.com')}">Request a Quote</a>`;
-  }
-  if(c.company_handle){
-    return `<a class="btn btn-primary btn-quote" href="${escapeHtml(profileUrl(c.company_handle))}">View Contact Info</a>`;
-  }
-  return '';
-}
+/* The per-listing "Request a Quote" button was removed for MVP1 (2026-08-31):
+   buyers contact suppliers directly through the phone and email columns that
+   sit in the results table and the sponsor banner. The quote/inquiry pipeline
+   (profile.js rfqForm, thread.*, the notify/inquiries backend) is preserved in
+   backups/mvp1-baseline-2026-08-25/ for MVP2. */
 
 /* Join form behavior */
 function initJoin(){
@@ -591,12 +576,13 @@ function initJoin(){
       const esc = k.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
       return `<span class="kw-tag"><a class="kw-check-link" href="/results?q=${encodeURIComponent(k)}" target="_blank" rel="noopener" title="Check availability: opens this keyword's live listing page in a new tab">${esc}</a><button type="button" data-i="${i}" aria-label="Remove">×</button></span>`;
     }).join('');
-    if(kwCount) kwCount.innerHTML = `<b>${keywords.length}</b> keyword${keywords.length===1?'':'s'}`;
+    if(kwCount) kwCount.innerHTML = `<b>${keywords.length}</b> of 10 keywords`;
   }
   function addKw(){
     // approval-level ruleset: lowercase, no hyphens, no plurals
     const v = (typeof cleanKw==='function') ? cleanKw(kwInput.value) : (kwInput.value||'').trim().toLowerCase();
     if(!v || keywords.includes(v)) return;
+    if(keywords.length >= 10){ setErr(kwInput, 'You can list up to 10 keywords for free. Remove one to add another.'); return; }
     keywords.push(v); kwInput.value=''; renderKw(); renderQuote(); kwInput.focus();
     setErr(kwInput, ''); // the "add at least one keyword" message, once satisfied
   }
@@ -900,21 +886,9 @@ const msg = document.getElementById('msg');
     check('f-contact', !!v('f-contact'), 'Please enter a contact person.');
     check('f-phone', isValidPhone(v('f-phone')), 'Please enter a phone number (at least 10 digits) — buyers need a way to call you.');
     check('f-website', !v('f-website') || isValidWebsite(v('f-website')), 'Please enter a valid website (e.g. www.company.com).');
-    /* The account step only applies when there isn't one yet. Signed in, these
-       fields are hidden and there is nothing to fill in. */
-    check('f-handle', handleFormatOk(v('f-handle')) && (JOIN_ADOPTED || handleState !== 'bad'),
-      handleState === 'bad' ? 'That Circuits.com address is not available.'
-                            : 'Choose your Circuits.com username (3–32 letters, numbers, hyphens or underscores).');
-    if(!JOIN_USER){
-      check('f-email', isValidEmail(v('f-email')), 'Please enter a valid email address (e.g. sales@company.com).');
-      check('f-pass', v('f-pass').length >= 8, 'Your password must be at least 8 characters.');
-      check('f-pass2', v('f-pass') === v('f-pass2') && !!v('f-pass2'), 'The two passwords do not match.');
-    }
-    /* a badge that claims a certification never reaches the database anyway,
-       so stop it here rather than letting the whole application fail */
-    if(badgeCheck && badgeCheck.checked && showBadgeProblem() && !firstBad){
-      firstBad = document.getElementById('badge-custom') || document.getElementById('badge-builder');
-    }
+    /* MVP1: a free listing request — no password/account is created here, so we
+       only need an email your team can reply to. */
+    check('f-email', isValidEmail(v('f-email')), 'Please enter a valid email address (e.g. sales@company.com) so we can reply.');
     /* terms must be accepted before the form can be submitted */
     const termsBox = document.getElementById('f-terms');
     const termsErr = document.getElementById('terms-err');
@@ -953,7 +927,7 @@ const msg = document.getElementById('msg');
   if(form) form.addEventListener('submit', async e=>{
     e.preventDefault();
     if(looksLikeSpam(form)){
-      fakeSuccess(form, 'Thanks — your application has been received. We will be in touch.');
+      fakeSuccess(form, 'Thanks — your request has been received. We will be in touch.');
       return;
     }
     if(!validate()) return;
@@ -961,48 +935,26 @@ const msg = document.getElementById('msg');
     const v = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
     let website = v('f-website');
     if(website && !/^https?:\/\//i.test(website)) website = 'https://' + website;
-    const wantsBadge = !!(badgeCheck && badgeCheck.checked);
+    /* MVP1: a FREE listing request. No account is created here and no keyword
+       fee applies — a Pending application is filed and staff follow up by email.
+       (The account/upgrade/pricing steps and their fields were removed; the
+       full version is preserved in backups/mvp1-baseline-2026-08-25/.) */
     const base = {
-      /* applications.email is the account that owns the listing — the database
-         copies it into owner_email on insert. Signed in, that must be the
-         session's address, not whatever is typed on the form. */
       company: v('f-company'), contact: v('f-contact'),
-      email: JOIN_USER ? JOIN_USER.email : v('f-email'),
+      email: v('f-email'),          // the address staff reply to; the DB copies it to owner_email
       phone: v('f-phone'), website,
       logo: '',
-      banner: !!(document.getElementById('promo-check') && document.getElementById('promo-check').checked),
-      badge: wantsBadge ? { text: curBadgeText, color: curBadgeColor } : null,
+      banner: false,
+      badge: null,
       message: msg ? msg.value.trim() : '',
       terms: !!(document.getElementById('f-terms') && document.getElementById('f-terms').checked),
       status: 'Pending'
     };
-    base.requested_handle = v('f-handle');
     try {
       if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
 
-      /* Re-check the username at submit: someone may have taken it while this
-         form sat open. The database triggers are the real guard. */
-      const why = await handleAvailable(base.requested_handle, null);
-      if(why){
-        if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
-        setErr(document.getElementById('f-handle'), 'That address just became unavailable: ' + why);
-        document.getElementById('f-handle').scrollIntoView({behavior:'smooth', block:'center'});
-        return;
-      }
-
-      /* No account, no listing. The account is created first, here, so that by
-         the time the listing is submitted it already belongs to somebody. */
-      if(!JOIN_USER){
-        const { error: authErr } = await signUp(base.email, v('f-pass'));
-        if(authErr && !/already registered|already exists/i.test(authErr.message || '')){
-          if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
-          setErr(document.getElementById('f-email'), authErr.message);
-          return;
-        }
-      }
-
       /* Uploads are best-effort: a failed logo/document upload must NEVER
-         stop the application data from reaching the database. */
+         stop the request data from reaching the database. */
       base.docs = [];
       try{
         const logoFile = logoInput && logoInput.files && logoInput.files[0];
@@ -1013,85 +965,42 @@ const msg = document.getElementById('msg');
       }catch(e){ console.warn('doc upload skipped', e); }
       await addApplicationKeywords(base, keywords);
     } catch(err) {
-      if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
-      alert('Sorry, we couldn’t submit your application right now. Please try again.');
+      if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Request'; }
+      alert('Sorry, we couldn’t submit your request right now. Please try again.');
       return;
     }
-    /* notify the founders + send the applicant a confirmation email with a copy
-       of what they submitted. Best-effort: the application itself is already
-       saved above, and staff see every pending application in the admin
-       console, so a failed notification must not fail the submission — but we
-       await it (rather than fire-and-forget) so it completes and logs. */
+    /* Tell the founders a request came in, and send the requester a copy.
+       Best-effort: the request is already saved and visible in the admin
+       console, so a failed notification must not fail the submission. */
     const kwList = keywords.map(cleanKw).join(', ') || '(none)';
-    const founderNotified = await sendFounderEmail('New Listing Application - ' + base.company, {
+    const founderNotified = await sendFounderEmail('New Listing Request - ' + base.company, {
       company: base.company,
       contact: base.contact,
       email: base.email,
       phone: base.phone || '(not provided)',
       website: base.website || '(none)',
-      circuits_address: 'circuits.com/' + base.requested_handle,
       logo: base.logo || '(none)',
       keywords: kwList,
-      exclusive_sponsor: base.banner ? 'Yes' : 'No',
-      trust_badge: wantsBadge ? (curBadgeText + ' (' + curBadgeColor + ')') : 'No',
       documentation: base.docs.length ? base.docs.map(d=>d.name).join(', ') : '(none)',
       ideas: base.message || '(none)'
-    }, 'Thanks for applying to list ' + base.company + ' on Circuits.com! We received your application and will respond within 1 business day.\n\n'
-      + 'Here is a copy of what you submitted:\n'
+    }, 'Thanks for your request to list ' + base.company + ' on Circuits.com! We received it and will respond within 1 business day.\n\n'
+      + 'Here is a copy of what you sent:\n'
       + '- Company: ' + base.company + '\n'
       + '- Contact: ' + base.contact + '\n'
       + '- Email: ' + base.email + '\n'
       + '- Phone: ' + (base.phone || '(not provided)') + '\n'
       + '- Website: ' + (base.website || '(none)') + '\n'
-      + '- Your Circuits.com address: circuits.com/' + base.requested_handle + ' (reserved for you)\n'
       + '- Keywords: ' + kwList + '\n'
-      + '- Exclusive Circuits-Keyword™ Sponsor: ' + (base.banner ? 'Yes' : 'No') + '\n'
-      + '- Circuits.com Trust Badge: ' + (wantsBadge ? curBadgeText : 'No') + '\n'
       + '- Documentation: ' + (base.docs.length ? base.docs.map(d=>d.name).join(', ') : '(none)') + '\n'
       + '- Ideas: ' + (base.message || '(none)') + '\n\n'
       + '- John & Mike, Circuits.com');
-    if(!founderNotified) console.warn('founder notification not delivered; application is still saved and visible in the admin console');
-    if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Application →'; }
+    if(!founderNotified) console.warn('founder notification not delivered; the request is still saved and visible in the admin console');
+    if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Request'; }
     const ok = document.getElementById('success');
-    const okHandle = document.getElementById('success-handle');
-    if(okHandle) okHandle.innerHTML = '<b>circuits.com/' + escapeHtml(base.requested_handle)
-      + '</b> is reserved for you. ';
-    /* A typo'd address or a spam filter used to be a dead end — the password is
-       set once, here, and nothing could resend the confirmation. Now it can. */
-    const okResend = document.getElementById('success-resend');
-    if(okResend && !JOIN_USER && typeof resendConfirmation === 'function'){
-      const addr = base.email;
-      okResend.innerHTML = '<br><span class="resend-line">Nothing arrived at ' + escapeHtml(addr)
-        + '? Check spam first, then <button type="button" id="success-resend-btn">send it again</button>.'
-        + ' <span id="success-resend-msg"></span></span>';
-      document.getElementById('success-resend-btn').addEventListener('click', async () => {
-        const m = document.getElementById('success-resend-msg');
-        m.textContent = 'Sending…';
-        const err = await resendConfirmation(addr);
-        m.textContent = err || 'Sent — give it a minute, and check spam.';
-      });
-    }
     ok.classList.add('show');
-    /* form.reset() blanks EVERY field, including the company name and handle
-       that adoptExistingCompany() locked for a returning supplier — leaving
-       them empty and still readOnly (uneditable), with JOIN_ADOPTED stuck on.
-       Snapshot the locked values and put them back so a second listing can be
-       added straight away. */
-    const lockedCompany = JOIN_ADOPTED ? (document.getElementById('f-company') || {}).value : null;
-    const lockedHandle  = JOIN_ADOPTED ? (document.getElementById('f-handle') || {}).value : null;
     form.reset();
-    if(JOIN_ADOPTED){
-      const c = document.getElementById('f-company'), h = document.getElementById('f-handle');
-      if(c && lockedCompany != null) c.value = lockedCompany;
-      if(h && lockedHandle != null) h.value = lockedHandle;
-    }
     keywords = []; renderKw();
-    resetBadge();
-    renderQuote();
     logoUrl = null;
-    if(handleMsg) handleMsg.textContent = '';
-    if(passMsg) passMsg.textContent = '';
-    handleState = '';
     clearDocs();
     updatePreviews();
     if(logoPrev) logoPrev.style.display='none';

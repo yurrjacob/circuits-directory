@@ -18,15 +18,6 @@ global.isLogoUrl = s => /^https?:\/\//i.test(s || '');
 global.profileUrl = h => '/' + h;
 global.docLinks = () => '';
 global.badgeHtml = () => '';
-/* the real quote button, not a stub — whether every listing gets one is the
-   thing being checked */
-{
-  const f = src.indexOf('function quoteBtn');
-  assert.ok(f >= 0, 'quoteBtn is gone from app.js');
-  let d = 0, i = f;
-  for(; i < src.length; i++){ if(src[i] === '{') d++; else if(src[i] === '}'){ d--; if(!d) break; } }
-  (0, eval)(src.slice(f, i + 1).replace('function quoteBtn', 'global.quoteBtn = function'));
-}
 global.armSpamTrap = () => {};
 global.looksLikeSpam = () => false;
 global.fakeSuccess = () => {};
@@ -148,29 +139,24 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
                         contact: 'Sam', phone: '(555) 2', email: 'a@b.co', docs: [] }];
   await initResults('oscillators');
 
-  /* --- every listing offers a way to ask for a quote --- */
-  assert.ok(/Request a Quote/.test(captured), 'a listing has no Request a Quote button');
-
-  /* Phone and email sit directly in the table — put back on 2026-08-20 at
-     Jacob's direction: a buyer should be able to reach a supplier without a
-     detour through the profile. */
+  /* Buyers reach a supplier directly from the table. The "Request a Quote"
+     button was removed for MVP1 (2026-08-31); phone and email columns are the
+     contact path now, so those must stay. */
   const tbodyEmail = captured.slice(captured.indexOf('<tbody>'));
   assert.ok(/mailto:a@b\.co/.test(tbodyEmail),
     'the results table lost its email column — buyers cannot email straight from the list');
   assert.ok(/tel:/.test(tbodyEmail),
     'the results table lost its phone links');
+  assert.ok(!/Request a Quote/.test(captured),
+    'a Request a Quote button is back on the results page (removed for MVP1)');
+  assert.ok(!/#rfq/.test(captured),
+    'something still links to the removed in-page quote form');
 
   /* The position must not present itself as a ranking. */
   assert.ok(!/<th class="rank"[^>]*>#</.test(captured),
     'the position column is back to a bare "#", which buyers read as a ranking');
   assert.ok(/not a ranking/.test(captured),
     'the results page no longer says the order is not a ranking');
-  /* The in-page quote form is off (2026-08-21) — the quote button now opens
-     the buyer's own mail client addressed to the supplier. */
-  assert.ok(/btn-quote" href="mailto:a@b\.co/.test(captured),
-    'the quote button no longer opens an email to the supplier');
-  assert.ok(!/#rfq/.test(captured),
-    'something still links to the removed in-page quote form');
 
   /* --- and every listing is numbered --- */
   assert.ok(/class="rank"[^>]*>1</.test(captured), 'listings are not numbered');
@@ -201,16 +187,11 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   assert.deepStrictEqual(ranks, ['1', '2'],
     `the list is numbered ${ranks.join(',')} — removing the sponsor left a hole in the sequence`);
 
-  assert.ok(/premium-contact[\s\S]*?Request a Quote/.test(captured),
-    'the sponsor banner has no Request a Quote button');
-
-  /* a listing with no profile page still has to be contactable */
-  assert.ok(/mailto:a@b\.co/.test(quoteBtn({ email: 'a@b.co' })),
-    'a listing without a profile page loses its quote button entirely');
-  /* and one with no email still points the buyer somewhere useful */
-  assert.ok(/href="\/acme"/.test(quoteBtn({ company_handle: 'acme' })),
-    'a listing with no email no longer links to the profile for contact info');
-  assert.strictEqual(quoteBtn({}), '', 'a listing with no handle and no email should render no button');
+  /* the sponsor banner shows the supplier's own contact details (no quote button) */
+  assert.ok(/premium-contact[\s\S]*?mailto:s@b\.co/.test(captured),
+    'the sponsor banner lost the supplier email');
+  assert.ok(!/Request a Quote/.test(captured),
+    'a Request a Quote button is back on the sponsor banner (removed for MVP1)');
 
   console.log('search results OK — pitch page with buyer capture at the bottom, numbered rows, sponsor not listed twice');
 })();

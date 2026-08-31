@@ -231,26 +231,12 @@ for (const fn of ['fetchAllCompanies', 'fetchSecurityLog']) {
   }
 }
 
-/* --- a paid badge must never read as a certification ---
-       This is the one place where a $49 add-on could mislead a buyer into a
-       purchasing decision. The database refuses the dangerous words outright;
-       these checks make sure the site does not offer them in the first place
-       and does not present a bought label as an assessed one. */
-const badgeJoin = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
-const badgePresets = [...badgeJoin.matchAll(/class="opt-btn" data-text="([^"]+)"/g)].map(m => m[1]);
-assert.ok(badgePresets.length >= 3, `only ${badgePresets.length} badge presets offered`);
-for (const preset of badgePresets) {
-  assert.ok(!/certif|approv|accredit|licens|verif|iso|compliant/i.test(preset),
-    `"${preset}" is offered as a buyable badge but claims an assessment nobody made`);
-}
+/* --- the shared badge RENDERER must never present a paid label as certified ---
+       The paid badge BUILDER moved off Get Listed in MVP1 (2026-08-31, backed
+       up in backups/mvp1-baseline-2026-08-25/ for MVP2). Badges are still
+       rendered on approved listings that carry one, set by staff — so the
+       renderer and its safeguards stay. */
 const badgeApp = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
-assert.ok(/const BADGE_FORBIDDEN/.test(badgeApp), 'custom badge text is no longer screened in the browser');
-assert.ok(/function badgeProblem/.test(badgeApp) && /showBadgeProblem\(\)/.test(badgeApp),
-  'the badge warning is never shown to the applicant');
-// and it must actually block submission, not merely warn
-const validateBlock = badgeApp.slice(badgeApp.indexOf('badgeCheck.checked && showBadgeProblem()'));
-assert.ok(/firstBad =/.test(validateBlock.slice(0, 300)),
-  'a bad badge warns but still lets the application through');
 /* Badges render through one helper now, so the explanation lives there rather
    than being repeated at every call site. */
 assert.ok(/function badgeHtml/.test(badgeApp), 'the shared badge renderer is gone');
@@ -295,7 +281,7 @@ assert.ok(/badgeHtml\(k\.badge, 'kw-lb'\)/.test(badgeProf),
 assert.ok(!/isCircuitsBadge/.test(badgeProf), 'profile.js still treats our mark as a badge');
 
 // nobody can buy it or be given it: not on Get Listed, not in the admin console
-assert.ok(!/data-text="Circuits\.com"/i.test(badgeJoin),
+assert.ok(!/data-text="Circuits\.com"/i.test(fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8')),
   'the Circuits.com mark is being offered on the public Get Listed form');
 assert.ok(/function editBadge/.test(adminSrc), 'the admin badge editor is missing');
 assert.ok(!/CX_BADGE/.test(adminSrc),
@@ -751,14 +737,15 @@ assert.ok(/Deliberately the same outcome|If that account exists/.test(
   fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8') + resetHtml),
   'password reset reveals which accounts exist');
 
-/* --- a paid badge must never read as a check Circuits.com performed --- */
+/* --- a paid badge must never read as a check Circuits.com performed ---
+       The badge builder is off Get Listed for MVP1 (backed up for MVP2), so no
+       badge is for sale there at all; if it returns, it still must not sell
+       "Verified" or our own mark. The distinction is carried in the Terms. */
 const joinSrc = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
 assert.ok(!/data-text="Verified"/i.test(joinSrc),
   'Verified is on sale again — a bought badge would be indistinguishable from a real check');
 assert.ok(!/data-text="Circuits\.com"/i.test(joinSrc),
   'our own mark is on sale — a bought badge would be indistinguishable from a real check');
-assert.ok(/cannot be bought/.test(joinSrc),
-  'Get Listed no longer explains which badge is not for sale');
 const termsHtml = fs.readFileSync(path.join(ROOT, 'terms.html'), 'utf8');
 assert.ok(/Circuits\.com badge/.test(termsHtml) && /cannot be purchased/i.test(termsHtml),
   'the terms do not distinguish paid Trust Badges from our own mark');
@@ -867,15 +854,14 @@ assert.ok(pathRe.test('/aaa_electronics'), 'profile path regex rejects underscor
 assert.ok(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8').includes('[a-z0-9_-]*'),
   'profileHandle() lost underscore support in its path match');
 
-/* --- accounts are created on Register or Get Listed, and nowhere else ---
-       Anyone may hold a profile; a company listing still needs approval. Those
-       are the only two doors, so no other page may call signUp. */
-for (const f of ['portal.js', 'portal.html', 'claim.html', 'admin.js', 'company.html', 'profile.js']) {
+/* --- accounts are created on Register, and nowhere else ---
+       Anyone may hold a profile. Get Listed became a FREE listing REQUEST in
+       MVP1 (2026-08-31) — it no longer creates an account — so Register is now
+       the only door, and no other page may call signUp. */
+for (const f of ['app.js', 'portal.js', 'portal.html', 'claim.html', 'admin.js', 'company.html', 'profile.js']) {
   assert.ok(!fs.readFileSync(path.join(ROOT, f), 'utf8').includes('signUp('),
-    `${f} can create an account — that belongs on Register or Get Listed only`);
+    `${f} can create an account — that belongs on Register only (Get Listed is a free request in MVP1)`);
 }
-assert.ok(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8').includes('signUp(base.email'),
-  'the Get Listed form no longer creates the account');
 assert.ok(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8').includes('sb.auth.signUp'),
   'registerProfile() no longer creates the account');
 
@@ -894,35 +880,28 @@ for (const fn of ['fetchProfileByHandle', 'myProfile', 'registerProfile']) {
 assert.ok(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8').includes('fetchProfileByHandle'),
   'circuits.com/<name> no longer resolves a person, only a company');
 const joinHtml = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
-for (const id of ['f-handle', 'f-pass', 'f-pass2']) {
-  assert.ok(joinHtml.includes(`id="${id}"`), `join.html is missing ${id}`);
-}
 
-/* --- you cannot submit a listing without an account ---
-       The account step comes first in Get Listed, with a log-in path for
-       people who already have one, so Register and Get Listed stop competing. */
-assert.ok(/<span class="step-num">00<\/span>/.test(joinHtml),
-  'Get Listed lost its 00 account step');
-assert.ok(joinHtml.indexOf('id="acct-step"') < joinHtml.indexOf('id="f-company"'),
-  'the account step must come before the company details');
-for (const id of ['acct-new', 'acct-login', 'acct-done', 'acct-handle', 'li-id', 'li-pass', 'li-submit']) {
-  assert.ok(joinHtml.includes(`id="${id}"`), `join.html is missing ${id}`);
+/* --- MVP1 (2026-08-31): Get Listed is a FREE listing REQUEST ---
+       No account, no password, no pricing or paid upgrades. It collects company
+       details + up to 10 free keywords + a message and files a Pending request;
+       staff follow up by email. The full account/upgrade/pricing version is
+       preserved in backups/mvp1-baseline-2026-08-25/ for MVP2. */
+for (const gone of ['id="acct-step"', 'id="f-handle"', 'id="f-pass"', 'id="promo-check"',
+                    'id="badge-check"', 'id="quote-step"']) {
+  assert.ok(!joinHtml.includes(gone),
+    `${gone} is back on Get Listed — MVP1 is a free request (that piece moved to backups/ for MVP2)`);
 }
-// the username field must sit OUTSIDE the register-only block: a signed-in
-// user still has to choose an address for the listing itself
-const newBlock = joinHtml.slice(joinHtml.indexOf('id="acct-new"'), joinHtml.indexOf('id="acct-login"'));
-assert.ok(!newBlock.includes('id="f-handle"'),
-  'the listing username is hidden when signed in — signed-in users could not pick one');
+for (const id of ['f-company', 'f-contact', 'f-email', 'f-phone', 'kw-input', 'f-terms']) {
+  assert.ok(joinHtml.includes(`id="${id}"`), `join.html lost its request field ${id}`);
+}
+assert.ok(/Submit Request/.test(joinHtml), 'the Get Listed button no longer says Submit Request');
+assert.ok(/up to 10 keywords/i.test(joinHtml), 'the free-keywords note is gone from Get Listed');
 
 const joinJs = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
-assert.ok(joinJs.includes('function initJoinAccount'), 'Get Listed lost its account step logic');
-assert.ok(joinJs.includes('initJoinAccount()'), 'initJoinAccount is never called');
-// submission must be gated on an account existing
-assert.ok(/if\(!JOIN_USER\)\{[\s\S]{0,120}await signUp\(/.test(joinJs),
-  'Get Listed no longer creates the account before submitting the listing');
-// a signed-in user's listing must be owned by the session, not a typed address
-assert.ok(joinJs.includes("JOIN_USER ? JOIN_USER.email : v('f-email')"),
-  'the listing owner is taken from the form rather than the signed-in account');
+// a free request: an email to reply to, filed as Pending, and no account made
+assert.ok(!/await signUp\(/.test(joinJs), 'Get Listed creates an account again — MVP1 is a free request');
+assert.ok(/email: v\('f-email'\)/.test(joinJs), 'the request no longer takes its reply-to email from the form');
+assert.ok(/status: 'Pending'/.test(joinJs), 'the Get Listed request is not filed as Pending');
 
 /* --- the estimate shown on Get Listed must equal what admin bills ---
        Each keyword becomes its own application row, so extras are per keyword.

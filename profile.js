@@ -267,7 +267,7 @@ async function initProfile(){
     <div class="pf-side-card">
       ${looksEmail(co.email)
         ? `<a class="btn btn-primary pf-cta" id="pf-email-cta"
-             href="mailto:${escapeHtml(co.email.trim())}?subject=${encodeURIComponent('Quote request via Circuits.com — ' + co.name)}">Email ${escapeHtml(co.name)}</a>`
+             href="mailto:${escapeHtml(co.email.trim())}?subject=${encodeURIComponent('Enquiry via Circuits.com — ' + co.name)}">Email ${escapeHtml(co.name)}</a>`
         : ''}
       <button type="button" class="btn pf-save" id="pf-save"
               data-slug="${escapeHtml(co.slug)}" data-handle="${escapeHtml(co.handle || '')}"
