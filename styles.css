@@ -1312,21 +1312,21 @@ body.nav-open .nav-burger .x{display:block}
 .pw-eye:hover{color:var(--ink);background:var(--bg-soft)}
 
 /* ---- the row a profile's keyword tag (or the approval email) points at ----
-   One solid green hold (about two seconds) that fades out slowly, leaving
+   One solid green hold (about a second) that fades out over the next, leaving
    no bar or outline behind (an earlier inset box-shadow drew a green stripe on
    every cell — Jacob, 2026-09-01). The sponsor card keeps its gradient, so it
    glows instead of changing its background. Timing lives in app.js: the row is
    lit only once it is on screen. */
 @keyframes hl-pulse{0%{background:transparent}5%{background:#bfe57a}50%{background:#bfe57a}100%{background:transparent}}
 @keyframes hl-glow{0%{box-shadow:0 2px 16px rgba(122,133,146,.22)}5%{box-shadow:0 0 0 6px #bfe57a}50%{box-shadow:0 0 0 6px #bfe57a}100%{box-shadow:0 2px 16px rgba(122,133,146,.22)}}
-tr.hl-flash td{animation:hl-pulse 4s ease-in-out both}
-.premium-card.hl-flash{animation:hl-glow 4s ease-in-out both}
+tr.hl-flash td{animation:hl-pulse 2s ease-in-out both}
+.premium-card.hl-flash{animation:hl-glow 2s ease-in-out both}
 /* A colour change is not motion, so the highlight keeps its timing even under
    reduced motion. Windows with "animation effects" switched off (Jacob's PC)
    reports prefers-reduced-motion, and the global reset earlier in this file
    was silently shrinking the flash to 0.01ms — no highlight at all. */
 @media(prefers-reduced-motion:reduce){
-  tr.hl-flash td,.premium-card.hl-flash{animation-duration:4s !important}
+  tr.hl-flash td,.premium-card.hl-flash{animation-duration:2s !important}
 }
 
 /* ---- portal: certifications / team / gallery fold away until opened ---- */
