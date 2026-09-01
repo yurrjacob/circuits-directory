@@ -511,14 +511,25 @@ async function initResults(forcedTerm){
       </div>
     </div>` + (featured ? '' : listCta(escapeHtml(q)));
 
-  /* Arriving from a profile's keyword tag (?hl=<slug>): walk the buyer to that
-     company's row — or its sponsor banner — and flash it so the eye lands. */
+  /* Arriving from a profile's keyword tag or the approval email (?hl=<slug>):
+     walk the reader to that company's row — or its sponsor banner — and flash
+     it so the eye lands. The row is scrolled into view FIRST and lit up only
+     once it is on screen; lighting it during the scroll meant people caught
+     the last quarter-second of the fade and nothing else (Jacob, 2026-09-01). */
   const hl = params.get('hl');
   if(hl){
     const target = body.querySelector(`[data-slug="${CSS.escape(hl)}"]`);
     if(target){
-      target.classList.add('hl-flash');
-      setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
+      let lit = false;
+      const light = () => { if(lit) return; lit = true; target.classList.add('hl-flash'); };
+      setTimeout(() => {
+        const r = target.getBoundingClientRect();
+        const onScreen = r.top >= 0 && r.bottom <= innerHeight;
+        if(onScreen){ light(); return; }
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document.addEventListener('scrollend', light, { once: true });
+        setTimeout(light, 900);            // browsers without scrollend
+      }, 60);
     }
   }
 }
