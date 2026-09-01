@@ -827,11 +827,13 @@ for (const gone of ['login.html', 'admin.html']) {
 
   /* ...but the table rows are HTML strings carrying onclick="foo(...)", and an
      inline handler is evaluated in global scope. Wrapping the file once put
-     every row button — Edit, Badge, Remove, Pause, Approve, Reject, Deny,
-     Suspend — out of reach of its own code, and they silently did nothing.
-     Every name a row calls must be published on window. */
+     every row button — Edit, Badge, Remove, Pause, Approve, Reject, Suspend —
+     out of reach of its own code, and they silently did nothing. Every name a
+     row calls must be published on window. (The claims, reviews and buyers-
+     waiting panels, with their Approve/Deny/Mark done buttons, were removed
+     from the console on 2026-09-01, so the floor is 7.) */
   const called = [...adminJs.matchAll(/onclick="([A-Za-z_$][\w$]*)\s*\(/g)].map(m => m[1]);
-  assert.ok(called.length >= 9, 'expected the console to wire its row buttons inline');
+  assert.ok(called.length >= 7, 'expected the console to wire its row buttons inline');
   const exported = (adminJs.match(/Object\.assign\(window,\s*\{([^}]*)\}/) || [, ''])[1]
     .split(',').map(x => x.trim()).filter(Boolean);
   for (const fn of new Set(called)) {

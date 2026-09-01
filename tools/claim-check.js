@@ -59,38 +59,9 @@ assert.strictEqual(verdict(acme, ''), 'unknown', 'a claim with no email is not b
 assert.strictEqual(verdict({ website: '', email: 'ops@bell.co.uk' }, 'dana@bell.co.uk'), 'listed-address',
   'a claim from the address already on the listing is not recognised');
 
-/* ---- the admin console renders it honestly ---- */
-const admin = fs.readFileSync(path.join(__dirname, '..', 'admin.js'), 'utf8');
+/* The admin console's claim panel (signal labels, weak-evidence confirmation
+   before Approve) was retired on 2026-09-01 together with the "Claim this
+   listing" prompts, so there is no renderer left to check here. The domain
+   rules above still mirror the SQL, which is still in the database. */
 
-const from = admin.indexOf('const CLAIM_SIGNAL');
-const to = admin.indexOf('async function reloadClaims');
-assert.ok(from >= 0 && to > from, 'the claim signal renderer is gone from admin.js');
-global.esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
-(0, eval)(admin.slice(from, to)
-  .replace('const CLAIM_SIGNAL', 'global.CLAIM_SIGNAL')
-  .replace('function claimSignalHtml', 'global.claimSignalHtml = function'));
-
-assert.strictEqual(claimSignalHtml(null), '',
-  'a failed evidence lookup still renders a label — staff would read "no problem" from a lookup that never ran');
-
-for(const v of ['domain-match','listed-address','free-mailbox','different-domain','unknown']){
-  assert.ok(CLAIM_SIGNAL[v], `the "${v}" verdict has no label, so it would render as "No email"`);
-}
-assert.strictEqual(CLAIM_SIGNAL['free-mailbox'].cls, 'warn',
-  'a personal mailbox is styled as though it confirmed something');
-assert.strictEqual(CLAIM_SIGNAL['different-domain'].cls, 'warn',
-  'an unrelated domain is styled as though it confirmed something');
-
-const escaped = claimSignalHtml({ verdict: 'domain-match', detail: 'x " onmouseover=alert(1) "' });
-assert.ok(!/onmouseover=alert/.test(escaped.replace(/&quot;/g, '')) || /&quot;/.test(escaped),
-  'the evidence text is not escaped before going into a title attribute');
-
-/* ---- and the weak-evidence confirmation still guards Approve ---- */
-const decide = admin.slice(admin.indexOf('async function decide(id, approve)'),
-                           admin.indexOf('/* ---- review moderation ---- */'));
-for(const v of ['free-mailbox','different-domain','unknown']){
-  assert.ok(decide.includes(v), `approving a "${v}" claim no longer asks staff to confirm`);
-}
-assert.ok(/if\(!ok\)\s*return/.test(decide), 'the confirmation is shown but its answer is ignored');
-
-console.log('claim evidence OK — no false verification, weak claims warned before approval');
+console.log('claim evidence OK — domain rules mirror the SQL (claim panel retired 2026-09-01)');

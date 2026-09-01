@@ -91,7 +91,7 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
 
   for(const need of ['pf-layout','pf-main','pf-side','pf-side-card','pf-cta','pf-rows',
                      'id="pf-email-cta"','id="pf-phone"','id="pf-email"','id="pf-site"',
-                     'pf-claim','aaa_electronics']){
+                     'aaa_electronics']){
     assert.ok(captured.includes(need), 'missing from render: ' + need);
   }
   /* The in-page quote form was removed 2026-08-21 (Jacob) — the profile
@@ -166,8 +166,10 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   global.companyClaimed = async () => false;
   await initProfile();
   assert.ok(captured.includes('lb-unclaimed'), 'an unclaimed listing is not marked as such');
-  assert.ok(captured.includes('pf-unclaimed-card'), 'the unclaimed listing has no claim prompt');
-  assert.ok(captured.includes('/claim?c='), 'the unclaimed prompt does not link to the claim flow');
+  assert.ok(captured.includes('pf-unclaimed-card'), 'the unclaimed listing does not say its details are unconfirmed');
+  /* Claims were retired 2026-09-01 (Jacob): nothing on a profile may invite one,
+     because there is no longer anywhere for staff to approve it. */
+  assert.ok(!/\/claim\b|pf-claim"/.test(captured), 'a profile still links to the retired claim flow');
   global.companyClaimed = async () => true;
 
   /* The two marks must never swap places.
