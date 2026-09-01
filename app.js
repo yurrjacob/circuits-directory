@@ -439,10 +439,16 @@ async function initResults(forcedTerm){
 
   /* The Exclusive Sponsor is lifted OUT of the list, not shown twice. While the
      banner is being paid for, that company IS the banner; when it lapses the
-     row returns to its permanent position, because the order is by created_at
-     and nothing about the position was given away. */
+     row goes back into the list like any other. */
   const featured = listings.find(l => l.banner);
   const listed = listings.filter(l => !l.banner);
+  /* Every load deals the list in a fresh random order (Jacob, 2026-09-01) —
+     the "#" is just the row's place today, not a rank. Fisher-Yates, because
+     sort(() => Math.random() - .5) is biased. */
+  for(let i = listed.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [listed[i], listed[j]] = [listed[j], listed[i]];
+  }
   let html = '';
   if(!featured){
     html += exampleBanner(escapeHtml(q));
