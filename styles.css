@@ -1321,6 +1321,13 @@ body.nav-open .nav-burger .x{display:block}
 @keyframes hl-glow{0%{box-shadow:0 2px 16px rgba(122,133,146,.22)}5%{box-shadow:0 0 0 6px #bfe57a}50%{box-shadow:0 0 0 6px #bfe57a}100%{box-shadow:0 2px 16px rgba(122,133,146,.22)}}
 tr.hl-flash td{animation:hl-pulse 4s ease-in-out both}
 .premium-card.hl-flash{animation:hl-glow 4s ease-in-out both}
+/* A colour change is not motion, so the highlight keeps its timing even under
+   reduced motion. Windows with "animation effects" switched off (Jacob's PC)
+   reports prefers-reduced-motion, and the global reset earlier in this file
+   was silently shrinking the flash to 0.01ms — no highlight at all. */
+@media(prefers-reduced-motion:reduce){
+  tr.hl-flash td,.premium-card.hl-flash{animation-duration:4s !important}
+}
 
 /* ---- portal: certifications / team / gallery fold away until opened ---- */
 .pt-fold{border:1px solid var(--line);border-radius:12px;margin:14px 0;background:var(--card)}
