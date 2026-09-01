@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /* The search results page, driven without a browser.
 
-   An empty keyword opens with the keyword-available pitch (mocked-up sponsor
-   card and listing row — Jacob's chosen layout, restored 2026-08-20), with the
-   buyer's "tell me when someone lists" capture at the bottom. The other
-   invariants stand: every search logged, empty pages noindexed, and a failed
-   lookup never mistaken for an unclaimed keyword — that would sell a keyword
-   twice. */
+   An empty keyword opens with the banner-available pitch (mocked-up sponsor
+   card and listing row — Jacob's chosen layout, restored 2026-08-20; the
+   buyer's "tell me when someone lists" capture was removed 2026-09-01). Any
+   keyword page without a sponsor shows the same example banner and the
+   "Get Listed" button (2026-09-01). The other invariants stand: every search
+   logged, empty pages noindexed, and a failed lookup never mistaken for an
+   unclaimed keyword — that would sell a keyword twice. */
 const fs = require('fs'), path = require('path'), assert = require('assert');
 
 const src = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
@@ -73,26 +74,29 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
 (0, eval)(src.slice(from, to).replace('async function initResults', 'global.initResults = async function'));
 
 (async () => {
-  /* --- nothing listed: the keyword-available pitch, wanted-form at the
-         bottom (restored to the pre-redesign layout on 2026-08-20 at Jacob's
-         direction: pitch first, "tell me when someone lists" last) --- */
+  /* --- nothing listed: the banner-available pitch (pitch first, example
+         row, then the Get Listed button; no email capture since 2026-09-01) --- */
   listingsToReturn = []; relatedToReturn = [];
   await initResults('oscillators');
 
-  assert.ok(/This Circuits-Keyword&trade; is available/.test(captured),
-    'the empty result no longer opens with the keyword-available pitch');
-  for (const ghost of ['Your Company or Name', 'sales@yourcompany.com', '(555) 123-4567', 'Your Contact']) {
+  assert.ok(/This Banner is Available/.test(captured),
+    'the empty result no longer opens with the banner-available pitch');
+  for (const ghost of ['Your Company', 'johndoe@yourcompany.com', '(555) 123-4567', 'John Doe']) {
     assert.ok(captured.includes(ghost),
       `the mocked-up example listing is missing its "${ghost}" placeholder`);
   }
-  assert.ok(/Be The First Listed For/.test(captured),
-    'the pitch lost its call to action');
-  assert.ok(/id="wanted-form"/.test(captured),
-    'there is no way for a buyer to say what they were looking for');
-  assert.ok(/type="email"/.test(captured), 'the demand form takes no email address');
-  assert.ok(/privacy/.test(captured), 'the email capture does not link the privacy policy');
-  assert.ok(captured.indexOf('This Circuits-Keyword&trade; is available') < captured.indexOf('wanted-form'),
-    'the buyer capture is not at the bottom — the pitch should come first');
+  assert.ok(!/Your Company or Name|Your Contact|sales@yourcompany/.test(captured),
+    'an old placeholder is back on the example listing');
+  assert.ok(/Get Listed For <span class="tc">oscillators<\/span>/.test(captured),
+    'the pitch lost its call to action (or the keyword is not wrapped for capitalising)');
+  assert.ok(/<span class="doc-link">Website<\/span>/.test(captured) && /<span class="doc-link">View Docs<\/span>/.test(captured),
+    'the example listing lost its Website / View Docs placeholders');
+  assert.ok(!/<a[^>]*>(Website|View Docs)<\/a>/.test(captured),
+    'a placeholder Website / View Docs label is a real link — it must not go anywhere');
+  assert.ok(!/wanted-form|Tell me when someone lists|Looking to buy/.test(captured),
+    'the "tell me when someone lists" capture is back (removed 2026-09-01)');
+  assert.ok(captured.indexOf('This Banner is Available') < captured.indexOf('Get Listed For'),
+    'the Get Listed button is not at the bottom — the pitch should come first');
 
   /* --- every search is recorded, hit or miss --- */
   assert.deepStrictEqual(logged, { term: 'oscillators', hits: 0 },
@@ -117,6 +121,17 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   await initResults('oscillators');
   assert.ok(/Acme/.test(captured), 'a real listing stopped rendering');
   assert.ok(!/wanted-form/.test(captured), 'the demand form shows even when results were found');
+  /* nobody holds the banner here, so the example banner and the Get Listed
+     button frame the list (2026-09-01) */
+  assert.ok(/This Banner is Available/.test(captured) && /Exclusive Sponsor/.test(captured),
+    'a keyword list with no sponsor does not show the example banner');
+  assert.ok(/Get Listed For <span class="tc">oscillators<\/span>/.test(captured),
+    'a keyword list with no sponsor has no Get Listed button');
+  assert.ok(captured.indexOf('This Banner is Available') < captured.indexOf('Acme')
+    && captured.indexOf('Acme') < captured.indexOf('Get Listed For'),
+    'the example banner should sit above the list and the Get Listed button below it');
+  assert.ok(!/Your Company<\/a>/.test(captured),
+    'the mocked-up example ROW is showing on a page that has real listings');
   assert.deepStrictEqual(logged, { term: 'oscillators', hits: 1 },
     'a search that found something was not recorded with its hit count');
 
@@ -152,11 +167,12 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   assert.ok(!/#rfq/.test(captured),
     'something still links to the removed in-page quote form');
 
-  /* The position must not present itself as a ranking. */
-  assert.ok(!/<th class="rank"[^>]*>#</.test(captured),
-    'the position column is back to a bare "#", which buyers read as a ranking');
-  assert.ok(/not a ranking/.test(captured),
-    'the results page no longer says the order is not a ranking');
+  /* The position column is a plain "#" and the claim-order note is gone
+     (both at Jacob's request, 2026-09-01). */
+  assert.ok(/<th class="rank">#<\/th>/.test(captured),
+    'the position column is not headed "#"');
+  assert.ok(!/Held<\/th>|list-note|not a ranking/.test(captured),
+    'the "Held" heading or the claim-order note is back on the results page');
 
   /* --- and every listing is numbered --- */
   assert.ok(/class="rank"[^>]*>1</.test(captured), 'listings are not numbered');
@@ -192,6 +208,9 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
     'the sponsor banner lost the supplier email');
   assert.ok(!/Request a Quote/.test(captured),
     'a Request a Quote button is back on the sponsor banner (removed for MVP1)');
+  /* a paid sponsor replaces the example banner and its Get Listed button */
+  assert.ok(!/This Banner is Available|Get Listed For|John Doe/.test(captured),
+    'the example banner or Get Listed button is showing on a keyword that already has a sponsor');
 
-  console.log('search results OK — pitch page with buyer capture at the bottom, numbered rows, sponsor not listed twice');
+  console.log('search results OK — banner pitch on empty and unsponsored lists, numbered rows, sponsor not listed twice');
 })();
