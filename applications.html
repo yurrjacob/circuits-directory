@@ -50,15 +50,24 @@
   </div>
 
   <div class="sheet-wrap">
+    <!-- Ten columns that share the page width (no horizontal scrolling, at
+         Jacob's request 2026-09-01): contact/email/phone are one stacked cell,
+         Ideas moved to the Admin tab, and the logo thumbnail IS the link to the
+         full image, so the pasted-URL line went too. -->
     <table class="sheet-table">
+      <colgroup>
+        <col style="width:7%"><col style="width:17%"><col style="width:14%"><col style="width:12%">
+        <col style="width:8%"><col style="width:11%"><col style="width:11%"><col style="width:6%">
+        <col style="width:6%"><col style="width:8%">
+      </colgroup>
       <thead>
         <tr>
-          <th>Date</th><th>Company</th><th>Contact</th><th>Email</th><th>Phone</th>
-          <th>Keyword &amp; Price</th><th>Premium Banner</th><th>Trust Badge</th><th>Profile Description</th><th>Ideas</th>
+          <th>Date</th><th>Company</th><th>Contact</th>
+          <th>Keyword &amp; Price</th><th>Premium Banner</th><th>Trust Badge</th><th>Profile Description</th>
           <th>Total Price</th><th>Status</th><th>Actions</th>
         </tr>
       </thead>
-      <tbody id="apps-body"><tr><td colspan="13" style="padding:20px;text-align:center;color:#5f6368">Loading…</td></tr></tbody>
+      <tbody id="apps-body"><tr><td colspan="10" style="padding:20px;text-align:center;color:#5f6368">Loading…</td></tr></tbody>
     </table>
   </div>
 </main>
@@ -128,8 +137,9 @@ function sortRows(rows){
 }
 
 function rowHtml(a){
+  /* the thumbnail is the link: click the picture to open the full-size logo */
   const logoHtml = isLogoUrl(a.logo)
-    ? `<a href="${esc(a.logo)}" target="_blank" rel="noopener" title="View full logo"><img class="logo-thumb" src="${esc(a.logo)}" alt="${esc(a.company)} logo"></a>`
+    ? `<a href="${esc(a.logo)}" target="_blank" rel="noopener" title="Open the full-size logo"><img class="logo-thumb" src="${esc(a.logo)}" alt="${esc(a.company)} logo"></a>`
     : '<span style="color:#c0c4bb">—</span>';
   const conflict = a.status!=='Approved' && bannerConflict(a);
   return `<tr data-id="${a.id}" class="${conflict?'row-warn':''}">
@@ -141,18 +151,19 @@ function rowHtml(a){
         <label class="mini-btn" style="padding:2px 8px;font-size:.72rem;cursor:pointer;margin-left:6px" title="Upload a logo image">Upload<input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" data-logo-up style="display:none"></label>
         ${isLogoUrl(a.logo)?`<button type="button" class="mini-btn danger" data-act="clearlogo" style="padding:2px 8px;font-size:.72rem;margin-left:6px" title="Remove this logo">Clear</button>`:''}
       </div>
-      <div class="co-sub">URL: <span class="ce" contenteditable data-field="logo" data-ph="paste image URL">${isLogoUrl(a.logo)?esc(a.logo):''}</span></div>
     </td>
-    <td><span class="ce" contenteditable data-field="contact" data-ph="—">${esc(a.contact)}</span></td>
-    <td><span class="ce" contenteditable data-field="email" data-ph="—">${esc(a.email)}</span></td>
-    <td><span class="ce" contenteditable data-field="phone" data-ph="—">${esc(a.phone)}</span></td>
-    <td class="kw nowrap">
+    <td class="contact-cell">
+      <span class="ce" contenteditable data-field="contact" data-ph="Name">${esc(a.contact)}</span>
+      <div class="co-sub"><span class="ce" contenteditable data-field="email" data-ph="email">${esc(a.email)}</span></div>
+      <div class="co-sub"><span class="ce" contenteditable data-field="phone" data-ph="phone">${esc(a.phone)}</span></div>
+    </td>
+    <td class="kw">
       <label class="cbx" title="Listing live for this keyword"><input type="checkbox" data-field="live" ${a.paused?'':'checked'}></label>
       <span class="ce" contenteditable data-field="keyword" data-ph="—">${esc(a.keyword)}</span>
       <span class="ce price" contenteditable data-price="listing_price" data-ph="${money(BASE_FEE)}">${money(effPrice(a.listing_price,BASE_FEE))}</span>
     </td>
-    <td class="nowrap"><label class="cbx"><input type="checkbox" data-field="banner" ${a.banner?'checked':''}> Yes</label>${conflict?' <span class="warn-flag" title="This keyword already has a live Exclusive Sponsor banner">⚠</span>':''} <span class="ce price" contenteditable data-price="banner_price" data-cell="bannerprice" data-ph="${a.banner?money(BANNER_FEE):''}">${a.banner?money(effPrice(a.banner_price,BANNER_FEE)):''}</span></td>
-    <td class="nowrap badge-cell">
+    <td><label class="cbx"><input type="checkbox" data-field="banner" ${a.banner?'checked':''}> Yes</label>${conflict?' <span class="warn-flag" title="This keyword already has a live Exclusive Sponsor banner">⚠</span>':''} <span class="ce price" contenteditable data-price="banner_price" data-cell="bannerprice" data-ph="${a.banner?money(BANNER_FEE):''}">${a.banner?money(effPrice(a.banner_price,BANNER_FEE)):''}</span></td>
+    <td class="badge-cell">
       <label class="cbx" title="Trust badge on/off"><input type="checkbox" data-badge="on" ${a.badge?'checked':''}> Yes</label>
       ${a.badge ? `
       <span class="ce" contenteditable data-badge="text" data-ph="none">${esc(a.badge.text)}</span>
@@ -160,10 +171,9 @@ function rowHtml(a){
       <span class="ce price" contenteditable data-price="badge_price" data-cell="badgeprice" data-ph="${money(BADGE_FEE)}">${money(effPrice(a.badge_price,BADGE_FEE))}</span>` : ''}
     </td>
     <td class="msg-cell"><span class="ce" contenteditable data-field="description" data-maxlen="300" data-ph="Add description…" title="Shown on the listing's Exclusive Sponsor banner once entered (max 300 characters)">${esc(a.description)}</span></td>
-    <td class="msg-cell"><span class="ce" contenteditable data-field="message" data-ph="—" title="Applicant's ideas from the form (not shown on their profile)">${esc(a.message)}</span></td>
     <td class="nowrap" data-cell="total"><b>$${totalPrice(a)}/mo</b></td>
     <td class="nowrap">${statusBadge(a.status)}</td>
-    <td class="row-actions nowrap">
+    <td class="row-actions">
       <button class="mini-btn green" data-act="approve" ${conflict?'disabled title="Blocked: this keyword already has a live Exclusive Sponsor banner. Remove that banner first."':''}>Approve</button>
       <button class="mini-btn danger" data-act="deny">Deny</button>
       <button class="mini-btn" data-act="reset" title="Undo the changes you made to this line">Reset Changes</button>
@@ -176,7 +186,7 @@ function draw(){
   if(companyFilter) rows = rows.filter(a => a.company===companyFilter);
   rows = sortRows(rows).slice(0, rowLimit);
   body.innerHTML = rows.map(rowHtml).join('')
-    || `<tr><td colspan="13" class="empty-line" style="text-align:center;padding:20px">No applications in this view.</td></tr>`;
+    || `<tr><td colspan="10" class="empty-line" style="text-align:center;padding:20px">No applications in this view.</td></tr>`;
   $('c-all').textContent = apps.length;
   $('c-acc').textContent = apps.filter(a=>a.status==='Approved').length;
   $('c-pen').textContent = apps.filter(a=>a.status==='Pending').length;

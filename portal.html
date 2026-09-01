@@ -56,9 +56,8 @@
     <div id="pt-me" class="pf-form"></div>
     <div id="pt-account"></div>
     <div class="auth-note">
-      A profile and a company listing are separate. If your company is already in the directory,
-      <a href="/claim">claim the listing</a> and our team will connect it to this profile.
-      If it is not listed yet, <a href="/join">get it listed</a>.
+      A profile and a company listing are separate. If your company is not in the directory yet,
+      <a href="/join">get it listed</a>.
     </div>
     <div class="auth-note" id="pt-none-staff" style="display:none;border-left:3px solid var(--green);padding-left:10px">
       This address is on the Circuits.com staff list. The supplier portal only ever shows companies you
@@ -261,7 +260,6 @@
     <div class="stat"><div class="num" id="s-companies">0</div><div class="lbl">Companies</div></div>
     <div class="stat"><div class="num" id="s-sponsored">0</div><div class="lbl">Sponsored Banners</div></div>
     <div class="stat"><div class="num" id="s-pending">0</div><div class="lbl">Pending Applications</div></div>
-    <div class="stat"><div class="num" id="s-unanswered">0</div><div class="lbl">Unanswered Requests</div></div>
   </div>
 
   <!-- Keyword Listings -->
@@ -381,34 +379,19 @@
     </div>
   </div>
 
-  <!-- Quote requests a supplier has left hanging. Until now, silence here was
-       invisible: the buyer concluded the directory does not work, and nobody
-       on staff found out. Counts only threads with no supplier reply. -->
+  <!-- Ideas: what applicants typed into "Have Any Ideas? Tell Us What You're
+       Thinking" on the Get Listed form. Moved here from the Website
+       Applications sheet on 2026-09-01. -->
   <div class="panel">
-    <div class="panel-head"><h2>Unanswered Quote Requests</h2>
-      <span class="hint">Waiting 3+ Days With No Reply From The Supplier</span></div>
+    <div class="panel-head"><h2>Ideas</h2><span class="hint">From The Get Listed Form &mdash; Not Shown On Any Profile</span></div>
     <div class="panel-body">
       <div class="table-scroll">
         <table class="dash-table">
-          <thead><tr><th>Company</th><th>Waiting</th><th>Oldest Request</th><th>Actions</th></tr></thead>
-          <tbody id="unanswered-body"></tbody>
+          <thead><tr><th>When</th><th>Company</th><th>Contact</th><th>Idea</th></tr></thead>
+          <tbody id="ideas-body"></tbody>
         </table>
       </div>
-      <div id="unanswered-empty" class="empty-line" style="display:none">Nothing Waiting On A Supplier.</div>
-    </div>
-  </div>
-
-  <!-- Profile claims -->
-  <div class="panel">
-    <div class="panel-head"><h2>Profile Claims</h2><span class="hint">Approving A Claim Grants Portal Access</span></div>
-    <div class="panel-body">
-      <div class="table-scroll">
-        <table class="dash-table">
-          <thead><tr><th>Company</th><th>Claimant</th><th>Email</th><th>Evidence</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody id="claims-body"></tbody>
-        </table>
-      </div>
-      <div id="claims-empty" class="empty-line" style="display:none">No Profile Claims.</div>
+      <div id="ideas-empty" class="empty-line" style="display:none">No Ideas Submitted Yet.</div>
     </div>
   </div>
 
@@ -452,21 +435,6 @@
     </div>
   </div>
 
-  <!-- Buyers who asked to be told when somebody lists -->
-  <div class="panel">
-    <div class="panel-head"><h2>Buyers Waiting</h2>
-      <span class="hint">Left An Email On A Keyword Nobody Holds</span></div>
-    <div class="panel-body">
-      <div class="table-scroll">
-        <table class="dash-table">
-          <thead><tr><th>When</th><th>Keyword</th><th>Email</th><th>What They Need</th><th>Actions</th></tr></thead>
-          <tbody id="wanted-body"></tbody>
-        </table>
-      </div>
-      <div id="wanted-empty" class="empty-line" style="display:none">Nobody waiting.</div>
-    </div>
-  </div>
-
   <!-- Audit log: append-only, including our own actions -->
   <div class="panel">
     <div class="panel-head"><h2>Staff Audit Log</h2><span class="hint">Append-Only &mdash; Cannot Be Edited Or Deleted, Including By Us</span></div>
@@ -481,19 +449,6 @@
     </div>
   </div>
 
-  <!-- Review moderation -->
-  <div class="panel">
-    <div class="panel-head"><h2>Buyer Reviews</h2><span class="hint">Companies Cannot Approve Their Own</span></div>
-    <div class="panel-body">
-      <div class="table-scroll">
-        <table class="dash-table">
-          <thead><tr><th>Company</th><th>Rating</th><th>Author</th><th>Review</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody id="reviews-body"></tbody>
-        </table>
-      </div>
-      <div id="reviews-empty" class="empty-line" style="display:none">No Reviews Submitted.</div>
-    </div>
-  </div>
   </section>
 </main>
 

@@ -151,7 +151,23 @@ function renderPending(){
   $('pending-empty').style.display = pending().length ? 'none' : 'block';
 }
 
-function renderAll(){ renderStats(); renderListings(); renderBanners(); renderBadges(); renderPending(); }
+/* Ideas: the free-text "Have Any Ideas?" box on the Get Listed form, one row
+   per application that filled it in, newest first. Lived on the Website
+   Applications sheet until 2026-09-01; it is read here, edited nowhere. */
+function renderIdeas(){
+  const rows = allApps.filter(a => a.message && String(a.message).trim())
+    .slice().sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''));
+  $('ideas-body').innerHTML = rows.map(a=>`
+    <tr>
+      <td class="cell-muted nowrap">${esc((a.created_at||'').slice(0,10))}</td>
+      <td>${esc(a.company)||'—'}</td>
+      <td class="cell-muted">${esc(a.contact)||'—'}${a.email?'<br><span class="cell-muted">'+esc(a.email)+'</span>':''}</td>
+      <td class="idea-text">${esc(a.message)}</td>
+    </tr>`).join('');
+  $('ideas-empty').style.display = rows.length ? 'none' : 'block';
+}
+
+function renderAll(){ renderStats(); renderListings(); renderBanners(); renderBadges(); renderPending(); renderIdeas(); }
 function renderPanel(panel){ ({listings:renderListings,banners:renderBanners,badges:renderBadges,pending:renderPending}[panel])(); }
 async function reload(){ allApps = await fetchApplications(); renderAll(); }
 
@@ -252,87 +268,6 @@ async function rejectApp(id){
   await reload();
 }
 
-/* ---- profile claims ---- */
-let allClaims = [];
-/* The claimant's own words, plus the one fact they cannot fake: where their
-   email actually comes from. Shown together so the typed justification is read
-   against the evidence rather than on its own. */
-const CLAIM_SIGNAL = {
-  'domain-match':    { label: 'Company domain',  cls: 'ok'   },
-  'listed-address':  { label: 'Listed address',  cls: 'ok'   },
-  'free-mailbox':    { label: 'Personal email',  cls: 'warn' },
-  'different-domain':{ label: 'Different domain',cls: 'warn' },
-  'unknown':         { label: 'No email',        cls: 'warn' }
-};
-function claimSignalHtml(ev){
-  if(!ev) return '';   // lookup failed: show nothing rather than a reassuring guess
-  const s = CLAIM_SIGNAL[ev.verdict] || CLAIM_SIGNAL.unknown;
-  return `<div class="claim-signal ${s.cls}" title="${esc(ev.detail)}">${esc(s.label)}</div>`;
-}
-async function reloadClaims(){
-  allClaims = await fetchClaims();
-  /* only for claims still awaiting a decision — the rest are history */
-  await Promise.all(allClaims.map(async c => {
-    if(c.status === 'Pending') c._ev = await claimEvidence(c.company_slug, c.email);
-  }));
-  const rows = allClaims.map(c=>`<tr>
-    <td><a href="/${esc(c.company_slug)}" target="_blank" rel="noopener">${esc(c.company_slug)}</a></td>
-    <td>${esc(c.name||'—')}${c.role_title?'<br><span class="cell-muted">'+esc(c.role_title)+'</span>':''}</td>
-    <td class="cell-muted">${esc(c.email)}${claimSignalHtml(c._ev)}</td>
-    <td class="cell-muted" style="max-width:280px">${esc(c.evidence||'—')}${
-      c._ev ? '<div class="claim-why">' + esc(c._ev.detail) + '</div>' : ''}</td>
-    <td>${esc(c.status)}</td>
-    <td class="row-actions">${c.status==='Pending'
-      ? `<button class="mini-btn green" onclick="decide('${c.id}',true)">Approve</button>
-         <button class="mini-btn" onclick="decide('${c.id}',false)">Deny</button>` : ''}</td></tr>`).join('');
-  $('claims-body').innerHTML = rows;
-  $('claims-empty').style.display = allClaims.length ? 'none' : 'block';
-}
-async function decide(id, approve){
-  const c = allClaims.find(x=>x.id===id); if(!c) return;
-  /* Approving hands over the listing's quote requests, and taking that back
-     later does not un-send the ones that went to the wrong inbox. When the
-     email is not from the company, say so once before it happens. */
-  if(approve && c._ev && (c._ev.verdict === 'free-mailbox'
-      || c._ev.verdict === 'different-domain' || c._ev.verdict === 'unknown')){
-    const ok = confirm(c._ev.detail + '\n\nApproving gives ' + (c.email || 'this person')
-      + ' control of ' + c.company_slug + ', including every quote request sent to it.'
-      + '\n\nApprove anyway?');
-    if(!ok) return;
-  }
-  const err = await decideClaim(c, approve);
-  if(err){ alert('Could not update that claim: ' + err); return; }
-  await reloadClaims();
-}
-
-/* ---- review moderation ---- */
-let allReviews = [];
-async function reloadReviews(){
-  allReviews = await fetchAllReviews();
-  /* Anything still Pending is invisible to the public until someone here acts,
-     so it goes to the top rather than being buried under old decisions. */
-  const rank = s => s === 'Pending' ? 0 : 1;
-  allReviews.sort((a,b) => rank(a.status) - rank(b.status));
-  const waiting = allReviews.filter(r => r.status === 'Pending').length;
-  const hint = document.querySelector('#reviews-body')
-    .closest('.panel').querySelector('.panel-head .hint');
-  if(hint) hint.textContent = waiting
-    ? waiting + (waiting === 1 ? ' review waiting' : ' reviews waiting')
-    : 'Nothing waiting';
-  $('reviews-body').innerHTML = allReviews.map(r=>`<tr class="${r.status==='Pending'?'row-waiting':''}">
-    <td><a href="/${esc(r.company_slug)}" target="_blank" rel="noopener">${esc(r.company_slug)}</a></td>
-    <td>${'★'.repeat(r.rating)}</td>
-    <td class="cell-muted">${esc(r.author_name)}<br><span class="cell-muted">${esc(r.author_email)}</span></td>
-    <td class="cell-muted" style="max-width:320px">${esc(r.body)}</td>
-    <td>${esc(r.status)}</td>
-    <td class="row-actions">
-      ${r.status!=='Approved'?`<button class="mini-btn green" onclick="modReview('${r.id}','Approved')">Approve</button>`:''}
-      ${r.status!=='Denied'?`<button class="mini-btn" onclick="modReview('${r.id}','Denied')">Deny</button>`:''}
-    </td></tr>`).join('');
-  $('reviews-empty').style.display = allReviews.length ? 'none' : 'block';
-}
-async function modReview(id, status){ await setReviewStatus(id, status); await reloadReviews(); }
-
 /* ---- companies: suspend and reinstate ----
    Suspension is the alternative to deleting. A suspended company disappears
    from the directory and from keyword results, cannot be edited by its owner,
@@ -378,26 +313,6 @@ async function setSuspended(slug, suspend){
   await reloadAudit();
 }
 
-/* ---- quote requests the supplier is sitting on ----
-   The database counts New/Open inquiries older than three days with no
-   supplier-authored message. The "Nudge" action is a plain mailto from the
-   staff member's own mail client — it works today, with no sending key. */
-async function reloadUnanswered(){
-  const rows = await adminUnansweredInquiries(3);
-  const total = rows.reduce((a, r) => a + Number(r.waiting), 0);
-  if($('s-unanswered')) $('s-unanswered').textContent = total;
-  $('unanswered-body').innerHTML = rows.map(r => `
-    <tr class="row-waiting">
-      <td>${esc(r.company)}</td>
-      <td><b>${r.waiting}</b> request${Number(r.waiting) === 1 ? '' : 's'}</td>
-      <td class="cell-muted nowrap">${new Date(r.oldest).toLocaleDateString()}</td>
-      <td class="row-actions">${r.email
-        ? `<a class="mini-btn" href="mailto:${esc(r.email)}?subject=${encodeURIComponent('Buyers are waiting on you at Circuits.com')}&body=${encodeURIComponent('Hi,\n\nQuote requests are waiting in your Circuits.com portal with no reply yet. Buyers usually move on after a few days.\n\nSign in at https://circuits.com/portal to answer them.\n\n- The Circuits.com team')}">Nudge by email</a>`
-        : '<span class="cell-muted">no email on file</span>'}</td>
-    </tr>`).join('');
-  $('unanswered-empty').style.display = rows.length ? 'none' : 'block';
-}
-
 /* ---- audit log ---- */
 async function reloadAudit(){
   const rows = await fetchSecurityLog(100);
@@ -414,9 +329,10 @@ async function reloadAudit(){
   $('audit-empty').style.display = rows.length ? 'none' : 'block';
 }
 
-/* ---- demand: what people looked for, and who is waiting ----
+/* ---- demand: what people looked for ----
    The whole reason for logging searches. A list of terms nobody could be sold
-   is the sales list, and the ones with a buyer attached are warm. */
+   is the sales list. (The "buyers waiting" list went with the capture form,
+   2026-09-01.) */
 let searchView = { days: 30, missedOnly: false };
 
 async function reloadSearches(){
@@ -430,25 +346,6 @@ async function reloadSearches(){
       <td><a class="mini-btn" href="/results?q=${encodeURIComponent(r.term)}" target="_blank" rel="noopener">See it</a></td>
     </tr>`).join('');
   $('searches-empty').style.display = rows.length ? 'none' : 'block';
-}
-
-async function reloadWanted(){
-  const rows = await fetchWanted();
-  $('wanted-body').innerHTML = rows.map(w => `
-    <tr${w.handled ? ' style="opacity:.5"' : ''}>
-      <td class="cell-muted nowrap">${new Date(w.at).toLocaleDateString()}</td>
-      <td><b>${esc(w.keyword)}</b></td>
-      <td><a href="mailto:${esc(w.email)}?subject=${encodeURIComponent('Your Circuits.com request for "' + w.keyword + '"')}">${esc(w.email)}</a></td>
-      <td class="cell-muted" style="max-width:340px">${esc(w.note || '')}</td>
-      <td><button class="mini-btn" onclick="markWanted('${w.id}', ${w.handled ? 'false' : 'true'})">${w.handled ? 'Reopen' : 'Mark done'}</button></td>
-    </tr>`).join('');
-  $('wanted-empty').style.display = rows.length ? 'none' : 'block';
-}
-
-async function markWanted(id, handled){
-  const err = await setWantedHandled(id, handled);
-  if(err){ alert('Could not update:\n\n' + err); return; }
-  reloadWanted();
 }
 
 document.addEventListener('click', e => {
@@ -471,8 +368,7 @@ window.initAdmin = async function(){
   if(started) return;
   if(!(await checkStaff())) return;        // belt and braces; the database is the real gate
   started = true;
-  reloadClaims(); reloadReviews(); reloadCompanies(); reloadAudit();
-  reloadSearches(); reloadWanted(); reloadUnanswered();
+  reloadCompanies(); reloadAudit(); reloadSearches();
   const saved = await loadPrefs('admin');
   if(saved) for(const k in panels){
     if(saved[k] && saved[k].sort) panels[k].sort = saved[k].sort;
@@ -488,6 +384,6 @@ window.initAdmin = async function(){
    tools/check.js fails if a new onclick appears without being listed here. */
 Object.assign(window, {
   editListing, editBadge, removeListing, togglePause,
-  approveApp, rejectApp, decide, modReview, setSuspended, markWanted
+  approveApp, rejectApp, setSuspended
 });
 })();

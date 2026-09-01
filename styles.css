@@ -378,6 +378,7 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 .dash-table td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
 .dash-table tr:last-child td{border-bottom:0}
 .dash-table tr:hover td{background:var(--bg-soft)}
+.dash-table .idea-text{white-space:pre-line;max-width:520px;color:var(--ink)}
 .kw{font-weight:600}
 .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .list-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px}
@@ -403,15 +404,21 @@ tr.row-warn td{background:#fff3cd}
 .sheet-controls{display:flex;gap:18px;flex-wrap:wrap;margin:0 0 14px}
 .sheet-controls label{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--muted);font-weight:600}
 .sheet-controls select{height:36px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font-size:.85rem;background:var(--card);color:var(--ink);min-width:180px}
-.sheet-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;max-height:calc(100vh - 160px)}
-.sheet-table{width:100%;border-collapse:separate;border-spacing:0;font-size:.8rem;white-space:nowrap}
+.sheet-wrap{overflow-x:hidden;overflow-y:auto;border:1px solid var(--line);border-radius:12px;max-height:calc(100vh - 160px)}
+/* The sheet shares the page width instead of scrolling sideways (2026-09-01):
+   fixed column widths from the colgroup, and every cell may wrap. */
+.sheet-table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:.8rem;white-space:normal}
 /* column headers stay pinned to the top of the screen while scrolling the list */
 .sheet-table th{position:sticky;top:0;z-index:10;background:var(--bg-soft);text-align:left;font-size:.66rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line)}
-.sheet-table td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.sheet-table td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;overflow-wrap:anywhere}
 .sheet-table tr:last-child td{border-bottom:0}
 .sheet-table .nowrap{white-space:nowrap}
+.sheet-table .contact-cell .co-sub{margin-top:3px}
+.sheet-table .row-actions{flex-direction:column;align-items:stretch;gap:5px}
+.sheet-table .row-actions .mini-btn{padding:5px 8px;font-size:.74rem;text-align:center}
+.sheet-table .badge-cell .ce{max-width:100%}
 .sheet-table .co-cell,.sheet-table .msg-cell{white-space:normal}
-.sheet-table .ce{display:inline-block;min-width:34px;padding:1px 4px;border-radius:4px;cursor:text}
+.sheet-table .ce{display:inline-block;min-width:34px;max-width:100%;overflow-wrap:anywhere;padding:1px 4px;border-radius:4px;cursor:text}
 .sheet-table .ce:hover{background:#f1f3ee}
 .sheet-table .ce:focus{outline:2px solid var(--green);background:var(--input-bg)}
 .sheet-table .ce:empty::before{content:attr(data-ph);color:#c0c4bb}
@@ -475,7 +482,7 @@ tr.row-warn td{background:#fff3cd}
 .sheet-table .price{color:var(--green-dark);font-weight:700;font-size:.75rem}
 .sheet-table .cbx{cursor:pointer;white-space:nowrap}
 .sheet-table tr:hover td{background:var(--bg-soft)}
-.sheet-table .msg-cell{white-space:normal;max-width:200px;color:var(--muted)}
+.sheet-table .msg-cell{white-space:normal;color:var(--muted)}
 .sheet-table a{color:var(--green-dark);text-decoration:none}
 .sheet-filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
 .sheet-filters .mini-btn.active{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -487,11 +494,6 @@ tr.row-warn td{background:#fff3cd}
 .mini-btn.green{background:var(--green);border-color:var(--green);color:#0f0f0f;font-weight:700}
 .mini-btn.green:hover{background:var(--green-dark);color:#fff;border-color:var(--green-dark)}
 .row-actions{display:flex;gap:8px;flex-wrap:wrap}
-/* Pin the Actions column to the right edge so it stays visible while scrolling horizontally */
-.sheet-table th:last-child,.sheet-table td:last-child{position:sticky;right:0;z-index:6;background:var(--card);box-shadow:-8px 0 8px -8px rgba(0,0,0,.18)}
-.sheet-table th:last-child{z-index:12;background:var(--bg-soft)}
-.sheet-table tr:hover td:last-child{background:var(--bg-soft)}
-.sheet-table tr.row-warn td:last-child{background:#fff3cd}
 
 .bars{display:flex;align-items:flex-end;gap:10px;height:140px;padding:10px 4px 26px}
 .bars .bar{flex:1;background:linear-gradient(180deg,var(--green),#aadd55);border-radius:6px 6px 0 0;position:relative;min-height:4px}
