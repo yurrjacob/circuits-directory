@@ -1311,10 +1311,15 @@ body.nav-open .nav-burger .x{display:block}
   color:var(--muted);cursor:pointer;border-radius:8px}
 .pw-eye:hover{color:var(--ink);background:var(--bg-soft)}
 
-/* ---- the row a profile's keyword tag points at ---- */
-@keyframes hl-pulse{0%{background:#eaf6d4}70%{background:#eaf6d4}100%{background:transparent}}
-tr.hl-flash td{animation:hl-pulse 3s ease-out;box-shadow:inset 3px 0 0 var(--green)}
-.premium-card.hl-flash{animation:hl-pulse 3s ease-out;outline:2px solid var(--green)}
+/* ---- the row a profile's keyword tag (or the approval email) points at ----
+   A real flash: the row blinks green three times and fades to nothing, leaving
+   no bar or outline behind (the old inset box-shadow drew a green stripe on
+   every cell — Jacob, 2026-09-01). The sponsor card keeps its gradient, so it
+   flashes a glow instead of its background. */
+@keyframes hl-pulse{0%,40%,80%{background:#c8ec84}20%,60%{background:#f1fadf}100%{background:transparent}}
+@keyframes hl-glow{0%,40%,80%{box-shadow:0 0 0 5px #a6dc3e}20%,60%{box-shadow:0 0 0 0 rgba(118,192,0,0)}100%{box-shadow:0 2px 16px rgba(122,133,146,.22)}}
+tr.hl-flash td{animation:hl-pulse 2.4s ease-in-out}
+.premium-card.hl-flash{animation:hl-glow 2.4s ease-in-out}
 
 /* ---- portal: certifications / team / gallery fold away until opened ---- */
 .pt-fold{border:1px solid var(--line);border-radius:12px;margin:14px 0;background:var(--card)}
