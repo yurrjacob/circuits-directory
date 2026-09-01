@@ -146,15 +146,15 @@ img{max-width:100%}
 .subbar-meta .count-line{white-space:nowrap}
 
 .premium{max-width:var(--maxw);margin:10px auto 4px;padding:0 24px}
-.premium-card{position:relative;display:flex;align-items:stretch;gap:22px;border:1px solid var(--sponsor-line);border-left:5px solid #9aa4ae;border-radius:var(--radius);padding:22px;background:linear-gradient(90deg,var(--sponsor-a),var(--sponsor-b));box-shadow:0 2px 16px rgba(122,133,146,.22)}
+.premium-card{position:relative;display:flex;align-items:stretch;gap:26px;border:1px solid var(--sponsor-line);border-left:5px solid #9aa4ae;border-radius:var(--radius);padding:30px 28px;background:linear-gradient(90deg,var(--sponsor-a),var(--sponsor-b));box-shadow:0 2px 16px rgba(122,133,146,.22)}
 .premium-badge{position:absolute;top:-10px;left:18px;background:linear-gradient(180deg,#f2f4f7,#aab3bd);color:#2b3138;font-size:.68rem;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:20px;text-transform:uppercase;box-shadow:0 1px 4px rgba(90,100,112,.35)}
-.premium-logo{width:64px;height:64px;border-radius:12px;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.4rem;flex:0 0 auto;overflow:hidden;align-self:center}
+.premium-logo{width:80px;height:80px;border-radius:14px;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.4rem;flex:0 0 auto;overflow:hidden;align-self:center}
 .co-logo svg.silhouette,.premium-logo svg.silhouette{width:66%;height:66%;display:block}
 .premium-body{flex:1;min-width:0;align-self:center}
-.premium-body h3{margin:0 0 4px;font-size:1.15rem;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.premium-body h3{margin:0 0 6px;font-size:1.32rem;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .premium-body h3 a{color:var(--ink);text-decoration:none}
 .premium-body h3 a:hover{text-decoration:underline}
-.premium-body p{margin:0;color:var(--muted);font-size:.92rem}
+.premium-body p{margin:0;color:var(--muted);font-size:1rem;line-height:1.5}
 /* The contact column is its own panel, not text pushed against the right edge.
    Left-aligned so the three lines share a margin instead of going ragged, and
    the button gets its own line — it used to sit inline after the email. */
@@ -179,9 +179,15 @@ img{max-width:100%}
 
 .listings{max-width:var(--maxw);margin:12px auto 48px;padding:0 24px}
 .table-wrap{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
-table.listings-table{width:100%;border-collapse:collapse;font-size:.92rem}
-.listings-table thead th{background:var(--bg-soft);text-align:left;padding:9px 16px;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
-.listings-table td{padding:8px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
+.listings-table thead th{background:var(--bg-soft);text-align:left;padding:10px 16px;font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+.listings-table td{padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+/* Rows and logos run a size up from the rest of the site's tables so fewer
+   listings fit a screen (2026-09-01) — scoped to the results table on purpose. */
+.listings-table .co-logo{width:38px;height:38px;border-radius:10px}
+.listings-table .co a{font-size:1.02rem}
+/* the search term, capitalised the same way the subbar shows it */
+.tc{text-transform:capitalize}
 .listings-table tr:last-child td{border-bottom:0}
 .listings-table tr:hover td{background:var(--bg-soft)}
 .co{display:flex;align-items:center;gap:12px}

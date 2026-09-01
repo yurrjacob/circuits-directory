@@ -360,6 +360,37 @@ async function initResults(forcedTerm){
      never logged as "nobody wanted this keyword". */
   logSearch(q, listings.length);
 
+  /* The example sponsor banner and the "get listed" button. Shown on an empty
+     keyword page, and on any keyword page where nobody holds the banner yet, so
+     every list carries the pitch (2026-09-01). The Website / View Docs labels are
+     spans on purpose: there is nothing to visit, so nothing should look like it
+     goes somewhere. The keyword is capitalised by CSS (.tc), the same way the
+     subbar shows it. */
+  const exampleBanner = (term, extra = '') => `
+    <div class="empty" style="margin-bottom:4px">
+      <div class="big">This Banner is Available</div>
+      ${extra}
+    </div>
+    <div class="premium"><div class="premium-card">
+      <span class="premium-badge">Exclusive Sponsor</span>
+      <div class="premium-logo">${avatarSvg()}</div>
+      <div class="premium-body">
+        <h3>Your Company</h3>
+        <p>Own the Exclusive Circuits-Keyword&trade; Sponsor Banner for &ldquo;<span class="tc">${term}</span>&rdquo;.<br>Own the First Listing Every Viewer Sees.</p>
+        <div class="premium-links"><span class="doc-link">Website</span><span class="doc-link">View Docs</span></div>
+      </div>
+      <div class="premium-contact">
+        <div class="pc-lines">
+          <span class="pc-name">John Doe</span>
+          <span>johndoe@yourcompany.com</span>
+        </div>
+      </div>
+    </div></div>`;
+  const listCta = (term) => `
+    <div class="empty" style="margin:10px auto 26px">
+      <a class="btn btn-primary" href="/join" style="padding:14px 28px;font-size:1rem;display:inline-block;font-weight:700">Get Listed For <span class="tc">${term}</span></a>
+    </div>`;
+
   if(!listings.length){
     const term = escapeHtml(q);
 
@@ -375,29 +406,10 @@ async function initResults(forcedTerm){
       }
     }catch(e){ /* suggestions are a nicety; the page must render without them */ }
 
-    /* The keyword-available pitch, back by request: the mocked-up sponsor
-       card and listing row show a supplier exactly what they would be buying.
-       The buyer's "tell me when someone lists" capture stays — at the bottom. */
-    body.innerHTML = `
-    <div class="empty" style="margin-bottom:4px">
-      <div class="big">This Circuits-Keyword&trade; is available</div>
-      ${didYouMean}
-    </div>
-    <div class="premium"><div class="premium-card">
-      <span class="premium-badge">Exclusive Sponsor</span>
-      <div class="premium-logo">${avatarSvg()}</div>
-      <div class="premium-body">
-        <h3>Your Company or Name</h3>
-        <p>Own the Exclusive Circuits-Keyword&trade; Sponsor Banner for &ldquo;${term}&rdquo;.<br>Own the First Listing Every Viewer Sees.</p>
-      </div>
-      <div class="premium-contact">
-        <div class="pc-lines">
-          <span class="pc-name">Your Contact</span>
-          <span>(555) 123-4567</span>
-          <span>sales@yourcompany.com</span>
-        </div>
-      </div>
-    </div></div>
+    /* The keyword-available pitch: the mocked-up sponsor card and listing row
+       show a supplier exactly what they would be buying. The buyer's "tell me
+       when someone lists" capture was removed 2026-09-01 at Jacob's request. */
+    body.innerHTML = exampleBanner(term, didYouMean) + `
     <div class="listings" style="margin-bottom:10px">
       <div class="table-wrap">
         <table class="listings-table">
@@ -405,60 +417,18 @@ async function initResults(forcedTerm){
           <tbody><tr>
             <td><div class="co">
               <span class="co-logo" style="background:var(--dark)">${avatarSvg()}</span>
-              <a href="/join">Your Company or Name</a>
+              <a href="/join">Your Company</a>
               <span class="lb" style="background:#c9a227">Authorized</span>
+              <span class="doc-link">Website</span>
+              <span class="doc-link">View Docs</span>
             </div></td>
-            <td class="cell-muted" data-label="Contact">Your Contact</td>
+            <td class="cell-muted" data-label="Contact">John Doe</td>
             <td class="cell-muted" data-label="Phone">(555) 123-4567</td>
-            <td class="cell-muted" data-label="Email">sales@yourcompany.com</td>
+            <td class="cell-muted" data-label="Email">johndoe@yourcompany.com</td>
           </tr></tbody>
         </table>
       </div>
-    </div>
-    <div class="empty" style="margin:10px auto 26px">
-      <a class="btn btn-primary" href="/join" style="padding:14px 28px;font-size:1rem;display:inline-block;font-weight:700">Be The First Listed For &ldquo;${term}&rdquo;</a>
-    </div>
-
-    <div class="miss" style="margin-top:34px">
-      <p class="miss-sub"><b>Looking to buy ${term}?</b> Leave your email and we will
-      tell you the moment a supplier lists for it.</p>
-      <form class="miss-form" id="wanted-form" autocomplete="off">
-        <div class="miss-row">
-          <input id="wanted-email" type="email" required placeholder="you@company.com"
-                 autocomplete="email" spellcheck="false" aria-label="Your email">
-          <button class="btn btn-primary" type="submit" id="wanted-submit">Tell me when someone lists</button>
-        </div>
-        <textarea id="wanted-note" rows="2" maxlength="1000"
-          placeholder="Optional: what exactly do you need? Part numbers, quantities, where you are."></textarea>
-        <div id="wanted-msg" class="field-hint"></div>
-        <p class="field-hint">We use this to tell you about &ldquo;${term}&rdquo; and nothing else.
-        See our <a href="/privacy">privacy policy</a>.</p>
-      </form>
-    </div>`;
-
-    /* The demand capture is a public form, so it gets the same two traps as the
-       others, and the database rate-limits it per IP regardless. */
-    const wf = document.getElementById('wanted-form');
-    armSpamTrap(wf);
-    wf.addEventListener('submit', async e => {
-      e.preventDefault();
-      const msg = document.getElementById('wanted-msg');
-      const btn = document.getElementById('wanted-submit');
-      const email = document.getElementById('wanted-email').value.trim();
-      if(looksLikeSpam(wf)){ fakeSuccess(wf, 'Thanks — we will be in touch.'); return; }
-      if(!isValidEmail(email)){ msg.style.color = '#b3261e'; msg.textContent = 'Please enter a valid email address.'; return; }
-      btn.disabled = true; msg.style.color = ''; msg.textContent = 'Saving…';
-      const err = await registerWanted(q, email, document.getElementById('wanted-note').value);
-      if(err){
-        btn.disabled = false;
-        msg.style.color = '#b3261e';
-        msg.textContent = rateLimitMessage({ message: err })
-          || 'We could not save that just now. Please try again in a moment.';
-        return;
-      }
-      wf.innerHTML = '<div class="success show">Thanks. We will email you when a supplier lists for &ldquo;'
-        + term + '&rdquo;.</div>';
-    });
+    </div>` + listCta(term);
 
     return;
   }
@@ -474,7 +444,9 @@ async function initResults(forcedTerm){
   const featured = listings.find(l => l.banner);
   const listed = listings.filter(l => !l.banner);
   let html = '';
-  if(featured){
+  if(!featured){
+    html += exampleBanner(escapeHtml(q));
+  } else {
     const fLogo = isLogoUrl(featured.logo)
       ? `<img src="${escapeHtml(featured.logo)}" alt="${escapeHtml(featured.company)} logo">`
       : avatarSvg();
@@ -524,26 +496,20 @@ async function initResults(forcedTerm){
       <td class="cell-muted" data-label="Email">${c.email ? `<a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>` : '—'}</td>
     </tr>`).join('');
 
-  /* The number is the order companies claimed this keyword, and it is the thing
-     they are paying to hold. Left as a bare "#" a buyer reads it as a ranking —
-     "1" meaning best — which is a claim we are not making and cannot support.
-     Naming it, and saying so under the table, keeps it honest without giving up
-     what makes the position worth buying. */
+  /* The column used to be headed "Held" with a claim-order note under the
+     table; both went 2026-09-01 at Jacob's request — it is a plain "#" now. */
   body.innerHTML = html + `
     <div class="listings">
       <div class="table-wrap">
         <table class="listings-table">
           <thead><tr>
-            <th class="rank" title="The order these companies claimed this keyword">Held</th>
+            <th class="rank">#</th>
             <th>Company</th><th>Contact</th><th>Phone</th><th>Email</th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
-      <p class="list-note">Listed in the order each company claimed
-      &ldquo;${escapeHtml(q)}&rdquo;. This is not a ranking or a recommendation.
-      Circuits.com has not assessed these suppliers.</p>
-    </div>`;
+    </div>` + (featured ? '' : listCta(escapeHtml(q)));
 
   /* Arriving from a profile's keyword tag (?hl=<slug>): walk the buyer to that
      company's row — or its sponsor banner — and flash it so the eye lands. */
