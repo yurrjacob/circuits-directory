@@ -135,7 +135,7 @@ for (const f of NAV_PAGES) {
   const nav = (src.match(/<nav class="nav">[\s\S]*?<\/nav>/) || [null])[0];
   if (!nav) continue;                       // redirect stubs and the like
   navChecked++;
-  for (const href of ['/', '/about', '/contact', '/portal', '/register']) {
+  for (const href of ['/', '/about', '/contact', '/portal', '/join']) {
     assert.ok(nav.includes(`href="${href}"`), `${f} nav is missing ${href}`);
   }
   // merged away, and deliberately dropped from the header
@@ -918,22 +918,41 @@ assert.ok(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8').includes('fetch
   'circuits.com/<name> no longer resolves a person, only a company');
 const joinHtml = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
 
-/* --- Get Listed is gone (Jacob, 2026-09-02) ---
-       A company registers at /register and asks for keyword listings from the
-       Listings tab of its dashboard ("Get another listing", the old step 02).
-       /join stays only as a redirect so old links and bookmarks still land. */
-assert.ok(/http-equiv="refresh" content="0; url=\/register"/.test(joinHtml), 'join.html must redirect to /register');
-assert.ok(!/<form/.test(joinHtml), 'the Get Listed form is back on /join');
-for (const f of NAV_PAGES.concat(['app.js', 'profile.js', 'portal.js'])) {
-  const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
-  if (f === 'join.html') continue;
-  assert.ok(!/href="\/?join"/.test(src), `${f} still links the removed Get Listed page`);
+/* --- MVP1 (2026-08-31): Get Listed is a FREE listing REQUEST ---
+       No account, no password, no pricing or paid upgrades. It collects company
+       details + up to 10 free keywords + a message and files a Pending request;
+       staff follow up by email. The full account/upgrade/pricing version is
+       preserved in backups/mvp1-baseline-2026-08-25/ for MVP2. */
+for (const gone of ['id="acct-step"', 'id="f-handle"', 'id="f-pass"', 'id="promo-check"',
+                    'id="badge-check"', 'id="quote-step"']) {
+  assert.ok(!joinHtml.includes(gone),
+    `${gone} is back on Get Listed, MVP1 is a free request (that piece moved to backups/ for MVP2)`);
 }
+for (const id of ['f-company', 'f-contact', 'f-email', 'f-phone', 'kw-input', 'f-terms']) {
+  assert.ok(joinHtml.includes(`id="${id}"`), `join.html lost its request field ${id}`);
+}
+assert.ok(/Submit Request/.test(joinHtml), 'the Get Listed button no longer says Submit Request');
+assert.ok(/up to 10 keywords/i.test(joinHtml), 'the free-keywords note is gone from Get Listed');
+
+const joinJs = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+// a free request: an email to reply to, filed as Pending, and no account made
+assert.ok(!/await signUp\(/.test(joinJs), 'Get Listed creates an account again, MVP1 is a free request');
+assert.ok(/email: v\('f-email'\)/.test(joinJs), 'the request no longer takes its reply-to email from the form');
+assert.ok(/status: 'Pending'/.test(joinJs), 'the Get Listed request is not filed as Pending');
+
+/* --- Get Listed, signed in vs out (Jacob, 2026-09-02) ---
+       Signed out: every Get Listed button goes to the /join form, no account
+       needed. Signed in: nav.js sends the same buttons (and /join itself) to
+       the Listings tab, where "Get another listing" is the old step 02. */
+const navSrc = fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8');
+assert.ok(/a\[href="\/join"\]/.test(navSrc) && /\/portal#listings/.test(navSrc), 'nav.js no longer sends signed-in Get Listed clicks to /portal#listings');
+assert.ok(/\/join\(\\\.html\)\?\$/.test(navSrc), 'nav.js no longer redirects a signed-in visit to /join');
 const portalListings = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
 for (const id of ['al-input', 'al-add', 'al-check', 'al-tags', 'al-submit']) {
   assert.ok(portalListings.includes(`id="${id}"`), `the Listings tab lost its Get another listing field ${id}`);
 }
 const portalJsSrc = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
+assert.ok(/location\.hash === '#listings'/.test(portalJsSrc), 'portal.js no longer opens the Listings tab for /portal#listings');
 assert.ok(/company_slug: PT\.slug/.test(portalJsSrc), 'a requested listing is not tied to the company that asked for it');
 assert.ok(/status: 'Pending'/.test(portalJsSrc), 'a requested listing is not filed as Pending');
 assert.ok(/kws\.length >= 10/.test(portalJsSrc), 'the ten-keyword cap is gone from Get another listing');
@@ -1336,6 +1355,38 @@ const [BASE_Y, BANNER_Y, BADGE_Y] = yearLine.slice(1).map(Number);
 for (const [m, y, what] of [[BASE, BASE_Y, 'listing'], [BANNER, BANNER_Y, 'banner'], [BADGE, BADGE_Y, 'badge']]) {
   assert.ok(y < m * 12, what + ' yearly price is not cheaper than paying monthly');
   assert.ok(y > m, what + ' yearly price is below one month, which is surely wrong');
+}
+
+/* --- Admin console order and Trust Badge attributes (Jacob, 2026-09-02) --- */
+{
+  const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
+  const tabs = [...ph.matchAll(/class="adm-tab[^"]*" data-adm="([a-z]+)">([^<]+)</g)].map(m => m[1] + ':' + m[2]);
+  assert.deepStrictEqual(tabs, ['companies:All Companies', 'listings:Listings', 'applications:Website Applications',
+    'upgrades:Upgrade Applications', 'employment:Recruiting Applications', 'messages:Notifications', 'activity:Activity'],
+    'the admin sub-tabs are out of order or renamed: ' + tabs.join(', '));
+  for (const h of ['Keywords With Banners', 'Keywords With Badges']) {
+    const i = ph.indexOf('<!-- ' + h + ' -->');
+    assert.ok(i > 0 && /data-adm="listings"/.test(ph.slice(i, i + 120)), h + ' must live under the Listings tab');
+  }
+  assert.ok(/#pt-tab-admin\{margin-left:auto/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the Admin tab no longer sits apart from the account tabs');
+  const pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
+  assert.ok(/class="up-text"/.test(pj) && /class="up-color"/.test(pj), 'the Trust Badge request lost its label or colour field');
+  assert.ok(/requestUpgrade\(req\.dataset\.request, PT\.slug, req\.dataset\.kind, null, badge\)/.test(pj), 'the badge label and colour are not sent with the request');
+  const st = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+  assert.ok(/badge_text: badge \? badge\.text : null/.test(st), 'store.js drops the badge attributes');
+  assert.ok(/decision: decision \|\| null/.test(st), 'store.js no longer records the Approve/Deny decision');
+  const aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
+  assert.ok(/function approveUpgrade/.test(aj) && /function denyUpgrade/.test(aj), 'Upgrade Applications lost Approve or Deny');
+  assert.ok(/badge: \{ text: \(r\.badge_text \|\| ''\)\.slice\(0, 18\), color: r\.badge_color/.test(aj), 'Approve does not apply the label and colour the company chose');
+  /* profile pictures for individuals: picked on Personal Details, shown on
+     circuits.com/<handle> and in the unlocked contact block, never on the
+     anonymous recruit card */
+  assert.ok(/id="me-photo"/.test(pj) && /fields\.photo_url = url/.test(pj), 'Personal Details lost the profile picture');
+  assert.ok(/photo_url/.test(st.match(/const PROFILE_PUBLIC_COLS = '[^']+'/)[0]), 'store.js does not read photo_url');
+  assert.ok(/p\.photo_url/.test(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8')), 'the person profile page does not show the picture');
+  const appSrc2 = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+  assert.ok(/tal-photo/.test(appSrc2.slice(appSrc2.indexOf('function talentContactHtml'), appSrc2.indexOf('function talentContactHtml') + 600)), 'the unlocked contact block does not show the picture');
+  assert.ok(!/photo/.test(appSrc2.slice(appSrc2.indexOf('function talentCardHtml'), appSrc2.indexOf('function talentContactHtml'))), 'the recruit card must stay anonymous: no picture before Unlock');
 }
 
 console.log('checks passed');
