@@ -433,6 +433,16 @@ tr.row-warn td{background:#fff3cd}
 /* the profile card, when it lives in the Your Profile tab, sits like content
    rather than a centered sign-in sheet */
 #tab-me .auth-card{margin:8px 0}
+/* Desktop fit for the profile card (Jacob, 2026-09-02): the sign-in width
+   looked lost on a wide screen, so the profile and account sit side by side. */
+.auth-card.wide{width:min(1040px,92vw)}
+.pt-none-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:22px;align-items:start}
+.pt-none-grid #pt-account{margin:0}
+@media(max-width:860px){.pt-none-grid{grid-template-columns:1fr}}
+.pt-section{margin-top:28px;padding-top:22px;border-top:1px solid var(--line)}
+.pt-section>h2{margin:0 0 6px;font-size:1.2rem}
+.pt-section .pf-form{margin-top:14px}
+
 .pt-admin-only .console-head p,
 .pt-admin-only #pt-company,
 .pt-admin-only #pt-view{display:none}
@@ -856,6 +866,34 @@ tr.row-warn td{background:#fff3cd}
 .pf-review-head .pf-note{margin:0;margin-left:auto}
 .pf-reply{margin-top:9px;padding:9px 11px;background:var(--bg-soft);border-radius:8px;font-size:.86rem}
 .pf-form{border:1px solid var(--line);border-radius:var(--radius);padding:18px;background:var(--bg-soft)}
+/* ---- talent marketplace (MVP2): recruit cards, the blur, job cards ---- */
+.tal-intro{padding-top:20px;padding-bottom:0}
+.tal-intro .lede{margin-bottom:10px}
+.tal-note{font-size:.88rem;color:var(--muted);max-width:720px}
+.tal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.tal-card,.job-card{border:1px solid var(--line);border-radius:var(--radius);background:var(--card);padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.tal-card h3,.job-card h3{margin:0;font-size:1.05rem}
+.tal-meta{display:block;margin:0;font-size:.82rem;color:var(--muted)}
+.tal-bio{margin:0;font-size:.9rem;line-height:1.5;color:var(--ink)}
+.tal-card .kw-tags,.job-card .kw-tags{margin-top:2px}
+.kw-tag a,a.kw-tag{text-decoration:none}
+.tal-private{margin-top:auto;padding-top:12px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tal-blur{display:flex;flex-direction:column;gap:2px;font-size:.85rem;color:var(--muted);filter:blur(5px);user-select:none;pointer-events:none}
+.tal-blur b{color:var(--ink)}
+.tal-open{display:flex;flex-direction:column;gap:3px;font-size:.9rem}
+.tal-open a{color:var(--green-dark);text-decoration:none}
+.tal-open a:hover{text-decoration:underline}
+.tal-unlock{padding:9px 16px;font-size:.88rem;white-space:nowrap}
+.job-co{display:flex;align-items:center;gap:10px}
+.job-co a{font-weight:700;color:var(--ink);text-decoration:none}
+.job-co a:hover{text-decoration:underline}
+.job-apply{margin-top:auto;padding-top:12px;border-top:1px solid var(--line)}
+.job-note{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:.9rem}
+.pt-job{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.pt-job-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.pt-applicants{margin-top:10px;border-top:1px solid var(--line);padding-top:10px;font-size:.9rem}
+.pt-applicants .pt-app{padding:8px 0;border-bottom:1px solid var(--line)}
+.pt-applicants .pt-app:last-child{border-bottom:0}
 /* register: person or company, side by side */
 .reg-kind{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 24px}
 .reg-kind-card{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);background:var(--card)}

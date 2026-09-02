@@ -46,15 +46,17 @@
 
 <!-- signed in, but no company attached -->
 <div class="auth-wrap" id="pt-none" style="display:none">
-  <div class="auth-card">
+  <div class="auth-card wide">
     <h1>Your profile</h1>
     <p class="sub">Signed in as <b id="pt-none-email"></b>. This account does not manage a company listing.</p>
     <!-- Filled by initPortal for the applicant who has not confirmed their
          email yet: their application exists, and saying nothing here made the
          portal look like it had lost it. -->
     <div id="pt-pending"></div>
-    <div id="pt-me" class="pf-form"></div>
-    <div id="pt-account"></div>
+    <div class="pt-none-grid">
+      <div id="pt-me" class="pf-form"></div>
+      <div id="pt-account"></div>
+    </div>
     <div class="auth-note">
       A profile and a company listing are separate. If your company is not in the directory yet,
       <a href="/join">get it listed</a>.
@@ -235,6 +237,41 @@
       </div>
       <a class="btn btn-primary" href="/join">Get Listed</a>
     </div>
+
+    <!-- Job Listings (MVP2). One tab, not three: Jacob, 2026-09-02, "too many
+         categories". A job post is a listing; so is a person. -->
+    <div class="pt-section" id="pt-jobs-section">
+      <h2>Job Listings</h2>
+      <p class="kit-intro">Post an open role under the Circuits-Keywords&trade; you hire for. A post goes live on the
+        <a href="/jobs" target="_blank" rel="noopener">Job Board</a> for 30 days once Circuits.com confirms payment, and applicants
+        arrive here with a link to their profile.</p>
+      <div class="pt-list" id="pt-jobs"></div>
+      <div class="pf-form" id="pt-job-form">
+        <h3>Post a job</h3>
+        <div class="grid2">
+          <div class="auth-field"><label for="job-title">Job title</label><input id="job-title" type="text" maxlength="120" placeholder="RF Design Engineer"></div>
+          <div class="auth-field"><label for="job-location">Location</label><input id="job-location" type="text" maxlength="120" placeholder="Austin, TX or Remote"></div>
+        </div>
+        <div class="auth-field"><label for="job-keywords">Keywords <span class="cell-muted">(up to 10, comma separated)</span></label>
+          <input id="job-keywords" type="text" placeholder="rf design, pcb layout"></div>
+        <div class="auth-field"><label for="job-desc">Description</label>
+          <textarea id="job-desc" rows="6" maxlength="4000" placeholder="The role, the team, what you need."></textarea></div>
+        <div class="auth-field"><label for="job-email">Send applications to <span class="cell-muted">(optional, defaults to your company email)</span></label>
+          <input id="job-email" type="email" maxlength="120" placeholder="hiring@company.com"></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-primary" type="button" id="job-post">Post job</button>
+          <span class="pf-note" id="job-msg"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Your Talent Listing: renderMyProfile() draws into #pt-me, which
+         initPortal moves here for company owners. -->
+    <div class="pt-section" id="pt-talent-section">
+      <h2>Your Talent Listing</h2>
+      <p class="kit-intro">Your own profile on Circuits.com: your address, your Circuits-Keywords&trade; and, if you want, a place in the
+        <a href="/talent" target="_blank" rel="noopener">Recruits Directory</a>.</p>
+    </div>
   </section>
 
   <!-- promote -->
@@ -243,6 +280,7 @@
     They pull your logo and link from your profile, so update it once and these follow.</p>
     <div class="kit" id="promo-kit"></div>
   </section>
+
 
   <!-- admin: only rendered for staff, and every action behind it is enforced
        by the database, not by this tab being hidden -->
@@ -395,13 +433,41 @@
     </div>
   </div>
 
-  <!-- Companies: the only place suspension can be applied or lifted -->
+  <!-- Recruits (MVP2): people who opted into the directory; Hide pulls one out -->
   <div class="panel">
-    <div class="panel-head"><h2>Companies</h2><span class="hint" id="companies-hint">Suspend Hides A Listing Without Deleting Anything</span></div>
+    <div class="panel-head"><h2>Recruits</h2><span class="hint">Listed In The Recruits Directory &mdash; Hide Pulls One Out Without Touching Their Profile</span></div>
     <div class="panel-body">
       <div class="table-scroll">
         <table class="dash-table">
-          <thead><tr><th>Company</th><th>Address</th><th>Email</th><th>State</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Person</th><th>Title</th><th>Years</th><th>Updated</th><th>State</th><th>Actions</th></tr></thead>
+          <tbody id="recruits-body"></tbody>
+        </table>
+      </div>
+      <div id="recruits-empty" class="empty-line" style="display:none">Nobody Has Listed Themselves Yet.</div>
+    </div>
+  </div>
+
+  <!-- Jobs (MVP2): a post is invisible until Mark Paid; 30 days per payment -->
+  <div class="panel">
+    <div class="panel-head"><h2>Jobs</h2><span class="hint">Mark Paid Starts (Or Extends) 30 Live Days</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Job</th><th>Keywords</th><th>Posted</th><th>State</th><th>Actions</th></tr></thead>
+          <tbody id="jobs-body"></tbody>
+        </table>
+      </div>
+      <div id="jobs-empty" class="empty-line" style="display:none">No Jobs Posted Yet.</div>
+    </div>
+  </div>
+
+  <!-- Companies: the only place suspension can be applied or lifted -->
+  <div class="panel">
+    <div class="panel-head"><h2>Companies</h2><span class="hint" id="companies-hint">Suspend Hides A Listing Without Deleting Anything &mdash; Talent Access Unlocks The Recruits Directory</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Address</th><th>Email</th><th>State</th><th>Talent Access</th><th>Actions</th></tr></thead>
           <tbody id="companies-body"></tbody>
         </table>
       </div>

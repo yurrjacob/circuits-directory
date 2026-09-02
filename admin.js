@@ -309,12 +309,104 @@ async function reloadCompanies(){
       <td>${c.suspended_at
             ? '<b>Suspended</b><br><span class="cell-muted">' + new Date(c.suspended_at).toLocaleDateString() + '</span>'
             : 'Active'}</td>
+      <td>${accessUntil(c) > Date.now()
+            ? '<b>Until ' + new Date(c.talent_access_until).toLocaleDateString() + '</b>'
+            : '<span class="cell-muted">None</span>'}</td>
       <td class="row-actions">
         ${c.suspended_at
           ? `<button class="mini-btn green" onclick="setSuspended('${esc(c.slug)}', false)">Reinstate</button>`
           : `<button class="mini-btn" onclick="setSuspended('${esc(c.slug)}', true)">Suspend</button>`}
+        <button class="mini-btn" onclick="setTalentAccessUI('${esc(c.slug)}')">Talent Access</button>
       </td></tr>`).join('');
   $('companies-empty').style.display = allCompanies.length ? 'none' : 'block';
+}
+function accessUntil(c){ return c && c.talent_access_until ? new Date(c.talent_access_until).getTime() : 0; }
+
+/* Talent Access (MVP2): a monthly subscription recorded by staff after payment.
+   Months are added to whatever is left, so renewing early loses nothing. */
+async function setTalentAccessUI(slug){
+  const co = allCompanies.find(c => c.slug === slug);
+  const name = co ? co.name : slug;
+  const left = accessUntil(co) > Date.now() ? 'Active until ' + new Date(co.talent_access_until).toLocaleDateString() + '.' : 'No access at the moment.';
+  const raw = prompt(name + ': Talent Access.\n' + left + '\n\nMonths to add (1-12). Leave blank to revoke access now.', '1');
+  if(raw === null) return;
+  let until = null;
+  if(raw.trim()){
+    const months = parseInt(raw, 10);
+    if(!(months >= 1 && months <= 12)){ alert('Months should be 1 to 12.'); return; }
+    const d = new Date(Math.max(Date.now(), accessUntil(co)));
+    d.setMonth(d.getMonth() + months);
+    until = d.toISOString();
+  }
+  const err = await setTalentAccess(slug, until);
+  if(err){ alert('Could not do that: ' + err); return; }
+  await reloadCompanies();
+}
+
+/* ---- recruits (MVP2): people listed in the Recruits Directory ---- */
+let allRecruits = [];
+async function reloadRecruits(){
+  const body = $('recruits-body'); if(!body) return;
+  allRecruits = await fetchRecruits();
+  body.innerHTML = allRecruits.map(r => `
+    <tr class="${r.talent_hidden ? 'row-waiting' : ''}">
+      <td><a href="/${esc(r.handle)}" target="_blank" rel="noopener">${esc(r.display_name || r.handle)}</a></td>
+      <td>${esc(r.title || '—')}</td>
+      <td>${r.years == null ? '—' : r.years}</td>
+      <td class="cell-muted">${new Date(r.updated_at).toLocaleDateString()}</td>
+      <td>${r.talent_hidden ? '<b>Hidden</b>' : 'Listed'}</td>
+      <td class="row-actions">
+        ${r.talent_hidden
+          ? `<button class="mini-btn green" onclick="hideRecruit('${esc(r.user_id)}', false)">Unhide</button>`
+          : `<button class="mini-btn" onclick="hideRecruit('${esc(r.user_id)}', true)">Hide</button>`}
+      </td></tr>`).join('');
+  $('recruits-empty').style.display = allRecruits.length ? 'none' : 'block';
+}
+async function hideRecruit(userId, hide){
+  const r = allRecruits.find(x => x.user_id === userId);
+  if(hide && !confirm('Hide ' + (r ? (r.display_name || r.handle) : 'this person') + ' from the Recruits Directory? Their profile stays as it is.')) return;
+  const err = await setTalentHidden(userId, hide);
+  if(err){ alert('Could not do that: ' + err); return; }
+  await reloadRecruits();
+}
+
+/* ---- jobs (MVP2): live for 30 days per payment, recorded by staff ---- */
+let allJobs = [];
+function jobState(j){
+  if(j.closed_at) return 'Closed';
+  if(j.paid_until && new Date(j.paid_until) > new Date()) return 'Live until ' + new Date(j.paid_until).toLocaleDateString();
+  if(j.paid_until) return 'Expired';
+  return 'Awaiting payment';
+}
+async function reloadJobs(){
+  const body = $('jobs-body'); if(!body) return;
+  allJobs = await fetchAllJobs();
+  body.innerHTML = allJobs.map(j => `
+    <tr class="${jobState(j) === 'Awaiting payment' ? 'row-waiting' : ''}">
+      <td><a href="/${esc(j.company_handle || j.company_slug)}" target="_blank" rel="noopener">${esc(j.company_name)}</a></td>
+      <td><b>${esc(j.title)}</b>${j.location ? '<br><span class="cell-muted">' + esc(j.location) + '</span>' : ''}</td>
+      <td class="cell-muted">${esc((j.keywords || []).join(', ') || '—')}</td>
+      <td class="cell-muted">${new Date(j.created_at).toLocaleDateString()}</td>
+      <td>${esc(jobState(j))}</td>
+      <td class="row-actions">
+        ${j.closed_at ? '' : `<button class="mini-btn green" onclick="markJobPaid('${esc(j.id)}')">Mark paid</button>
+        <button class="mini-btn" onclick="closeJob('${esc(j.id)}')">Close</button>`}
+      </td></tr>`).join('');
+  $('jobs-empty').style.display = allJobs.length ? 'none' : 'block';
+}
+async function markJobPaid(id){
+  const j = allJobs.find(x => x.id === id);
+  const from = Math.max(Date.now(), j && j.paid_until ? new Date(j.paid_until).getTime() : 0);
+  const err = await updateJob(id, { paid_until: new Date(from + 30 * 864e5).toISOString() });
+  if(err){ alert('Could not do that: ' + err); return; }
+  await reloadJobs();
+}
+async function closeJob(id){
+  const j = allJobs.find(x => x.id === id);
+  if(!confirm('Close ' + (j ? '"' + j.title + '"' : 'this job') + '? It leaves the Job Board and cannot be reopened.')) return;
+  const err = await updateJob(id, { closed_at: new Date().toISOString() });
+  if(err){ alert('Could not do that: ' + err); return; }
+  await reloadJobs();
 }
 
 async function setSuspended(slug, suspend){
@@ -390,7 +482,7 @@ window.initAdmin = async function(){
   if(started) return;
   if(!(await checkStaff())) return;        // belt and braces; the database is the real gate
   started = true;
-  reloadCompanies(); reloadAudit(); reloadSearches();
+  reloadCompanies(); reloadAudit(); reloadSearches(); reloadRecruits(); reloadJobs();
   const saved = await loadPrefs('admin');
   if(saved) for(const k in panels){
     if(saved[k] && saved[k].sort) panels[k].sort = saved[k].sort;
@@ -406,6 +498,6 @@ window.initAdmin = async function(){
    tools/check.js fails if a new onclick appears without being listed here. */
 Object.assign(window, {
   editListing, editBadge, removeListing, togglePause, lockListing,
-  approveApp, rejectApp, setSuspended
+  approveApp, rejectApp, setSuspended, setTalentAccessUI, hideRecruit, markJobPaid, closeJob
 });
 })();

@@ -25,13 +25,15 @@ function renderMyProfile(me){
   if(fresh) me = { handle: '', display_name: '', keywords: [] };
   box.innerHTML = `
     ${fresh ? '<p class="pf-note" style="color:#3f6300">This account has no Circuits.com address yet. Pick one below and save to create your profile.</p>' : ''}
-    <div class="auth-field"><label>Your Circuits.com address</label>
-      <div class="handle-row"><span class="handle-prefix">circuits.com/</span>
-        <input id="me-handle" type="text" maxlength="32" spellcheck="false" value="${escapeHtml(me.handle)}"></div>
-      <div id="me-handle-msg" class="pf-note"></div>
+    <div class="grid2">
+      <div class="auth-field"><label>Your Circuits.com address</label>
+        <div class="handle-row"><span class="handle-prefix">circuits.com/</span>
+          <input id="me-handle" type="text" maxlength="32" spellcheck="false" value="${escapeHtml(me.handle)}"></div>
+        <div id="me-handle-msg" class="pf-note"></div>
+      </div>
+      <div class="auth-field"><label>Display name</label>
+        <input id="me-name" type="text" maxlength="120" value="${escapeHtml(me.display_name || '')}"></div>
     </div>
-    <div class="auth-field"><label>Display name</label>
-      <input id="me-name" type="text" maxlength="120" value="${escapeHtml(me.display_name || '')}"></div>
     <h3 style="margin-top:22px">Talent profile</h3>
     <p class="pf-note" style="margin:0 0 10px">Optional. Fill this in and tick the box to appear in the
       Recruits Directory. Employers see your title, experience, keywords and summary; your name,
@@ -42,11 +44,13 @@ function renderMyProfile(me){
       <div class="auth-field"><label>Years of experience</label>
         <input id="me-years" type="number" min="0" max="60" placeholder="8" value="${me.years == null ? '' : me.years}"></div>
     </div>
-    <div class="auth-field"><label>Phone <span class="cell-muted">(private)</span></label>
-      <input id="me-phone" type="tel" maxlength="40" placeholder="(555) 123-4567" value="${escapeHtml(me.phone || '')}"></div>
-    <div class="auth-field"><label>Keywords <span class="cell-muted">(up to 10, comma separated)</span></label>
-      <input id="me-keywords" type="text" placeholder="rf design, pcb layout, fpga" value="${escapeHtml((me.keywords || []).join(', '))}">
-      <div class="pf-note">Same words employers search for on Circuits.com. One idea per keyword: <b>pcb layout</b>, not <b>pcb layout and test</b>.</div></div>
+    <div class="grid2">
+      <div class="auth-field"><label>Phone <span class="cell-muted">(private)</span></label>
+        <input id="me-phone" type="tel" maxlength="40" placeholder="(555) 123-4567" value="${escapeHtml(me.phone || '')}"></div>
+      <div class="auth-field"><label>Keywords <span class="cell-muted">(up to 10, comma separated)</span></label>
+        <input id="me-keywords" type="text" placeholder="rf design, pcb layout, fpga" value="${escapeHtml((me.keywords || []).join(', '))}">
+        <div class="pf-note">Same words employers search for on Circuits.com. One idea per keyword: <b>pcb layout</b>, not <b>pcb layout and test</b>.</div></div>
+    </div>
     <div class="auth-field"><label>Summary</label>
       <textarea id="me-bio" rows="4" maxlength="600" placeholder="What you do, what you are looking for.">${escapeHtml(me.bio || '')}</textarea></div>
     <div class="auth-field"><label>Resume <span class="cell-muted">(PDF, up to 10 MB, private)</span></label>
@@ -206,6 +210,7 @@ async function initPortal(){
   });
 
   wireTabs();
+  wireJobs();
   await wireAdminTab();
   /* A company owner gets a real Account tab (password, sign-out-everywhere).
      Before this, changing a password meant the forgot-password email loop —
@@ -215,11 +220,11 @@ async function initPortal(){
   /* A company owner is also a person with a profile: the Your Profile tab (and
      its Talent section, MVP2) used to exist only for accounts with no listing,
      so an owner could never reach it (Jacob, 2026-09-02). Same card, same tab. */
-  show('pt-tab-me', true);
-  const card = el('pt-none') && el('pt-none').querySelector('.auth-card');
-  if(card){ el('tab-me').appendChild(card); card.querySelector('h1').textContent = 'Your profile'; }
+  /* ...and the talent form lives under Listings, not in a tab of its own
+     (Jacob, 2026-09-02: "too many categories"; a person is a listing too). */
+  const talent = el('pt-talent-section'), meBox = el('pt-me');
+  if(talent && meBox) talent.appendChild(meBox);
   renderMyProfile(me);
-  const sub = el('pt-none-email'); if(sub) sub.textContent = user.email;
   await loadCompany(cos[0].slug);
 }
 
@@ -329,6 +334,7 @@ async function loadCompany(slug){
   markClean();
   renderListings();
   renderPromote();
+  renderJobs();
 }
 
 /* Applying used to end in silence: the supplier refreshed the portal hoping,
@@ -1550,6 +1556,88 @@ function qrSvg(text){
   q.addData(text);
   q.make();
   return q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+}
+
+/* ---- jobs (MVP2) ----
+   A post is a row the owner writes; "live" is a fact staff record (paid_until)
+   and the Job Board reads. Applicants come from job_applicants(), which the
+   database only answers for the employer or staff. */
+function jobStateLabel(j){
+  if(j.closed_at) return { text: 'Closed', cls: '' };
+  if(j.paid_until && new Date(j.paid_until) > new Date()) return { text: 'Live until ' + new Date(j.paid_until).toLocaleDateString(), cls: 'live' };
+  if(j.paid_until) return { text: 'Expired. Contact us to renew.', cls: '' };
+  return { text: 'Awaiting payment. We will confirm by email.', cls: 'pending' };
+}
+async function renderJobs(){
+  const box = el('pt-jobs'); if(!box) return;
+  const jobs = await myJobs(PT.slug);
+  box.innerHTML = jobs.length ? jobs.map(j => {
+    const st = jobStateLabel(j);
+    return `<div class="pt-job" data-job="${escapeHtml(j.id)}">
+      <div class="pt-job-head">
+        <div><b>${escapeHtml(j.title)}</b>${j.location ? ' <span class="cell-muted">' + escapeHtml(j.location) + '</span>' : ''}
+          <div class="pf-note" style="margin:4px 0 0">${escapeHtml((j.keywords || []).join(', ') || 'No keywords yet')}</div></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="badge ${st.cls}">${escapeHtml(st.text)}</span>
+          <button type="button" class="mini-btn" data-applicants="${escapeHtml(j.id)}">Applicants</button>
+          ${j.closed_at ? '' : `<button type="button" class="mini-btn danger" data-close="${escapeHtml(j.id)}">Close</button>`}</div>
+      </div>
+      <div class="pt-applicants" id="apps-${escapeHtml(j.id)}" style="display:none"></div>
+    </div>`;
+  }).join('') : '<p class="pf-note">No jobs posted yet.</p>';
+}
+function wireJobs(){
+  const box = el('pt-jobs'), post = el('job-post');
+  if(!box || !post) return;
+  box.addEventListener('click', async e => {
+    const a = e.target.closest('[data-applicants]');
+    if(a){
+      const panel = el('apps-' + a.dataset.applicants);
+      if(panel.style.display !== 'none'){ panel.style.display = 'none'; return; }
+      panel.style.display = ''; panel.innerHTML = '<span class="pf-note">Loading…</span>';
+      const rows = await jobApplicants(a.dataset.applicants);
+      panel.innerHTML = rows.length ? rows.map(r => `<div class="pt-app">
+          <b><a href="/${escapeHtml(r.handle)}" target="_blank" rel="noopener">${escapeHtml(r.display_name || r.handle)}</a></b>
+          ${r.title ? ' <span class="cell-muted">' + escapeHtml(r.title) + (r.years != null ? ', ' + r.years + ' yrs' : '') + '</span>' : ''}
+          <span class="cell-muted"> · ${new Date(r.created_at).toLocaleDateString()}</span>
+          ${r.email ? ' · <a href="mailto:' + escapeHtml(r.email) + '">' + escapeHtml(r.email) + '</a>' : ''}
+          ${r.phone ? ' · ' + escapeHtml(r.phone) : ''}
+          ${r.resume_path ? ' · <a href="#" data-resume="' + escapeHtml(r.resume_path) + '">Resume (PDF)</a>' : ''}
+          ${r.note ? '<div class="pf-note" style="margin:4px 0 0">' + escapeHtml(r.note) + '</div>' : ''}
+        </div>`).join('') : '<span class="pf-note">No applicants yet.</span>';
+      return;
+    }
+    const r = e.target.closest('[data-resume]');
+    if(r){
+      e.preventDefault();
+      const url = await resumeLink(r.dataset.resume);
+      if(url) window.open(url, '_blank', 'noopener'); else toast('Could not open that resume just now.', false);
+      return;
+    }
+    const c = e.target.closest('[data-close]');
+    if(c){
+      if(!confirm('Close this job? It leaves the Job Board and cannot be reopened.')) return;
+      const err = await updateJob(c.dataset.close, { closed_at: new Date().toISOString() });
+      if(err){ toast(err, false); return; }
+      renderJobs();
+    }
+  });
+  post.addEventListener('click', async () => {
+    const msg = el('job-msg');
+    const title = val('job-title');
+    if(!title){ msg.textContent = 'A job title is needed.'; msg.style.color = '#b3261e'; return; }
+    const keywords = val('job-keywords').split(',').map(s => s.trim()).filter(Boolean);
+    if(!keywords.length){ msg.textContent = 'Add at least one keyword so people can find it.'; msg.style.color = '#b3261e'; return; }
+    if(keywords.length > 10){ msg.textContent = 'Ten keywords is the limit.'; msg.style.color = '#b3261e'; return; }
+    msg.textContent = 'Posting…'; msg.style.color = ''; post.disabled = true;
+    const r = await postJob(PT.slug, { title, location: val('job-location'), description: val('job-desc'), apply_email: val('job-email') });
+    post.disabled = false;
+    if(r.error){ msg.textContent = r.error; msg.style.color = '#b3261e'; return; }
+    const kw = await setJobKeywords(r.id, keywords);
+    if(kw.error){ msg.textContent = 'Posted, but the keywords were refused: ' + kw.error; msg.style.color = '#b3261e'; renderJobs(); return; }
+    ['job-title','job-location','job-keywords','job-desc','job-email'].forEach(id => { el(id).value = ''; });
+    msg.textContent = 'Posted. It goes live once we confirm payment.'; msg.style.color = '#3f6300';
+    renderJobs();
+  });
 }
 
 function renderPromote(){

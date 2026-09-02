@@ -971,7 +971,7 @@ async function notifySupplier(slug, quote, token){
 async function fetchAllCompanies(){
   if(!sb) return [];
   const { data, error } = await sb.from('companies')
-    .select('slug, name, handle, email, published, suspended_at, created_at')
+    .select('slug, name, handle, email, published, suspended_at, created_at, talent_access_until')
     .order('name');
   if(error){ console.error('fetchAllCompanies', error); return []; }
   return data || [];
