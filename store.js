@@ -18,8 +18,8 @@ const sb = (window.supabase && window.supabase.createClient)
    denies the whole query, which once made every listing vanish for logged-out
    visitors. Signed-in reads (portal, admin) keep select('*'); they have the
    full grant. Keep these in sync with the table columns. */
-const APP_PUBLIC_COLS = 'id, created_at, company, contact, email, phone, website, logo, keywords, banner, badge, message, terms, fee, status, keyword, paused, listing_price, banner_price, badge_price, locked_position, docs, description, company_slug, company_handle, requested_handle, keyword_norm';
-const REVIEW_PUBLIC_COLS = 'id, company_slug, author_name, rating, body, reply, status, created_at';
+const APP_PUBLIC_COLS = 'id, created_at, company, contact, email, phone, website, logo, keywords, banner, badge, message, terms, fee, status, keyword, paused, listing_price, banner_price, badge_price, locked_position, docs, description, company_slug, company_handle, requested_handle, keyword_norm, certifications, team, gallery, reviews_enabled';
+const REVIEW_PUBLIC_COLS = 'id, company_slug, application_id, author_name, rating, body, reply, status, created_at';
 
 /* ---- pricing ----
    Beta rates. Original owners keep these for as long as their subscription
@@ -231,7 +231,7 @@ async function updateApplication(id, fields){
 
    Commercial terms stay with staff because they are what the company is billed
    for. Its own words and its own datasheets are not. */
-const LISTING_OWNER_FIELDS = ['description', 'docs'];
+const LISTING_OWNER_FIELDS = ['description', 'docs', 'certifications', 'team', 'gallery', 'reviews_enabled'];
 
 async function updateMyListing(id, fields){
   if(!sb) return 'No connection';
@@ -690,7 +690,7 @@ async function fetchReviews(slug){
 async function submitReview(slug, r){
   if(!sb) throw new Error('No connection');
   const { error } = await sb.from('reviews').insert({
-    company_slug: slug, author_name: r.name, author_email: r.email,
+    company_slug: slug, application_id: r.application_id || null, author_name: r.name, author_email: r.email,
     rating: r.rating, body: r.body, status: 'Pending'
   });
   if(error){ console.error('submitReview', error); throw error; }

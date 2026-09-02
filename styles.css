@@ -823,6 +823,12 @@ tr.row-warn td{background:#fff3cd}
 .pf-kws .kw-tag{text-decoration:none;cursor:pointer;transition:background .12s,color .12s}
 .pf-kws .kw-tag:hover{background:var(--green);color:#000}
 
+/* per-listing showcase on the profile page (2026-09-02) */
+.pf-listing .pf-sec-h a{color:inherit;text-decoration:none}
+.pf-listing .pf-sec-h a:hover{color:var(--green-dark)}
+.pf-sub{margin:18px 0 8px;font-size:.95rem;font-weight:700}
+.pf-ldocs{display:flex;flex-wrap:wrap;gap:8px 14px;margin:0 0 6px}
+.pf-ldocs .doc-link{font-weight:600;color:var(--green-dark)}
 .pf-docs{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
 .pf-docs li a{display:inline-flex;align-items:center;gap:8px;color:var(--green-dark);font-weight:600;font-size:.9rem;text-decoration:none}
 .pf-docs li a::before{content:"";width:15px;height:18px;flex:none;border:1.5px solid currentColor;border-radius:2px}

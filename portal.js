@@ -280,16 +280,12 @@ let PT_DIRTY = false;
 function markDirty(){ PT_DIRTY = true; }
 function markClean(){ PT_DIRTY = false; }
 function wireDirtyTracking(){
-  /* the profile form spans three tabs since 2026-08-20; edits in any of them
-     count, and one Save saves them all */
-  for(const id of ['tab-company', 'tab-branding', 'tab-showcase']){
-  const panel = el(id);
-  if(!panel || panel.__dirtyWired) continue;
-  panel.__dirtyWired = true;
-  panel.addEventListener('input', markDirty);
-  panel.addEventListener('change', markDirty);
-  // adding or removing a certification/team/gallery row is an edit too
-  panel.addEventListener('click', e => { if(e.target.closest('[data-add],[data-del]')) markDirty(); });
+  /* the whole company profile is one tab again (2026-09-02) */
+  const panel = el('tab-company');
+  if(panel && !panel.__dirtyWired){
+    panel.__dirtyWired = true;
+    panel.addEventListener('input', markDirty);
+    panel.addEventListener('change', markDirty);
   }
   if(wireDirtyTracking.__unloadWired) return;
   wireDirtyTracking.__unloadWired = true;
@@ -1026,7 +1022,6 @@ function renderProfileForm(){
   set('f-phone', c.phone); set('f-email', c.email); set('f-contact', c.contact);
   set('f-address', c.address); set('f-founded', c.founded); set('f-employees', c.employees);
   set('f-handle', c.handle);
-  el('f-reviews-on').checked = !!c.reviews_enabled;
   wireHandleCheck();
   PT.clearLogo = false;
   PT.logoFile = null;
@@ -1050,13 +1045,6 @@ function renderProfileForm(){
   el('f-socials').innerHTML = SOCIAL_KEYS.map(([k, label]) =>
     `<div class="auth-field"><label>${label}</label><input id="s-${k}" type="text" placeholder="https://…" value="${escapeHtml(soc[k] || '')}"></div>`
   ).join('');
-
-  renderRepeater('certs', c.certifications, ['name', 'issuer', 'year'],
-                 ['Certification', 'Issuer', 'Year']);
-  renderRepeater('team', c.team, ['name', 'role', 'email', 'photo'],
-                 ['Name', 'Role', 'Email', 'Photo'], ['text', 'text', 'text', 'img']);
-  renderRepeater('gallery', c.gallery, ['url', 'caption'],
-                 ['Image', 'Caption'], ['img', 'text']);
 }
 
 /* Live availability check on the vanity handle. Debounced so typing does not
@@ -1080,7 +1068,8 @@ function wireHandleCheck(){
   });
 }
 
-/* One generic list editor covers certifications, team and gallery.
+/* One generic list editor covers certifications, team and gallery, per
+   keyword listing since 2026-09-02 (key is e.g. "certs-<listing id>").
    A field marked 'img' gets a real file upload — asking a supplier for an
    "image URL" is asking them to go and host a file somewhere first, which is
    why the gallery and team photos were unusable. */
@@ -1135,11 +1124,22 @@ function renderRepeater(key, items, fields, labels, types){
     holder.classList.remove('busy');
     if(!url){ toast('That image could not be uploaded. Try a smaller PNG or JPEG.', false); return; }
     list[i][f] = url;
-    markDirty();
     draw();
   };
   box.__list = list;
   draw();
+}
+
+/* Validation the listing showcase shares with the old company one: every
+   optional field still has a shape when filled in (Jacob, 2026-08-20). */
+function showcaseProblem(certs, team){
+  for(const m of team){
+    if((m.email || '').trim() && !isValidEmail(m.email)) return `Team member "${m.name || m.email}" has an invalid email address.`;
+  }
+  for(const c of certs){
+    if((c.year || '').trim() && !isValidYear(c.year)) return `Certification "${c.name || '(unnamed)'}" needs a 4-digit year.`;
+  }
+  return null;
 }
 
 async function saveProfile(){
@@ -1157,11 +1157,8 @@ async function saveProfile(){
   }
   const socials = {};
   SOCIAL_KEYS.forEach(([k]) => { const v = val('s-' + k); if(v) socials[k] = v; });
-  const clean = key => (el('f-' + key).__list || []).filter(o => Object.values(o).some(v => (v || '').trim()));
-
   /* every optional field still has a shape when filled in — nothing that is
      not an email/phone/website/year gets saved as one (Jacob, 2026-08-20) */
-  const certs = clean('certs'), team = clean('team');
   let bad =
     (val('f-email')   && !isValidEmail(val('f-email')))     ? 'Public email is not a valid email address.' :
     (val('f-phone')   && !isValidPhone(val('f-phone')))     ? 'Phone needs to be a real phone number (at least 10 digits).' :
@@ -1170,12 +1167,6 @@ async function saveProfile(){
   if(!bad) for(const [k, label] of SOCIAL_KEYS){
     const v = val('s-' + k);
     if(v && !isValidWebsite(v)){ bad = label + ' needs to be a link (https://…).'; break; }
-  }
-  if(!bad) for(const m of team){
-    if((m.email || '').trim() && !isValidEmail(m.email)){ bad = `Team member "${m.name || m.email}" has an invalid email address.`; break; }
-  }
-  if(!bad) for(const c of certs){
-    if((c.year || '').trim() && !isValidYear(c.year)){ bad = `Certification "${c.name || '(unnamed)'}" needs a 4-digit year.`; break; }
   }
   if(bad){ btn.disabled = false; toast('Not saved: ' + bad, false); return; }
 
@@ -1190,9 +1181,7 @@ async function saveProfile(){
     address: val('f-address') || null,
     founded: val('f-founded') || null,
     employees: val('f-employees') || null,
-    reviews_enabled: el('f-reviews-on').checked,
-    socials,
-    certifications: clean('certs'), team: clean('team'), gallery: clean('gallery')
+    socials
   };
   /* only touch the address when it actually changed and is non-empty, so a
      blank field can never wipe an existing circuits.com/<handle> */
@@ -1244,6 +1233,12 @@ function renderListings(){
     <b>No listings yet</b>
     <p>Once Circuits.com approves a Circuits-Keyword™ for you, it appears here and you can pause or resume it.</p>
   </div>`;
+  const open = PT.listings.find(l => l.id === PT.editing);
+  if(open){
+    renderRepeater('certs-' + open.id, open.certifications, ['name', 'issuer', 'year'], ['Certification', 'Issuer', 'Year']);
+    renderRepeater('team-' + open.id, open.team, ['name', 'role', 'email', 'photo'], ['Name', 'Role', 'Email', 'Photo'], ['text', 'text', 'text', 'img']);
+    renderRepeater('gallery-' + open.id, open.gallery, ['url', 'caption'], ['Image', 'Caption'], ['img', 'text']);
+  }
   wireListings();
 }
 
@@ -1253,9 +1248,13 @@ function renderListings(){
 function listingSummary(l){
   if(PT.editing === l.id) return '';
   const docs = Array.isArray(l.docs) ? l.docs : [];
+  const n = (a, one, many) => Array.isArray(a) && a.length ? a.length + ' ' + (a.length === 1 ? one : many) : null;
+  const bits = [docs.length ? docs.length + (docs.length === 1 ? ' document' : ' documents') : 'No documents',
+    n(l.certifications, 'certification', 'certifications'), n(l.team, 'team member', 'team members'),
+    n(l.gallery, 'photo', 'photos'), l.reviews_enabled ? 'Buyer reviews on' : null].filter(Boolean);
   return `<div class="pt-listing-sum">
     <p>${l.description ? escapeHtml(l.description) : '<i>No description. Buyers see only your company name on this keyword.</i>'}</p>
-    <span class="pf-note">${docs.length ? docs.length + (docs.length === 1 ? ' document' : ' documents') : 'No documents'}</span>
+    <span class="pf-note">${bits.join(' · ')}</span>
   </div>`;
 }
 
@@ -1275,6 +1274,22 @@ function listingEditor(l){
       </span>`).join('') || '<span class="pf-note">None yet.</span>'}
     </div>
     <input type="file" id="ed-file-${l.id}" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg">
+
+    <label class="pt-lbl" style="margin-top:14px">Showcase <span class="pf-note">— shown with this listing on your profile</span></label>
+    <details class="pt-fold"><summary>Certifications <span class="pf-note" id="fold-certs-${l.id}-n"></span></summary><div class="pt-list" id="f-certs-${l.id}"></div></details>
+    <details class="pt-fold"><summary>Team <span class="pf-note" id="fold-team-${l.id}-n"></span></summary><div class="pt-list" id="f-team-${l.id}"></div></details>
+    <details class="pt-fold"><summary>Gallery <span class="pf-note" id="fold-gallery-${l.id}-n"></span></summary><div class="pt-list" id="f-gallery-${l.id}"></div></details>
+    <div class="pt-setting">
+      <div class="pt-setting-text">
+        <b>Buyer reviews</b>
+        <p class="pf-note">Let buyers review this listing on your profile. Circuits.com checks every review before it appears, and you can reply publicly.</p>
+      </div>
+      <label class="switch">
+        <input id="ed-reviews-${l.id}" type="checkbox" ${l.reviews_enabled ? 'checked' : ''}>
+        <span class="knob" aria-hidden="true"></span>
+        <span class="sr-only">Allow buyers to review this listing</span>
+      </label>
+    </div>
 
     <div class="pt-edit-actions">
       <button class="btn btn-primary" data-save="${l.id}">Save</button>
@@ -1325,8 +1340,13 @@ function wireListings(){
     const save = e.target.closest('[data-save]');
     if(save){
       const id = save.dataset.save;
+      const clean = key => (el('f-' + key + '-' + id).__list || []).filter(o => Object.values(o).some(v => (v || '').trim()));
+      const certifications = clean('certs'), team = clean('team'), gallery = clean('gallery');
+      const bad = showcaseProblem(certifications, team);
+      if(bad){ toast('Not saved: ' + bad, false); return; }
       save.disabled = true;
-      const err = await updateMyListing(id, { description: val('ed-desc-' + id) });
+      const err = await updateMyListing(id, { description: val('ed-desc-' + id), certifications, team, gallery,
+        reviews_enabled: !!(el('ed-reviews-' + id) && el('ed-reviews-' + id).checked) });
       save.disabled = false;
       if(err){ toast('Could not save: ' + err, false); return; }
       PT.editing = null;

@@ -202,67 +202,63 @@ async function initProfile(){
      belong to the keyword listing, not the profile. The only place one may
      surface is as evidence behind a certification below. */
 
-  /* ---- gallery ---- */
-  const gallery = Array.isArray(co.gallery) ? co.gallery : [];
-  html += section('Gallery', gallery.length
-    ? `<div class="pf-gallery">${gallery.map(g =>
+  /* ---- one section per keyword listing (2026-09-02) ----
+     Certifications, team, gallery and buyer reviews belong to the listing, not
+     the company: a distributor's "PCB Assembly" listing shows its IPC people
+     and its line photos; its "Connectors" listing shows something else. */
+  const byListing = {};
+  for(const r of reviews) (byListing[r.application_id || ''] = byListing[r.application_id || ''] || []).push(r);
+  const certDoc = (ldocs, name) => ldocs.find(d =>
+    (d.name || '').toLowerCase().includes((name || '').toLowerCase().slice(0, 12)) && (name || '').length > 3);
+  for(const k of kws){
+    const ldocs = (Array.isArray(k.docs) ? k.docs : []).filter(d => d && d.url);
+    const gallery = Array.isArray(k.gallery) ? k.gallery.filter(g => g && g.url) : [];
+    const certs = (Array.isArray(k.certifications) ? k.certifications : []).filter(c => c && (c.name || '').trim());
+    const team = (Array.isArray(k.team) ? k.team : []).filter(t => t && ((t.name || '').trim() || t.photo));
+    const rv = byListing[k.id] || [];
+    let inner = '';
+    if(k.description) inner += `<p class="pf-prose">${escapeHtml(k.description)}</p>`;
+    if(ldocs.length) inner += `<p class="pf-ldocs">${ldocs.map(d =>
+      `<a class="doc-link" href="${escapeHtml(safeUrl(d.url))}" target="_blank" rel="noopener nofollow">${escapeHtml(d.name || 'Document')}</a>`).join(' ')}</p>`;
+    if(gallery.length) inner += `<h3 class="pf-sub">Gallery</h3><div class="pf-gallery">${gallery.map(g =>
         `<figure><img src="${escapeHtml(g.url)}" alt="${escapeHtml(g.caption || co.name)}" loading="lazy"
            data-full="${escapeHtml(g.url)}" data-cap="${escapeHtml(g.caption || '')}">
-         ${g.caption ? `<figcaption>${escapeHtml(g.caption)}</figcaption>` : ''}</figure>`
-      ).join('')}</div>` : '');
-
-  /* ---- certifications ----
-     These are typed in by the company. Nobody at Circuits.com checks them, and
-     a buyer choosing a supplier on the strength of "ISO 9001" deserves to know
-     that. So the section says whose claim it is, and points at the evidence
-     when the company has actually attached a certificate. Presenting an
-     unchecked claim as established fact would be the same mistake the Trust
-     Badge used to make. */
-  /* section() escapes the title, so pass a plain ampersand — passing &amp;
-     here rendered literally as "Certifications &amp; approvals" on the page.
-     Rows with no name are dropped: the repeater leaves blanks behind, and an
-     empty <li> shows up as a stray bullet. */
-  const certs = (Array.isArray(co.certifications) ? co.certifications : [])
-    .filter(c => c && (c.name || '').trim());
-  const certDoc = name => docs.find(d =>
-    (d.name || '').toLowerCase().includes((name || '').toLowerCase().slice(0, 12)) && (name || '').length > 3);
-  /* The tooltip carries the caveat instead of a paragraph under the list. The
-     full explanation lives in the Terms, linked once at the foot of the page. */
-  html += section('Certifications & approvals', certs.length
-    ? `<ul class="pf-certs" title="Listed by the company. Circuits.com has not checked these.">${certs.map(c => {
-        const doc = certDoc(c.name);
+         ${g.caption ? `<figcaption>${escapeHtml(g.caption)}</figcaption>` : ''}</figure>`).join('')}</div>`;
+    /* Certifications are typed in by the company. Nobody at Circuits.com checks
+       them, so the tooltip says whose claim it is and the row points at the
+       evidence when a matching certificate is attached to this listing. */
+    if(certs.length) inner += `<h3 class="pf-sub">Certifications &amp; approvals</h3>
+      <ul class="pf-certs" title="Listed by the company. Circuits.com has not checked these.">${certs.map(c => {
+        const doc = certDoc(ldocs, c.name);
         return `<li><b>${escapeHtml(c.name.trim())}</b>`
           + (c.issuer ? ` — ${escapeHtml(c.issuer)}` : '')
           + (c.year ? ` (${escapeHtml(String(c.year))})` : '')
-          + (doc && doc.url
-              ? ` <a class="doc-link" href="${escapeHtml(safeUrl(doc.url))}" target="_blank" rel="noopener nofollow">certificate</a>`
-              : '')
+          + (doc ? ` <a class="doc-link" href="${escapeHtml(safeUrl(doc.url))}" target="_blank" rel="noopener nofollow">certificate</a>` : '')
           + `</li>`;
-      }).join('')}</ul>` : '');
-
-  /* ---- team ---- */
-  const team = Array.isArray(co.team) ? co.team : [];
-  html += section('Team', team.length
-    ? `<div class="pf-team">${team.map(t => `
+      }).join('')}</ul>`;
+    if(team.length) inner += `<h3 class="pf-sub">Team</h3><div class="pf-team">${team.map(t => `
         <div class="founder-card">
           <div class="founder-avatar">${t.photo ? `<img src="${escapeHtml(t.photo)}" alt="${escapeHtml(t.name || '')}">` : escapeHtml((t.name || '?').slice(0, 1).toUpperCase())}</div>
           <div><div class="founder-name">${escapeHtml(t.name || '')}</div>
           <div class="founder-role">${escapeHtml(t.role || '')}</div>
           ${t.email ? `<a class="founder-line" href="mailto:${escapeHtml(t.email)}">${escapeHtml(t.email)}</a>` : ''}</div>
-        </div>`).join('')}</div>` : '');
-
-  /* ---- reviews ----
-     Reviews are off by default. If a company has them switched off, the whole
-     section stays out of the page rather than advertising an empty one. */
-  html += (co.reviews_enabled || reviews.length) ? section('Buyer reviews', `
-    ${reviews.length ? `<div class="pf-reviews">${reviews.map(r => `
+        </div>`).join('')}</div>`;
+    /* Reviews are off by default per listing; a listing with them off and none
+       approved shows no review section at all. */
+    if(k.reviews_enabled || rv.length) inner += `<h3 class="pf-sub">Buyer reviews</h3>
+      ${rv.length ? `<div class="pf-reviews">${rv.map(r => `
       <div class="pf-review">
         <div class="pf-review-head">${stars(r.rating)} <b>${escapeHtml(r.author_name)}</b>
           <span class="pf-note">${new Date(r.created_at).toLocaleDateString()}</span></div>
         <p>${escapeHtml(r.body)}</p>
         ${r.reply ? `<div class="pf-reply"><b>${escapeHtml(co.name)} replied:</b> ${escapeHtml(r.reply)}</div>` : ''}
-      </div>`).join('')}</div>` : '<p class="empty-line">No reviews yet. Be the first to review this supplier.</p>'}
-    ${co.reviews_enabled ? reviewForm() : ''}`) : '';
+      </div>`).join('')}</div>` : '<p class="empty-line">No reviews yet. Be the first to review this listing.</p>'}
+      ${k.reviews_enabled ? reviewForm(k.id) : ''}`;
+    if(!inner) continue;
+    html += `<section class="pf-sec pf-listing" id="kw-${escapeHtml(k.id)}">
+      <h2 class="pf-sec-h"><a href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}" class="tc">${escapeHtml(k.keyword)}</a>${k.banner ? ' ★' : ''}${badgeHtml(k.badge, 'kw-lb')}</h2>
+      ${inner}</section>`;
+  }
 
   /* The in-page quote form is OFF (Jacob, 2026-08-21: "Request a quote part
      of the profile should be removed. Just make it provide their emails and
@@ -338,19 +334,19 @@ function socialLinks(socials){
   return links.length ? `<div class="pf-socials">${links.join('')}</div>` : '';
 }
 
-function reviewForm(){
+function reviewForm(appId){
   return `
-  <form class="pf-form" id="review-form" autocomplete="off">
+  <form class="pf-form review-form" data-app="${escapeHtml(appId)}" autocomplete="off">
     <h3>Leave a review</h3>
     <div class="form-row">
-      <div class="auth-field"><label>Your name</label><input id="rv-name" type="text" required maxlength="80"></div>
-      <div class="auth-field"><label>Your email <span class="pf-note">(not published)</span></label><input id="rv-email" type="email" required></div>
+      <div class="auth-field"><label>Your name</label><input class="rv-name" type="text" required maxlength="80"></div>
+      <div class="auth-field"><label>Your email <span class="pf-note">(not published)</span></label><input class="rv-email" type="email" required></div>
       <div class="auth-field"><label>Rating</label>
-        <select id="rv-rating">${[5,4,3,2,1].map(n => `<option value="${n}">${'★'.repeat(n)} (${n})</option>`).join('')}</select>
+        <select class="rv-rating">${[5,4,3,2,1].map(n => `<option value="${n}">${'★'.repeat(n)} (${n})</option>`).join('')}</select>
       </div>
     </div>
-    <div class="auth-field"><label>Your experience</label><textarea id="rv-body" rows="4" maxlength="1500" required></textarea></div>
-    <div id="rv-msg" class="err-msg"></div>
+    <div class="auth-field"><label>Your experience</label><textarea class="rv-body" rows="4" maxlength="1500" required></textarea></div>
+    <div class="err-msg rv-msg"></div>
     <button class="mini-btn green" type="submit">Submit review</button>
     <p class="pf-note">Reviews are checked by Circuits.com before they appear.</p>
   </form>`;
@@ -502,20 +498,22 @@ function wireProfile(slug, co){
     }
   });
 
-  const rv = document.getElementById('review-form');
-  armSpamTrap(rv);
-  if(rv) rv.addEventListener('submit', async e => {
-    e.preventDefault();
-    if(looksLikeSpam(rv)){ fakeSuccess(rv, 'Thanks. Your review is with our team for checking.'); return; }
-    const v = id => (document.getElementById(id).value || '').trim();
-    const msg = document.getElementById('rv-msg');
-    if(!isValidEmail(v('rv-email'))){ msg.textContent = 'Please enter a valid email address.'; return; }
-    try{
-      await submitReview(slug, { name: v('rv-name'), email: v('rv-email'), rating: +v('rv-rating'), body: v('rv-body') });
-      rv.innerHTML = '<div class="success show">Thanks. Your review is with our team for checking.</div>';
-    }catch(err){
-      msg.textContent = rateLimitMessage(err) || 'Sorry, that didn’t send. Please try again.';
-    }
+  /* one review form per listing that allows reviews */
+  document.querySelectorAll('form.review-form').forEach(rv => {
+    armSpamTrap(rv);
+    rv.addEventListener('submit', async e => {
+      e.preventDefault();
+      if(looksLikeSpam(rv)){ fakeSuccess(rv, 'Thanks. Your review is with our team for checking.'); return; }
+      const v = cls => (rv.querySelector('.' + cls).value || '').trim();
+      const msg = rv.querySelector('.rv-msg');
+      if(!isValidEmail(v('rv-email'))){ msg.textContent = 'Please enter a valid email address.'; return; }
+      try{
+        await submitReview(slug, { application_id: rv.dataset.app, name: v('rv-name'), email: v('rv-email'), rating: +v('rv-rating'), body: v('rv-body') });
+        rv.innerHTML = '<div class="success show">Thanks. Your review is with our team for checking.</div>';
+      }catch(err){
+        msg.textContent = rateLimitMessage(err) || 'Sorry, that didn’t send. Please try again.';
+      }
+    });
   });
 }
 

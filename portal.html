@@ -89,8 +89,6 @@
        wiring live in backups/dashboard-2026-08-20/ ready to restore. -->
   <div class="pt-tabs">
     <button class="pt-tab active" data-tab="company">Company Details</button>
-    <button class="pt-tab" data-tab="branding">About &amp; Branding</button>
-    <button class="pt-tab" data-tab="showcase">Showcase</button>
     <button class="pt-tab" data-tab="listings">Listings</button>
     <button class="pt-tab" data-tab="promote">Promote</button>
     <!-- shown by portal.js for a company owner: password change, sign-out-
@@ -110,9 +108,9 @@
   <!-- filled by portal.js with a company owner's account settings -->
   <section class="pt-panel" id="tab-account"><div id="pt-account-owner"></div></section>
 
-  <!-- Profile settings, split across three tabs. All three are parts of the
-       SAME saved profile: every field stays in the page whichever tab shows,
-       and any Save profile button saves all of them together. -->
+  <!-- Company profile: one tab, one form, one Save (was three tabs until
+       2026-09-02). Certifications, team, gallery and buyer reviews belong to
+       each keyword listing now and are edited under Listings. -->
 
   <!-- company details -->
   <section class="pt-panel active" id="tab-company">
@@ -149,13 +147,10 @@
       </div>
       <p class="pf-note">Contact person, phone, email, website and logo update everywhere &mdash; your profile,
       every keyword listing and your sponsor banner.</p>
-      <div><button class="btn btn-primary pt-save" type="button">Save profile</button></div>
-    </div>
-  </section>
 
-  <!-- about & branding -->
-  <section class="pt-panel" id="tab-branding">
-    <div class="pf-form">
+      <!-- Logo, About and Social profiles used to be an "About & Branding" tab
+           (merged here 2026-09-02, Jacob: fewer tabs). One form, one Save. -->
+      <h3 style="margin-top:22px">About &amp; branding</h3>
       <div class="pt-row">
         <div class="auth-field"><label for="pt-logo">Logo</label>
           <div style="display:flex;gap:10px;align-items:center">
@@ -184,45 +179,6 @@
 
       <h3>Social profiles</h3>
       <div class="pt-row" id="f-socials"></div>
-      <div><button class="btn btn-primary pt-save" type="button">Save profile</button></div>
-    </div>
-  </section>
-
-  <!-- showcase: certifications, team, gallery -->
-  <section class="pt-panel" id="tab-showcase">
-    <div class="pf-form">
-      <!-- The list editors below used to sit fully expanded and swallowed the
-           whole page. Folded until opened; the summary says what is inside. -->
-      <details class="pt-fold">
-        <summary>Certifications <span class="pf-note" id="fold-certs-n"></span></summary>
-        <div class="pt-list" id="f-certs"></div>
-      </details>
-
-      <details class="pt-fold">
-        <summary>Team <span class="pf-note" id="fold-team-n"></span></summary>
-        <div class="pt-list" id="f-team"></div>
-      </details>
-
-      <details class="pt-fold">
-        <summary>Gallery <span class="pf-note" id="fold-gallery-n"></span></summary>
-        <div class="pt-list" id="f-gallery"></div>
-      </details>
-
-      <!-- Was a bare terms-style checkbox stranded between sections — looked
-           broken. A setting gets a setting's presentation: name, consequence,
-           switch. Same input id, so portal.js needed no change to read it. -->
-      <div class="pt-setting">
-        <div class="pt-setting-text">
-          <b>Buyer reviews</b>
-          <p class="pf-note">Let buyers leave a review on your public profile. Circuits.com checks
-          every review before it appears, and you can reply publicly. Saved with the profile.</p>
-        </div>
-        <label class="switch">
-          <input id="f-reviews-on" type="checkbox">
-          <span class="knob" aria-hidden="true"></span>
-          <span class="sr-only">Allow buyers to leave reviews on my profile</span>
-        </label>
-      </div>
       <div><button class="btn btn-primary pt-save" type="button">Save profile</button></div>
     </div>
   </section>
