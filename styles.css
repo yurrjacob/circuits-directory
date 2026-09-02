@@ -361,6 +361,40 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 .console-head h1{font-size:1.6rem;margin:0}
 .console-head p{margin:5px 0 0;color:var(--muted)}
 .signout{color:#cfd2d6;text-decoration:none;font-size:.9rem;padding:8px 14px;border-radius:8px;border:1px solid #2a2a2a}
+
+/* notifications inbox: a bell in the header, a panel in the corner */
+.topbar .brand{margin-right:auto}   /* everything after the brand packs right, bell included */
+.inbox-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;margin:0 6px;border:1px solid #2a2a2a;border-radius:10px;background:transparent;color:#cfd2d6;cursor:pointer}
+.inbox-btn:hover,.inbox-btn[aria-expanded="true"]{color:#fff;border-color:#3a3a3a;background:#1a1a1a}
+.inbox-btn.has-unread{color:#fff}
+.inbox-n{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--green);color:#0f0f0f;font-size:.68rem;font-weight:800;line-height:18px;text-align:center}
+.inbox-panel{position:fixed;top:66px;right:16px;z-index:60;width:min(400px,calc(100vw - 24px));max-height:min(72vh,640px);overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px rgba(15,15,15,.22)}
+.inbox-head{position:sticky;top:0;display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--card);border-bottom:1px solid var(--line);font-size:.95rem}
+.inbox-head b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inbox-readall,.inbox-back{border:0;background:transparent;color:var(--green-dark);font:inherit;font-size:.82rem;font-weight:600;cursor:pointer;padding:4px 6px;border-radius:6px}
+.inbox-readall:hover,.inbox-back:hover{background:var(--bg-soft)}
+.inbox-back{font-size:1.1rem;line-height:1}
+.inbox-item{display:flex;gap:12px;width:100%;text-align:left;padding:12px 14px;border:0;border-bottom:1px solid var(--line);background:transparent;font:inherit;color:var(--ink);cursor:pointer}
+.inbox-item:hover{background:var(--bg-soft)}
+.inbox-item.unread{background:#f7fcec}
+.inbox-item.unread .inbox-subject{font-weight:700}
+.inbox-avatar{flex:none;width:38px;height:38px;border-radius:50%;overflow:hidden;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:center}
+.inbox-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.inbox-avatar .silhouette{width:22px;height:22px}
+.inbox-text{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.inbox-who{display:flex;justify-content:space-between;gap:10px;font-size:.82rem}
+.inbox-who span{color:var(--muted);white-space:nowrap}
+.inbox-subject{font-size:.92rem}
+.inbox-snip{font-size:.82rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inbox-empty{margin:0;padding:22px 14px;color:var(--muted);font-size:.9rem;text-align:center}
+.inbox-msg{padding:14px}
+.inbox-from{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.inbox-from div{display:flex;flex-direction:column;font-size:.9rem}
+.inbox-from span{color:var(--muted);font-size:.8rem}
+.inbox-body{font-size:.92rem;line-height:1.55}
+.inbox-body p{margin:0 0 10px}
+.inbox-open{margin-top:12px}
+@media(max-width:720px){.inbox-panel{top:60px;right:8px}.inbox-btn{margin:0 4px}}
 .signout:hover{background:#1c1c1c;color:#fff}
 .portal-tag{color:#9aa0a6;font-size:.78rem;font-style:italic}
 

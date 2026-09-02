@@ -587,6 +587,21 @@ async function fetchTalentKeywords(userId){
   if(error){ console.warn('fetchTalentKeywords', error.message); return []; }
   return (data || []).map(r => r.keyword);
 }
+/* ---- notifications inbox: the bell in the header ---- */
+async function fetchNotifications(){
+  if(!sb) return [];
+  const { data, error } = await sb.from('notifications')
+    .select('id, sender_name, sender_avatar, subject, body, link, read_at, created_at')
+    .order('created_at', { ascending: false }).limit(50);
+  if(error){ console.error('fetchNotifications', error); return []; }
+  return data || [];
+}
+async function markNotificationRead(id){
+  if(!sb) return;
+  const { error } = await sb.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', id).is('read_at', null);
+  if(error) console.error('markNotificationRead', error);
+}
+
 /* ---- jobs (MVP2): posted by a company owner, live once staff mark it paid ---- */
 async function postJob(slug, fields){
   if(!sb) return { error: 'No connection' };

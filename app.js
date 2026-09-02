@@ -250,8 +250,107 @@ function wirePasswordToggles(root){
   });
 }
 if(typeof document !== 'undefined' && document.addEventListener){
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => wirePasswordToggles());
-  else wirePasswordToggles();
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { wirePasswordToggles(); initInbox(); });
+  else { wirePasswordToggles(); initInbox(); }
+}
+
+/* supabase-js keeps the session under sb-<ref>-auth-token; presence is a hint, not a gate */
+function storedSession(){
+  try{
+    for(let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(/^sb-.*-auth-token$/.test(k || '') && localStorage.getItem(k)) return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+/* ---- notifications inbox (Jacob, 2026-09-02) ----
+   A bell in the top-right of every page that loads store.js, for anyone
+   signed in. It opens a panel in the corner, not a page: the list, then the
+   message. Rows come from the notifications table (welcome on signup, staff
+   messages); opening one marks it read. */
+async function initInbox(){
+  const bar = document.querySelector('.topbar .inner');
+  if(!bar || bar.querySelector('.inbox-btn')) return;
+  /* The homepage does not load the data client. If the stored session says
+     somebody is signed in (the same check nav.js makes for the Dashboard
+     button), pull the client in now; a signed-out visitor pays nothing. */
+  if(typeof sb === 'undefined'){
+    if(!storedSession()) return;
+    const add = src => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
+    try{ await add('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'); await add('/store.js'); }catch(e){ return; }
+  }
+  if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
+  let user = null;
+  try{ user = await currentUser(); }catch(e){}
+  if(!user) return;
+
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'inbox-btn'; btn.setAttribute('aria-label', 'Notifications'); btn.setAttribute('aria-expanded', 'false');
+  btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="inbox-n" hidden></span>';
+  /* In the header itself, not inside the nav: on a phone the nav folds into
+     the burger menu and the bell must stay visible in the corner. It sits
+     just before the last control (the burger on public pages, Sign out in
+     the portal). */
+  bar.insertBefore(btn, bar.querySelector('.nav-burger') || bar.querySelector('.signout') || null);
+
+  const panel = document.createElement('div');
+  panel.className = 'inbox-panel'; panel.hidden = true; panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Notifications');
+  document.body.appendChild(panel);
+
+  let items = null, open = null;
+  const when = iso => { const d = new Date(iso), days = (Date.now() - d) / 864e5;
+    return days < 1 ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : days < 7 ? d.toLocaleDateString([], { weekday: 'short' }) : d.toLocaleDateString(); };
+  const avatar = n => `<span class="inbox-avatar">${n.sender_avatar ? `<img src="${escapeHtml(n.sender_avatar)}" alt="">` : avatarSvg()}</span>`;
+  const badge = () => {
+    const n = (items || []).filter(x => !x.read_at).length, b = btn.querySelector('.inbox-n');
+    b.textContent = n > 9 ? '9+' : String(n); b.hidden = !n;
+    btn.classList.toggle('has-unread', n > 0);
+  };
+  const draw = () => {
+    if(items === null){ panel.innerHTML = '<div class="inbox-head"><b>Notifications</b></div><p class="inbox-empty">Loading…</p>'; return; }
+    if(open){
+      const n = open;
+      panel.innerHTML = `<div class="inbox-head"><button type="button" class="inbox-back" aria-label="Back to notifications">&larr;</button><b>${escapeHtml(n.subject)}</b></div>
+        <div class="inbox-msg">
+          <div class="inbox-from">${avatar(n)}<div><b>${escapeHtml(n.sender_name)}</b><span>${escapeHtml(when(n.created_at))}</span></div></div>
+          <div class="inbox-body"><p>${escapeHtml(n.body).replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>')}</p></div>
+          ${n.link ? `<a class="btn btn-primary inbox-open" href="${escapeHtml(n.link)}">Open</a>` : ''}
+        </div>`;
+      return;
+    }
+    panel.innerHTML = `<div class="inbox-head"><b>Notifications</b>${items.some(x => !x.read_at) ? '<button type="button" class="inbox-readall">Mark all read</button>' : ''}</div>` +
+      (items.length ? items.map(n => `<button type="button" class="inbox-item${n.read_at ? '' : ' unread'}" data-id="${escapeHtml(n.id)}">
+          ${avatar(n)}
+          <span class="inbox-text"><span class="inbox-who"><b>${escapeHtml(n.sender_name)}</b><span>${escapeHtml(when(n.created_at))}</span></span>
+            <span class="inbox-subject">${escapeHtml(n.subject)}</span>
+            <span class="inbox-snip">${escapeHtml(n.body.replace(/\s+/g, ' ').slice(0, 90))}${n.body.length > 90 ? '…' : ''}</span></span>
+        </button>`).join('') : '<p class="inbox-empty">Nothing here yet.</p>');
+  };
+  const load = async () => { items = await fetchNotifications(); badge(); draw(); };
+  const show = on => { panel.hidden = !on; btn.setAttribute('aria-expanded', on ? 'true' : 'false'); if(!on) open = null; };
+
+  btn.addEventListener('click', async () => { if(panel.hidden){ open = null; show(true); draw(); if(items === null) await load(); else draw(); } else show(false); });
+  panel.addEventListener('click', async e => {
+    e.stopPropagation();   // a redraw detaches the clicked row; the outside-click test below must not see it
+    const item = e.target.closest('.inbox-item');
+    if(item){
+      open = items.find(x => x.id === item.dataset.id) || null;
+      if(open && !open.read_at){ open.read_at = new Date().toISOString(); badge(); markNotificationRead(open.id); }
+      draw(); return;
+    }
+    if(e.target.closest('.inbox-back')){ open = null; draw(); return; }
+    if(e.target.closest('.inbox-readall')){
+      for(const n of items) if(!n.read_at){ n.read_at = new Date().toISOString(); markNotificationRead(n.id); }
+      badge(); draw();
+    }
+  });
+  document.addEventListener('click', e => { if(!panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) show(false); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape' && !panel.hidden) show(false); });
+
+  /* the badge without opening: one cheap read at load */
+  load();
 }
 
 /* The database raises this when someone trips the per-IP limit. Turn it into
