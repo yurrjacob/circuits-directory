@@ -1395,6 +1395,15 @@ body.nav-open .nav-burger .x{display:block}
 .switch input:focus-visible + .knob{box-shadow:0 0 0 3px rgba(118,192,0,.35)}
 .pt-job-sw{display:inline-flex;align-items:center;gap:8px;font-size:.85rem;font-weight:600;color:var(--muted)}
 .pt-upgrade-title{display:block;font-size:.9rem;margin:0 0 4px}
+.rp-add{padding:4px 10px;font-size:.76rem}
+.pt-list>.rp-add{align-self:flex-start}
+.req{color:var(--green-dark)}
+.kw-table td{vertical-align:middle}
+.kw-table .kw-field{width:100%;min-width:160px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--input-bg)}
+.kw-table tr.kw-off .kw-field{color:var(--muted)}
+.kw-switch{display:inline-flex;align-items:center;gap:8px;font-size:.82rem;font-weight:600;color:var(--muted)}
+.kw-switch input:checked ~ .sw-text{color:var(--green-dark)}
+.kw-tag.on{background:var(--green);color:#0f2a00;border-color:var(--green)}
 .pt-board-grid h3{margin:0 0 10px;font-size:.95rem}
 .pt-board-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
 .pt-board-row:last-child{border-bottom:1px solid var(--line)}

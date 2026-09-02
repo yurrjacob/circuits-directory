@@ -536,9 +536,10 @@ async function updateMyProfile(fields){
 /* ---- talent marketplace (MVP2): a profile that opts in to the Recruits Directory ---- */
 /* the keywords the owner wants to be found under; the database normalises,
    de-duplicates and caps them at ten */
-async function setTalentKeywords(keywords){
+/* keywords with their on/off switches, same order; the RPC dedupes and caps at 10 */
+async function setTalentKeywords(keywords, enabled){
   if(!sb) return { error: 'No connection' };
-  const { data, error } = await sb.rpc('set_talent_keywords', { p_keywords: keywords || [] });
+  const { data, error } = await sb.rpc('set_talent_keywords', { p_keywords: keywords || [], p_enabled: enabled || null });
   if(error) return { error: /keyword_limit/.test(error.message) ? 'Ten keywords is the limit.' : error.message };
   return { keywords: data || [] };
 }

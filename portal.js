@@ -52,12 +52,15 @@ function renderMeDetails(){
           <input id="me-handle" type="text" maxlength="32" spellcheck="false" value="${escapeHtml(ME.handle)}"></div>
         <div id="me-handle-msg" class="pf-note"></div>
       </div>
-      <div class="auth-field"><label>Display name</label>
-        <input id="me-name" type="text" maxlength="120" value="${escapeHtml(ME.display_name || '')}"></div>
+      <div class="auth-field"><label>Full name <span class="req">*</span></label>
+        <input id="me-name" type="text" maxlength="120" required value="${escapeHtml(ME.display_name || '')}"></div>
     </div>
     <div class="grid2">
-      <div class="auth-field"><label>Phone <span class="cell-muted">(private until a company unlocks you)</span></label>
-        <input id="me-phone" type="tel" maxlength="40" placeholder="(555) 123-4567" value="${escapeHtml(ME.phone || '')}"></div>
+      <div class="auth-field"><label>Email <span class="req">*</span> <span class="cell-muted">(private until a company unlocks you)</span></label>
+        <input id="me-email" type="email" readonly value="${escapeHtml(ME.email || (PT.user && PT.user.email) || '')}" title="Change it under Account Settings">
+        <div class="pf-note">This is your sign-in email. Change it under Account Settings.</div></div>
+      <div class="auth-field"><label>Phone <span class="req">*</span> <span class="cell-muted">(private until a company unlocks you)</span></label>
+        <input id="me-phone" type="tel" maxlength="40" required placeholder="(555) 123-4567" value="${escapeHtml(ME.phone || '')}"></div>
     </div>
     ${saveBtn('me-msg-1')}`;
 }
@@ -66,20 +69,20 @@ function renderExperience(){
   const box = el('pt-experience'); if(!box) return;
   box.innerHTML = `
     <div class="grid2">
-      <div class="auth-field"><label>Job title</label>
+      <div class="auth-field"><label>Position Desired</label>
         <input id="me-title" type="text" maxlength="80" placeholder="RF Design Engineer" value="${escapeHtml(ME.title || '')}"></div>
       <div class="auth-field"><label>Years of experience</label>
         <input id="me-years" type="number" min="0" max="60" placeholder="8" value="${ME.years == null ? '' : ME.years}"></div>
     </div>
     <div class="auth-field"><label>Qualifying statement</label>
       <textarea id="me-bio" rows="5" maxlength="600" placeholder="What you do, what you are good at, what you are looking for.">${escapeHtml(ME.bio || '')}</textarea></div>
-    <div class="auth-field"><label>Resume <span class="cell-muted">(PDF, up to 10 MB, private)</span></label>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <span id="me-resume-state" class="pf-note" style="margin:0">${ME_FRESH ? 'Save your profile first, then upload a resume.' : ME.resume_path ? 'Resume on file.' : 'No resume yet.'}</span>
-        ${ME.resume_path ? '<a class="mini-btn" href="#" id="me-resume-view">View</a><button class="mini-btn danger" type="button" id="me-resume-remove">Remove</button>' : ''}
-        ${ME_FRESH ? '' : `<label class="mini-btn" style="cursor:pointer">${ME.resume_path ? 'Replace' : 'Upload'}<input id="me-resume" type="file" accept="application/pdf" style="display:none"></label>`}
-      </div></div>
     <details class="pt-fold" open><summary>Certifications &amp; degrees <span class="pf-note" id="fold-creds-n"></span></summary><div class="pt-list" id="f-creds"></div></details>
+    <details class="pt-fold" open><summary>Resume <span class="pf-note">${ME.resume_path ? '· on file' : '· none yet'}</span></summary>
+      <div class="pt-list"><div class="pt-item" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <span id="me-resume-state" class="pf-note" style="margin:0;flex:1">${ME_FRESH ? 'Save your profile first, then upload a resume.' : ME.resume_path ? 'Resume on file. PDF, private until a company unlocks you.' : 'No resume yet. PDF, up to 10 MB, private until a company unlocks you.'}</span>
+        ${ME.resume_path ? '<a class="mini-btn rp-add" href="#" id="me-resume-view">View</a><button class="mini-btn rp-add danger" type="button" id="me-resume-remove">Remove</button>' : ''}
+        ${ME_FRESH ? '' : `<label class="mini-btn green rp-add" style="cursor:pointer">${ME.resume_path ? 'Replace' : '+ Upload'}<input id="me-resume" type="file" accept="application/pdf" style="display:none"></label>`}
+      </div></div></details>
     ${saveBtn('me-msg-2')}`;
   renderRepeater('creds', ME.credentials, ['name', 'issuer', 'year'], ['Certification or degree', 'Issued by', 'Year']);
 
@@ -108,12 +111,39 @@ function renderExperience(){
   });
 }
 
+/* Keywords are a table (Jacob, 2026-09-02): one row per keyword with its own
+   field, an on/off switch, and a Preview button that shows the card the way
+   a company searching that keyword sees it. */
+let KW_ROWS = [], PREVIEW_KW = null;
+function kwRowsFromMe(){
+  const rows = Array.isArray(ME.keyword_rows) ? ME.keyword_rows : (ME.keywords || []).map(k => ({ keyword: k, enabled: true }));
+  return rows.map(r => ({ keyword: r.keyword || '', enabled: r.enabled !== false }));
+}
+function drawKwTable(){
+  const t = el('me-kw-rows'); if(!t) return;
+  t.innerHTML = KW_ROWS.map((r, i) => `<tr class="${r.enabled ? '' : 'kw-off'}">
+      <td><input type="text" class="kw-field" data-i="${i}" maxlength="40" placeholder="e.g. pcb layout" value="${escapeHtml(r.keyword)}" aria-label="Keyword ${i + 1}"></td>
+      <td><label class="switch kw-switch"><input type="checkbox" data-on="${i}" ${r.enabled ? 'checked' : ''}><span class="knob" aria-hidden="true"></span><span class="sw-text">${r.enabled ? 'On' : 'Off'}</span></label></td>
+      <td class="row-actions"><button type="button" class="mini-btn rp-add ${PREVIEW_KW === r.keyword && r.keyword ? 'green' : ''}" data-preview="${i}">Preview</button>
+        <button type="button" class="pt-doc-x" data-rmkw="${i}" aria-label="Remove keyword">&times;</button></td>
+    </tr>`).join('');
+  const add = el('me-kw-add'); if(add) add.disabled = KW_ROWS.length >= 10;
+  const n = el('me-kw-n'); if(n) n.innerHTML = `<b>${KW_ROWS.filter(r => r.keyword.trim()).length}</b> of 10 keywords, ${KW_ROWS.filter(r => r.keyword.trim() && r.enabled).length} on`;
+}
 function renderRecruit(){
   const box = el('pt-recruit'); if(!box) return;
+  KW_ROWS = kwRowsFromMe();
+  if(!KW_ROWS.length) KW_ROWS.push({ keyword: '', enabled: true });
   box.innerHTML = `
-    <div class="auth-field"><label>Your Circuits-Keywords&trade; <span class="cell-muted">(up to 10, comma separated)</span></label>
-      <input id="me-keywords" type="text" placeholder="rf design, pcb layout, fpga" value="${escapeHtml((ME.keywords || []).join(', '))}">
-      <div class="pf-note">The words a recruiter searches for. One idea per keyword: <b>pcb layout</b>, not <b>pcb layout and test</b>.</div></div>
+    <div class="auth-field"><label>Your Circuits-Keywords&trade; <span class="cell-muted">(up to 10)</span></label>
+      <div class="table-scroll"><table class="dash-table kw-table">
+        <thead><tr><th>Keyword</th><th>On / Off</th><th></th></tr></thead>
+        <tbody id="me-kw-rows"></tbody>
+      </table></div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px">
+        <button type="button" class="mini-btn green rp-add" id="me-kw-add">+ Add keyword</button>
+        <span class="pf-note" id="me-kw-n" style="margin:0"></span></div>
+      <div class="pf-note">The words a recruiter searches for. One idea per keyword: <b>pcb layout</b>, not <b>pcb layout and test</b>. Off keeps a keyword without being found by it.</div></div>
     <div class="pt-setting">
       <div class="pt-setting-text"><b>List me in the Recruits Directory</b>
         <p class="pf-note">Companies searching your keywords see the preview. Switch it off any time.</p></div>
@@ -125,17 +155,42 @@ function renderRecruit(){
       : ME.talent_status === 'Denied'   ? '<p class="pf-note" style="color:#b3261e">Not approved. Reply through the <a href="/contact">Contact page</a> if you think this is a mistake.</p>'
       : '<p class="pf-note">Waiting for Circuits.com to approve your listing. You get a message in your inbox when that is done.</p>') : ''}
     ${saveBtn('me-msg-3')}`;
-  el('me-keywords').addEventListener('input', renderRecruitPreview);
+  drawKwTable();
+  const table = el('me-kw-rows');
+  table.addEventListener('input', e => { const f = e.target.closest('.kw-field'); if(!f) return; KW_ROWS[+f.dataset.i].keyword = f.value; const n = el('me-kw-n'); if(n) n.innerHTML = `<b>${KW_ROWS.filter(r => r.keyword.trim()).length}</b> of 10 keywords, ${KW_ROWS.filter(r => r.keyword.trim() && r.enabled).length} on`; renderRecruitPreview(); });
+  table.addEventListener('change', e => { const c = e.target.closest('[data-on]'); if(!c) return; KW_ROWS[+c.dataset.on].enabled = c.checked; drawKwTable(); renderRecruitPreview(); });
+  table.addEventListener('click', e => {
+    const pv = e.target.closest('[data-preview]'), rm = e.target.closest('[data-rmkw]');
+    if(pv){ const k = KW_ROWS[+pv.dataset.preview].keyword.trim(); PREVIEW_KW = PREVIEW_KW === k ? null : k; drawKwTable(); renderRecruitPreview(); }
+    if(rm){ KW_ROWS.splice(+rm.dataset.rmkw, 1); if(!KW_ROWS.length) KW_ROWS.push({ keyword: '', enabled: true }); drawKwTable(); renderRecruitPreview(); }
+  });
+  el('me-kw-add').addEventListener('click', () => { if(KW_ROWS.length >= 10) return; KW_ROWS.push({ keyword: '', enabled: true }); drawKwTable(); const last = table.querySelector('tr:last-child .kw-field'); if(last) last.focus(); });
   renderRecruitPreview();
 }
 
 /* the card exactly as a searching company sees it: public bits open, private bits blurred */
 function renderRecruitPreview(){
   const box = el('pt-recruit-preview'); if(!box) return;
-  const kw = el('me-keywords') ? el('me-keywords').value.split(',').map(x => x.trim()).filter(Boolean) : (ME.keywords || []);
+  const on = KW_ROWS.filter(r => r.keyword.trim() && r.enabled).map(r => r.keyword.trim());
+  const pk = PREVIEW_KW && KW_ROWS.find(r => r.keyword.trim() === PREVIEW_KW);
+  const kw = pk ? [PREVIEW_KW].concat(on.filter(k => k !== PREVIEW_KW)) : on;
   const row = { user_id: 'me', title: val('me-title') || ME.title, years: val('me-years') === '' ? ME.years : parseInt(val('me-years'), 10),
                 bio: val('me-bio') || ME.bio, keywords: kw, credentials: (el('f-creds') && el('f-creds').__list) || ME.credentials };
-  box.innerHTML = `<div class="tal-grid" style="grid-template-columns:1fr">${talentCardHtml(row, { preview: true, kwHref: null })}</div>`;
+  const cap = pk
+    ? (pk.enabled ? `<p class="pf-note" style="margin:0 0 8px">Previewing a company searching <b>${escapeHtml(PREVIEW_KW)}</b>. Unlock shows what they see after paying.</p>`
+                  : `<p class="pf-note" style="margin:0 0 8px;color:#b3261e"><b>${escapeHtml(PREVIEW_KW)}</b> is switched off, so a company searching it does not see you.</p>`)
+    : '<p class="pf-note" style="margin:0 0 8px">Pick Preview beside a keyword to see that search. Unlock shows what a company sees after paying.</p>';
+  box.innerHTML = cap + `<div class="tal-grid" style="grid-template-columns:1fr">${talentCardHtml(row, { access: true, kwHref: null })}</div>`;
+  if(pk) box.querySelector('.kw-tag') && box.querySelector('.kw-tag').classList.add('on');
+  /* Unlock works here: it is your own card, so it reveals your own details */
+  const u = box.querySelector('button.tal-unlock');
+  if(u) u.addEventListener('click', async () => {
+    const priv = box.querySelector('.tal-private');
+    const resume = ME.resume_path ? await resumeLink(ME.resume_path) : '';
+    priv.innerHTML = talentContactHtml({ handle: ME.handle, display_name: val('me-name') || ME.display_name, email: ME.email || (PT.user && PT.user.email) || '', phone: val('me-phone') || ME.phone || '' }, resume)
+      + '<button type="button" class="mini-btn rp-add" id="me-relock">Lock again</button>';
+    priv.querySelector('#me-relock').addEventListener('click', renderRecruitPreview);
+  });
 }
 
 function wireIndividual(){
@@ -150,10 +205,13 @@ function wireIndividual(){
       const why = await handleAvailable(handle);
       if(why){ say(why, true); return; }
     }
+    if(!name){ say('Your full name is needed.', true); activateTab('me'); el('me-name').focus(); return; }
+    if(!isValidPhone(val('me-phone'))){ say('A phone number (at least 10 digits) is needed.', true); activateTab('me'); el('me-phone').focus(); return; }
     const yearsRaw = val('me-years');
     const years = yearsRaw === '' ? null : parseInt(yearsRaw, 10);
     if(yearsRaw !== '' && !(years >= 0 && years <= 60)){ say('Years of experience should be 0 to 60.', true); return; }
-    const keywords = val('me-keywords').split(',').map(x => x.trim()).filter(Boolean);
+    const kwRows = KW_ROWS.filter(r => r.keyword.trim());
+    const keywords = kwRows.map(r => r.keyword.trim()), kwOn = kwRows.map(r => r.enabled);
     if(keywords.length > 10){ say('Ten keywords is the limit.', true); return; }
     const credentials = (el('f-creds') && el('f-creds').__list || []).filter(o => Object.values(o).some(v => (v || '').trim()));
     for(const c of credentials){ if((c.year || '').trim() && !isValidYear(c.year)){ say(`"${c.name || '(unnamed)'}" needs a 4-digit year.`, true); return; } }
@@ -164,7 +222,7 @@ function wireIndividual(){
     const err = await updateMyProfile({ handle, display_name: name || null, phone: val('me-phone') || null,
       title: val('me-title') || null, years, bio: val('me-bio') || null, credentials,
       talent_listed: !!(el('me-listed') && el('me-listed').checked) });
-    const kw = err ? {} : await setTalentKeywords(keywords);
+    const kw = err ? {} : await setTalentKeywords(keywords, kwOn);
     const bad = err || kw.error;
     if(bad){ say(bad, true); return; }
     try{ localStorage.setItem('cx_account_type', 'individual'); }catch(e){}
@@ -217,6 +275,7 @@ async function initPortal(){
   await wireAdminTab();
   /* Account Settings for both kinds; only an individual may delete the account
      here (a company listing is paid for and may be shared). */
+  PT.user = user;
   renderAccount(user, 'pt-account-owner', kind === 'individual');
 
   if(kind === 'individual'){
@@ -1150,8 +1209,8 @@ function renderRepeater(key, items, fields, labels, types){
   function draw(){
     box.innerHTML = list.map((it, i) =>
       `<div class="pt-item"><div class="pt-row">${fields.map((f, j) => cell(it, i, f, labels[j])).join('')}</div>
-       <button type="button" class="mini-btn" data-del="${i}">Remove</button></div>`
-    ).join('') + `<button type="button" class="mini-btn green" data-add="1">+ Add</button>`;
+       <button type="button" class="mini-btn rp-add" data-del="${i}">Remove</button></div>`
+    ).join('') + `<button type="button" class="mini-btn green rp-add" data-add="1">+ Add</button>`;
     /* the fold's summary line says what is inside without opening it */
     const n = el('fold-' + key + '-n');
     if(n) n.textContent = list.length ? '· ' + list.length : '· none yet';
