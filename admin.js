@@ -364,6 +364,22 @@ async function doneUpgrade(id){
   await reloadUpgrades();
 }
 
+/* ---- send a message: staff-written notification into one or many inboxes ---- */
+async function sendNotificationUI(){
+  const v = id => ($(id).value || '').trim();
+  const to = v('nt-to'), subject = v('nt-subject'), body = v('nt-body'), link = v('nt-link'), msg = $('nt-msg');
+  if(!to || !subject || !body){ msg.textContent = 'To, subject and message are all needed.'; return; }
+  const wide = /^(everyone|all|\*|individuals|companies)$/i.test(to);
+  if(wide && !confirm(`Send "${subject}" to ${to.toLowerCase()}? This cannot be recalled.`)) return;
+  $('nt-send').disabled = true; msg.textContent = 'Sending…';
+  const r = await sendNotification(to, subject, body, link);
+  $('nt-send').disabled = false;
+  if(r.error){ msg.textContent = 'Could not send: ' + r.error; return; }
+  if(!r.sent){ msg.textContent = 'Nobody matched "' + to + '". Use a handle, an email, or everyone / individuals / companies.'; return; }
+  msg.textContent = 'Sent to ' + r.sent + (r.sent === 1 ? ' inbox.' : ' inboxes.');
+  ['nt-subject', 'nt-body', 'nt-link'].forEach(id => { $(id).value = ''; });
+}
+
 /* ---- recruits (MVP2): people listed in the Recruits Directory ---- */
 let allRecruits = [];
 async function reloadRecruits(){
@@ -519,6 +535,6 @@ window.initAdmin = async function(){
    tools/check.js fails if a new onclick appears without being listed here. */
 Object.assign(window, {
   editListing, editBadge, removeListing, togglePause, lockListing,
-  approveApp, rejectApp, setSuspended, setTalentAccessUI, hideRecruit, markJobPaid, closeJob, doneUpgrade
+  approveApp, rejectApp, setSuspended, setTalentAccessUI, hideRecruit, markJobPaid, closeJob, doneUpgrade, sendNotificationUI
 });
 })();

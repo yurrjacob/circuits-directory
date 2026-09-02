@@ -601,6 +601,14 @@ async function markNotificationRead(id){
   const { error } = await sb.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', id).is('read_at', null);
   if(error) console.error('markNotificationRead', error);
 }
+/* Staff only (the RPC refuses everyone else). to: handle, email, or
+   everyone / individuals / companies. Resolves to how many inboxes it landed in. */
+async function sendNotification(to, subject, body, link){
+  if(!sb) return { error: 'No connection' };
+  const { data, error } = await sb.rpc('send_notification', { p_to: to, p_subject: subject, p_body: body, p_link: link || null });
+  if(error){ console.error('sendNotification', error); return { error: error.message }; }
+  return { sent: data };
+}
 
 /* ---- jobs (MVP2): posted by a company owner, live once staff mark it paid ---- */
 async function postJob(slug, fields){
