@@ -206,6 +206,16 @@ async function initPortal(){
      there was no account UI once you owned a listing. */
   show('pt-tab-account', true);
   renderAccount(user, 'pt-account-owner', false);
+  /* A company owner is also a person with a profile: the Your Profile tab (and
+     its Talent section, MVP2) used to exist only for accounts with no listing,
+     so an owner could never reach it (Jacob, 2026-09-02). Same card, same tab. */
+  if(me){
+    show('pt-tab-me', true);
+    const card = el('pt-none') && el('pt-none').querySelector('.auth-card');
+    if(card){ el('tab-me').appendChild(card); card.querySelector('h1').textContent = 'Your profile'; }
+    renderMyProfile(me);
+    const sub = el('pt-none-email'); if(sub) sub.textContent = user.email;
+  }
   await loadCompany(cos[0].slug);
 }
 
