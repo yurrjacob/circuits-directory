@@ -1387,6 +1387,14 @@ for (const [m, y, what] of [[BASE, BASE_Y, 'listing'], [BANNER, BANNER_Y, 'banne
   const appSrc2 = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
   assert.ok(/tal-photo/.test(appSrc2.slice(appSrc2.indexOf('function talentContactHtml'), appSrc2.indexOf('function talentContactHtml') + 600)), 'the unlocked contact block does not show the picture');
   assert.ok(!/photo/.test(appSrc2.slice(appSrc2.indexOf('function talentCardHtml'), appSrc2.indexOf('function talentContactHtml'))), 'the recruit card must stay anonymous: no picture before Unlock');
+  /* every live email leaves from notifications@circuits.com: a listing request
+     (Get Listed or Get another listing) is acknowledged by the notify function,
+     not by FormSubmit */
+  const joinFn = appSrc2.slice(appSrc2.indexOf('function initJoin('), appSrc2.indexOf('async function initReset('));
+  assert.ok(/notifyListingRequest\(base\.email, base\.company\)/.test(joinFn), 'Get Listed no longer emails the applicant and staff through the notify function');
+  assert.ok(!/sendFounderEmail\(/.test(joinFn), 'Get Listed went back to FormSubmit');
+  assert.ok(/notifyListingRequest\(base\.email, base\.company\)/.test(pj), 'Get another listing does not email a copy');
+  assert.ok(/kind: 'listing-request'/.test(st), 'store.js lost notifyListingRequest');
 }
 
 console.log('checks passed');
