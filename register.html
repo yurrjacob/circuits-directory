@@ -37,16 +37,23 @@
 </header>
 
 <div class="form-wrap form-wrap-narrow">
-<h1>Create Your Profile</h1>
-<p class="lede">Claim your address on Circuits.com. Anyone can have one &mdash; you do not need a
-company listing, and a company can be listed without one.</p>
+<h1>Create Your Account</h1>
 
-<!-- Individual or company: a person registers here, a company goes to Get Listed (MVP2, 2026-09-02) -->
-<div class="reg-kind">
-  <a class="reg-kind-card active" href="#reg-form"><b>I&rsquo;m an individual</b>
-    <span>Engineer, recruiter, researcher, educator. A free profile, plus optional keywords and a resume so employers can find you.</span></a>
-  <a class="reg-kind-card" href="/join"><b>I&rsquo;m a company</b>
-    <span>A free directory listing under your Circuits-Keywords&trade;, with a company profile to manage it from.</span></a>
+<!-- Step one is only this choice (Jacob, 2026-09-02): pick a card, and the
+     same registration form appears below for either kind of account. -->
+<div class="reg-kind" id="reg-kind">
+  <button type="button" class="reg-kind-card" data-kind="individual"><b>Individual</b>
+    <ul>
+      <li>Create Your Free Profile &amp; Circuits.com Address</li>
+      <li>Get Found Under Your Circuits-Keywords&trade;</li>
+      <li>Build Your Employment Profile &amp; Get Recruited</li>
+    </ul></button>
+  <button type="button" class="reg-kind-card" data-kind="company"><b>Company</b>
+    <ul>
+      <li>View Your Free Account &amp; Keyword Listings</li>
+      <li>Claim Keyword Upgrades</li>
+      <li>Create Employment Profile For Posting &amp; Searching</li>
+    </ul></button>
 </div>
 
 <div id="reg-success" class="success">
@@ -55,14 +62,15 @@ Check your inbox to confirm your email address, then sign in at
 <a href="/portal">circuits.com/portal</a>.
 </div>
 
-<form id="reg-form" autocomplete="off" novalidate>
+<form id="reg-form" autocomplete="off" novalidate style="display:none">
+<input type="hidden" id="r-kind" value="individual">
 
 <!-- Step 0 -->
 <section class="step">
 <div class="step-head">
 <span class="step-num">00</span>
 <div>
-<h2>Register</h2>
+<h2 id="reg-h2">Register</h2>
 <p>Your username is your link. Pick it carefully &mdash; it is what you put on adverts and cards.</p>
 </div>
 </div>
@@ -81,7 +89,7 @@ hyphens or underscores between them.</p>
 
 <div class="grid2">
 <div class="field">
-<label for="r-name">Display Name <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
+<label for="r-name" id="r-name-label">Display Name <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
 <input id="r-name" type="text" maxlength="120" placeholder="Jacob Kennedy">
 </div>
 <div class="field">
@@ -113,12 +121,12 @@ hyphens or underscores between them.</p>
 </div>
 </form>
 
-<div class="reg-next">
+<div class="reg-next" id="reg-next" style="display:none">
 <h2 class="pf-sec-h">What happens next</h2>
 <ol class="reg-steps">
-<li><b>Profile created</b> &mdash; circuits.com/yourname is yours.</li>
+<li><b>Account created</b> &mdash; circuits.com/yourname is yours.</li>
 <li><b>Confirm your email</b> so you can sign in.</li>
-<li><b>Optional:</b> <a href="/join">get a company listed</a>. A listing is not required to have a profile.</li>
+<li><b>Open your dashboard</b> at <a href="/portal">circuits.com/portal</a>.</li>
 </ol>
 </div>
 </div>

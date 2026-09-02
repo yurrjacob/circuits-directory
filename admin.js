@@ -343,6 +343,27 @@ async function setTalentAccessUI(slug){
   await reloadCompanies();
 }
 
+/* ---- upgrade requests: badge / banner / locked position, asked from Listings ---- */
+const UPGRADE_NAMES = { badge: 'Trust Badge', banner: 'Sponsor banner', lock: 'Locked position' };
+async function reloadUpgrades(){
+  const body = $('upgrades-body'); if(!body) return;
+  const rows = await fetchUpgradeRequests();
+  body.innerHTML = rows.map(r => `
+    <tr class="row-waiting">
+      <td>${esc(r.company || r.company_slug)}</td>
+      <td>${esc(r.keyword || '—')}</td>
+      <td><b>${esc(UPGRADE_NAMES[r.kind] || r.kind)}</b></td>
+      <td class="cell-muted">${new Date(r.created_at).toLocaleDateString()}</td>
+      <td class="row-actions"><button class="mini-btn green" onclick="doneUpgrade('${esc(r.id)}')">Done</button></td></tr>`).join('');
+  $('upgrades-empty').style.display = rows.length ? 'none' : 'block';
+}
+async function doneUpgrade(id){
+  if(!confirm('Mark this upgrade request done? Only do this once payment is taken and the upgrade is applied to the listing.')) return;
+  const err = await handleUpgradeRequest(id);
+  if(err){ alert('Could not do that: ' + err); return; }
+  await reloadUpgrades();
+}
+
 /* ---- recruits (MVP2): people listed in the Recruits Directory ---- */
 let allRecruits = [];
 async function reloadRecruits(){
@@ -482,7 +503,7 @@ window.initAdmin = async function(){
   if(started) return;
   if(!(await checkStaff())) return;        // belt and braces; the database is the real gate
   started = true;
-  reloadCompanies(); reloadAudit(); reloadSearches(); reloadRecruits(); reloadJobs();
+  reloadCompanies(); reloadAudit(); reloadSearches(); reloadRecruits(); reloadJobs(); reloadUpgrades();
   const saved = await loadPrefs('admin');
   if(saved) for(const k in panels){
     if(saved[k] && saved[k].sort) panels[k].sort = saved[k].sort;
@@ -498,6 +519,6 @@ window.initAdmin = async function(){
    tools/check.js fails if a new onclick appears without being listed here. */
 Object.assign(window, {
   editListing, editBadge, removeListing, togglePause, lockListing,
-  approveApp, rejectApp, setSuspended, setTalentAccessUI, hideRecruit, markJobPaid, closeJob
+  approveApp, rejectApp, setSuspended, setTalentAccessUI, hideRecruit, markJobPaid, closeJob, doneUpgrade
 });
 })();

@@ -445,7 +445,7 @@ async function profileRunByStaff(handle){
 /* Only these columns are readable by visitors: email, phone and resume_path are
    private (talent marketplace, 2026-09-02) and leave the table solely through
    my_profile() for the owner and talent_contact() for subscribed companies. */
-const PROFILE_PUBLIC_COLS = 'user_id, handle, display_name, created_at, updated_at, suspended_at, title, years, bio, talent_listed, talent_hidden';
+const PROFILE_PUBLIC_COLS = 'user_id, handle, display_name, created_at, updated_at, suspended_at, title, years, bio, talent_listed, talent_hidden, account_type, credentials';
 async function fetchProfileByHandle(handle){
   if(!sb || !handle) return null;
   const { data, error } = await sb.from('profiles').select(PROFILE_PUBLIC_COLS)
@@ -470,11 +470,65 @@ async function createMyProfile(handle, displayName){
     .insert({ user_id: u.id, handle, display_name: displayName || null, email: u.email });
   return error ? error.message : '';
 }
+/* A company account's own companies row, created on its first portal visit
+   (register_company() is idempotent: it returns the slug it already owns). */
+async function registerCompany(){
+  if(!sb) return { error: 'No connection' };
+  const { data, error } = await sb.rpc('register_company');
+  if(error) return { error: error.message };
+  return { slug: data };
+}
+/* Account settings: a new sign-in email. Supabase mails a confirmation link
+   to the new address and only switches once it is clicked. */
+async function changeEmail(email){
+  if(!sb) return 'No connection';
+  const { error } = await sb.auth.updateUser({ email }, { emailRedirectTo: location.origin + '/portal' });
+  return error ? error.message : '';
+}
+/* Listings tab: searches per keyword in the last 30 days (owner or staff). */
+async function listingSearchCounts(slug){
+  if(!sb || !slug) return {};
+  const { data, error } = await sb.rpc('listing_search_counts', { p_slug: slug });
+  if(error){ console.error('listing_search_counts', error); return {}; }
+  const out = {};
+  for(const r of (data || [])) out[r.keyword_norm] = Number(r.searches) || 0;
+  return out;
+}
+/* Paid upgrades (badge, banner, locked position) are recorded by staff; the
+   owner raises a request here and staff see it in the console. */
+async function requestUpgrade(applicationId, slug, kind, note){
+  if(!sb) return 'No connection';
+  const { error } = await sb.from('upgrade_requests')
+    .insert({ application_id: applicationId, company_slug: slug, kind, note: note || null });
+  return error ? error.message : '';
+}
+async function myUpgradeRequests(slug){
+  if(!sb || !slug) return [];
+  const { data, error } = await sb.from('upgrade_requests').select('id, application_id, kind, created_at, handled_at')
+    .eq('company_slug', slug).is('handled_at', null);
+  if(error){ console.error('myUpgradeRequests', error); return []; }
+  return data || [];
+}
+async function fetchUpgradeRequests(){
+  if(!sb) return [];
+  const { data, error } = await sb.from('upgrade_requests')
+    .select('id, application_id, company_slug, kind, note, created_at, handled_at, applications(keyword, company)')
+    .is('handled_at', null).order('created_at', { ascending: true });
+  if(error){ console.error('fetchUpgradeRequests', error); return []; }
+  return (data || []).map(r => ({ ...r, keyword: r.applications ? r.applications.keyword : '', company: r.applications ? r.applications.company : r.company_slug }));
+}
+async function handleUpgradeRequest(id){
+  if(!sb) return 'No connection';
+  const { data, error } = await sb.from('upgrade_requests').update({ handled_at: new Date().toISOString() }).eq('id', id).select('id');
+  if(error) return error.message;
+  if(!data || !data.length) return 'That change was refused.';
+  return '';
+}
 async function updateMyProfile(fields){
   if(!sb) return 'No connection';
   const u = await currentUser();
   if(!u) return 'Not signed in';
-  const { data, error } = await sb.from('profiles').update(fields).eq('user_id', u.id).select('user_id');
+  const { data, error } = await sb.from('profiles').update(fields).eq('user_id', u.id).select('user_id');   // credentials, title, years, bio... column grants decide
   if(error) return error.message;
   if(!data || !data.length) return 'That change was refused.';
   return '';
@@ -641,12 +695,13 @@ async function hasTalentAccess(){
    The handle rides along as signup metadata because email confirmation means
    there is no session yet — a trigger turns it into the profile row, so the
    address is held from the moment the account exists. */
-async function registerProfile(email, password, handle, displayName){
+async function registerProfile(email, password, handle, displayName, accountType){
   if(!sb) return 'No connection';
   const { error } = await sb.auth.signUp({
     email, password,
     options: {
-      data: { handle: (handle||'').toLowerCase().trim(), display_name: displayName || '' },
+      data: { handle: (handle||'').toLowerCase().trim(), display_name: displayName || '',
+              account_type: accountType === 'company' ? 'company' : 'individual' },
       emailRedirectTo: location.origin + '/portal'   // confirmation lands on the portal, not the reset sheet
     }
   });

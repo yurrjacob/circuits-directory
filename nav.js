@@ -54,7 +54,11 @@
     var a = document.createElement('a');
     a.className = 'cta nav-dash';
     a.href = '/portal';
-    a.textContent = 'Dashboard';
+    /* "Company Dashboard" / "Individual Dashboard" (Jacob, 2026-09-02). The
+       portal stores the account type once it knows it; until then, plain. */
+    var kind = '';
+    try{ kind = localStorage.getItem('cx_account_type') || ''; }catch(e){}
+    a.textContent = kind === 'company' ? 'Company Dashboard' : kind === 'individual' ? 'Individual Dashboard' : 'Dashboard';
     nav.appendChild(a);
   }
 

@@ -89,6 +89,9 @@ function personProfile(p, staffRun){
           ${p.bio ? `<p class="pf-prose">${escapeHtml(p.bio)}</p>` : ''}`)
       : section('About', `<p class="pf-prose">This is a Circuits.com profile. Profiles are people;
       company listings are separate, and a profile can claim one to manage it.</p>`)}
+    ${(Array.isArray(p.credentials) ? p.credentials : []).filter(c => c && (c.name || '').trim()).length
+      ? section('Certifications & degrees', `<ul class="pf-certs" title="Listed by the person. Circuits.com has not checked these.">${p.credentials.filter(c => c && (c.name || '').trim()).map(c =>
+          `<li><b>${escapeHtml(c.name.trim())}</b>${c.issuer ? ` — ${escapeHtml(c.issuer)}` : ''}${c.year ? ` (${escapeHtml(String(c.year))})` : ''}</li>`).join('')}</ul>`) : ''}
     ${(p.keywords || []).length ? section('Keywords', `<div class="kw-tags">${p.keywords.map(k => `<span class="kw-tag">${escapeHtml(k)}</span>`).join('')}</div>`) : ''}
   </div>
   <aside class="pf-side">

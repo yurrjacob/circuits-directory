@@ -44,37 +44,15 @@
   </div>
 </div>
 
-<!-- signed in, but no company attached -->
-<div class="auth-wrap" id="pt-none" style="display:none">
-  <div class="auth-card wide">
-    <h1>Your profile</h1>
-    <p class="sub">Signed in as <b id="pt-none-email"></b>. This account does not manage a company listing.</p>
-    <!-- Filled by initPortal for the applicant who has not confirmed their
-         email yet: their application exists, and saying nothing here made the
-         portal look like it had lost it. -->
-    <div id="pt-pending"></div>
-    <div class="pt-none-grid">
-      <div id="pt-me" class="pf-form"></div>
-      <div id="pt-account"></div>
-    </div>
-    <div class="auth-note">
-      A profile and a company listing are separate. If your company is not in the directory yet,
-      <a href="/join">get it listed</a>.
-    </div>
-    <div class="auth-note" id="pt-none-staff" style="display:none;border-left:3px solid var(--green);padding-left:10px">
-      This address is on the Circuits.com staff list. The supplier portal only ever shows companies you
-      personally own. If you are on the Circuits.com team, the Admin tab appears once you sign in.
-    </div>
-    <div class="auth-foot"><a href="#" onclick="signOut().then(()=>location.reload());return false">Sign out</a></div>
-  </div>
-</div>
+<!-- An account that has not confirmed its email yet (its company listing is
+     keyed on the CONFIRMED address) gets one notice above the dashboard. -->
+<div id="pt-pending"></div>
 
-<!-- signed in with a company -->
 <main class="console console-wide" id="pt-app" style="display:none">
   <div class="console-head">
     <div>
-      <h1>Your Circuits.com profile</h1>
-      <p>Everything a buyer sees for <b id="pt-name"></b>, and every request they send you.</p>
+      <h1 id="pt-title">Your Circuits.com profile</h1>
+      <p id="pt-sub">Everything a buyer sees for <b id="pt-name"></b>, and every request they send you.</p>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select id="pt-company" style="height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px"></select>
@@ -84,34 +62,43 @@
 
   <div id="pt-toast" style="display:none;font-weight:600;margin-bottom:10px"></div>
 
-  <!-- Overview, Quote requests and Reviews were removed 2026-08-20 at Jacob's
-       direction ("back them up, then remove them for now"). Their markup and
-       wiring live in backups/dashboard-2026-08-20/ ready to restore. -->
+  <!-- Two dashboards, one page (Jacob, 2026-09-02). portal.js puts
+       acct-company or acct-individual on <body>; the CSS hides the other set
+       of tabs. Overview, Quote requests and Reviews stay off (2026-08-20,
+       backups/dashboard-2026-08-20/). -->
   <div class="pt-tabs">
-    <button class="pt-tab active" data-tab="company">Company Details</button>
-    <button class="pt-tab" data-tab="listings">Listings</button>
+    <!-- company -->
+    <button class="pt-tab tab-co active" data-tab="company">Company Details</button>
+    <button class="pt-tab tab-co" data-tab="employment">Employment</button>
+    <button class="pt-tab tab-co" data-tab="listings">Listings</button>
+    <!-- individual -->
+    <button class="pt-tab tab-ind" data-tab="me">Individual Details</button>
+    <button class="pt-tab tab-ind" data-tab="experience">Experience</button>
+    <button class="pt-tab tab-ind" data-tab="recruit">Employment</button>
+    <!-- both -->
     <button class="pt-tab" data-tab="promote">Promote</button>
-    <!-- shown by portal.js for a company owner: password change, sign-out-
-         everywhere and account help. Hidden for the admin-only view, which
-         carries the same controls under its "Your Profile" tab. -->
-    <button class="pt-tab" data-tab="account" id="pt-tab-account" style="display:none">Account</button>
-    <!-- shown by portal.js for an account with no company listing: their own
-         profile and account settings as a real tab, not a card lost under the
-         admin console -->
-    <button class="pt-tab" data-tab="me" id="pt-tab-me" style="display:none">Your Profile</button>
+    <button class="pt-tab" data-tab="account" id="pt-tab-account">Account Settings</button>
     <!-- shown by portal.js only when the signed-in account is a Circuits.com admin -->
     <button class="pt-tab" data-tab="admin" id="pt-tab-admin" style="display:none">Admin</button>
   </div>
 
-  <!-- filled by portal.js with the profile/account card when it is shown -->
-  <section class="pt-panel" id="tab-me"></section>
-  <!-- filled by portal.js with a company owner's account settings -->
+  <!-- ===== individual: details / experience / employment (one saved profile) ===== -->
+  <section class="pt-panel" id="tab-me"><div class="pf-form" id="pt-me"></div></section>
+  <section class="pt-panel" id="tab-experience"><div class="pf-form" id="pt-experience"></div></section>
+  <section class="pt-panel" id="tab-recruit">
+    <p class="kit-intro">Companies search the Recruits Directory by Circuits-Keyword&trade;. Pick the keywords a
+      recruiter would type to find someone like you, and switch the listing on. They see the preview below;
+      your name, contact details and resume stay blurred until a company pays to unlock them.</p>
+    <div class="pt-recruit-grid">
+      <div class="pf-form" id="pt-recruit"></div>
+      <div><h3 style="margin:0 0 10px">How companies see you</h3><div id="pt-recruit-preview"></div></div>
+    </div>
+  </section>
+
+  <!-- ===== account settings (both) ===== -->
   <section class="pt-panel" id="tab-account"><div id="pt-account-owner"></div></section>
 
-  <!-- Company profile: one tab, one form, one Save (was three tabs until
-       2026-09-02). Certifications, team, gallery and buyer reviews belong to
-       each keyword listing now and are edited under Listings. -->
-
+  <!-- ===== company ===== -->
   <!-- company details -->
   <section class="pt-panel active" id="tab-company">
     <div class="pf-form">
@@ -183,50 +170,56 @@
     </div>
   </section>
 
-  <!-- listings -->
+  <!-- employment: post a job, search recruits -->
+  <section class="pt-panel" id="tab-employment">
+    <div class="pt-section" style="margin-top:0;padding-top:0;border-top:0">
+      <h2>Recruiting Listing</h2>
+      <p class="kit-intro">Post an open role under the Circuits-Keywords&trade; you hire for. A post goes live on the
+        <a href="/jobs" target="_blank" rel="noopener">Employment Board</a> for 30 days once Circuits.com confirms payment, and applicants
+        arrive here with a link to their profile.</p>
+      <div class="pt-list" id="pt-jobs"></div>
+    <div class="pf-form" id="pt-job-form">
+      <h3>Post a job</h3>
+      <div class="grid2">
+        <div class="auth-field"><label for="job-title">Job title</label><input id="job-title" type="text" maxlength="120" placeholder="RF Design Engineer"></div>
+        <div class="auth-field"><label for="job-location">Location</label><input id="job-location" type="text" maxlength="120" placeholder="Austin, TX or Remote"></div>
+      </div>
+      <div class="auth-field"><label for="job-keywords">Keywords <span class="cell-muted">(up to 10, comma separated)</span></label>
+        <input id="job-keywords" type="text" placeholder="rf design, pcb layout"></div>
+      <div class="auth-field"><label for="job-desc">Description</label>
+        <textarea id="job-desc" rows="6" maxlength="4000" placeholder="The role, the team, what you need."></textarea></div>
+      <div class="auth-field"><label for="job-email">Send applications to <span class="cell-muted">(optional, defaults to your company email)</span></label>
+        <input id="job-email" type="email" maxlength="120" placeholder="hiring@company.com"></div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary" type="button" id="job-post">Post job</button>
+        <span class="pf-note" id="job-msg"></span>
+      </div>
+    </div>
+    </div>
+    </div>
+
+    <div class="pt-section">
+      <h2>Search Recruits</h2>
+      <p class="kit-intro">Search the Recruits Directory by the Circuits-Keyword&trade; you are hiring for. Searching is free.
+        Names, contact details and resumes are blurred until you unlock them with Talent Access.</p>
+      <form id="rs-form" class="mini-search" autocomplete="off" style="max-width:520px">
+        <input id="rs-q" type="text" placeholder="rf design, pcb layout, test engineer" aria-label="Search recruits">
+        <button type="submit" class="search-go mini" aria-label="Search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+      </form>
+      <div id="rs-note" class="tal-note"></div>
+      <div id="rs-results"></div>
+    </div>
+  </section>
+
+  <!-- listings: every keyword listing with its stats, badges, banners and upgrades -->
   <section class="pt-panel" id="tab-listings">
     <div class="pt-list" id="pt-listings"></div>
     <div class="pf-form pt-addkw">
       <div>
         <h3>Want another Circuits-Keyword&trade;?</h3>
-        <p class="pf-note">Pick the keyword, see the price, and add a sponsor banner or a Trust Badge in the same place you set up your first listing.</p>
+        <p class="pf-note">Every keyword listing is free. Pick the keyword and we review it, then upgrade it here with a Trust Badge, a sponsor banner or a locked position.</p>
       </div>
       <a class="btn btn-primary" href="/join">Get Listed</a>
-    </div>
-
-    <!-- Job Listings (MVP2). One tab, not three: Jacob, 2026-09-02, "too many
-         categories". A job post is a listing; so is a person. -->
-    <div class="pt-section" id="pt-jobs-section">
-      <h2>Job Listings</h2>
-      <p class="kit-intro">Post an open role under the Circuits-Keywords&trade; you hire for. A post goes live on the
-        <a href="/jobs" target="_blank" rel="noopener">Job Board</a> for 30 days once Circuits.com confirms payment, and applicants
-        arrive here with a link to their profile.</p>
-      <div class="pt-list" id="pt-jobs"></div>
-      <div class="pf-form" id="pt-job-form">
-        <h3>Post a job</h3>
-        <div class="grid2">
-          <div class="auth-field"><label for="job-title">Job title</label><input id="job-title" type="text" maxlength="120" placeholder="RF Design Engineer"></div>
-          <div class="auth-field"><label for="job-location">Location</label><input id="job-location" type="text" maxlength="120" placeholder="Austin, TX or Remote"></div>
-        </div>
-        <div class="auth-field"><label for="job-keywords">Keywords <span class="cell-muted">(up to 10, comma separated)</span></label>
-          <input id="job-keywords" type="text" placeholder="rf design, pcb layout"></div>
-        <div class="auth-field"><label for="job-desc">Description</label>
-          <textarea id="job-desc" rows="6" maxlength="4000" placeholder="The role, the team, what you need."></textarea></div>
-        <div class="auth-field"><label for="job-email">Send applications to <span class="cell-muted">(optional, defaults to your company email)</span></label>
-          <input id="job-email" type="email" maxlength="120" placeholder="hiring@company.com"></div>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-primary" type="button" id="job-post">Post job</button>
-          <span class="pf-note" id="job-msg"></span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Your Talent Listing: renderMyProfile() draws into #pt-me, which
-         initPortal moves here for company owners. -->
-    <div class="pt-section" id="pt-talent-section">
-      <h2>Your Talent Listing</h2>
-      <p class="kit-intro">Your own profile on Circuits.com: your address, your Circuits-Keywords&trade; and, if you want, a place in the
-        <a href="/talent" target="_blank" rel="noopener">Recruits Directory</a>.</p>
     </div>
   </section>
 
@@ -236,7 +229,6 @@
     They pull your logo and link from your profile, so update it once and these follow.</p>
     <div class="kit" id="promo-kit"></div>
   </section>
-
 
   <!-- admin: only rendered for staff, and every action behind it is enforced
        by the database, not by this tab being hidden -->
@@ -386,6 +378,22 @@
         </table>
       </div>
       <div id="ideas-empty" class="empty-line" style="display:none">No Ideas Submitted Yet.</div>
+    </div>
+  </div>
+
+  <!-- Upgrade requests: a company asked for a badge, banner or locked position
+       from its Listings tab. Staff take payment, apply it with the row controls
+       above, then mark it done here. -->
+  <div class="panel">
+    <div class="panel-head"><h2>Upgrade Requests</h2><span class="hint">Take Payment, Apply The Upgrade In Keyword Listings, Then Mark Done</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Company</th><th>Keyword</th><th>Upgrade</th><th>Asked</th><th>Actions</th></tr></thead>
+          <tbody id="upgrades-body"></tbody>
+        </table>
+      </div>
+      <div id="upgrades-empty" class="empty-line" style="display:none">No Open Upgrade Requests.</div>
     </div>
   </div>
 

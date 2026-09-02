@@ -15,60 +15,74 @@ function toast(text, ok){
   setTimeout(() => { t.style.display = 'none'; }, 4000);
 }
 
-/* Your profile: the thing you always have, whether or not you manage a listing. */
-function renderMyProfile(me){
-  const box = el('pt-me');
-  if(!box) return;
-  /* No row yet (an account from before profiles existed): same form, and the
-     first save creates the profile. Jacob, 2026-09-02: "still dont see it". */
-  const fresh = !me;
-  if(fresh) me = { handle: '', display_name: '', keywords: [] };
+/* ===== the individual dashboard: Individual Details / Experience / Employment =====
+   Three tabs, one saved profile. Every field stays in the page whichever tab
+   shows, so any Save button saves all of them (the same rule the company form
+   follows). An account from before profiles existed has no row yet: the form
+   still draws, and the first save creates it. */
+let ME = null, ME_FRESH = false;
+
+function renderIndividual(me){
+  ME_FRESH = !me;
+  ME = me || { handle: '', display_name: '', keywords: [], credentials: [] };
+  renderMeDetails(); renderExperience(); renderRecruit();
+  /* Promote reuses the company kit with the person as the subject */
+  PT.co = ME.handle ? { handle: ME.handle, name: ME.display_name || ME.handle, tagline: ME.title || '', logo: null,
+                        contact: null, phone: ME.phone || '', socials: {} } : null;
+  PT.listings = [];
+  renderPromote();
+  el('pt-title').textContent = 'Your Individual Dashboard';
+  el('pt-sub').innerHTML = ME.handle ? 'Your profile lives at <b id="pt-name">circuits.com/' + escapeHtml(ME.handle) + '</b>.' : 'Pick your Circuits.com address to create your profile.';
+  el('pt-view').href = ME.handle ? '/' + ME.handle : '#';
+  el('pt-view').style.display = ME.handle ? '' : 'none';
+  el('pt-company').style.display = 'none';
+}
+
+const saveBtn = (id) => `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px">
+    <button class="btn btn-primary me-save" type="button">${ME_FRESH ? 'Create profile' : 'Save'}</button>
+    <span id="${id}" class="pf-note me-msg"></span></div>`;
+
+function renderMeDetails(){
+  const box = el('pt-me'); if(!box) return;
   box.innerHTML = `
-    ${fresh ? '<p class="pf-note" style="color:#3f6300">This account has no Circuits.com address yet. Pick one below and save to create your profile.</p>' : ''}
+    ${ME_FRESH ? '<p class="pf-note" style="color:#3f6300;margin-top:0">This account has no Circuits.com address yet. Pick one below and save to create your profile.</p>' : ''}
     <div class="grid2">
       <div class="auth-field"><label>Your Circuits.com address</label>
         <div class="handle-row"><span class="handle-prefix">circuits.com/</span>
-          <input id="me-handle" type="text" maxlength="32" spellcheck="false" value="${escapeHtml(me.handle)}"></div>
+          <input id="me-handle" type="text" maxlength="32" spellcheck="false" value="${escapeHtml(ME.handle)}"></div>
         <div id="me-handle-msg" class="pf-note"></div>
       </div>
       <div class="auth-field"><label>Display name</label>
-        <input id="me-name" type="text" maxlength="120" value="${escapeHtml(me.display_name || '')}"></div>
+        <input id="me-name" type="text" maxlength="120" value="${escapeHtml(ME.display_name || '')}"></div>
     </div>
-    <h3 style="margin-top:22px">Talent profile</h3>
-    <p class="pf-note" style="margin:0 0 10px">Optional. Fill this in and tick the box to appear in the
-      Recruits Directory. Employers see your title, experience, keywords and summary; your name,
-      contact details and resume stay hidden until a company with talent access unlocks them.</p>
+    <div class="grid2">
+      <div class="auth-field"><label>Phone <span class="cell-muted">(private until a company unlocks you)</span></label>
+        <input id="me-phone" type="tel" maxlength="40" placeholder="(555) 123-4567" value="${escapeHtml(ME.phone || '')}"></div>
+    </div>
+    ${saveBtn('me-msg-1')}`;
+}
+
+function renderExperience(){
+  const box = el('pt-experience'); if(!box) return;
+  box.innerHTML = `
     <div class="grid2">
       <div class="auth-field"><label>Job title</label>
-        <input id="me-title" type="text" maxlength="80" placeholder="RF Design Engineer" value="${escapeHtml(me.title || '')}"></div>
+        <input id="me-title" type="text" maxlength="80" placeholder="RF Design Engineer" value="${escapeHtml(ME.title || '')}"></div>
       <div class="auth-field"><label>Years of experience</label>
-        <input id="me-years" type="number" min="0" max="60" placeholder="8" value="${me.years == null ? '' : me.years}"></div>
+        <input id="me-years" type="number" min="0" max="60" placeholder="8" value="${ME.years == null ? '' : ME.years}"></div>
     </div>
-    <div class="grid2">
-      <div class="auth-field"><label>Phone <span class="cell-muted">(private)</span></label>
-        <input id="me-phone" type="tel" maxlength="40" placeholder="(555) 123-4567" value="${escapeHtml(me.phone || '')}"></div>
-      <div class="auth-field"><label>Keywords <span class="cell-muted">(up to 10, comma separated)</span></label>
-        <input id="me-keywords" type="text" placeholder="rf design, pcb layout, fpga" value="${escapeHtml((me.keywords || []).join(', '))}">
-        <div class="pf-note">Same words employers search for on Circuits.com. One idea per keyword: <b>pcb layout</b>, not <b>pcb layout and test</b>.</div></div>
-    </div>
-    <div class="auth-field"><label>Summary</label>
-      <textarea id="me-bio" rows="4" maxlength="600" placeholder="What you do, what you are looking for.">${escapeHtml(me.bio || '')}</textarea></div>
+    <div class="auth-field"><label>Qualifying statement</label>
+      <textarea id="me-bio" rows="5" maxlength="600" placeholder="What you do, what you are good at, what you are looking for.">${escapeHtml(ME.bio || '')}</textarea></div>
     <div class="auth-field"><label>Resume <span class="cell-muted">(PDF, up to 10 MB, private)</span></label>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <span id="me-resume-state" class="pf-note" style="margin:0">${fresh ? 'Save your profile first, then upload a resume.' : me.resume_path ? 'Resume on file.' : 'No resume yet.'}</span>
-        ${me.resume_path ? '<a class="mini-btn" href="#" id="me-resume-view">View</a><button class="mini-btn danger" type="button" id="me-resume-remove">Remove</button>' : ''}
-        ${fresh ? '' : `<label class="mini-btn" style="cursor:pointer">${me.resume_path ? 'Replace' : 'Upload'}<input id="me-resume" type="file" accept="application/pdf" style="display:none"></label>`}
+        <span id="me-resume-state" class="pf-note" style="margin:0">${ME_FRESH ? 'Save your profile first, then upload a resume.' : ME.resume_path ? 'Resume on file.' : 'No resume yet.'}</span>
+        ${ME.resume_path ? '<a class="mini-btn" href="#" id="me-resume-view">View</a><button class="mini-btn danger" type="button" id="me-resume-remove">Remove</button>' : ''}
+        ${ME_FRESH ? '' : `<label class="mini-btn" style="cursor:pointer">${ME.resume_path ? 'Replace' : 'Upload'}<input id="me-resume" type="file" accept="application/pdf" style="display:none"></label>`}
       </div></div>
-    <label style="display:flex;gap:8px;align-items:center;margin:6px 0 14px;font-weight:600;cursor:pointer"><input id="me-listed" type="checkbox" style="width:auto;margin:0" ${me.talent_listed ? 'checked' : ''}>
-      <span>List me in the Recruits Directory</span></label>
-    ${me.talent_hidden ? '<p class="pf-note" style="color:#b3261e">Circuits.com staff have hidden this profile from the directory.</p>' : ''}
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <button class="btn btn-primary" type="button" id="me-save">${fresh ? 'Create profile' : 'Save profile'}</button>
-      ${fresh ? '' : `<a class="mini-btn" href="/${escapeHtml(me.handle)}" target="_blank" rel="noopener">View profile ↗</a>`}
-    </div>
-    <div id="me-msg" class="pf-note"></div>`;
+    <details class="pt-fold" open><summary>Certifications &amp; degrees <span class="pf-note" id="fold-creds-n"></span></summary><div class="pt-list" id="f-creds"></div></details>
+    ${saveBtn('me-msg-2')}`;
+  renderRepeater('creds', ME.credentials, ['name', 'issuer', 'year'], ['Certification or degree', 'Issued by', 'Year']);
 
-  /* resume: upload, view (signed link, 5 minutes), remove */
   const up = el('me-resume');
   if(up) up.addEventListener('change', async e => {
     const f = e.target.files && e.target.files[0]; if(!f) return;
@@ -78,11 +92,11 @@ function renderMyProfile(me){
     st.textContent = 'Uploading…';
     const r = await uploadResume(f);
     if(r.error){ st.textContent = 'Upload failed: ' + r.error; return; }
-    me.resume_path = r.path; renderMyProfile(me);
+    ME.resume_path = r.path; renderExperience(); renderRecruitPreview();
   });
   const view = el('me-resume-view');
   if(view) view.addEventListener('click', async e => {
-    e.preventDefault(); const url = await resumeLink(me.resume_path);
+    e.preventDefault(); const url = await resumeLink(ME.resume_path);
     if(url) window.open(url, '_blank', 'noopener'); else el('me-resume-state').textContent = 'Could not open the resume just now.';
   });
   const rm = el('me-resume-remove');
@@ -90,36 +104,69 @@ function renderMyProfile(me){
     if(!confirm('Remove your resume from Circuits.com?')) return;
     const err = await removeResume();
     if(err){ el('me-resume-state').textContent = err; return; }
-    me.resume_path = null; renderMyProfile(me);
+    ME.resume_path = null; renderExperience(); renderRecruitPreview();
   });
+}
 
-  el('me-save').addEventListener('click', async ()=>{
-    const msg = el('me-msg');
-    const handle = el('me-handle').value.trim().toLowerCase();
-    const name = el('me-name').value.trim();
-    msg.textContent = 'Saving…'; msg.style.color = '';
-    if(fresh || handle !== me.handle){
+function renderRecruit(){
+  const box = el('pt-recruit'); if(!box) return;
+  box.innerHTML = `
+    <div class="auth-field"><label>Your Circuits-Keywords&trade; <span class="cell-muted">(up to 10, comma separated)</span></label>
+      <input id="me-keywords" type="text" placeholder="rf design, pcb layout, fpga" value="${escapeHtml((ME.keywords || []).join(', '))}">
+      <div class="pf-note">The words a recruiter searches for. One idea per keyword: <b>pcb layout</b>, not <b>pcb layout and test</b>.</div></div>
+    <div class="pt-setting">
+      <div class="pt-setting-text"><b>List me in the Recruits Directory</b>
+        <p class="pf-note">Companies searching your keywords see the preview. Switch it off any time.</p></div>
+      <label class="switch"><input id="me-listed" type="checkbox" ${ME.talent_listed ? 'checked' : ''}>
+        <span class="knob" aria-hidden="true"></span><span class="sr-only">List me in the Recruits Directory</span></label>
+    </div>
+    ${ME.talent_hidden ? '<p class="pf-note" style="color:#b3261e">Circuits.com staff have hidden this profile from the directory.</p>' : ''}
+    ${saveBtn('me-msg-3')}`;
+  el('me-keywords').addEventListener('input', renderRecruitPreview);
+  renderRecruitPreview();
+}
+
+/* the card exactly as a searching company sees it: public bits open, private bits blurred */
+function renderRecruitPreview(){
+  const box = el('pt-recruit-preview'); if(!box) return;
+  const kw = el('me-keywords') ? el('me-keywords').value.split(',').map(x => x.trim()).filter(Boolean) : (ME.keywords || []);
+  const row = { user_id: 'me', title: val('me-title') || ME.title, years: val('me-years') === '' ? ME.years : parseInt(val('me-years'), 10),
+                bio: val('me-bio') || ME.bio, keywords: kw, credentials: (el('f-creds') && el('f-creds').__list) || ME.credentials };
+  box.innerHTML = `<div class="tal-grid" style="grid-template-columns:1fr">${talentCardHtml(row, { preview: true, kwHref: null })}</div>`;
+}
+
+function wireIndividual(){
+  document.addEventListener('click', async e => {
+    const b = e.target.closest('.me-save'); if(!b) return;
+    const msgs = [...document.querySelectorAll('.me-msg')];
+    const say = (t, bad) => msgs.forEach(m => { m.textContent = t; m.style.color = bad ? '#b3261e' : '#3f6300'; });
+    const handle = val('me-handle').toLowerCase();
+    const name = val('me-name');
+    say('Saving…', false); msgs.forEach(m => m.style.color = '');
+    if(ME_FRESH || handle !== ME.handle){
       const why = await handleAvailable(handle);
-      if(why){ msg.textContent = why; msg.style.color = '#b3261e'; return; }
+      if(why){ say(why, true); return; }
     }
-    if(fresh){
-      const err = await createMyProfile(handle, name);
-      if(err){ msg.textContent = err; msg.style.color = '#b3261e'; return; }
-    }
-    const yearsRaw = el('me-years').value.trim();
+    const yearsRaw = val('me-years');
     const years = yearsRaw === '' ? null : parseInt(yearsRaw, 10);
-    if(yearsRaw !== '' && !(years >= 0 && years <= 60)){ msg.textContent = 'Years of experience should be 0 to 60.'; msg.style.color = '#b3261e'; return; }
-    const keywords = el('me-keywords').value.split(',').map(s => s.trim()).filter(Boolean);
-    if(keywords.length > 10){ msg.textContent = 'Ten keywords is the limit.'; msg.style.color = '#b3261e'; return; }
-    const err = await updateMyProfile({ handle, display_name: name || null,
-      title: el('me-title').value.trim() || null, years, phone: el('me-phone').value.trim() || null,
-      bio: el('me-bio').value.trim() || null, talent_listed: el('me-listed').checked });
+    if(yearsRaw !== '' && !(years >= 0 && years <= 60)){ say('Years of experience should be 0 to 60.', true); return; }
+    const keywords = val('me-keywords').split(',').map(x => x.trim()).filter(Boolean);
+    if(keywords.length > 10){ say('Ten keywords is the limit.', true); return; }
+    const credentials = (el('f-creds') && el('f-creds').__list || []).filter(o => Object.values(o).some(v => (v || '').trim()));
+    for(const c of credentials){ if((c.year || '').trim() && !isValidYear(c.year)){ say(`"${c.name || '(unnamed)'}" needs a 4-digit year.`, true); return; } }
+    if(ME_FRESH){
+      const err = await createMyProfile(handle, name);
+      if(err){ say(err, true); return; }
+    }
+    const err = await updateMyProfile({ handle, display_name: name || null, phone: val('me-phone') || null,
+      title: val('me-title') || null, years, bio: val('me-bio') || null, credentials,
+      talent_listed: !!(el('me-listed') && el('me-listed').checked) });
     const kw = err ? {} : await setTalentKeywords(keywords);
     const bad = err || kw.error;
-    msg.textContent = bad || 'Saved. Your profile is at circuits.com/' + handle;
-    msg.style.color = bad ? '#b3261e' : '#3f6300';
-    if(!err){ me.handle = handle; if(kw.keywords) el('me-keywords').value = kw.keywords.join(', '); }
-    if(fresh && !bad){ renderMyProfile(await myProfile()); el('me-msg').textContent = msg.textContent; el('me-msg').style.color = '#3f6300'; }
+    if(bad){ say(bad, true); return; }
+    try{ localStorage.setItem('cx_account_type', 'individual'); }catch(e){}
+    renderIndividual(await myProfile());
+    say('Saved. Your profile is at circuits.com/' + handle, false);
   });
 }
 
@@ -128,58 +175,53 @@ async function initPortal(){
   const user = await currentUser();
   if(!user){ show('pt-auth', true); show('pt-app', false); wireAuth(); return; }
 
-  const [cos, me] = await Promise.all([myCompanies(), myProfile()]);
+  let [cos, me] = await Promise.all([myCompanies(), myProfile()]);
 
-  /* Having a profile and managing a listing are different things. A profile
-     with no listing is a normal, finished state — not an error. */
-  if(!cos.length){
-    show('pt-auth', false); show('pt-app', false); show('pt-none', true);
-    el('pt-none-email').textContent = user.email;
-    /* An applicant who has not clicked the confirmation link yet lands here,
-       because ownership is keyed on the CONFIRMED email. "This account does
-       not manage a company listing" read like their application was lost.
-       Say what is actually happening, and hand them the fix. */
-    const confirmed = !!(user.email_confirmed_at || user.confirmed_at);
-    const pend = el('pt-pending');
-    if(pend && !confirmed){
-      pend.innerHTML = `<div class="pt-underreview">
-        <b>One step left: confirm your email.</b>
-        We sent a link to <b>${escapeHtml(user.email || '')}</b> when this account was created.
-        If you submitted a listing application, it is safe — it appears here the moment
-        your email is confirmed.
-        <div class="resend-line">Nothing arrived? Check spam, then
-          <button type="button" id="pt-pending-resend">send the link again</button>.
-          <span id="pt-pending-resend-msg"></span></div>
-      </div>`;
-      el('pt-pending-resend').addEventListener('click', async () => {
-        const m = el('pt-pending-resend-msg');
-        m.textContent = 'Sending…';
-        const err = await resendConfirmation(user.email);
-        m.textContent = err || 'Sent — give it a minute.';
-      });
-    }
-    renderMyProfile(me);
-    renderAccount(user);
-    /* An admin does not have to run a listing. Give them the console on its
-       own rather than a "no company linked" page that looks broken. */
-    if(await checkStaff()){
-      show('pt-app', true);
-      document.body.classList.add('pt-admin-only');
-      /* An admin with no listing gets TWO tabs: the console, and their own
-         profile + account settings as a "Your Profile" tab (Jacob,
-         2026-08-20 — Mike and John were left with the admin panel and
-         nothing else). The pt-none card simply moves into the tab. */
-      show('pt-tab-me', true);
-      el('tab-me').appendChild(el('pt-none').querySelector('.auth-card'));
-      show('pt-none', false);
-      wireTabs();
-      await wireAdminTab();
-      const t = el('pt-tab-admin');
-      if(t) t.click();
-    }
+  /* Which dashboard: owning a company makes it the Company Dashboard; otherwise
+     the choice made at registration. A company account that has not opened
+     the portal before gets its companies row now (register_company). */
+  let kind = cos.length ? 'company' : ((me && me.account_type) || 'individual');
+  if(kind === 'company' && !cos.length){
+    const r = await registerCompany();
+    if(!r.error) cos = await myCompanies();
+    if(!cos.length) kind = 'individual';
+  }
+  try{ localStorage.setItem('cx_account_type', kind); }catch(e){}
+  document.body.classList.add('acct-' + kind);
+  show('pt-auth', false); show('pt-app', true);
+
+  /* An applicant who has not clicked the confirmation link yet: ownership is
+     keyed on the CONFIRMED email, so say what is happening and hand them the fix. */
+  const confirmed = !!(user.email_confirmed_at || user.confirmed_at);
+  const pend = el('pt-pending');
+  if(pend && !confirmed){
+    pend.innerHTML = `<div class="pt-underreview" style="margin:14px 24px 0">
+      <b>One step left: confirm your email.</b>
+      We sent a link to <b>${escapeHtml(user.email || '')}</b> when this account was created.
+      If you submitted a listing application, it is safe — it appears here the moment your email is confirmed.
+      <div class="resend-line">Nothing arrived? Check spam, then
+        <button type="button" id="pt-pending-resend">send the link again</button>.
+        <span id="pt-pending-resend-msg"></span></div></div>`;
+    el('pt-pending-resend').addEventListener('click', async () => {
+      const m = el('pt-pending-resend-msg');
+      m.textContent = 'Sending…';
+      const err = await resendConfirmation(user.email);
+      m.textContent = err || 'Sent — give it a minute.';
+    });
+  }
+
+  wireTabs();
+  await wireAdminTab();
+  /* Account Settings for both kinds; only an individual may delete the account
+     here (a company listing is paid for and may be shared). */
+  renderAccount(user, 'pt-account-owner', kind === 'individual');
+
+  if(kind === 'individual'){
+    wireIndividual();
+    renderIndividual(me);
+    activateTab('me');
     return;
   }
-  show('pt-auth', false); show('pt-none', false); show('pt-app', true);
 
   /* A suspended owner can still sign in and still sees their data — the
      database just refuses every edit. Without a notice the portal would look
@@ -209,23 +251,15 @@ async function initPortal(){
     loadCompany(picker.value);
   });
 
-  wireTabs();
+  el('pt-title').textContent = 'Your Company Dashboard';
   wireJobs();
-  await wireAdminTab();
-  /* A company owner gets a real Account tab (password, sign-out-everywhere).
-     Before this, changing a password meant the forgot-password email loop —
-     there was no account UI once you owned a listing. */
-  show('pt-tab-account', true);
-  renderAccount(user, 'pt-account-owner', false);
-  /* A company owner is also a person with a profile: the Your Profile tab (and
-     its Talent section, MVP2) used to exist only for accounts with no listing,
-     so an owner could never reach it (Jacob, 2026-09-02). Same card, same tab. */
-  /* ...and the talent form lives under Listings, not in a tab of its own
-     (Jacob, 2026-09-02: "too many categories"; a person is a listing too). */
-  const talent = el('pt-talent-section'), meBox = el('pt-me');
-  if(talent && meBox) talent.appendChild(meBox);
-  renderMyProfile(me);
+  wireRecruitSearch();
   await loadCompany(cos[0].slug);
+}
+
+function activateTab(name){
+  const b = document.querySelector(`.pt-tab[data-tab="${name}"]`);
+  if(b) b.click();
 }
 
 /* Admin is something an account has, not a separate login. The tab is hidden
@@ -323,7 +357,8 @@ async function loadCompany(slug){
      (Jacob, 2026-08-20 — full copies in backups/dashboard-2026-08-20/), so
      their data is not fetched either. Their render functions stay below,
      dormant, for an easy restore. */
-  PT.listings = await fetchMyListings(slug);
+  const [listings, stats, upgrades] = await Promise.all([fetchMyListings(slug), listingSearchCounts(slug), myUpgradeRequests(slug)]);
+  PT.listings = listings; PT.stats = stats; PT.upgrades = upgrades;
   renderReviewStatus();
   renderProfileForm();
   wireDirtyTracking();
@@ -422,6 +457,11 @@ async function renderAccount(user, hostId, canDelete){
           ? '<span class="ac-ok">email confirmed</span>'
           : '<span class="ac-warn">email not confirmed yet — check your inbox for the link</span>'}</p>
 
+      <div class="auth-field"><label for="ac-email">Change sign-in email</label>
+        <input id="ac-email" type="email" autocomplete="email" placeholder="new@address.com"></div>
+      <button class="mini-btn" type="button" id="ac-email-save">Change email</button>
+      <div id="ac-email-msg" class="pf-note"></div>
+      <hr class="ac-rule">
       <div class="auth-field"><label for="ac-pass">New password</label>
         <input id="ac-pass" type="password" minlength="8" autocomplete="new-password"
                placeholder="At least 8 characters"></div>
@@ -447,6 +487,16 @@ async function renderAccount(user, hostId, canDelete){
 
   /* these fields render after the page-load pass, so wire their eyes here */
   if(typeof wirePasswordToggles === 'function') wirePasswordToggles(host);
+
+  el('ac-email-save').onclick = async () => {
+    const msg = el('ac-email-msg'), v = (el('ac-email').value || '').trim();
+    msg.style.color = '#b3261e';
+    if(!isValidEmail(v)){ msg.textContent = 'Please enter a valid email address.'; return; }
+    msg.style.color = ''; msg.textContent = 'Saving…';
+    const err = await changeEmail(v);
+    if(err){ msg.style.color = '#b3261e'; msg.textContent = err; return; }
+    msg.textContent = 'Check ' + v + ' for a confirmation link. Your email changes once you click it.';
+  };
 
   el('ac-save').onclick = async () => {
     const msg = el('ac-msg'), a = el('ac-pass').value, b = el('ac-pass2').value;
@@ -1218,16 +1268,19 @@ function renderListings(){
           <span class="badge ${l.status === 'Approved' ? (l.paused ? '' : 'live') : ''}">${l.paused ? 'Paused' : escapeHtml(l.status)}</span>
           ${l.banner ? '<span class="badge sponsored">Sponsored</span>' : ''}
           ${l.badge ? `<span class="lb" style="background:${escapeHtml(l.badge.color)}">${escapeHtml(l.badge.text)}</span>` : ''}
+          ${l.locked_position ? `<span class="badge">#${l.locked_position} locked</span>` : ''}
         </div>
         <div>
-          <span class="pf-note">${escapeHtml(l.fee || '')}</span>
+          <span class="pf-note">${escapeHtml(l.fee || 'Free')}</span>
           <button class="mini-btn" data-edit="${l.id}">Edit</button>
-          ${l.status === 'Approved'
-            ? `<button class="mini-btn" data-pause="${l.id}" data-to="${l.paused ? '0' : '1'}">${l.paused ? 'Resume' : 'Pause'}</button>` : ''}
+          ${l.status === 'Approved' ? `<button class="mini-btn green" data-upgrade="${l.id}">Upgrade</button>
+            <button class="mini-btn" data-pause="${l.id}" data-to="${l.paused ? '0' : '1'}">${l.paused ? 'Resume' : 'Pause'}</button>` : ''}
         </div>
       </div>
+      ${listingStats(l)}
       ${listingSummary(l)}
       ${PT.editing === l.id ? listingEditor(l) : ''}
+      ${PT.upgrading === l.id ? upgradePanel(l) : ''}
     </div>`).join('');
   el('pt-listings').innerHTML = rows || `<div class="pt-empty">
     <b>No listings yet</b>
@@ -1240,6 +1293,43 @@ function renderListings(){
     renderRepeater('gallery-' + open.id, open.gallery, ['url', 'caption'], ['Image', 'Caption'], ['img', 'text']);
   }
   wireListings();
+}
+
+/* Stats and standing of one listing: searches for its keyword in the last 30
+   days (from the searches table), and which paid extras it carries. */
+function listingStats(l){
+  const n = (PT.stats || {})[l.keyword_norm];
+  const pend = (PT.upgrades || []).filter(u => u.application_id === l.id).map(u => u.kind);
+  const bits = [
+    n == null ? null : `<b>${n}</b> search${n === 1 ? '' : 'es'} for this keyword in the last 30 days`,
+    'Trust Badge: ' + (l.badge ? escapeHtml(l.badge.text) : 'none'),
+    'Sponsor banner: ' + (l.banner ? 'running' : 'none'),
+    'Position: ' + (l.locked_position ? '#' + l.locked_position + ' locked' : 'rotates with every search'),
+    pend.length ? '<span style="color:#8a6100">Upgrade requested: ' + pend.map(k => UPGRADES[k].name).join(', ') + '</span>' : null
+  ].filter(Boolean);
+  return `<div class="pt-stats">${bits.map(b => `<span>${b}</span>`).join('')}</div>`;
+}
+
+/* Paid extras. Payment is recorded by Circuits.com staff for now, so a click
+   raises a request they see in the console; the price is what they charge.
+   ponytail: no checkout, add Stripe when the volume justifies it. */
+const UPGRADES = {
+  badge:  { name: 'Trust Badge',      price: '$' + BADGE_FEE + '/month',  why: 'A short label beside your keyword, in the colour you choose. Cannot claim a certification.' },
+  banner: { name: 'Sponsor banner',   price: '$' + BANNER_FEE + '/month', why: 'The exclusive banner above every result for this keyword: logo, pitch, contact and documents.' },
+  lock:   { name: 'Locked position',  price: 'Ask us',                    why: 'Results shuffle on every search. A locked position pins you to #1, #2 or #3 every time.' }
+};
+function upgradePanel(l){
+  const pend = new Set((PT.upgrades || []).filter(u => u.application_id === l.id).map(u => u.kind));
+  const has = { badge: !!l.badge, banner: !!l.banner, lock: !!l.locked_position };
+  return `<div class="pt-upgrade">
+    ${Object.entries(UPGRADES).map(([k, u]) => `<div class="pt-upgrade-row">
+      <div><b>${u.name}</b> <span class="pf-note">${u.price}</span><p class="pf-note">${u.why}</p></div>
+      ${has[k] ? '<span class="badge live">Active</span>'
+        : pend.has(k) ? '<span class="badge pending">Requested</span>'
+        : `<button class="mini-btn green" data-request="${l.id}" data-kind="${k}">Request</button>`}
+    </div>`).join('')}
+    <p class="pf-note" style="margin:8px 0 0">We confirm each request by email, take payment, and switch it on. <button type="button" class="mini-btn" data-upclose="1">Close</button></p>
+  </div>`;
 }
 
 /* What the listing looks like to a buyer, shown closed. Suppliers could not see
@@ -1319,6 +1409,20 @@ function wireListings(){
 
     const edit = e.target.closest('[data-edit]');
     if(edit){ PT.editing = (PT.editing === edit.dataset.edit) ? null : edit.dataset.edit; renderListings(); return; }
+
+    const up = e.target.closest('[data-upgrade]');
+    if(up){ PT.upgrading = (PT.upgrading === up.dataset.upgrade) ? null : up.dataset.upgrade; renderListings(); return; }
+    if(e.target.closest('[data-upclose]')){ PT.upgrading = null; renderListings(); return; }
+    const req = e.target.closest('[data-request]');
+    if(req){
+      req.disabled = true;
+      const err = await requestUpgrade(req.dataset.request, PT.slug, req.dataset.kind);
+      if(err){ req.disabled = false; toast('Could not send that request: ' + err, false); return; }
+      PT.upgrades = await myUpgradeRequests(PT.slug);
+      renderListings();
+      toast('Requested. We will email you to confirm and take payment.', true);
+      return;
+    }
 
     if(e.target.closest('[data-cancel]')){ PT.editing = null; renderListings(); return; }
 
@@ -1578,6 +1682,39 @@ function qrSvg(text){
   return q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
 }
 
+/* ---------- search recruits (company Employment tab) ----------
+   The same search the Recruits Directory page runs, inside the dashboard.
+   The database gates the private details; this only decides what to draw. */
+function wireRecruitSearch(){
+  const form = el('rs-form'), out = el('rs-results'), note = el('rs-note');
+  if(!form || form.__wired) return;
+  form.__wired = true;
+  let access = null;
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const q = val('rs-q');
+    out.innerHTML = loadingHtml('Searching…');
+    if(access === null) access = await hasTalentAccess();
+    note.innerHTML = access
+      ? '<b>Talent Access is active.</b> Unlock any recruit to see their name, contact details and resume.'
+      : 'Searching is free. Unlocking a recruit needs Talent Access, a monthly subscription. <a href="/contact">Contact us</a> to add it.';
+    let rows = [];
+    try{ rows = await talentSearch(q); }
+    catch(err){ out.innerHTML = loadErrorHtml('the Recruits Directory', 'Try again'); return; }
+    if(!rows.length){ out.innerHTML = `<div class="empty"><div class="big">No recruits listed${q ? ' for &ldquo;' + escapeHtml(q) + '&rdquo;' : ''} yet</div></div>`; return; }
+    out.innerHTML = `<div class="tal-grid">${rows.map(r => talentCardHtml(r, { locked: true, access, signedIn: true, kwHref: null })).join('')}</div>`;
+  });
+  out.addEventListener('click', async e => {
+    const b = e.target.closest('button.tal-unlock'); if(!b) return;
+    b.disabled = true; b.textContent = 'Unlocking…';
+    const c = await talentContact(b.dataset.uid);
+    const box = el('priv-' + b.dataset.uid);
+    if(!c){ b.disabled = false; b.textContent = 'Unlock'; box.insertAdjacentHTML('beforeend', '<p class="pf-note" style="color:#b3261e">Could not unlock. Is your Talent Access still active?</p>'); return; }
+    const resume = c.resume_path ? await resumeLink(c.resume_path) : '';
+    box.innerHTML = talentContactHtml(c, resume);
+  });
+}
+
 /* ---- jobs (MVP2) ----
    A post is a row the owner writes; "live" is a fact staff record (paid_until)
    and the Job Board reads. Applicants come from job_applicants(), which the
@@ -1662,11 +1799,11 @@ function wireJobs(){
 
 function renderPromote(){
   const kit = el('promo-kit');
-  if(!kit || !PT.co) return;
+  if(!kit) return;
   const co = PT.co;
-  if(!co.handle){
+  if(!co || !co.handle){
     kit.innerHTML = `<div class="pt-empty"><b>Pick your address first</b>
-      <p>Everything here is built around circuits.com/&lt;your name&gt;. Set it on the Profile tab and these appear.</p></div>`;
+      <p>Everything here is built around circuits.com/&lt;your name&gt;. Set it on the first tab, save, and these appear.</p></div>`;
     return;
   }
 

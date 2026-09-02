@@ -86,7 +86,7 @@
     ? '<b>Talent Access is active.</b> Unlock any recruit to see their name, contact details and resume.'
     : (user
         ? 'Your account has no Talent Access. It is a monthly subscription for companies. <a href="/contact">Contact us</a> to add it.'
-        : '<a href="/portal">Sign in</a> as a company with Talent Access to unlock recruits. Not on Circuits.com yet? <a href="/register">Create a free profile</a>.');
+        : '<a href="/portal">Sign in</a> to your Company Dashboard to search and unlock recruits. Not on Circuits.com yet? <a href="/register">Create a free profile</a>.');
 
   body.innerHTML = loadingHtml('Searching…');
   let rows = [];
@@ -100,21 +100,7 @@
     return;
   }
 
-  const card = r => `
-    <article class="tal-card" data-uid="${escapeHtml(r.user_id)}">
-      <div class="tal-main">
-        <h3>${escapeHtml(r.title || 'Circuits industry professional')}</h3>
-        <p class="tal-meta">${r.years != null ? `${r.years} year${r.years === 1 ? '' : 's'} of experience` : 'Experience not given'}</p>
-        ${r.bio ? `<p class="tal-bio">${escapeHtml(r.bio)}</p>` : ''}
-        <div class="kw-tags">${(r.keywords || []).map(k => `<a class="kw-tag" href="/talent?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join('')}</div>
-      </div>
-      <div class="tal-private" id="priv-${escapeHtml(r.user_id)}">
-        <div class="tal-blur" aria-hidden="true"><b>Jane Doe</b><span>jane@example.com</span><span>(555) 123-4567</span><span>Resume.pdf</span></div>
-        ${access
-          ? `<button type="button" class="btn btn-primary tal-unlock" data-uid="${escapeHtml(r.user_id)}">Unlock</button>`
-          : `<a class="btn tal-unlock" href="${user ? '/contact' : '/portal'}">${user ? 'Get Talent Access' : 'Sign in to unlock'}</a>`}
-      </div>
-    </article>`;
+  const card = r => talentCardHtml(r, { access, signedIn: !!user });
   body.innerHTML = `<div class="listings"><div class="tal-grid">${rows.map(card).join('')}</div></div>`;
 
   body.addEventListener('click', async e => {
@@ -124,12 +110,7 @@
     const box = document.getElementById('priv-' + b.dataset.uid);
     if(!c){ b.disabled = false; b.textContent = 'Unlock'; box.insertAdjacentHTML('beforeend', '<p class="pf-note" style="color:#b3261e">Could not unlock. Is your Talent Access still active?</p>'); return; }
     const resume = c.resume_path ? await resumeLink(c.resume_path) : '';
-    box.innerHTML = `<div class="tal-open">
-      <b><a href="/${escapeHtml(c.handle)}">${escapeHtml(c.display_name || c.handle)}</a></b>
-      ${c.email ? `<a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>` : ''}
-      ${c.phone ? `<a href="tel:${escapeHtml(c.phone.replace(/[^\d+]/g, ''))}">${escapeHtml(c.phone)}</a>` : ''}
-      ${resume ? `<a href="${escapeHtml(resume)}" target="_blank" rel="noopener">Open resume (PDF)</a>` : '<span class="pf-note">No resume uploaded</span>'}
-    </div>`;
+    box.innerHTML = talentContactHtml(c, resume);
   });
 })();
 </script>

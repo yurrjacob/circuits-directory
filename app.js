@@ -12,8 +12,62 @@ function initHome(){
   const input = document.getElementById('home-search');
   const form  = document.getElementById('home-form');
   if(form){
-    form.addEventListener('submit', e=>{ e.preventDefault(); gotoSearch(input.value); });
+    form.addEventListener('submit', e=>{
+      e.preventDefault();
+      if(form.dataset.mode === 'employment'){
+        const q = (input.value || '').trim();
+        location.href = '/jobs' + (q ? '?q=' + encodeURIComponent(q) : '');
+        return;
+      }
+      gotoSearch(input.value);
+    });
   }
+  /* Directory or Employment Board: same box, different index */
+  document.querySelectorAll('.search-mode [data-mode]').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.search-mode [data-mode]').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b ? 'true' : 'false'); });
+    form.dataset.mode = b.dataset.mode;
+    input.placeholder = b.dataset.mode === 'employment'
+      ? 'Search jobs by title or keyword...'
+      : 'Search products, services, professionals, education, or keywords...';
+    input.focus();
+  }));
+}
+
+/* ---- Recruits Directory card (shared by /talent, the company dashboard and
+   the individual's own preview). Public bits open; the private block is a
+   blur until a company with Talent Access unlocks it. ---- */
+function talentCardHtml(r, o){
+  o = o || {};
+  const creds = (Array.isArray(r.credentials) ? r.credentials : []).filter(c => c && (c.name || '').trim());
+  const kwHref = o.kwHref === undefined ? (k => '/talent?q=' + encodeURIComponent(k)) : o.kwHref;
+  const tag = k => kwHref ? `<a class="kw-tag" href="${escapeHtml(kwHref(k))}">${escapeHtml(k)}</a>` : `<span class="kw-tag">${escapeHtml(k)}</span>`;
+  const action = o.preview ? `<span class="btn btn-primary tal-unlock" aria-hidden="true" style="pointer-events:none">Unlock</span>`
+    : o.access
+    ? `<button type="button" class="btn btn-primary tal-unlock" data-uid="${escapeHtml(r.user_id)}">Unlock</button>`
+    : o.signedIn ? `<a class="btn tal-unlock" href="/contact">Get Talent Access</a>`
+                 : `<a class="btn tal-unlock" href="/portal">Sign in to unlock</a>`;
+  return `
+    <article class="tal-card" data-uid="${escapeHtml(r.user_id)}">
+      <div class="tal-main">
+        <h3>${escapeHtml(r.title || 'Circuits industry professional')}</h3>
+        <p class="tal-meta">${r.years != null && r.years !== '' && !isNaN(r.years) ? `${r.years} year${Number(r.years) === 1 ? '' : 's'} of experience` : 'Experience not given'}</p>
+        ${r.bio ? `<p class="tal-bio">${escapeHtml(r.bio)}</p>` : ''}
+        ${creds.length ? `<p class="tal-meta">${creds.map(c => escapeHtml(c.name.trim()) + (c.issuer ? ', ' + escapeHtml(c.issuer) : '') + (c.year ? ' (' + escapeHtml(String(c.year)) + ')' : '')).join(' · ')}</p>` : ''}
+        <div class="kw-tags">${(r.keywords || []).map(tag).join('')}</div>
+      </div>
+      <div class="tal-private" id="priv-${escapeHtml(r.user_id)}">
+        <div class="tal-blur" aria-hidden="true"><b>Jane Doe</b><span>jane@example.com</span><span>(555) 123-4567</span><span>Resume.pdf</span></div>
+        ${o.locked === false ? '' : action}
+      </div>
+    </article>`;
+}
+function talentContactHtml(c, resume){
+  return `<div class="tal-open">
+      <b><a href="/${escapeHtml(c.handle)}">${escapeHtml(c.display_name || c.handle)}</a></b>
+      ${c.email ? `<a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>` : ''}
+      ${c.phone ? `<a href="tel:${escapeHtml(c.phone.replace(/[^\d+]/g, ''))}">${escapeHtml(c.phone)}</a>` : ''}
+      ${resume ? `<a href="${escapeHtml(resume)}" target="_blank" rel="noopener">Open resume (PDF)</a>` : '<span class="pf-note">No resume uploaded</span>'}
+    </div>`;
 }
 
 /* ---- validators (shared) ---- */
@@ -1218,6 +1272,19 @@ function initRegister(){
   const handleInput = el('r-handle'), handleMsg = el('r-handle-msg');
   const passEl = el('r-pass'), pass2El = el('r-pass2'), passMsg = el('r-pass-msg');
   const errBox = el('r-err'), submitBtn = el('r-submit');
+  /* Step one is the choice of account. Nothing else shows until a card is
+     picked; the form is the same for both, only the labels change. */
+  document.querySelectorAll('#reg-kind .reg-kind-card').forEach(card => card.addEventListener('click', () => {
+    const kind = card.dataset.kind;
+    document.querySelectorAll('#reg-kind .reg-kind-card').forEach(c => c.classList.toggle('active', c === card));
+    el('r-kind').value = kind;
+    el('reg-h2').textContent = kind === 'company' ? 'Register your company' : 'Register';
+    el('r-name-label').innerHTML = kind === 'company' ? 'Company Name <span class="req">*</span>'
+      : 'Display Name <span class="cell-muted" style="font-weight:400">(Optional)</span>';
+    el('r-name').placeholder = kind === 'company' ? 'AAA Electronics' : 'Jacob Kennedy';
+    form.style.display = ''; const next = el('reg-next'); if(next) next.style.display = '';
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
   let handleState = '', handleTimer = null;
 
   function fail(msg){
@@ -1260,6 +1327,7 @@ function initRegister(){
     const handle = v('r-handle'), email = v('r-email');
 
     if(!handle) return fail('Choose the username that will be your circuits.com address.');
+    if(v('r-kind') === 'company' && !v('r-name')) return fail('Please enter your company name.');
     if(!isValidEmail(email)) return fail('Please enter a valid email address (e.g. you@company.com) — it is how you sign in.');
     if(passEl.value.length < 8) return fail('Your password must be at least 8 characters.');
     if(passEl.value !== pass2El.value) return fail('The two passwords do not match.');
@@ -1277,7 +1345,7 @@ function initRegister(){
       return fail('That address just became unavailable.');
     }
 
-    const err = await registerProfile(email, passEl.value, handle, v('r-name'));
+    const err = await registerProfile(email, passEl.value, handle, v('r-name'), v('r-kind'));
     if(err){
       submitBtn.disabled = false; submitBtn.textContent = 'Create Profile';
       return fail(/already registered|already exists/i.test(err)
