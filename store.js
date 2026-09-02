@@ -18,7 +18,7 @@ const sb = (window.supabase && window.supabase.createClient)
    denies the whole query, which once made every listing vanish for logged-out
    visitors. Signed-in reads (portal, admin) keep select('*'); they have the
    full grant. Keep these in sync with the table columns. */
-const APP_PUBLIC_COLS = 'id, created_at, company, contact, email, phone, website, logo, keywords, banner, badge, message, terms, fee, status, keyword, paused, listing_price, banner_price, badge_price, docs, description, company_slug, company_handle, requested_handle, keyword_norm';
+const APP_PUBLIC_COLS = 'id, created_at, company, contact, email, phone, website, logo, keywords, banner, badge, message, terms, fee, status, keyword, paused, listing_price, banner_price, badge_price, locked_position, docs, description, company_slug, company_handle, requested_handle, keyword_norm';
 const REVIEW_PUBLIC_COLS = 'id, company_slug, author_name, rating, body, reply, status, created_at';
 
 /* ---- pricing ----

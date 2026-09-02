@@ -51,7 +51,28 @@ function actionsCell(l){
     <button class="mini-btn" onclick="editBadge('${l.id}')">Badge</button>
     <button class="mini-btn danger" onclick="removeListing('${l.id}')">Remove</button>
     <button class="mini-btn" onclick="togglePause('${l.id}')">${l.paused?'Unpause':'Pause'}</button>
+    <button class="mini-btn" onclick="lockListing('${l.id}')">${l.locked_position?'Unlock':'Lock'}</button>
   </td>`;
+}
+
+/* Paid fixed placement: pin this listing to spot #N on its keyword. Staff only
+   (the database reverts it for anyone else) and one company per spot per
+   keyword (a unique index) — so a taken spot comes back as an error here. */
+async function lockListing(id){
+  const l = allApps.find(a=>a.id===id); if(!l) return;
+  const raw = prompt('Lock ' + l.company + ' to which spot on \u201c' + (l.keyword||'') + '\u201d?\n\nEnter a number (1 = top of the list). Leave it blank to unlock.',
+    l.locked_position ? String(l.locked_position) : '');
+  if(raw === null) return;
+  const n = raw.trim() === '' ? null : parseInt(raw, 10);
+  if(raw.trim() !== '' && !(n >= 1 && n <= 99)){ alert('Please enter a number from 1 to 99, or leave it blank to unlock.'); return; }
+  const err = await updateApplication(id, { locked_position: n });
+  if(err){
+    alert(/duplicate|unique|23505/i.test((err.message||'') + (err.code||''))
+      ? 'Spot #' + n + ' on \u201c' + (l.keyword||'') + '\u201d is already locked by another company. Unlock theirs first, or pick another spot.'
+      : 'Could not save that: ' + (err.message || 'unknown error'));
+    return;
+  }
+  await reload();
 }
 
 /* ---- badge editor (staff only) ----
@@ -107,6 +128,7 @@ function renderListings(){
       <td>${esc(appPriceLabel(l))}</td>
       <td>${l.banner ? '<span class="badge sponsored">Yes</span>' : 'No'}</td>
       <td>${badgeTag(l.badge)}</td>
+      <td>${l.locked_position ? '<span class="badge sponsored">#' + l.locked_position + '</span>' : '—'}</td>
       ${actionsCell(l)}
     </tr>`).join('');
   $('listings-empty').style.display = approved().length ? 'none' : 'block';
@@ -383,7 +405,7 @@ window.initAdmin = async function(){
    published deliberately; everything else stays private to this file.
    tools/check.js fails if a new onclick appears without being listed here. */
 Object.assign(window, {
-  editListing, editBadge, removeListing, togglePause,
+  editListing, editBadge, removeListing, togglePause, lockListing,
   approveApp, rejectApp, setSuspended
 });
 })();

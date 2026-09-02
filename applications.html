@@ -103,9 +103,11 @@ function statusBadge(s){
   const cls = s==='Approved' ? 'accepted' : (s==='Denied' ? 'denied' : 'pending');
   return `<span class="badge ${cls}">${s}</span>`;
 }
-function errMsg(err){
+function errMsg(err, field){
   if(err && (err.code==='23505' || /duplicate|unique/i.test(err.message||'')))
-    return 'That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword.';
+    return field==='locked_position'
+      ? 'That spot on this keyword is already locked by another company. Unlock theirs first, or pick another number.'
+      : 'That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword.';
   return 'Could not save. Make sure you are signed in as staff.';
 }
 
@@ -161,6 +163,7 @@ function rowHtml(a){
       <label class="cbx" title="Listing live for this keyword"><input type="checkbox" data-field="live" ${a.paused?'':'checked'}></label>
       <span class="ce" contenteditable data-field="keyword" data-ph="—">${esc(a.keyword)}</span>
       <span class="ce price" contenteditable data-price="listing_price" data-ph="${money(BASE_FEE)}">${money(effPrice(a.listing_price,BASE_FEE))}</span>
+      <div class="co-sub" title="Paid fixed placement: the spot this listing holds on the keyword list. Blank = shuffled with everyone else.">Lock #<span class="ce" contenteditable data-field="locked_position" data-ph="none">${a.locked_position||''}</span></div>
     </td>
     <td><label class="cbx"><input type="checkbox" data-field="banner" ${a.banner?'checked':''}> Yes</label>${conflict?' <span class="warn-flag" title="This keyword already has a live Exclusive Sponsor banner">⚠</span>':''} <span class="ce price" contenteditable data-price="banner_price" data-cell="bannerprice" data-ph="${a.banner?money(BANNER_FEE):''}">${a.banner?money(effPrice(a.banner_price,BANNER_FEE)):''}</span></td>
     <td class="badge-cell">
@@ -195,7 +198,7 @@ function draw(){
 
 /* pristine copy of every row as loaded from the database, so edits can be undone */
 let originals = {};
-const EDITABLE = ['company','website','logo','contact','email','phone','keyword','banner','badge','message','description','paused','listing_price','banner_price','badge_price'];
+const EDITABLE = ['company','website','logo','contact','email','phone','keyword','banner','badge','message','description','paused','listing_price','banner_price','badge_price','locked_position'];
 function snapshot(){
   originals = {};
   apps.forEach(a => { originals[a.id] = JSON.parse(JSON.stringify(a)); });
@@ -226,17 +229,19 @@ const FIELD_RULES = {
   email:   [v => !v || isValidEmail(v), 'That is not a valid email address.'],
   phone:   [v => !v || isValidPhone(v), 'That is not a valid phone number (needs at least 10 digits).'],
   website: [v => !v || isValidWebsite(v), 'That is not a valid website address.'],
-  logo:    [v => !v || isLogoUrl(v), 'The logo needs a full image URL starting with https://.']
+  logo:    [v => !v || isLogoUrl(v), 'The logo needs a full image URL starting with https://.'],
+  locked_position: [v => !v || /^([1-9]|[1-9]\d)$/.test(v), 'A locked spot is a number from 1 to 99 (blank to unlock).']
 };
 async function saveField(id, field, value){
   const a = apps.find(x=>x.id===id); if(!a) return;
   if((a[field]==null?'':String(a[field]))===value) return;
   const rule = FIELD_RULES[field];
   if(rule && !rule[0](value)){ alert('Not saved: ' + rule[1]); draw(); return; }
-  const err = await updateApplication(id, { [field]: value });
-  if(err){ alert(errMsg(err)); draw(); return; }
+  const stored = field==='locked_position' ? (value ? Number(value) : null) : value;
+  const err = await updateApplication(id, { [field]: stored });
+  if(err){ alert(errMsg(err, field)); draw(); return; }
   if(field==='keyword'){ a.keyword = cleanKw(value); a.keywords = a.keyword ? [a.keyword] : []; draw(); }
-  else a[field] = value;
+  else a[field] = stored;
 }
 async function saveBadge(tr){
   const id = tr.dataset.id, a = apps.find(x=>x.id===id); if(!a) return;

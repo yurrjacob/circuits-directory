@@ -449,6 +449,20 @@ async function initResults(forcedTerm){
     const j = Math.floor(Math.random() * (i + 1));
     [listed[i], listed[j]] = [listed[j], listed[i]];
   }
+  /* ...except paid locked spots: a company that pays for #N sits at #N and the
+     shuffled rest fill in around it. If there are fewer rows than N it simply
+     goes last. One company per spot per keyword is a database rule. */
+  const free = listed.filter(l => !l.locked_position);
+  const pinned = listed.filter(l => l.locked_position).sort((a,b) => a.locked_position - b.locked_position);
+  const ordered = [];
+  for(const l of pinned){
+    while(ordered.length < l.locked_position - 1 && free.length) ordered.push(free.shift());
+    ordered.push(l);
+  }
+  ordered.push(...free);
+  const lockHtml = (n, kw) => `<span class="lock" tabindex="0" aria-label="Position locked">`
+    + `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`
+    + `<span class="lock-tip"><b>Position locked.</b> This company holds #${n} for &ldquo;${escapeHtml(kw)}&rdquo;. <a href="/contact">Lock yours &rarr;</a></span></span>`;
   let html = '';
   if(!featured){
     html += exampleBanner(escapeHtml(q));
@@ -479,9 +493,9 @@ async function initResults(forcedTerm){
     </div></div>`;
   }
 
-  const rows = listed.map((c,i)=>`
+  const rows = ordered.map((c,i)=>`
     <tr data-slug="${escapeHtml(c.company_slug || '')}">
-      <td class="rank" data-label="#">${i+1}</td>
+      <td class="rank" data-label="#">${i+1}${c.locked_position ? lockHtml(i+1, q) : ''}</td>
       <td>
         <div class="co">
           ${c.company_handle ? `<a class="co-logo-link" href="${escapeHtml(profileUrl(c.company_handle))}" aria-label="${escapeHtml(c.company)} profile">` : ''}
