@@ -41,7 +41,7 @@ JavaScript is a convenience layer over rules the database imposes anyway.
 | `admin.js` | The staff Admin tab inside the portal (listings, banners, applications). |
 | `nav.js` | Shared header behaviour: signed-in relabel, phone menu, skip link. |
 | `analytics.js` | Cookie consent gate. Google Analytics loads only after acceptance. |
-| `index.html` | Homepage. Deliberately a bare search page — see below. |
+| `index.html` | Homepage. Deliberately a bare search page, see below. |
 | `company.html` | Template the profile generator fills in. |
 | `applications.html` | The staff sheet for reviewing incoming listing applications. |
 | `tools/` | Checks and the profile/sitemap generator. |
@@ -57,7 +57,7 @@ Postgres, in the Supabase project `ghpruernzhjwsgsezdyn`.
 | Table | Holds |
 |---|---|
 | `applications` | One row per company-plus-keyword. This is a *listing*. Status Pending / Approved / Denied. Order of claim decides ranking. |
-| `companies` | One row per company. This is a *profile* — the thing at `circuits.com/<handle>`. |
+| `companies` | One row per company. This is a *profile*, the thing at `circuits.com/<handle>`. |
 | `profiles` | A person's own account and handle. Shares the same namespace as `companies`. |
 | `company_users` | Who may manage which company. |
 | `claims` | Requests to take over an existing listing. Reviewed by hand. |
@@ -75,7 +75,7 @@ is the core rule of the system.
 ## The publishable key is meant to be public
 
 `store.js` contains a Supabase URL and a publishable key in plain text. That is
-correct and intended — that key only grants what Row Level Security allows.
+correct and intended, that key only grants what Row Level Security allows.
 
 What must **never** appear in this repo, or anywhere in the browser, is the
 **service role key**, which bypasses every rule. There is no `.env` file and no
@@ -89,15 +89,15 @@ node tools/check.js      # everything below, in one command
 
 That runs, in order:
 
-- **`tools/check.js`** — structural rules: slugs match the database, no
+- **`tools/check.js`**, structural rules: slugs match the database, no
   `javascript:` URLs, every page loads the scripts it uses, one shared header
   and footer, no page name a company could claim, spam traps present, and more.
-- **`tools/render-check.js`** — renders a fully populated profile with stubs and
+- **`tools/render-check.js`**, renders a fully populated profile with stubs and
   asserts the markup is balanced.
-- **`tools/failure-check.js`** — runs the search and profile pages against a
+- **`tools/failure-check.js`**, runs the search and profile pages against a
   database that refuses every request, and fails if either offers to sell a
   keyword or an address as a result.
-- **`tools/completeness-check.js`** — the profile completeness meter and the
+- **`tools/completeness-check.js`**, the profile completeness meter and the
   percentage-change arithmetic, including the divide-by-zero cases.
 
 Separately, against the database:

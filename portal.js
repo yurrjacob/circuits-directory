@@ -1,4 +1,4 @@
-/* ===== Circuits.com — supplier portal =====
+/* ===== Circuits.com, supplier portal =====
    Everything here is gated by RLS, not by this file. Hiding a button is a
    convenience; the database is what actually refuses the write. */
 
@@ -198,7 +198,7 @@ async function initPortal(){
     pend.innerHTML = `<div class="pt-underreview" style="margin:14px 24px 0">
       <b>One step left: confirm your email.</b>
       We sent a link to <b>${escapeHtml(user.email || '')}</b> when this account was created.
-      If you submitted a listing application, it is safe — it appears here the moment your email is confirmed.
+      If you submitted a listing application, it is safe. It appears here the moment your email is confirmed.
       <div class="resend-line">Nothing arrived? Check spam, then
         <button type="button" id="pt-pending-resend">send the link again</button>.
         <span id="pt-pending-resend-msg"></span></div></div>`;
@@ -206,7 +206,7 @@ async function initPortal(){
       const m = el('pt-pending-resend-msg');
       m.textContent = 'Sending…';
       const err = await resendConfirmation(user.email);
-      m.textContent = err || 'Sent — give it a minute.';
+      m.textContent = err || 'Sent. Give it a minute.';
     });
   }
 
@@ -223,7 +223,7 @@ async function initPortal(){
     return;
   }
 
-  /* A suspended owner can still sign in and still sees their data — the
+  /* A suspended owner can still sign in and still sees their data, the
      database just refuses every edit. Without a notice the portal would look
      broken rather than suspended, so say so plainly and once, at the top. */
   const suspended = cos.filter(c => c.suspended_at);
@@ -263,7 +263,7 @@ function activateTab(name){
 }
 
 /* Admin is something an account has, not a separate login. The tab is hidden
-   for everyone else — but hiding a tab is presentation, not security: every
+   for everyone else, but hiding a tab is presentation, not security: every
    action inside it is refused by the database unless is_staff() is true. */
 async function wireAdminTab(){
   if(!(await checkStaff())) return false;
@@ -281,10 +281,10 @@ function wireAuth(){
     try{
       const { error } = await signIn(val('pt-email'), val('pt-password'));
       if(error){
-        /* An unconfirmed email is fixable on the spot — offer the fix rather
+        /* An unconfirmed email is fixable on the spot, offer the fix rather
            than parroting the raw error and leaving them stuck. */
         if(/not confirmed/i.test(error.message || '')){
-          msg.innerHTML = 'Your email has not been confirmed yet — the sign-in works as soon as '
+          msg.innerHTML = 'Your email has not been confirmed yet. The sign-in works as soon as '
             + 'you click the link we sent you. <span class="resend-line">Nothing arrived? '
             + '<button type="button" id="pt-auth-resend">Send it again</button> '
             + '<span id="pt-auth-resend-msg"></span></span>';
@@ -292,7 +292,7 @@ function wireAuth(){
             const m = el('pt-auth-resend-msg');
             m.textContent = 'Sending…';
             const err2 = await resendConfirmation(val('pt-email'));
-            m.textContent = err2 || 'Sent — check spam too.';
+            m.textContent = err2 || 'Sent. Check spam too.';
           });
           el('pt-auth-submit').disabled = false;
           return;
@@ -334,7 +334,7 @@ function wireTabs(){
   document.querySelectorAll('.pt-tab').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('.pt-tab').forEach(x => x.classList.toggle('active', x === b));
     document.querySelectorAll('.pt-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + b.dataset.tab));
-    /* The console loads nothing until an admin actually opens it — a company
+    /* The console loads nothing until an admin actually opens it, a company
        owner who never sees this tab never fetches a row of anyone else's data. */
     if(b.dataset.tab === 'admin' && typeof initAdmin === 'function') initAdmin();
   }));
@@ -354,7 +354,7 @@ async function loadCompany(slug){
   el('pt-name').textContent = PT.co.name;
   el('pt-view').href = profileUrl(PT.co.handle) || '#';
   /* Overview, Quote requests and Reviews are off the dashboard for now
-     (Jacob, 2026-08-20 — full copies in backups/dashboard-2026-08-20/), so
+     (Jacob, 2026-08-20, full copies in backups/dashboard-2026-08-20/), so
      their data is not fetched either. Their render functions stay below,
      dormant, for an easy restore. */
   const [listings, stats, upgrades] = await Promise.all([fetchMyListings(slug), listingSearchCounts(slug), myUpgradeRequests(slug)]);
@@ -389,7 +389,7 @@ function renderReviewStatus(){
   if(waiting.length && !live.length){
     note.className = 'pt-underreview';
     note.style.display = '';
-    note.innerHTML = '<b>Your application is under review</b> — usually one business day. '
+    note.innerHTML = '<b>Your application is under review</b>, usually one business day. '
       + (kws.length ? 'Keyword' + (kws.length > 1 ? 's' : '') + ' requested: <b>' + kws.join('</b>, <b>') + '</b>. ' : '')
       + 'Nothing is public yet. We email you the decision, and this page updates as soon as it is made.';
   } else if(waiting.length){
@@ -455,7 +455,7 @@ async function renderAccount(user, hostId, canDelete){
       <p class="pf-note">Signed in as <b>${escapeHtml(user.email || '')}</b>
         ${confirmed
           ? '<span class="ac-ok">email confirmed</span>'
-          : '<span class="ac-warn">email not confirmed yet — check your inbox for the link</span>'}</p>
+          : '<span class="ac-warn">email not confirmed yet. Check your inbox for the link</span>'}</p>
 
       <div class="auth-field"><label for="ac-email">Change sign-in email</label>
         <input id="ac-email" type="email" autocomplete="email" placeholder="new@address.com"></div>
@@ -477,11 +477,11 @@ async function renderAccount(user, hostId, canDelete){
       <hr class="ac-rule">
       <button class="mini-btn ac-danger" type="button" id="ac-delete">Delete my account</button>
       <p class="pf-note">Permanent. Your Circuits.com address is released and can be taken by
-        someone else. Company listings are not deleted this way &mdash; contact us for those.</p>
+        someone else. Company listings are not deleted this way. Contact us for those.</p>
       <div id="ac-del-msg" class="pf-note"></div>` : `
       <hr class="ac-rule">
       <p class="pf-note">Need to close this account or hand the listing to a colleague?
-        <a href="/contact">Contact us</a> — company listings are paid for and may be shared,
+        <a href="/contact">Contact us</a>. Company listings are paid for and may be shared,
         so we sort those out with you directly.</p>`}
     </div>`;
 
@@ -532,7 +532,7 @@ async function renderAccount(user, hostId, canDelete){
     msg.style.color = '#b3261e';
     msg.textContent = res === 'still_owns_listing'
       ? 'This account manages a company listing, so it cannot be deleted here. '
-        + 'Listings are paid for and may be shared with colleagues — contact us and we will sort it out.'
+        + 'Listings are paid for and may be shared with colleagues. Contact us and we will sort it out.'
       : 'Your account could not be deleted just now. Please try again or contact us.';
   };
 }
@@ -546,7 +546,7 @@ async function renderInsights(){
   const d = await companyInsights(PT.slug, 30);
   if(!d){
     host.innerHTML = '<p class="pf-note">Your figures could not be loaded just now. '
-      + 'Nothing has been lost — reload the page to try again.</p>';
+      + 'Nothing has been lost. Reload the page to try again.</p>';
     return;
   }
   const views = Number(d.views) || 0;
@@ -653,7 +653,7 @@ function renderNextSteps(){
 }
 
 /* "up 18%" only means something against the period before it. No previous
-   activity means there is no percentage to state — say "new" rather than
+   activity means there is no percentage to state, say "new" rather than
    inventing a division by zero. */
 function changeLabel(now, before){
   now = Number(now) || 0; before = Number(before) || 0;
@@ -728,7 +728,7 @@ function bucketSeries(rows, from, to, bucket){
     out.push([new Date(t), got[t] || 0]);
     /* Step by calendar, not by fixed milliseconds: adding 7×24h walks off
        local midnight the first time the range crosses a DST change, after
-       which no grid key matches and the chart flatlines at zero — which is
+       which no grid key matches and the chart flatlines at zero, which is
        exactly what "6 months" did every spring. */
     cur = new Date(t);
     if(bucket === 'month')     cur.setMonth(cur.getMonth() + 1);
@@ -767,7 +767,7 @@ function lineChartSvg(series, tick){
   const area = pts.length
     ? line + ` L ${pts[pts.length - 1][0].toFixed(1)} ${base} L ${pts[0][0].toFixed(1)} ${base} Z` : '';
 
-  /* whole numbers only — "2.5 views" is not a thing */
+  /* whole numbers only, "2.5 views" is not a thing */
   const ticks = [...new Set([0, Math.round(g.top / 2), g.top])].sort((a, b) => a - b);
   const grid = ticks.map(v =>
     `<line class="g-grid" x1="${G.L}" x2="${G.W - G.R}" y1="${g.y(v).toFixed(1)}" y2="${g.y(v).toFixed(1)}"></line>`
@@ -881,7 +881,7 @@ async function drawViews(){
   const note = el('pt-chart-note');
   const per = { hour:'hour', day:'day', week:'week', month:'month' }[bucket] || bucket;
   if(note) note.textContent = total === 0
-    ? 'No views recorded in this period — tracking starts the first time someone opens your profile.'
+    ? 'No views recorded in this period. Tracking starts the first time someone opens your profile.'
     : total + (total === 1 ? ' view' : ' views') + ' in this period, one point per ' + per + '.';
 }
 
@@ -930,7 +930,7 @@ function wireViewRanges(){
    what they see in the box is exactly what gets uploaded.
    ponytail: canvas and a range input, no cropping library. */
 const CROP_BOX = 260;   // on-screen preview, matches the canvas in portal.html
-const CROP_OUT = 512;   // saved size — big enough for retina, small enough to load fast
+const CROP_OUT = 512;   // saved size, big enough for retina, small enough to load fast
 const CROP_MAX_MB = 8;
 
 let CROP = null;        // { img, scale, min, x, y } while the panel is open
@@ -1120,7 +1120,7 @@ function wireHandleCheck(){
 
 /* One generic list editor covers certifications, team and gallery, per
    keyword listing since 2026-09-02 (key is e.g. "certs-<listing id>").
-   A field marked 'img' gets a real file upload — asking a supplier for an
+   A field marked 'img' gets a real file upload, asking a supplier for an
    "image URL" is asking them to go and host a file somewhere first, which is
    why the gallery and team photos were unusable. */
 function renderRepeater(key, items, fields, labels, types){
@@ -1197,17 +1197,16 @@ async function saveProfile(){
   const btn = { set disabled(v){ btns.forEach(b => b.disabled = v); } }; // every tab's Save moves together
   btn.disabled = true;
   /* The address is optional on save. It used to abort the whole save when the
-     field was empty or invalid, which silently threw away every other edit —
-     change your contact person with a blank address and nothing persisted. */
+     field was empty or invalid, which silently threw away every other edit, change your contact person with a blank address and nothing persisted. */
   const wantHandle = val('f-handle');
   const handleChanged = wantHandle !== (PT.co.handle || '');
   if(handleChanged && wantHandle){
     const why = await handleAvailable(wantHandle, PT.slug);
-    if(why){ btn.disabled = false; toast('Address not saved: ' + why + ' Your other changes were not saved either — fix the address or put the old one back.', false); return; }
+    if(why){ btn.disabled = false; toast('Address not saved: ' + why + ' Your other changes were not saved either. Fix the address or put the old one back.', false); return; }
   }
   const socials = {};
   SOCIAL_KEYS.forEach(([k]) => { const v = val('s-' + k); if(v) socials[k] = v; });
-  /* every optional field still has a shape when filled in — nothing that is
+  /* every optional field still has a shape when filled in, nothing that is
      not an email/phone/website/year gets saved as one (Jacob, 2026-08-20) */
   let bad =
     (val('f-email')   && !isValidEmail(val('f-email')))     ? 'Public email is not a valid email address.' :
@@ -1333,8 +1332,8 @@ function upgradePanel(l){
 }
 
 /* What the listing looks like to a buyer, shown closed. Suppliers could not see
-   their own description or documents from here at all — only the keyword and
-   its status — so there was no way to notice a stale datasheet. */
+   their own description or documents from here at all, only the keyword and
+   its status, so there was no way to notice a stale datasheet. */
 function listingSummary(l){
   if(PT.editing === l.id) return '';
   const docs = Array.isArray(l.docs) ? l.docs : [];
@@ -1351,12 +1350,12 @@ function listingSummary(l){
 function listingEditor(l){
   const docs = Array.isArray(l.docs) ? l.docs : [];
   return `<div class="pt-listing-edit">
-    <label class="pt-lbl" for="ed-desc-${l.id}">Description <span class="pf-note">— shown to buyers searching “${escapeHtml(l.keyword || '')}”</span></label>
+    <label class="pt-lbl" for="ed-desc-${l.id}">Description <span class="pf-note">shown to buyers searching “${escapeHtml(l.keyword || '')}”</span></label>
     <textarea id="ed-desc-${l.id}" maxlength="300" rows="3"
       placeholder="What you supply under this keyword.">${escapeHtml(l.description || '')}</textarea>
     <div class="pf-note" id="ed-count-${l.id}">${(l.description || '').length}/300</div>
 
-    <label class="pt-lbl">Documents <span class="pf-note">— datasheets and catalogues, shown as “View Docs”</span></label>
+    <label class="pt-lbl">Documents <span class="pf-note">datasheets and catalogues, shown as “View Docs”</span></label>
     <div class="pt-docs" id="ed-docs-${l.id}">
       ${docs.map((d, i) => `<span class="pt-doc">
         <a href="${escapeHtml(safeUrl(d.url))}" target="_blank" rel="noopener nofollow">${escapeHtml(d.name || 'Document')}</a>
@@ -1365,7 +1364,7 @@ function listingEditor(l){
     </div>
     <input type="file" id="ed-file-${l.id}" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg">
 
-    <label class="pt-lbl" style="margin-top:14px">Showcase <span class="pf-note">— shown with this listing on your profile</span></label>
+    <label class="pt-lbl" style="margin-top:14px">Showcase <span class="pf-note">shown with this listing on your profile</span></label>
     <details class="pt-fold"><summary>Certifications <span class="pf-note" id="fold-certs-${l.id}-n"></span></summary><div class="pt-list" id="f-certs-${l.id}"></div></details>
     <details class="pt-fold"><summary>Team <span class="pf-note" id="fold-team-${l.id}-n"></span></summary><div class="pt-list" id="f-team-${l.id}"></div></details>
     <details class="pt-fold"><summary>Gallery <span class="pf-note" id="fold-gallery-${l.id}-n"></span></summary><div class="pt-list" id="f-gallery-${l.id}"></div></details>
@@ -1384,7 +1383,7 @@ function listingEditor(l){
     <div class="pt-edit-actions">
       <button class="btn btn-primary" data-save="${l.id}">Save</button>
       <button class="mini-btn" data-cancel="1">Cancel</button>
-      <span class="pf-note">Keyword, sponsorship, badge and price are set by Circuits.com — contact us to change those.</span>
+      <span class="pf-note">Keyword, sponsorship, badge and price are set by Circuits.com. Contact us to change those.</span>
     </div>
   </div>`;
 }
@@ -1491,7 +1490,7 @@ function wireListings(){
 
 /* ---------- inquiries ---------- */
 /* ---------- quote requests: an inbox ----------
-   These used to render every request fully expanded on one page — body, whole
+   These used to render every request fully expanded on one page, body, whole
    thread, reply box and status dropdown, all at once, and it fetched every
    thread on every draw. With more than about three requests it was unreadable
    and slow. Now it is a list you open one at a time, like mail: the list says
@@ -1507,8 +1506,7 @@ function inquirySummary(q){
   return { line, preview: escapeHtml(preview.length > 110 ? preview.slice(0, 110) + '…' : preview) };
 }
 
-/* Short and relative near the top of the list, absolute once it is old —
-   "2:41 PM" is what you want for today and useless for last month. */
+/* Short and relative near the top of the list, absolute once it is old, "2:41 PM" is what you want for today and useless for last month. */
 function inquiryWhen(iso){
   const d = new Date(iso), now = new Date();
   const sameDay = d.toDateString() === now.toDateString();
@@ -1530,7 +1528,7 @@ function renderInquiryList(){
           <b class="q-who">${escapeHtml(q.from_name)}${q.from_company ? ' <span class="q-co">' + escapeHtml(q.from_company) + '</span>' : ''}</b>
           <span class="q-when">${escapeHtml(inquiryWhen(q.created_at))}</span>
         </span>
-        <span class="q-sub">${line ? '<b>' + line + '</b> — ' : ''}${preview}</span>
+        <span class="q-sub">${line ? '<b>' + line + '</b>: ' : ''}${preview}</span>
       </span>
       <span class="badge ${unread ? 'live' : ''} q-state">${escapeHtml(q.status)}</span>
     </button>`;
@@ -1596,7 +1594,7 @@ function renderInquiries(){
       PT.openInquiry = row.dataset.open;
       const q = PT.inquiries.find(x => x.id === PT.openInquiry);
       renderInquiries();
-      /* Opening one is what "seen" means now — not opening the tab. Only this
+      /* Opening one is what "seen" means now, not opening the tab. Only this
          request changes, so the others stay unread and keep their badge. */
       if(q && q.status === 'New') markInquirySeen(q);
       return;
@@ -1615,19 +1613,19 @@ function renderInquiries(){
     drawThread(id, q);
     /* The field MUST be called `email`: sendFounderEmail reads fields.email to
        set _replyto and to address the auto-response. It used to be named
-       buyer_email, which meant the reply had no recipient — the supplier was
+       buyer_email, which meant the reply had no recipient, the supplier was
        told "Reply sent", the buyer never heard anything, and the request just
        looked ignored. */
     /* The buyer has no account, so a reply that only lands in this thread is a
        reply nobody receives. This emails them and links back to the thread,
-       where they can answer — which is what "Reply in your portal" has been
+       where they can answer, which is what "Reply in your portal" has been
        promising suppliers all along. */
     notifyBuyerOfReply(id, body);
 
-    sendFounderEmail('Supplier reply — ' + PT.co.name, {
+    sendFounderEmail('Supplier reply: ' + PT.co.name, {
       supplier: PT.co.name, buyer: q.from_name, email: q.from_email, message: body
     }, 'Reply from ' + PT.co.name + ' via Circuits.com:\n\n' + body
-       + '\n\nYou can answer this email directly — it goes back to ' + PT.co.name + '.');
+       + '\n\nYou can answer this email directly. It goes back to ' + PT.co.name + '.');
 
     /* Answering is what moves a request along, so record it here rather than
        relying on the supplier to also remember the dropdown. Resolved requests
@@ -1658,7 +1656,7 @@ async function drawThread(id, q){
   const msgs = await fetchThread(id);
   if(el('th-' + id) !== box) return;          // they went back before it arrived
   const them = (q && q.from_name) ? escapeHtml(q.from_name) : 'Buyer';
-  /* The original request is the first thing in the thread — it is the message
+  /* The original request is the first thing in the thread, it is the message
      they sent, so it reads as one conversation rather than a form plus a log. */
   const first = q ? `<div class="pt-msg buyer"><b>${them}:</b> ${escapeHtml(q.body)}
      <span class="pf-note">${new Date(q.created_at).toLocaleString()}</span></div>` : '';
@@ -1909,12 +1907,12 @@ function renderPromote(){
       <p class="pf-note">Nothing to print. Paste it once and it goes out on every email you send.</p></div></div>
     <div class="kit-sig">
       <label>Plain text</label>
-      <textarea id="sig-text" rows="3" readonly>${escapeHtml(co.name + (co.contact ? ' — ' + co.contact : ''))}
+      <textarea id="sig-text" rows="3" readonly>${escapeHtml(co.name + (co.contact ? ', ' + co.contact : ''))}
 ${escapeHtml(short)}${co.phone ? '\n' + escapeHtml(co.phone) : ''}</textarea>
       <button class="mini-btn" data-copy="sig-text">Copy plain text</button>
 
       <label style="margin-top:14px">Formatted (Outlook, Gmail)</label>
-      <div class="kit-sig-html" id="sig-html"><b>${name}</b>${co.contact ? ' &mdash; ' + escapeHtml(co.contact) : ''}<br>
+      <div class="kit-sig-html" id="sig-html"><b>${name}</b>${co.contact ? ', ' + escapeHtml(co.contact) : ''}<br>
         <a href="${escapeHtml(url)}">${escapeHtml(short)}</a>${co.phone ? '<br>' + escapeHtml(co.phone) : ''}</div>
       <button class="mini-btn" data-copy-rich="sig-html">Copy formatted</button>
     </div>
@@ -1972,7 +1970,7 @@ function wirePromote(){
 }
 
 /* Click a preview to see it big. The artwork is cloned and re-scaled to fit the
-   window, so it stays crisp — it is live markup, not an image. */
+   window, so it stays crisp, it is live markup, not an image. */
 function zoomArt(stage){
   const art = stage.querySelector('.kit-art');
   if(!art) return;
@@ -2041,7 +2039,7 @@ function renderReviews(){
       <p class="pt-quote-body">${escapeHtml(r.body)}</p>
       <div class="pt-reply">
         <label for="rp-${r.id}">Your public reply</label>
-        <textarea id="rp-${r.id}" rows="3" placeholder="Answer publicly — this appears under the review.">${escapeHtml(r.reply || '')}</textarea>
+        <textarea id="rp-${r.id}" rows="3" placeholder="Answer publicly. This appears under the review.">${escapeHtml(r.reply || '')}</textarea>
         <button class="mini-btn green" data-reply="${r.id}">Save reply</button>
       </div>
     </div>`).join('') || `<div class="pt-empty">
@@ -2057,6 +2055,6 @@ function renderReviews(){
     toast('Reply saved. It shows under the review once the review is approved.', true);
   };
   el('pt-reviews-note').textContent = PT.reviews.some(r => r.status === 'Pending')
-    ? 'Pending reviews are not public yet — Circuits.com checks them first. You cannot approve your own.'
+    ? 'Pending reviews are not public yet. Circuits.com checks them first. You cannot approve your own.'
     : '';
 }

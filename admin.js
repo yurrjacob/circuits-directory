@@ -23,7 +23,7 @@ const pending  = () => allApps.filter(a=>a.status==='Pending');
 /* Renders the same way the public site does: our own mark is distinct from a
    paid Trust Badge chosen for that one keyword, and there is no other kind:
    our own team mark is not a badge and never sits on a listing. */
-const badgeTag = b => !b ? '—'
+const badgeTag = b => !b ? 'none'
   : `<span class="lb" style="background:${esc(b.color)}">${esc(b.text)}</span>`;
 
 /* A keyword can only carry ONE live Exclusive Sponsor banner. An app conflicts
@@ -57,7 +57,7 @@ function actionsCell(l){
 
 /* Paid fixed placement: pin this listing to spot #N on its keyword. Staff only
    (the database reverts it for anyone else) and one company per spot per
-   keyword (a unique index) — so a taken spot comes back as an error here. */
+   keyword (a unique index), so a taken spot comes back as an error here. */
 async function lockListing(id){
   const l = allApps.find(a=>a.id===id); if(!l) return;
   const raw = prompt('Lock ' + l.company + ' to which spot on \u201c' + (l.keyword||'') + '\u201d?\n\nEnter a number (1 = top of the list). Leave it blank to unlock.',
@@ -78,8 +78,8 @@ async function lockListing(id){
 /* ---- badge editor (staff only) ----
    Two things live here that the public form cannot do: free text of our
    choosing, and the Circuits.com mark itself. The database is what actually
-   enforces that — guard_verified_badge() refuses "Circuits.com", "Verified"
-   and anything claiming a certification from ANY caller, staff included — so
+   enforces that, guard_verified_badge() refuses "Circuits.com", "Verified"
+   and anything claiming a certification from ANY caller, staff included, so
    this is the convenience, not the control. */
 
 async function editBadge(id){
@@ -87,11 +87,11 @@ async function editBadge(id){
   if(!l) return;
   const cur = l.badge && l.badge.text ? l.badge.text : '';
   const answer = prompt(
-    'Badge for ' + l.company + (l.keyword ? ' — ' + l.keyword : '') + '\n\n'
+    'Badge for ' + l.company + (l.keyword ? ' / ' + l.keyword : '') + '\n\n'
     + 'Type a label, or leave it blank to remove the badge.\n\n'
     + 'A Trust Badge is a paid label for this one keyword. Anything claiming a\n'
     + 'certification (ISO, Certified, Approved…) will be refused, and so will\n'
-    + '"Circuits.com" — our mark belongs to the account, not to a listing.',
+    + '"Circuits.com". Our mark belongs to the account, not to a listing.',
     cur);
   if(answer === null) return;
 
@@ -124,11 +124,11 @@ function renderListings(){
   $('listings-body').innerHTML = rows.map(l=>`
     <tr class="${l.paused?'row-paused':''}">
       <td>${esc(l.company)}</td>
-      <td class="kw">${esc(l.keyword)||'—'}</td>
+      <td class="kw">${esc(l.keyword)||'none'}</td>
       <td>${esc(appPriceLabel(l))}</td>
       <td>${l.banner ? '<span class="badge sponsored">Yes</span>' : 'No'}</td>
       <td>${badgeTag(l.badge)}</td>
-      <td>${l.locked_position ? '<span class="badge sponsored">#' + l.locked_position + '</span>' : '—'}</td>
+      <td>${l.locked_position ? '<span class="badge sponsored">#' + l.locked_position + '</span>' : 'no'}</td>
       ${actionsCell(l)}
     </tr>`).join('');
   $('listings-empty').style.display = approved().length ? 'none' : 'block';
@@ -138,7 +138,7 @@ function renderBanners(){
   const rows = view(approved().filter(a=>a.banner), 'banners');
   $('banners-body').innerHTML = rows.map(l=>`
     <tr class="${l.paused?'row-paused':''}">
-      <td>${esc(l.company)}</td><td class="kw">${esc(l.keyword)||'—'}</td>
+      <td>${esc(l.company)}</td><td class="kw">${esc(l.keyword)||'none'}</td>
       <td>${esc(appPriceLabel(l))}</td>${actionsCell(l)}
     </tr>`).join('');
   $('banners-empty').style.display = approved().filter(a=>a.banner).length ? 'none' : 'block';
@@ -148,7 +148,7 @@ function renderBadges(){
   const rows = view(approved().filter(a=>a.badge), 'badges');
   $('badges-body').innerHTML = rows.map(l=>`
     <tr class="${l.paused?'row-paused':''}">
-      <td>${esc(l.company)}</td><td class="kw">${esc(l.keyword)||'—'}</td>
+      <td>${esc(l.company)}</td><td class="kw">${esc(l.keyword)||'none'}</td>
       <td>${esc(appPriceLabel(l))}</td><td>${badgeTag(l.badge)}</td>${actionsCell(l)}
     </tr>`).join('');
   $('badges-empty').style.display = approved().filter(a=>a.badge).length ? 'none' : 'block';
@@ -160,9 +160,9 @@ function renderPending(){
     const conflict = bannerConflict(p);
     return `
     <tr class="${conflict?'row-warn':''}">
-      <td>${esc(p.company)||'—'}</td>
-      <td class="kw">${esc(p.keyword)||'—'}</td>
-      <td>${esc(p.email)||'—'}</td>
+      <td>${esc(p.company)||'none'}</td>
+      <td class="kw">${esc(p.keyword)||'none'}</td>
+      <td>${esc(p.email)||'none'}</td>
       <td>${p.banner ? '<span class="badge sponsored">Yes</span>' : 'No'}${conflict?' <span class="warn-flag" title="This keyword already has a live Exclusive Sponsor banner">⚠</span>':''}</td>
       <td>${badgeTag(p.badge)}</td>
       <td class="row-actions">
@@ -182,8 +182,8 @@ function renderIdeas(){
   $('ideas-body').innerHTML = rows.map(a=>`
     <tr>
       <td class="cell-muted nowrap">${esc((a.created_at||'').slice(0,10))}</td>
-      <td>${esc(a.company)||'—'}</td>
-      <td class="cell-muted">${esc(a.contact)||'—'}${a.email?'<br><span class="cell-muted">'+esc(a.email)+'</span>':''}</td>
+      <td>${esc(a.company)||'none'}</td>
+      <td class="cell-muted">${esc(a.contact)||''}${a.email?'<br><span class="cell-muted">'+esc(a.email)+'</span>':''}</td>
       <td class="idea-text">${esc(a.message)}</td>
     </tr>`).join('');
   $('ideas-empty').style.display = rows.length ? 'none' : 'block';
@@ -201,7 +201,7 @@ document.querySelectorAll('.list-controls').forEach(bar=>{
     bar.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active', b===btn));
     renderPanel(panel); savePrefs('admin', panels);
   }));
-  /* the "What People Search For" bar has no limit box — a missing one must
+  /* the "What People Search For" bar has no limit box, a missing one must
      not crash this whole file at load (it did: initAdmin was never defined
      and the admin tab sat empty) */
   const lcLimit = bar.querySelector('.lc-limit');
@@ -219,7 +219,7 @@ function editListing(id){
   $('e-keyword').value = l.keyword||'';
   $('e-fee').value = l.fee||'';
   $('e-status').value = l.status||'Approved';
-  /* keep custom badge text selectable — add it as an option if it isn't one */
+  /* keep custom badge text selectable, add it as an option if it isn't one */
   const badgeSel = $('e-badge'), bText = l.badge ? l.badge.text : '';
   if(bText && ![...badgeSel.options].some(o=>o.value===bText)){
     const o = document.createElement('option'); o.textContent = bText; badgeSel.appendChild(o);
@@ -242,11 +242,11 @@ $('e-save').addEventListener('click', async ()=>{
     banner: $('e-banner').checked,
     badge: badgeText ? { text: badgeText, color: $('e-color').value } : null
   };
-  if(!patch.keyword){ alert('The listing needs a keyword — that is what buyers search for.'); return; }
+  if(!patch.keyword){ alert('The listing needs a keyword. That is what buyers search for.'); return; }
   if(patch.fee && !/\d/.test(patch.fee)){ alert('The fee needs an amount, e.g. $49/mo.'); return; }
   if(patch.banner && patch.status==='Approved'
      && bannerConflict({ id: editId, banner: true, keyword: patch.keyword })){
-    alert('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword — remove the existing banner first.');
+    alert('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword. Remove the existing banner first.');
     return;
   }
   $('e-save').disabled = true;
@@ -267,12 +267,12 @@ async function togglePause(id){ const l = allApps.find(a=>a.id===id); if(!l) ret
 async function approveApp(id){
   const app = allApps.find(a=>a.id===id);
   if(app && bannerConflict(app)){
-    alert('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword — remove the existing banner first.');
+    alert('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword. Remove the existing banner first.');
     return;
   }
   const err = await updateAppStatus(id,'Approved'); if(err){ alert(bannerError(err)); return; }
   /* Tell them. Until now a supplier applied and then refreshed the portal
-     hoping — the notifier only knew how to send quote requests. */
+     hoping, the notifier only knew how to send quote requests. */
   notifyDecision(id, '');
   await reload();
 }
@@ -284,7 +284,7 @@ async function rejectApp(id){
     'Why is this being denied?\n\n'
     + 'This is sent to the supplier. Leave it blank to send the plain notice with no reason.',
     '');
-  if(reason === null) return;                 // cancelled — change nothing
+  if(reason === null) return;                 // cancelled, change nothing
   await updateAppStatus(id,'Denied');
   notifyDecision(id, reason.trim());
   await reload();
@@ -304,8 +304,8 @@ async function reloadCompanies(){
   $('companies-body').innerHTML = allCompanies.map(c => `
     <tr class="${c.suspended_at ? 'row-waiting' : ''}">
       <td><a href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener">${esc(c.name)}</a></td>
-      <td class="cell-muted">circuits.com/${esc(c.handle || '—')}</td>
-      <td class="cell-muted">${esc(c.email || '—')}</td>
+      <td class="cell-muted">${c.handle ? 'circuits.com/' + esc(c.handle) : 'no address yet'}</td>
+      <td class="cell-muted">${esc(c.email || 'none')}</td>
       <td>${c.suspended_at
             ? '<b>Suspended</b><br><span class="cell-muted">' + new Date(c.suspended_at).toLocaleDateString() + '</span>'
             : 'Active'}</td>
@@ -351,7 +351,7 @@ async function reloadUpgrades(){
   body.innerHTML = rows.map(r => `
     <tr class="row-waiting">
       <td>${esc(r.company || r.company_slug)}</td>
-      <td>${esc(r.keyword || '—')}</td>
+      <td>${esc(r.keyword || 'none')}</td>
       <td><b>${esc(UPGRADE_NAMES[r.kind] || r.kind)}</b></td>
       <td class="cell-muted">${new Date(r.created_at).toLocaleDateString()}</td>
       <td class="row-actions"><button class="mini-btn green" onclick="doneUpgrade('${esc(r.id)}')">Done</button></td></tr>`).join('');
@@ -365,6 +365,21 @@ async function doneUpgrade(id){
 }
 
 /* ---- send a message: staff-written notification into one or many inboxes ---- */
+/* Specific users: one input per person, + adds a row, × removes one (never the last). */
+const ntUsers = $('nt-users');
+if(ntUsers) ntUsers.addEventListener('click', e => {
+  const add = e.target.closest('[data-adduser]'), rm = e.target.closest('[data-rmuser]');
+  if(add){
+    const row = ntUsers.querySelector('.nt-user').cloneNode(true);
+    row.querySelector('input').value = '';
+    ntUsers.insertBefore(row, add); row.querySelector('input').focus();
+  }
+  if(rm){
+    const rows = ntUsers.querySelectorAll('.nt-user');
+    if(rows.length > 1) rm.closest('.nt-user').remove(); else rows[0].querySelector('input').value = '';
+  }
+});
+function ntUserList(){ return Array.from(document.querySelectorAll('#nt-users .nt-user-in')).map(i => i.value.trim()).filter(Boolean); }
 function notifyAudienceUI(){
   const a = $('nt-aud').value;
   $('nt-users-field').style.display = a === 'users' ? '' : 'none';
@@ -373,7 +388,7 @@ function notifyAudienceUI(){
 async function sendNotificationUI(){
   const v = id => ($(id).value || '').trim();
   const aud = v('nt-aud'), subject = v('nt-subject'), body = v('nt-body'), link = v('nt-link'), msg = $('nt-msg');
-  const to = aud === 'users' ? v('nt-users') : aud === 'keyword' ? 'keyword:' + v('nt-kw') : aud;
+  const to = aud === 'users' ? ntUserList().join(', ') : aud === 'keyword' ? 'keyword:' + v('nt-kw') : aud;
   const label = { users: 'those users', keyword: 'everyone listed under "' + v('nt-kw') + '"', companies: 'every company account', individuals: 'every individual account', everyone: 'every user on the site' }[aud];
   if(!subject || !body || to === 'keyword:' || !to){ msg.textContent = 'Recipient, subject and message are all needed.'; return; }
   if(aud !== 'users' && !confirm(`Send "${subject}" to ${label}? This cannot be recalled.`)) return;
@@ -385,6 +400,7 @@ async function sendNotificationUI(){
   if(!r.sent){ msg.textContent = 'Nobody matched.' + (missed || ' Nothing is listed under that keyword yet.'); return; }
   msg.textContent = 'Sent to ' + r.sent + (r.sent === 1 ? ' inbox.' : ' inboxes.') + missed;
   ['nt-subject', 'nt-body', 'nt-link'].forEach(id => { $(id).value = ''; });
+  document.querySelectorAll('#nt-users .nt-user').forEach((r, i) => { if(i) r.remove(); else r.querySelector('input').value = ''; });
 }
 
 /* ---- recruits (MVP2): people listed in the Recruits Directory ---- */
@@ -395,8 +411,8 @@ async function reloadRecruits(){
   body.innerHTML = allRecruits.map(r => `
     <tr class="${r.talent_hidden ? 'row-waiting' : ''}">
       <td><a href="/${esc(r.handle)}" target="_blank" rel="noopener">${esc(r.display_name || r.handle)}</a></td>
-      <td>${esc(r.title || '—')}</td>
-      <td>${r.years == null ? '—' : r.years}</td>
+      <td>${esc(r.title || 'none')}</td>
+      <td>${r.years == null ? 'none' : r.years}</td>
       <td class="cell-muted">${new Date(r.updated_at).toLocaleDateString()}</td>
       <td>${r.talent_hidden ? '<b>Hidden</b>' : 'Listed'}</td>
       <td class="row-actions">
@@ -429,7 +445,7 @@ async function reloadJobs(){
     <tr class="${jobState(j) === 'Awaiting payment' ? 'row-waiting' : ''}">
       <td><a href="/${esc(j.company_handle || j.company_slug)}" target="_blank" rel="noopener">${esc(j.company_name)}</a></td>
       <td><b>${esc(j.title)}</b>${j.location ? '<br><span class="cell-muted">' + esc(j.location) + '</span>' : ''}</td>
-      <td class="cell-muted">${esc((j.keywords || []).join(', ') || '—')}</td>
+      <td class="cell-muted">${esc((j.keywords || []).join(', ') || 'none')}</td>
       <td class="cell-muted">${new Date(j.created_at).toLocaleDateString()}</td>
       <td>${esc(jobState(j))}</td>
       <td class="row-actions">
@@ -464,7 +480,7 @@ async function setSuspended(slug, suspend){
         ? 'This hides the listing from the directory and from search, and blocks the owner from editing it. Nothing is deleted.\n\nWhy?'
         : 'This puts the listing back in the directory.\n\nWhy?'));
   if(reason === null) return;
-  if(!reason.trim()){ alert('Please give a reason — it goes in the permanent audit log.'); return; }
+  if(!reason.trim()){ alert('Please give a reason. It goes in the permanent audit log.'); return; }
   const err = await suspendCompany(slug, suspend, reason.trim());
   if(err){ alert('Could not do that: ' + err); return; }
   await reloadCompanies();
@@ -548,7 +564,7 @@ window.initAdmin = async function(){
 };
 
 /* The table rows are built as HTML strings with onclick="..." on each button,
-   and an inline handler is evaluated in global scope — so wrapping this file
+   and an inline handler is evaluated in global scope, so wrapping this file
    put every row button out of its own reach. Anything a row calls has to be
    published deliberately; everything else stays private to this file.
    tools/check.js fails if a new onclick appears without being listed here. */

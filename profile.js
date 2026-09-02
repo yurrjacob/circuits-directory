@@ -1,14 +1,14 @@
-/* ===== Circuits.com — public company profile =====
+/* ===== Circuits.com, public company profile =====
    Renders circuits.com/<handle>. See profileHandle() for where the handle
    comes from; profiles are reached from search results, not a browsable list. */
 
-/* (opening hours removed 2026-08-20 — the DAYS table went with them) */
+/* (opening hours removed 2026-08-20, the DAYS table went with them) */
 const SOCIALS = [['linkedin','LinkedIn'],['x','X'],['facebook','Facebook'],['youtube','YouTube'],['instagram','Instagram'],['github','GitHub']];
 
 /* Where the handle comes from, in order:
    1. the tag baked in by tools/build-profiles.js on a generated page
    2. ?c= on the shared template
-   3. the URL itself — circuits.com/zzzelec — which is how 404.html resolves a
+   3. the URL itself, circuits.com/zzzelec, which is how 404.html resolves a
       profile whose static page has not been generated yet */
 function profileHandle(){
   const meta = document.querySelector('meta[name="company-handle"]');
@@ -73,7 +73,7 @@ function row(label, value, opts){
    not a listing. Anything commercial lives on a company listing they claim. */
 function personProfile(p, staffRun){
   const name = p.display_name || p.handle;
-  document.title = name + ' — Profile | Circuits.com';
+  document.title = name + ' | Profile | Circuits.com';
   setMeta('description', name + ' on Circuits.com.');
   return `
   <div class="pf-head">
@@ -91,7 +91,7 @@ function personProfile(p, staffRun){
       company listings are separate, and a profile can claim one to manage it.</p>`)}
     ${(Array.isArray(p.credentials) ? p.credentials : []).filter(c => c && (c.name || '').trim()).length
       ? section('Certifications & degrees', `<ul class="pf-certs" title="Listed by the person. Circuits.com has not checked these.">${p.credentials.filter(c => c && (c.name || '').trim()).map(c =>
-          `<li><b>${escapeHtml(c.name.trim())}</b>${c.issuer ? ` — ${escapeHtml(c.issuer)}` : ''}${c.year ? ` (${escapeHtml(String(c.year))})` : ''}</li>`).join('')}</ul>`) : ''}
+          `<li><b>${escapeHtml(c.name.trim())}</b>${c.issuer ? `, ${escapeHtml(c.issuer)}` : ''}${c.year ? ` (${escapeHtml(String(c.year))})` : ''}</li>`).join('')}</ul>`) : ''}
     ${(p.keywords || []).length ? section('Keywords', `<div class="kw-tags">${p.keywords.map(k => `<span class="kw-tag">${escapeHtml(k)}</span>`).join('')}</div>`) : ''}
   </div>
   <aside class="pf-side">
@@ -111,7 +111,7 @@ async function initProfile(){
 
   /* One namespace, two kinds of occupant. A company listing takes priority
      because it is the older claim; a person's profile is checked next.
-     A failed lookup must never reach notFound() — that page tells the visitor
+     A failed lookup must never reach notFound(), that page tells the visitor
      the address is free to claim, and this address may well belong to someone. */
   let co, person;
   try {
@@ -127,7 +127,7 @@ async function initProfile(){
   }
   if(!co){
     if(person){
-      /* the Circuits.com mark on an admin's own page — same database-decided
+      /* the Circuits.com mark on an admin's own page, same database-decided
          rule as on staff-run company profiles */
       const staffRun = await profileRunByStaff(person.handle).catch(() => false);
       root.innerHTML = personProfile(person, staffRun); wireCopyLink(); return true;
@@ -149,7 +149,7 @@ async function initProfile(){
   const avg = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
   const site = safeUrl(co.website);
 
-  document.title = co.name + ' — Profile | Circuits.com';
+  document.title = co.name + ' | Profile | Circuits.com';
   setMeta('description', (co.tagline || co.description || (co.name + ' on the Circuits.com directory.')).slice(0, 155));
 
   /* ---- hero ---- */
@@ -178,7 +178,7 @@ async function initProfile(){
     ? `<p class="pf-prose">${escapeHtml(co.description).replace(/\n+/g, '</p><p class="pf-prose">')}</p>` : '');
 
   /* ---- keywords ----
-     The badge belongs against the keyword it applies to — "PCB Design
+     The badge belongs against the keyword it applies to, "PCB Design
      (Authorized)", not "Jacob (Authorized)".
 
      It is also a PAID label the company chose for itself, so it is marked as
@@ -187,9 +187,9 @@ async function initProfile(){
      is deliberately plain; a subtle visual difference alone would not do it. */
   /* Only explain the star when there is a star to explain. fetchCompanyKeywords
      already drops paused and unapproved listings, so a banner here is a live
-     sponsorship — a company with none never sees a note about one. */
+     sponsorship, a company with none never sees a note about one. */
   /* Each tag walks the visitor to the results page for that keyword and
-     highlights this company's row there (?hl= picks it out) — the listing is
+     highlights this company's row there (?hl= picks it out), the listing is
      where the position, the sponsor banner and the quote button live. */
   const anyBanner = kws.some(k => k.banner);
   html += section('Keyword Listings', kws.length
@@ -201,7 +201,7 @@ async function initProfile(){
       + (anyBanner ? `<p class="pf-note">★ marks a Circuits-Keyword&trade; this company exclusively sponsors.</p>` : '')
     : '');
 
-  /* Listing documents deliberately do NOT get their own section here — they
+  /* Listing documents deliberately do NOT get their own section here, they
      belong to the keyword listing, not the profile. The only place one may
      surface is as evidence behind a certification below. */
 
@@ -234,7 +234,7 @@ async function initProfile(){
       <ul class="pf-certs" title="Listed by the company. Circuits.com has not checked these.">${certs.map(c => {
         const doc = certDoc(ldocs, c.name);
         return `<li><b>${escapeHtml(c.name.trim())}</b>`
-          + (c.issuer ? ` — ${escapeHtml(c.issuer)}` : '')
+          + (c.issuer ? `, ${escapeHtml(c.issuer)}` : '')
           + (c.year ? ` (${escapeHtml(String(c.year))})` : '')
           + (doc ? ` <a class="doc-link" href="${escapeHtml(safeUrl(doc.url))}" target="_blank" rel="noopener nofollow">certificate</a>` : '')
           + `</li>`;
@@ -266,14 +266,14 @@ async function initProfile(){
   /* The in-page quote form is OFF (Jacob, 2026-08-21: "Request a quote part
      of the profile should be removed. Just make it provide their emails and
      stuff"). rfqForm() and its wiring stay below, dormant, in case it comes
-     back — buyers now reach the company by the contact details themselves. */
+     back, buyers now reach the company by the contact details themselves. */
 
   /* ---- sidebar: one place for everything a buyer needs to act ---- */
   html += `</div><aside class="pf-side">
     <div class="pf-side-card">
       ${looksEmail(co.email)
         ? `<a class="btn btn-primary pf-cta" id="pf-email-cta"
-             href="mailto:${escapeHtml(co.email.trim())}?subject=${encodeURIComponent('Enquiry via Circuits.com — ' + co.name)}">Email ${escapeHtml(co.name)}</a>`
+             href="mailto:${escapeHtml(co.email.trim())}?subject=${encodeURIComponent('Enquiry via Circuits.com: ' + co.name)}">Email ${escapeHtml(co.name)}</a>`
         : ''}
       <button type="button" class="btn pf-save" id="pf-save"
               data-slug="${escapeHtml(co.slug)}" data-handle="${escapeHtml(co.handle || '')}"
@@ -413,7 +413,7 @@ function jsonLd(co, avg, count, site){
 function wireProfile(slug, co){
   trackEvent(slug, 'view');
 
-  /* Gallery photos open full size — a 140px thumbnail of a warehouse tells a
+  /* Gallery photos open full size, a 140px thumbnail of a warehouse tells a
      buyer nothing. */
   document.querySelectorAll('.pf-gallery img[data-full]').forEach(img => {
     img.addEventListener('click', () => openLightbox(img.dataset.full, img.dataset.cap));
@@ -438,8 +438,8 @@ function wireProfile(slug, co){
   });
 
   /* The Request a Quote buttons on the results page link here as /handle#rfq.
-     The browser resolves that hash while the page is still empty — this profile
-     is rendered after the data arrives — so the jump silently does nothing.
+     The browser resolves that hash while the page is still empty, this profile
+     is rendered after the data arrives, so the jump silently does nothing.
      Land the buyer on the form now that it exists. */
   if(location.hash === '#rfq'){
     const sec = document.getElementById('rfq');
@@ -469,24 +469,24 @@ function wireProfile(slug, co){
       });
       trackEvent(slug, 'rfq');
 
-      /* The supplier themselves — the whole point of the product. Goes through
+      /* The supplier themselves, the whole point of the product. Goes through
          our own sending service because FormSubmit can only deliver to
          addresses that have confirmed themselves, which a customer's address
          has not. Deliberately not awaited: the request is already saved and
          will appear in their portal regardless. */
       /* the token comes back from the insert and is the buyer's only route to
-         this conversation later — it goes into their confirmation email */
+         this conversation later, it goes into their confirmation email */
       notifySupplier(slug, {
         name: v('rq-name'), email: v('rq-email'), company: v('rq-company'),
         phone: v('rq-phone'), part_number: v('rq-pn'), quantity: v('rq-qty'), body: v('rq-body')
       }, sent && sent.token);
 
       /* and the founders, so nothing is missed while the above beds in */
-      sendFounderEmail('New quote request — ' + co.name, {
+      sendFounderEmail('New quote request: ' + co.name, {
         supplier: co.name, supplier_email: co.email || '(none)', name: v('rq-name'),
         email: v('rq-email'), company: v('rq-company') || '(none)', phone: v('rq-phone') || '(none)',
         part_number: v('rq-pn') || '(none)', quantity: v('rq-qty') || '(none)', message: v('rq-body')
-      }, 'Thanks — your quote request has been sent to ' + co.name + ' via Circuits.com. They typically reply directly to this email address.');
+      }, 'Thanks, your quote request has been sent to ' + co.name + ' via Circuits.com. They typically reply directly to this email address.');
       /* Say where the answer will arrive. "They will reply directly" was true
          only if the supplier used their email client; a reply sent from the
          portal now reaches the buyer too, and this is the page it lands on. */
@@ -524,7 +524,7 @@ function wireProfile(slug, co){
    A buyer comparing five distributors needs somewhere to put them, and making
    them create an account first would lose most of them. This lives in their
    own browser: no account, no server, nothing sent to us, so it is not
-   tracking and needs no consent. The trade-off is honest and stated — it does
+   tracking and needs no consent. The trade-off is honest and stated, it does
    not follow them to another device. */
 const SAVED_KEY = 'cx_saved';
 
@@ -559,7 +559,7 @@ function wireSave(){
   paint();
 }
 
-/* Copy the short link — this is what goes on adverts and email signatures.
+/* Copy the short link, this is what goes on adverts and email signatures.
    Person profiles need it too, and they never reach wireProfile(). */
 function wireCopyLink(){
   const copy = document.getElementById('pf-copy');
@@ -569,7 +569,7 @@ function wireCopyLink(){
       await navigator.clipboard.writeText(copy.dataset.url);
       label.textContent = 'Copied';
     }catch(e){
-      /* clipboard blocked (http, permissions) — select it so Ctrl+C still works */
+      /* clipboard blocked (http, permissions), select it so Ctrl+C still works */
       const r = document.createRange();
       r.selectNodeContents(copy.querySelector('span'));
       const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);

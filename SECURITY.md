@@ -12,7 +12,7 @@ receipt and tell you what we are doing about it.
 
 Circuits.com is static files in a browser talking straight to Postgres. There is
 no server of ours in between, so **nothing enforced in JavaScript is enforced at
-all** — anyone can edit the page and call the database directly with the same
+all**, anyone can edit the page and call the database directly with the same
 key.
 
 Every rule that matters therefore lives in the database:
@@ -65,5 +65,5 @@ Recorded here rather than left implicit:
 1. Rotate the service role key in the Supabase dashboard.
 2. Read `security_log`. It is append-only and cannot be edited or deleted by
    anyone, including staff, so it is trustworthy after an incident.
-3. Suspend affected companies or profiles rather than deleting them — suspension
+3. Suspend affected companies or profiles rather than deleting them, suspension
    hides them immediately and keeps every record for the investigation.

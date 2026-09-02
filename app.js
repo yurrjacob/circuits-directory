@@ -1,4 +1,4 @@
-/* ===== Circuits.com — shared front-end behavior ===== */
+/* ===== Circuits.com, shared front-end behavior ===== */
 
 
 function gotoSearch(term){
@@ -77,7 +77,7 @@ function isValidWebsite(s){ return /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}([\/?
 
 /* ---- anti-spam ----
    Two cheap traps that stop the volume scripts. Neither is a real defence on
-   its own — anything client-side can be bypassed — so the limit that actually
+   its own, anything client-side can be bypassed, so the limit that actually
    holds is the rate_limit() trigger in the database, which applies no matter
    how the row arrives. These just keep the obvious junk out of the founders'
    inbox and off the rate limiter.
@@ -88,7 +88,7 @@ function armSpamTrap(form){
   if(!form || form.dataset.armedAt) return;
   form.dataset.armedAt = Date.now();
   const hp = document.createElement('div');
-  // off-screen rather than display:none — some bots skip hidden inputs
+  // off-screen rather than display:none, some bots skip hidden inputs
   hp.style.cssText = 'position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden';
   hp.setAttribute('aria-hidden', 'true');
   hp.innerHTML = '<label>Do not fill this in'
@@ -107,7 +107,7 @@ function looksLikeSpam(form){
 /* Silently accept a suspected bot. Telling it why it failed just teaches the
    author what to change. */
 function fakeSuccess(form, message){
-  form.innerHTML = '<div class="success show">' + (message || 'Thanks — your message has been sent.') + '</div>';
+  form.innerHTML = '<div class="success show">' + (message || 'Thanks, your message has been sent.') + '</div>';
 }
 
 /* ---- the Circuits.com team mark ----
@@ -117,7 +117,7 @@ function fakeSuccess(form, message){
    appears is decided by company_run_by_staff() in the database, never by
    anything a company can set. */
 function teamMarkHtml(){
-  return '<span class="lb lb-cx" title="Circuits.com team — this profile is run by the Circuits.com team, not a paying advertiser.">'
+  return '<span class="lb lb-cx" title="Circuits.com team: this profile is run by the Circuits.com team, not a paying advertiser.">'
     + '<img class="lb-cx-mark" src="/assets/favicon.png" alt="" aria-hidden="true">Circuits.com</span>';
 }
 
@@ -130,7 +130,7 @@ function badgeHtml(badge, extraClass){
   if(!badge || !badge.text) return '';
   const cls = 'lb' + (extraClass ? ' ' + extraClass : '');
   return `<span class="${cls}" style="background:${escapeHtml(badge.color || '#c9a227')}"`
-    + ` title="Trust Badge — a paid label chosen by this company for this listing. It is not a certification and Circuits.com has not assessed it.">`
+    + ` title="Trust Badge: a paid label chosen by this company for this listing. It is not a certification and Circuits.com has not assessed it.">`
     + `${escapeHtml(badge.text)}</span>`;
 }
 
@@ -161,7 +161,7 @@ function loadingHtml(label){
    empty page, an outage, or the test fixture is not. Google honours a
    JS-set noindex, and this also gives every result page a real title. */
 function setResultsMeta(q, indexable){
-  document.title = q ? (q + ' suppliers — Circuits.com') : 'Search — Circuits.com';
+  document.title = q ? (q + ' suppliers | Circuits.com') : 'Search | Circuits.com';
   let m = document.querySelector('meta[name="robots"]');
   if(!m){ m = document.createElement('meta'); m.name = 'robots'; document.head.appendChild(m); }
   m.content = indexable ? 'index, follow' : 'noindex, follow';
@@ -371,10 +371,10 @@ function rateLimitMessage(err){
 
 /* ---- email notifications to the founders (via FormSubmit) ----
    Note: the first submission triggers a one-time activation email to
-   mike@circuits.com — click the link inside it once and delivery is live. */
+   mike@circuits.com, click the link inside it once and delivery is live. */
 /* Each founder gets his own FormSubmit send (no CC), so one un-activated
    form can never block the other. IMPORTANT: FormSubmit requires a ONE-TIME
-   activation per address — check mike@circuits.com AND john@circuits.com
+   activation per address, check mike@circuits.com AND john@circuits.com
    (including spam) for an "Activate Form" email and click the link once. */
 const FOUNDER_EMAILS = ['mike@circuits.com','john@circuits.com'];
 async function sendFounderEmail(subject, fields, autoresponse){
@@ -404,11 +404,11 @@ async function sendFounderEmail(subject, fields, autoresponse){
      activated), so we can't tell which endpoint will actually deliver it.
      Attach the confirmation to EVERY founder send: as long as at least one
      address is activated, the applicant gets their confirmation. (If both are
-     activated the applicant may get two copies — acceptable vs. getting none.) */
+     activated the applicant may get two copies, acceptable vs. getting none.) */
   const results = await Promise.all(FOUNDER_EMAILS.map(to => sendOne(to, true)));
   /* True only if at least one founder address actually accepted the message.
      Callers use this to decide between a real "sent" confirmation and an
-     honest error, instead of always claiming success — a FormSubmit endpoint
+     honest error, instead of always claiming success, a FormSubmit endpoint
      that was never activated silently drops mail, and telling someone their
      message went through when it did not is worse than telling them to try
      another way. */
@@ -419,7 +419,7 @@ async function sendFounderEmail(subject, fields, autoresponse){
 function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 /* A URL safe to put in an href. These values (a listing's website and its
    uploaded-doc links) are supplied by the listing owner, so escaping alone is
-   not enough — escapeHtml leaves `javascript:`/`data:` schemes intact. Only
+   not enough, escapeHtml leaves `javascript:`/`data:` schemes intact. Only
    http(s) is allowed through; a bare domain is upgraded to https, anything
    else becomes empty. Mirrors safeUrl() in profile.js. */
 function safeUrl(u){
@@ -445,7 +445,7 @@ function avatarSvg(){return '<svg class="silhouette" viewBox="0 0 24 24" fill="c
 /* ---- saved suppliers (buyer side) ----
    A buyer saves suppliers from a profile page (see wireSave in profile.js);
    the list lives in this browser only, under the same 'cx_saved' key. This is
-   where they get to SEE that list — without it the Save button wrote to
+   where they get to SEE that list, without it the Save button wrote to
    nowhere. The key is used as a literal (not a shared const): profile.js
    already declares its own SAVED_KEY, and both files share global scope. */
 function savedSuppliers(){
@@ -456,7 +456,7 @@ function removeSaved(slug){
   try{
     const list = savedSuppliers().filter(c => c.slug !== slug);
     localStorage.setItem('cx_saved', JSON.stringify(list));
-  }catch(e){ /* private mode / quota — nothing else to do */ }
+  }catch(e){ /* private mode / quota, nothing else to do */ }
 }
 function renderSavedStrip(){
   const strip = document.getElementById('saved-strip');
@@ -505,7 +505,7 @@ async function initResults(forcedTerm){
     listings = await fetchApprovedByKeyword(q);
   } catch(e){
     /* Do NOT fall through to the "this keyword is available" pitch. We do not
-       know that it is available — we only know we could not ask. */
+       know that it is available, we only know we could not ask. */
     body.innerHTML = loadErrorHtml('the results for “' + q + '”', 'Search again');
     const c = document.getElementById('result-count');
     if(c) c.textContent = '–';
@@ -516,7 +516,7 @@ async function initResults(forcedTerm){
   if(countEl) countEl.textContent = listings.length;
 
   /* Record the search and whether it landed. Only reached once the lookup has
-     actually succeeded — a failed request above returns early, so an outage is
+     actually succeeded, a failed request above returns early, so an outage is
      never logged as "nobody wanted this keyword". */
   logSearch(q, listings.length);
 
@@ -602,8 +602,7 @@ async function initResults(forcedTerm){
      row goes back into the list like any other. */
   const featured = listings.find(l => l.banner);
   const listed = listings.filter(l => !l.banner);
-  /* Every load deals the list in a fresh random order (Jacob, 2026-09-01) —
-     the "#" is just the row's place today, not a rank. Fisher-Yates, because
+  /* Every load deals the list in a fresh random order (Jacob, 2026-09-01), the "#" is just the row's place today, not a rank. Fisher-Yates, because
      sort(() => Math.random() - .5) is biased. */
   for(let i = listed.length - 1; i > 0; i--){
     const j = Math.floor(Math.random() * (i + 1));
@@ -671,13 +670,13 @@ async function initResults(forcedTerm){
           ${docLinks(c)}
         </div>
       </td>
-      <td class="cell-muted" data-label="Contact">${escapeHtml(c.contact||'—')}</td>
-      <td class="cell-muted" data-label="Phone">${c.phone ? `<a href="tel:${escapeHtml(c.phone)}">${escapeHtml(c.phone)}</a>` : '—'}</td>
-      <td class="cell-muted" data-label="Email">${c.email ? `<a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>` : '—'}</td>
+      <td class="cell-muted" data-label="Contact">${escapeHtml(c.contact||'')}</td>
+      <td class="cell-muted" data-label="Phone">${c.phone ? `<a href="tel:${escapeHtml(c.phone)}">${escapeHtml(c.phone)}</a>` : ''}</td>
+      <td class="cell-muted" data-label="Email">${c.email ? `<a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>` : ''}</td>
     </tr>`).join('');
 
   /* The column used to be headed "Held" with a claim-order note under the
-     table; both went 2026-09-01 at Jacob's request — it is a plain "#" now. */
+     table; both went 2026-09-01 at Jacob's request, it is a plain "#" now. */
   body.innerHTML = html + `
     <div class="listings">
       <div class="table-wrap">
@@ -692,7 +691,7 @@ async function initResults(forcedTerm){
     </div>` + (featured ? '' : listCta(escapeHtml(q)));
 
   /* Arriving from a profile's keyword tag or the approval email (?hl=<slug>):
-     walk the reader to that company's row — or its sponsor banner — and flash
+     walk the reader to that company's row, or its sponsor banner, and flash
      it so the eye lands. The row is scrolled into view FIRST and lit up only
      once it is on screen; lighting it during the scroll meant people caught
      the last quarter-second of the fade and nothing else (Jacob, 2026-09-01). */
@@ -797,8 +796,8 @@ function initJoin(){
     }
   }
   /* A badge is a label the company picks for itself, so it must not be able to
-     claim an assessment nobody made. The database refuses these outright — see
-     guard_verified_badge() — but finding out at submit time, after filling in a
+     claim an assessment nobody made. The database refuses these outright, see
+     guard_verified_badge(), but finding out at submit time, after filling in a
      long form, is a miserable way to learn it. Same rule, said earlier. */
   const BADGE_FORBIDDEN = [
     [/verified|circuits\.com|official/i,
@@ -927,7 +926,7 @@ if(logoUrl){
   if(pvLogo){ pvLogo.classList.remove('logo-ph'); pvLogo.innerHTML = `<img src="${logoUrl}" alt="Your logo">`; }
   if(bpLogo){ bpLogo.classList.remove('logo-ph'); bpLogo.innerHTML = `<img src="${logoUrl}" alt="Your logo">`; }
 } else {
-  /* no logo picked yet — show a "Your Logo" placeholder, never initials */
+  /* no logo picked yet, show a "Your Logo" placeholder, never initials */
   if(pvLogo){ pvLogo.classList.add('logo-ph'); pvLogo.textContent = 'Your Logo'; }
   if(bpLogo){ bpLogo.classList.add('logo-ph'); bpLogo.textContent = 'Your Logo'; }
 }
@@ -935,7 +934,7 @@ if(bpContact) bpContact.textContent = fieldVal('f-contact') || 'Jane Doe, VP Sal
 if(bpPhone) bpPhone.textContent = fieldVal('f-phone') || '(555) 123-4567';
 if(bpEmail) bpEmail.textContent = fieldVal('f-email') || 'sales@company.com';
 /* the profile description is written by staff after review, so the preview
-   keeps its example text — the Step 5 suggestions box does NOT feed it */
+   keeps its example text, the Step 5 suggestions box does NOT feed it */
 }
 ['f-company','f-contact','f-phone','f-email'].forEach(function(id){
 const el = document.getElementById(id);
@@ -1036,14 +1035,14 @@ const msg = document.getElementById('msg');
       setErr(el, ok ? '' : errText);
       if(!ok && !firstBad) firstBad = el;
     };
-    /* a typed-but-never-Added keyword still counts — people forget the button */
+    /* a typed-but-never-Added keyword still counts, people forget the button */
     if(kwInput && kwInput.value.trim()) addKw();
-    check('kw-input', keywords.length > 0, 'Add at least one keyword — that is what buyers search to find you.');
+    check('kw-input', keywords.length > 0, 'Add at least one keyword. That is what buyers search to find you.');
     check('f-company', !!v('f-company'), 'Please enter your company name.');
     check('f-contact', !!v('f-contact'), 'Please enter a contact person.');
-    check('f-phone', isValidPhone(v('f-phone')), 'Please enter a phone number (at least 10 digits) — buyers need a way to call you.');
+    check('f-phone', isValidPhone(v('f-phone')), 'Please enter a phone number (at least 10 digits). Buyers need a way to call you.');
     check('f-website', !v('f-website') || isValidWebsite(v('f-website')), 'Please enter a valid website (e.g. www.company.com).');
-    /* MVP1: a free listing request — no password/account is created here, so we
+    /* MVP1: a free listing request, no password/account is created here, so we
        only need an email your team can reply to. */
     check('f-email', isValidEmail(v('f-email')), 'Please enter a valid email address (e.g. sales@company.com) so we can reply.');
     /* terms must be accepted before the form can be submitted */
@@ -1084,7 +1083,7 @@ const msg = document.getElementById('msg');
   if(form) form.addEventListener('submit', async e=>{
     e.preventDefault();
     if(looksLikeSpam(form)){
-      fakeSuccess(form, 'Thanks — your request has been received. We will be in touch.');
+      fakeSuccess(form, 'Thanks, your request has been received. We will be in touch.');
       return;
     }
     if(!validate()) return;
@@ -1093,7 +1092,7 @@ const msg = document.getElementById('msg');
     let website = v('f-website');
     if(website && !/^https?:\/\//i.test(website)) website = 'https://' + website;
     /* MVP1: a FREE listing request. No account is created here and no keyword
-       fee applies — a Pending application is filed and staff follow up by email.
+       fee applies, a Pending application is filed and staff follow up by email.
        (The account/upgrade/pricing steps and their fields were removed; the
        full version is preserved in backups/mvp1-baseline-2026-08-25/.) */
     const base = {
@@ -1167,8 +1166,8 @@ const msg = document.getElementById('msg');
 }
 
 /* ===================================================================
-   Password reset. One page, two jobs: ask for the link, and — when the
-   person arrives back holding one — set the new password.
+   Password reset. One page, two jobs: ask for the link, and, when the
+   person arrives back holding one, set the new password.
    =================================================================== */
 async function initReset(){
   const el = id => document.getElementById(id);
@@ -1191,7 +1190,7 @@ async function initReset(){
     if(!user){ show('rs-bad', true); return; }
 
     /* An email-CONFIRMATION link is not a password reset. Someone who just
-       confirmed their address already chose a password minutes ago — showing
+       confirmed their address already chose a password minutes ago, showing
        them the set-a-new-password sheet reads as "your password is gone".
        Only a recovery link or a staff invite (no password yet) gets that
        sheet; a confirmation gets a plain "you're confirmed" and the portal. */
@@ -1236,10 +1235,10 @@ async function initReset(){
     const btn = el('rq-submit'), msg = el('rq-msg');
     const id = el('rq-id').value.trim();
     if(!id){ msg.textContent = 'Enter your email or username.'; msg.style.color = '#b3261e'; return; }
-    if(id.includes('@') && !isValidEmail(id)){ msg.textContent = 'That email address looks incomplete — check it and try again.'; msg.style.color = '#b3261e'; return; }
+    if(id.includes('@') && !isValidEmail(id)){ msg.textContent = 'That email address looks incomplete. Check it and try again.'; msg.style.color = '#b3261e'; return; }
     btn.disabled = true; msg.style.color = ''; msg.textContent = 'Sending…';
     const err = await requestPasswordReset(id);
-    /* An unknown account and a real one look identical, deliberately — but a
+    /* An unknown account and a real one look identical, deliberately, but a
        send that actually failed says so, rather than sending them to wait by
        an inbox for a message that was never sent. */
     if(err){
@@ -1253,7 +1252,7 @@ async function initReset(){
 }
 
 /* ===================================================================
-   Get Listed, step 00 — the account.
+   Get Listed, step 00, the account.
    Browsing needs no account; submitting a listing does. Rather than send
    people away to Register and lose the form they were filling in, the
    account is created (or signed into) in place, at the top of the flow.
@@ -1262,12 +1261,12 @@ let JOIN_USER = null;      // the signed-in user, once we know
 
 /* True once the form has been filled in from a company the signed-in user
    already owns. Lives here, not inside initJoin(), because both the form and
-   adoptExistingCompany() read it — assigning to it from the wrong scope would
+   adoptExistingCompany() read it, assigning to it from the wrong scope would
    just create a stray global that nothing checks. */
 let JOIN_ADOPTED = false;
 
 /* A supplier who already has a listing and comes back for a second keyword.
-   Get Listed asks for a company name and a FREE username — and their own
+   Get Listed asks for a company name and a FREE username, and their own
    username is already taken, by them. Left alone they would be pushed into
    inventing a second one, and because the database matches an existing company
    by exact name, the smallest difference in spelling would hand them a second
@@ -1299,17 +1298,17 @@ async function adoptExistingCompany(){
   lock(name, co.name);
   lock(handle, co.handle);
 
-  /* Their own address is "taken" — by them. The availability checker would call
+  /* Their own address is "taken", by them. The availability checker would call
      that unavailable and block the form, so it is switched off for a locked
      field. Reached by id: the checker's own variables belong to initJoin(). */
   JOIN_ADOPTED = true;
   const msg = el('handle-msg');
   if(msg){
-    msg.textContent = 'circuits.com/' + co.handle + ' — your existing address.';
+    msg.textContent = 'circuits.com/' + co.handle + ' is your existing address.';
     msg.style.color = '#3f6300';
   }
 
-  /* contact details are a convenience, not an identity — prefilled, still editable */
+  /* contact details are a convenience, not an identity, prefilled, still editable */
   const soft = (id, v) => { const f = el(id); if(f && !f.value && v) f.value = v; };
   soft('f-contact', co.contact); soft('f-phone', co.phone); soft('f-website', co.website);
 
@@ -1327,7 +1326,7 @@ async function initJoinAccount(){
   const stepNew = el('acct-new'), stepLogin = el('acct-login'), done = el('acct-done');
   if(!stepNew) return;
 
-  /* The username field stays put either way — it is the listing's address,
+  /* The username field stays put either way, it is the listing's address,
      not the account's, so a signed-in user still has to choose one. */
   async function refresh(){
     JOIN_USER = await currentUser();
@@ -1367,7 +1366,7 @@ async function initJoinAccount(){
 }
 
 /* ===================================================================
-   Register — anyone may create a profile. This is not Get Listed:
+   Register, anyone may create a profile. This is not Get Listed:
    no company, no approval, no fee. The username IS the address.
    =================================================================== */
 function initRegister(){
@@ -1415,7 +1414,7 @@ function initRegister(){
     }, 400);
   });
 
-  /* Two boxes, checked as you type — the password is set once here and there is
+  /* Two boxes, checked as you type, the password is set once here and there is
      no "resend" path if it is a typo. */
   function passwordsMatch(){
     if(!pass2El.value){ passMsg.textContent = ''; return false; }
@@ -1434,7 +1433,7 @@ function initRegister(){
 
     if(!handle) return fail('Choose the username that will be your circuits.com address.');
     if(v('r-kind') === 'company' && !v('r-name')) return fail('Please enter your company name.');
-    if(!isValidEmail(email)) return fail('Please enter a valid email address (e.g. you@company.com) — it is how you sign in.');
+    if(!isValidEmail(email)) return fail('Please enter a valid email address (e.g. you@company.com). It is how you sign in.');
     if(passEl.value.length < 8) return fail('Your password must be at least 8 characters.');
     if(passEl.value !== pass2El.value) return fail('The two passwords do not match.');
     if(!el('r-terms').checked) return fail('Please accept the Terms to continue.');
@@ -1442,7 +1441,7 @@ function initRegister(){
     submitBtn.disabled = true; submitBtn.textContent = 'Creating…';
 
     /* Re-check at submit: someone may have taken it while this form was open.
-       The database trigger is the real guard — this is just a kinder message. */
+       The database trigger is the real guard, this is just a kinder message. */
     const why = await handleAvailable(handle);
     if(why){
       submitBtn.disabled = false; submitBtn.textContent = 'Create Profile';
@@ -1468,7 +1467,7 @@ function initRegister(){
   });
 }
 /* ===================================================================
-   Browse — every claimed Circuits-Keyword™, A to Z.
+   Browse, every claimed Circuits-Keyword™, A to Z.
    The homepage stays a bare search box on purpose; this is the page for
    the buyer who does not know the exact word yet. Test fixtures are
    filtered out in fetchKeywordIndex, so fake companies never show here.
@@ -1485,7 +1484,7 @@ async function initBrowse(){
   if(!index.length){
     host.innerHTML = `<div class="empty">
       <div class="big">No keywords to browse yet</div>
-      <p>Circuits.com is new. <a href="/join">Be the first company listed</a> —
+      <p>Circuits.com is new. <a href="/join">Be the first company listed</a>,
       the first to claim a Circuits-Keyword&trade; holds its top position permanently.</p>
     </div>`;
     return;
@@ -1508,7 +1507,7 @@ async function initBrowse(){
     <div class="claim-strip browse-cta">
       <div>
         <b>Don&rsquo;t see your keyword?</b>
-        <p>Unclaimed Circuits-Keywords&trade; are first come, first served — the first company
+        <p>Unclaimed Circuits-Keywords&trade; are first come, first served: the first company
         listed for one holds the top position permanently, for as long as the listing stays active.</p>
       </div>
       <a class="btn btn-primary" href="/join">Claim your keyword</a>

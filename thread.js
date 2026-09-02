@@ -1,8 +1,8 @@
-/* ===== Circuits.com — the buyer's side of a quote request ==================
+/* ===== Circuits.com, the buyer's side of a quote request ==================
    A buyer has no account, deliberately: asking someone to register before they
    can ask a question loses the question. The link they were emailed carries a
    token, and that token is the credential. It reaches a database function that
-   returns exactly one thread — the tables themselves stay closed to anonymous
+   returns exactly one thread, the tables themselves stay closed to anonymous
    readers, so a wrong or expired token gets nothing rather than somebody
    else's conversation.
 
@@ -103,7 +103,7 @@
       if(res !== 'ok'){
         note.style.color = '#b3261e';
         note.textContent =
-          res === 'rate-limited' ? 'That is a lot of messages at once — try again shortly.'
+          res === 'rate-limited' ? 'That is a lot of messages at once. Try again shortly.'
         : res === 'closed'       ? 'This conversation is closed.'
         : res === 'empty'        ? 'Write something first.'
         : 'We could not send that just now. Please try again in a moment.';
@@ -119,14 +119,14 @@
   async function load(){
     if(!token){
       shellError('That link is not complete',
-        'Open the link exactly as it appears in your email — it needs the code on the end.');
+        'Open the link exactly as it appears in your email. It needs the code on the end.');
       return;
     }
     let t;
     try{
       t = await fetchThreadByToken(token);
     }catch(err){
-      /* An outage must not read as "your request does not exist" — the buyer
+      /* An outage must not read as "your request does not exist", the buyer
          would reasonably conclude it was never sent. */
       shellError('We could not load your request',
         'Something went wrong at our end. Your request is safe; please try this link again shortly.');

@@ -1,4 +1,4 @@
-/* ===== Circuits.com — signed-in header ==================================== =
+/* ===== Circuits.com, signed-in header ==================================== =
    Swaps "Sign In / Get Listed" for "Dashboard" once somebody is signed in.
 
    Loaded in <head> on every page that has the nav, and deliberately does NOT
@@ -8,7 +8,7 @@
    session directly costs nothing and works the same on every page.
 
    This is a display hint, not a gate. /portal does the real check against the
-   database — a tampered or stale value here gets someone a Dashboard link that
+   database, a tampered or stale value here gets someone a Dashboard link that
    then asks them to sign in, which is the correct failure.
    ========================================================================= */
 (function(){
@@ -26,8 +26,7 @@
         var tok = v.access_token || (v.currentSession && v.currentSession.access_token);
         var exp = v.expires_at   || (v.currentSession && v.currentSession.expires_at);
         if(!tok) continue;
-        /* An expired token still refreshes fine, so a little slack is right —
-           what must not happen is showing Dashboard to someone long gone. */
+        /* An expired token still refreshes fine, so a little slack is right, what must not happen is showing Dashboard to someone long gone. */
         if(exp && (exp * 1000) < Date.now() - 7 * 24 * 60 * 60 * 1000) continue;
         return true;
       }
@@ -67,7 +66,7 @@
 })();
 
 /* ===== phone menu + skip link ==============================================
-   Injected here because every page already loads nav.js in <head> — one file
+   Injected here because every page already loads nav.js in <head>, one file
    gives every header the same behaviour, with no per-page editing to forget.
 
    The burger only appears below 720px (styles.css hides it otherwise). The

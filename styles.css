@@ -1,4 +1,4 @@
-/* ===== Circuits.com — shared styles ===== */
+/* ===== Circuits.com, shared styles ===== */
 :root{
   --green:#76c000;
   --green-dark:#5f9b00;
@@ -11,7 +11,7 @@
   --shadow:0 1px 6px rgba(32,33,36,.18);
   --radius:12px;
   --maxw:1080px;
-  /* named surfaces — cards, inputs and the sponsor banner. Worth keeping as
+  /* named surfaces, cards, inputs and the sponsor banner. Worth keeping as
      variables even though they are all light: one place to change a surface,
      rather than the ~35 rules that used to hardcode #fff. */
   --card:#ffffff;
@@ -76,7 +76,7 @@ img{max-width:100%}
 .brand a{display:inline-flex;align-items:center}
 .brand-text{display:flex;flex-direction:column;line-height:1.18}
 .brand-title{color:#e8eaed;font-size:.92rem;font-weight:600;letter-spacing:.02em;white-space:nowrap;font-style:italic;line-height:1;display:flex;align-items:center}
-/* home topbar slogan — quiet uppercase wordmark set off from the logo by a hairline */
+/* home topbar slogan, quiet uppercase wordmark set off from the logo by a hairline */
 .brand-slogan{color:#bdc1c6;font-size:.7rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;white-space:nowrap;line-height:1.4;padding-left:14px;border-left:1px solid rgba(255,255,255,.22)}
 .slogan{color:#9aa0a6;font-size:.78rem;letter-spacing:.04em;white-space:nowrap;font-style:italic}
 @media(max-width:620px){.brand-title,.slogan{font-size:.72rem}.brand-slogan{font-size:.58rem;letter-spacing:.14em;padding-left:10px}}
@@ -161,7 +161,7 @@ img{max-width:100%}
 .premium-body p{margin:0;color:var(--muted);font-size:1rem;line-height:1.5}
 /* The contact column is its own panel, not text pushed against the right edge.
    Left-aligned so the three lines share a margin instead of going ragged, and
-   the button gets its own line — it used to sit inline after the email. */
+   the button gets its own line, it used to sit inline after the email. */
 .premium-contact{flex:0 0 auto;min-width:200px;max-width:260px;align-self:stretch;
   display:flex;flex-direction:column;justify-content:center;gap:10px;
   padding-left:22px;border-left:1px solid var(--sponsor-line);
@@ -187,7 +187,7 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 .listings-table thead th{background:var(--bg-soft);text-align:left;padding:10px 16px;font-size:.76rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
 .listings-table td{padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
 /* Rows and logos run a size up from the rest of the site's tables so fewer
-   listings fit a screen (2026-09-01) — scoped to the results table on purpose. */
+   listings fit a screen (2026-09-01), scoped to the results table on purpose. */
 .listings-table .co-logo{width:38px;height:38px;border-radius:10px}
 .listings-table .co a{font-size:1.02rem}
 /* the search term, capitalised the same way the subbar shows it */
@@ -330,7 +330,7 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 .info-card h3{margin:0 0 4px;font-size:1rem}
 .info-card a{color:var(--green-dark);text-decoration:none}
 /* .info-card a and .auth-foot a both set a green link colour, and being
-   (class + element) they outrank .btn-primary — a green button with green
+   (class + element) they outrank .btn-primary, a green button with green
    text. Name the button explicitly in those contexts. */
 .info-card a.btn-primary,.auth-foot a.btn-primary{color:#0f0f0f}
 .info-card a.btn-primary:hover,.auth-foot a.btn-primary:hover{color:#fff}
@@ -471,8 +471,7 @@ tr.row-warn td{background:#fff3cd}
 .badge-cell .badge-color{width:26px;height:20px;border:1px solid var(--line);border-radius:4px;background:none;padding:0;vertical-align:middle;cursor:pointer}
 /* uploaded logo thumbnail in the applications sheet */
 .logo-thumb{width:30px;height:30px;object-fit:cover;border:1px solid var(--line);border-radius:6px;background:#fff;vertical-align:middle}
-/* An admin who runs no listing of their own gets the console on its own —
-   the company picker and the supplier tabs would have nothing to point at. */
+/* An admin who runs no listing of their own gets the console on its own, the company picker and the supplier tabs would have nothing to point at. */
 .pt-admin-only .pt-tab:not(#pt-tab-admin):not(#pt-tab-me){display:none}
 /* the profile card, when it lives in the Your Profile tab, sits like content
    rather than a centered sign-in sheet */
@@ -600,7 +599,7 @@ tr.row-warn td{background:#fff3cd}
 .prose ul{margin:0 0 16px;padding-left:22px;max-width:720px}
 .prose li{margin:0 0 8px}
 .btn-row{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0 6px}
-.btn-white{background:var(--bg-soft)} /* matches .btn — one gray site-wide */
+.btn-white{background:var(--bg-soft)} /* matches .btn, one gray site-wide */
 .terms-meta{color:var(--muted);font-size:.9rem;margin:0 0 28px}
 
 /* ---- Listing documentation ---- */
@@ -619,7 +618,7 @@ tr.row-warn td{background:#fff3cd}
   .brand-title{white-space:normal;font-size:.72rem}
   .nav{flex:1 1 100%;justify-content:center;flex-wrap:wrap;gap:2px 4px}
   .nav a{padding:6px 9px;font-size:.8rem}
-  /* the divider only reads correctly on one line — once the nav wraps it
+  /* the divider only reads correctly on one line, once the nav wraps it
      ends up floating in the middle of nowhere */
   .nav a.nav-auth{margin-left:4px}
   .nav a.nav-auth::before{display:none}
@@ -707,9 +706,9 @@ tr.row-warn td{background:#fff3cd}
 .range-custom input{border:1px solid var(--line);border-radius:8px;padding:7px 9px;font:inherit}
 /* The viewBox is 720x260. Unbounded width makes the chart 500px+ tall on a wide
    monitor, and squeezing it below ~620px shrinks the labels with it until they
-   are unreadable — so cap the top and scroll rather than shrink at the bottom. */
+   are unreadable, so cap the top and scroll rather than shrink at the bottom. */
 .g-wrap{position:relative;width:100%;max-width:820px;overflow-x:auto}
-/* height:auto with the viewBox aspect kept — a fixed height plus
+/* height:auto with the viewBox aspect kept, a fixed height plus
    preserveAspectRatio:none scaled x and y differently and stretched every
    label out of shape. */
 .g-chart{display:block;width:100%;min-width:620px;height:auto;overflow:visible}
@@ -737,7 +736,7 @@ tr.row-warn td{background:#fff3cd}
 .reg-next{margin:26px 0 40px;padding:18px 20px;border:1px solid var(--line);border-radius:12px;background:#fafbfa}
 .reg-steps{margin:8px 0 0;padding-left:20px;color:var(--ink);font-size:.9rem;line-height:1.7}
 
-/* a review nobody has judged yet is invisible to the public — make it obvious */
+/* a review nobody has judged yet is invisible to the public, make it obvious */
 .dash-table tr.row-waiting td{background:#fffbe8}
 
 /* ---- cookie choice ----
@@ -756,13 +755,13 @@ tr.row-warn td{background:#fff3cd}
   .cookie-bar-actions .mini-btn{flex:1}
 }
 
-/* Save a supplier — sits under the quote button, quieter than it */
+/* Save a supplier, sits under the quote button, quieter than it */
 .pf-save{width:100%;margin-top:8px;font-size:.88rem}
 .pf-save.is-saved{background:#eaf3de;border-color:var(--green);color:#3b6d11;font-weight:700}
 
 /* ---- Get Listed progress ----
    Sticky, so you always know how far in you are. It reports position; it does
-   not gate anything — hiding later steps would hide the price, and people are
+   not gate anything, hiding later steps would hide the price, and people are
    entitled to see what it costs before filling in a form. */
 .wiz{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);
   margin:0 0 26px;padding:10px 0}
@@ -782,7 +781,7 @@ tr.row-warn td{background:#fff3cd}
 }
 
 /* Narrow phones. Everything above is fluid; these are the few components
-   added later that need a hand. Verified by measurement, not by eye — see the
+   added later that need a hand. Verified by measurement, not by eye, see the
    fixed-width guard in tools/check.js. */
 @media(max-width:640px){
   .pt-account{padding:16px 14px}
@@ -813,7 +812,7 @@ tr.row-warn td{background:#fff3cd}
 .auth-cta{display:block;text-align:center;text-decoration:none;padding:11px}
 .kw-lb{cursor:help}
 
-/* Our own mark. Deliberately not one of the purchasable colours — it is the
+/* Our own mark. Deliberately not one of the purchasable colours, it is the
    site's own green with the C mark, so it cannot be mistaken for a badge a
    company bought. */
 .lb-cx{background:var(--dark);color:#fff;display:inline-flex;align-items:center;gap:5px;
@@ -842,7 +841,7 @@ tr.row-warn td{background:#fff3cd}
 .funnel i{color:var(--muted);font-style:normal}
 @media(max-width:700px){ .ins-row{grid-template-columns:1fr;gap:20px} }
 
-/* "what should I do next" — the first thing on the dashboard */
+/* "what should I do next", the first thing on the dashboard */
 .pt-next{border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:0 0 20px;background:var(--card)}
 .pt-next.done{background:#f4faea;border-color:var(--green)}
 .pt-next-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
@@ -861,7 +860,7 @@ tr.row-warn td{background:#fff3cd}
 .pt-suspended{border:1px solid #e6b800;background:#fffae6;color:#4a3c00;
   border-radius:10px;padding:14px 16px;margin:0 0 20px;font-size:.9rem;line-height:1.6}
 .pt-suspended a{color:#7a5c00;font-weight:700}
-/* "we couldn't load this" — deliberately calmer than an empty result, because
+/* "we couldn't load this", deliberately calmer than an empty result, because
    nothing is wrong with what the visitor asked for */
 .load-error{max-width:520px}
 .load-error .big{color:var(--ink)}
@@ -1017,7 +1016,7 @@ tr.row-warn td{background:#fff3cd}
 .pt-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;
   margin-left:7px;padding:0 5px;border-radius:999px;background:var(--green);color:#000;
   font-size:.7rem;font-weight:700;vertical-align:1px}
-/* a visible keyboard focus ring everywhere — the browser default was being lost
+/* a visible keyboard focus ring everywhere, the browser default was being lost
    against the dark header and the green buttons */
 a:focus-visible,button:focus-visible,input:focus-visible,
 select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
@@ -1041,7 +1040,7 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
    Readable, obviously not editable, and not greyed into illegibility. */
 .is-locked{background:var(--bg-soft);color:var(--muted);cursor:default}
 
-/* "Want another keyword?" — a signpost to Get Listed, not a second form */
+/* "Want another keyword?", a signpost to Get Listed, not a second form */
 .pt-addkw{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
   gap:16px;margin-top:16px}
 .pt-addkw h3{margin:0 0 4px}
@@ -1086,6 +1085,9 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
   padding:4px 6px 4px 12px;font-size:.82rem;background:var(--bg-soft)}
 .pt-doc a{color:var(--ink);text-decoration:none;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pt-doc a:hover{text-decoration:underline}
+.nt-user{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.nt-user input{flex:1}
+.nt-plus{width:34px;height:34px;padding:0;font-size:1.3rem;line-height:1;border-radius:50%}
 .pt-doc-x{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:1.05rem;line-height:1;padding:0 4px}
 .pt-doc-x:hover{color:#b3261e}
 .pt-edit-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:8px}
@@ -1095,8 +1097,7 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 .listings-table tbody tr{transition:background .12s}
 .listings-table tbody tr:hover{background:var(--bg-soft)}
 
-/* Position in the keyword. Tabular figures so 9 and 10 line up, and quiet —
-   it is a fact about the listing, not a score. */
+/* Position in the keyword. Tabular figures so 9 and 10 line up, and quiet, it is a fact about the listing, not a score. */
 /* paid locked spot: a small lock after the number; hover or focus for the why */
 .lock{position:relative;display:inline-flex;margin-left:5px;color:var(--green-dark);vertical-align:-1px;cursor:help;outline:none}
 .lock svg{width:12px;height:12px;display:block}
@@ -1168,7 +1169,7 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 .kit-lb-x:hover{background:rgba(255,255,255,.26)}
 .kit-lb-note{margin:0;color:#cfd4d9;font-size:.82rem;text-align:center}
 /* A transform does not change layout size, so the stage used to reserve the
-   artwork's FULL height — a 10in sign left ~970px of empty grey. The scaler
+   artwork's FULL height, a 10in sign left ~970px of empty grey. The scaler
    box is sized to the scaled result and the art is positioned inside it. */
 .kit-scaler{position:relative;flex:none;
   width:calc(var(--w) * var(--s));height:calc(var(--h) * var(--s))}
@@ -1295,7 +1296,7 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 .q-who{font-weight:600;font-size:.95rem}
 .q-co{font-weight:400;color:var(--muted);font-size:.85rem}
 .q-when{color:var(--muted);font-size:.78rem;flex:0 0 auto}
-/* one line only — the whole point of a list is that rows are the same height */
+/* one line only, the whole point of a list is that rows are the same height */
 .q-sub{display:block;color:var(--muted);font-size:.86rem;margin-top:3px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .q-sub b{color:var(--ink);font-weight:600}
@@ -1433,7 +1434,7 @@ body.nav-open .nav-burger .x{display:block}
 /* ---- the row a profile's keyword tag (or the approval email) points at ----
    One solid green hold (about a second) that fades out over the next, leaving
    no bar or outline behind (an earlier inset box-shadow drew a green stripe on
-   every cell — Jacob, 2026-09-01). The sponsor card keeps its gradient, so it
+   every cell, Jacob, 2026-09-01). The sponsor card keeps its gradient, so it
    glows instead of changing its background. Timing lives in app.js: the row is
    lit only once it is on screen. */
 @keyframes hl-pulse{0%{background:transparent}5%{background:#bfe57a}50%{background:#bfe57a}100%{background:transparent}}
@@ -1443,7 +1444,7 @@ tr.hl-flash td{animation:hl-pulse 2s ease-in-out both}
 /* A colour change is not motion, so the highlight keeps its timing even under
    reduced motion. Windows with "animation effects" switched off (Jacob's PC)
    reports prefers-reduced-motion, and the global reset earlier in this file
-   was silently shrinking the flash to 0.01ms — no highlight at all. */
+   was silently shrinking the flash to 0.01ms, no highlight at all. */
 @media(prefers-reduced-motion:reduce){
   tr.hl-flash td,.premium-card.hl-flash{animation-duration:2s !important}
 }

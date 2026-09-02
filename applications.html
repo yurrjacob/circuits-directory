@@ -142,13 +142,13 @@ function rowHtml(a){
   /* the thumbnail is the link: click the picture to open the full-size logo */
   const logoHtml = isLogoUrl(a.logo)
     ? `<a href="${esc(a.logo)}" target="_blank" rel="noopener" title="Open the full-size logo"><img class="logo-thumb" src="${esc(a.logo)}" alt="${esc(a.company)} logo"></a>`
-    : '<span style="color:#c0c4bb">—</span>';
+    : '<span style="color:#c0c4bb">none</span>';
   const conflict = a.status!=='Approved' && bannerConflict(a);
   return `<tr data-id="${a.id}" class="${conflict?'row-warn':''}">
     <td class="nowrap">${esc((a.created_at||'').slice(0,10))}</td>
     <td class="co-cell">
       <span class="ce co-name" contenteditable data-field="company" data-ph="Company">${esc(a.company)}</span>
-      <div class="co-sub">Web: <span class="ce" contenteditable data-field="website" data-ph="—">${esc(a.website)}</span></div>
+      <div class="co-sub">Web: <span class="ce" contenteditable data-field="website" data-ph="none">${esc(a.website)}</span></div>
       <div class="co-sub">Logo: ${logoHtml}
         <label class="mini-btn" style="padding:2px 8px;font-size:.72rem;cursor:pointer;margin-left:6px" title="Upload a logo image">Upload<input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" data-logo-up style="display:none"></label>
         ${isLogoUrl(a.logo)?`<button type="button" class="mini-btn danger" data-act="clearlogo" style="padding:2px 8px;font-size:.72rem;margin-left:6px" title="Remove this logo">Clear</button>`:''}
@@ -161,7 +161,7 @@ function rowHtml(a){
     </td>
     <td class="kw">
       <label class="cbx" title="Listing live for this keyword"><input type="checkbox" data-field="live" ${a.paused?'':'checked'}></label>
-      <span class="ce" contenteditable data-field="keyword" data-ph="—">${esc(a.keyword)}</span>
+      <span class="ce" contenteditable data-field="keyword" data-ph="none">${esc(a.keyword)}</span>
       <span class="ce price" contenteditable data-price="listing_price" data-ph="${money(BASE_FEE)}">${money(effPrice(a.listing_price,BASE_FEE))}</span>
       <div class="co-sub" title="Paid fixed placement: the spot this listing holds on the keyword list. Blank = shuffled with everyone else.">Lock #<span class="ce" contenteditable data-field="locked_position" data-ph="none">${a.locked_position||''}</span></div>
     </td>
@@ -320,7 +320,7 @@ body.addEventListener('change', async e=>{
     if(want && bannerConflict({ id, banner:true, keyword: a.keyword })
         && a.status==='Approved'){
       el.checked = false;
-      alert('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword — remove the existing banner first.');
+      alert('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword. Remove the existing banner first.');
       return;
     }
     const err = await updateApplication(id, { banner: want });
@@ -356,11 +356,11 @@ body.addEventListener('click', async e=>{
   if(btn.dataset.act==='approve'){
     const app = apps.find(x=>x.id===id);
     if(app && bannerConflict(app)){
-      alert('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword — remove the existing banner first.');
+      alert('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword. Remove the existing banner first.');
       return;
     }
     const err = await updateAppStatus(id,'Approved'); if(err){ alert(errMsg(err)); return; }
-    /* Tell the supplier they are live — the Admin-tab path already did this,
+    /* Tell the supplier they are live, the Admin-tab path already did this,
        and approving from this sheet used to leave them refreshing the portal
        with no idea anything happened. */
     if(typeof notifyDecision === 'function') notifyDecision(id, '');

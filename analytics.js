@@ -1,4 +1,4 @@
-/* Circuits.com — analytics, behind consent.
+/* Circuits.com, analytics, behind consent.
    Loaded on public pages only, never on staff or admin pages.
 
    Google Analytics used to load the moment any page opened, which set its

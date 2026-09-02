@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Request Access To Your Profile — Circuits.com</title>
+<title>Request Access To Your Profile | Circuits.com</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="description" content="Request access to manage your company's Circuits.com listing.">
 <link rel="icon" href="/assets/favicon.png">
@@ -52,7 +52,7 @@
 <script src="/app.js"></script>
 <script>
 /* Accounts are only ever created through Get Listed. This page does NOT
-   register anyone — it raises a request that Circuits.com staff verify, and
+   register anyone, it raises a request that Circuits.com staff verify, and
    staff then attach an account to the company in the admin console. */
 const handle = (new URLSearchParams(location.search).get('c') || '').toLowerCase();
 const body = document.getElementById('claim-body');
@@ -62,7 +62,7 @@ function noCompany(){
   sub.textContent = 'Which company is yours?';
   body.innerHTML = '<p class="auth-note">Search the keyword your company is listed under, open its '
     + 'profile from the results, and use the &ldquo;Claim this profile&rdquo; link at the bottom.<br><br>'
-    + 'Not listed yet? <a href="/join">Get listed</a> — that is where you create your account '
+    + 'Not listed yet? <a href="/join">Get listed</a>. That is where you create your account '
     + 'and reserve your circuits.com address.</p>';
 }
 
@@ -72,7 +72,7 @@ function noCompany(){
   try {
     co = await fetchCompanyByHandle(handle);
   } catch(err){
-    // a failed lookup is not the same as "no such company" — do not send them away
+    // a failed lookup is not the same as "no such company", do not send them away
     console.error('claim lookup failed', err);
     sub.textContent = '';
     body.innerHTML = loadErrorHtml('that company');
@@ -80,7 +80,7 @@ function noCompany(){
   }
   if(!co){ sub.textContent = 'We could not find that company.'; return noCompany(); }
 
-  sub.innerHTML = 'For <b>' + escapeHtml(co.name) + '</b> &mdash; circuits.com/' + escapeHtml(co.handle);
+  sub.innerHTML = 'For <b>' + escapeHtml(co.name) + '</b>, circuits.com/' + escapeHtml(co.handle);
   body.innerHTML = `
     <form id="cf" autocomplete="off">
       <div class="auth-field"><label>Your name</label><input id="n" type="text" required maxlength="80"></div>
@@ -115,10 +115,10 @@ function noCompany(){
     if(err){ document.getElementById('cm').textContent = err; btn.disabled = false; return; }
     /* Best-effort notification: the claim is already saved above and staff see
        it in the admin console, so this must not block the confirmation. */
-    await sendFounderEmail('Profile access request — ' + co.name, {
+    await sendFounderEmail('Profile access request: ' + co.name, {
       company: co.name, circuits_address: 'circuits.com/' + co.handle,
       claimant: name, role: role || '(none)', email, evidence: ev || '(none)'
-    }, 'Thanks — we received your request for ' + co.name + ' on Circuits.com. We will verify it and '
+    }, 'Thanks. We received your request for ' + co.name + ' on Circuits.com. We will verify it and '
      + 'email you back, usually within 1 business day.');
     document.getElementById('claim-card').innerHTML =
       '<h1>Request sent</h1><p class="sub">We will verify you work at ' + escapeHtml(co.name) +
