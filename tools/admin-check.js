@@ -23,7 +23,8 @@ const src = fs.readFileSync(path.join(__dirname, '..', 'admin.js'), 'utf8');
 /* Every name an inline handler calls: onclick="fname(".
    Anchored to a real HTML attribute — whitespace, a lowercase event name and an
    opening quote — because `on\w+` alone also matches inside `textContent =`. */
-const handlers = [...new Set([...src.matchAll(/\son[a-z]+\s*=\s*"\s*([A-Za-z0-9_$]+)\s*\(/g)].map(m => m[1]))];
+const portalAdmin = fs.readFileSync(path.join(__dirname, '..', 'portal.html'), 'utf8').split('id="tab-admin"')[1] || '';
+const handlers = [...new Set([...(src + portalAdmin).matchAll(/\son[a-z]+\s*=\s*"\s*([A-Za-z0-9_$]+)\s*\(/g)].map(m => m[1]))];
 assert.ok(handlers.length, 'no inline handlers found in admin.js — has the markup changed?');
 
 const noop = () => {};
