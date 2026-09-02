@@ -352,7 +352,7 @@ assert.ok(!/parts database|component search|distributor pricing/i.test(readme),
 const acctSrc = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
 const storeAcct = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
 assert.ok(/function renderAccount/.test(acctSrc), 'the account panel is gone');
-assert.ok(/renderAccount\(user\)/.test(acctSrc), 'the account panel is never rendered');
+assert.ok(/renderAccount\(user, 'pt-account-owner'/.test(acctSrc), 'the account panel is never rendered');
 for (const fn of ['signOutEverywhere', 'deleteOwnAccount']) {
   assert.ok(storeAcct.includes(`async function ${fn}(`), `store.js is missing ${fn}`);
 }
@@ -370,8 +370,10 @@ assert.ok(/cannot be undone/i.test(delFn), 'the deletion prompt does not warn th
 assert.ok(/email_confirmed_at/.test(acctSrc), 'the account panel no longer shows whether the email is confirmed');
 assert.ok(/\.ac-danger\{/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
   'the delete button is not visually distinguished');
-assert.ok(fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8').includes('id="pt-account"'),
+assert.ok(fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8').includes('id="pt-account-owner"'),
   'portal.html has nowhere to put the account panel');
+assert.ok(/changeEmail\(/.test(acctSrc) && /auth\.updateUser\(\{ email \}/.test(storeAcct),
+  'Account Settings lost the change-email control (Jacob, 2026-09-02)');
 
 /* --- the dashboard has to answer "what should I do next" ---
        Weights are read out of portal.js rather than restated here, so this
@@ -694,13 +696,22 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     'store.js no longer asks the database whether a person profile is staff-run');
   assert.ok(/personProfile\(p, staffRun\)/.test(profSrc) && /staffRun \? ' ' \+ teamMarkHtml\(\)/.test(profSrc),
     'a staff-run person profile no longer shows the Circuits.com mark');
+  /* 2026-09-02: two dashboards. An account with no company gets the
+     Individual Dashboard (Individual Details / Experience / Employment /
+     Promote / Account Settings) — never a bare admin console. */
   const portalHtml2 = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
-  assert.ok(portalHtml2.includes('id="pt-tab-me"') && portalHtml2.includes('id="tab-me"'),
-    'the Your Profile tab is gone from portal.html');
-  assert.ok(portalSrc2.includes("el('tab-me').appendChild(el('pt-none').querySelector('.auth-card'))"),
-    'a staff account with no listing is back to seeing only the admin console — the profile card no longer becomes a tab');
-  assert.ok(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8').includes(':not(#pt-tab-me)'),
-    'the admin-only CSS hides the Your Profile tab');
+  for (const tab of ['data-tab="me"', 'data-tab="experience"', 'data-tab="recruit"', 'data-tab="employment"', 'data-tab="promote"', 'data-tab="account"']) {
+    assert.ok(portalHtml2.includes(tab), `portal.html lost its ${tab} tab`);
+  }
+  assert.ok(/kind === 'individual'\)\{[\s\S]*renderIndividual\(me\)/.test(portalSrc2),
+    'an account with no company no longer gets the Individual Dashboard');
+  assert.ok(/registerCompany\(\)/.test(portalSrc2),
+    'a company account with no companies row never gets one (register_company)');
+  const css2 = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
+  assert.ok(css2.includes('.acct-company .pt-tab.tab-ind') && css2.includes('.acct-individual .pt-tab.tab-co'),
+    'the CSS no longer hides the other dashboard\'s tabs');
+  assert.ok(/cx_account_type/.test(portalSrc2) && /cx_account_type/.test(fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8')),
+    'the header cannot say Company Dashboard / Individual Dashboard');
 }
 
 /* --- somebody who forgets their password must not be locked out forever --- */
