@@ -19,9 +19,13 @@ const portal = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
 const m = /const LISTING_OWNER_FIELDS = \[([^\]]*)\]/.exec(store);
 assert.ok(m, 'LISTING_OWNER_FIELDS is gone from store.js');
 const allowed = m[1].split(',').map(s => s.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
-assert.deepStrictEqual(allowed.slice().sort(), ['description', 'docs'],
-  `a supplier may now edit ${allowed.join(', ')} — anything beyond description and docs is either ` +
-  'reverted silently by applications_lock_billing() or is a commercial term that is not theirs to set');
+/* description + docs, and since 2026-09-02 the listing's own showcase
+   (certifications, team, gallery) and its buyer-reviews switch. Anything
+   else is either reverted silently by applications_lock_billing() or is a
+   commercial term that is not theirs to set. */
+const OWNER_OK = ['certifications', 'description', 'docs', 'gallery', 'reviews_enabled', 'team'];
+assert.deepStrictEqual(allowed.slice().sort(), OWNER_OK,
+  `a supplier may now edit ${allowed.join(', ')} — anything beyond the listing's own words, documents and showcase is not theirs to set`);
 
 /* ---- run the real function against a fake client ---- */
 let sent = null;
@@ -39,13 +43,13 @@ global.sb = { from(){ return { update(f){ sent = f; return { eq: async () => ({ 
 (async () => {
   /* every locked column, offered at once — none may reach the database */
   await updateMyListing('x', {
-    description: 'ok', docs: [{name:'a',url:'b'}],
+    description: 'ok', docs: [{name:'a',url:'b'}], certifications: [], team: [], gallery: [], reviews_enabled: true,
     keyword: 'stolen', banner: true, badge: {text:'Verified'}, status: 'Approved',
     listing_price: 0, banner_price: 0, badge_price: 0, fee: 'free',
     company: 'Someone Else', company_slug: 'someone-else', owner_email: 'me@example.com',
     keywords: ['stolen'], created_at: '1970-01-01'
   });
-  assert.deepStrictEqual(Object.keys(sent).sort(), ['description', 'docs'],
+  assert.deepStrictEqual(Object.keys(sent).sort(), OWNER_OK,
     `updateMyListing sent ${Object.keys(sent).join(', ')} — the extra fields are silently reverted by the ` +
     'database, so the supplier would be told it saved when nothing changed');
   assert.strictEqual(sent.keyword, undefined, 'a supplier must not be able to rename their own keyword');

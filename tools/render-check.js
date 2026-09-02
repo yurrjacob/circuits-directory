@@ -37,17 +37,18 @@ const CO = { slug:'aaa', handle:'aaa_electronics', name:'AAA Electronics, Inc.',
   tagline:'Authorised distributor of analog and power ICs', description:'Line one.\nLine two.',
   logo:'https://x/logo.png', website:'https://aaa.example.com/', phone:'(555) 123-4567',
   email:'sales@aaa.example.com', contact:'Jane Doe', address:'Nashua, NH', founded:'1998',
-  employees:'50–200', reviews_enabled:true,
-  hours:{mon:'8:00–17:00',fri:'8:00–15:00'}, socials:{linkedin:'https://linkedin.com/x'},
-  certifications:[{name:'ISO 9001',issuer:'BSI',year:2021}],
-  team:[{name:'Jane Doe',role:'VP Sales',email:'jane@aaa.example.com'}],
-  gallery:[{url:'https://x/1.png',caption:'Warehouse'}] };
+  employees:'50–200',
+  hours:{mon:'8:00–17:00',fri:'8:00–15:00'}, socials:{linkedin:'https://linkedin.com/x'} };
 
+/* Showcase and reviews belong to the keyword listing since 2026-09-02. */
+const KWS = [
+  { id:'l1', keyword:'analog ics', banner:true, badge:{text:'Authorized',color:'#c9a227'}, docs:[{name:'Line card',url:'https://x/d.pdf'}],
+    reviews_enabled:true, certifications:[{name:'ISO 9001',issuer:'BSI',year:2021}, {name:'  '}],
+    team:[{name:'Jane Doe',role:'VP Sales',email:'jane@aaa.example.com'}], gallery:[{url:'https://x/1.png',caption:'Warehouse'}] },
+  { id:'l2', keyword:'voltage regulator', banner:false, badge:null, docs:[], reviews_enabled:false, certifications:[], team:[], gallery:[] }];
 global.fetchCompanyByHandle = async () => CO;
-global.fetchCompanyKeywords = async () => ([
-  { keyword:'analog ics', banner:true, badge:{text:'Authorized',color:'#c9a227'}, docs:[{name:'Line card',url:'https://x/d.pdf'}] },
-  { keyword:'voltage regulator', banner:false, badge:null, docs:[] }]);
-global.fetchReviews = async () => ([{ rating:5, author_name:'Bob', body:'Great', reply:'Thanks', created_at:'2026-08-01T00:00:00Z' }]);
+global.fetchCompanyKeywords = async () => KWS;
+global.fetchReviews = async () => ([{ application_id:'l1', rating:5, author_name:'Bob', body:'Great', reply:'Thanks', created_at:'2026-08-01T00:00:00Z' }]);
 global.companyClaimed = async () => true;
 global.companyRunByStaff = async () => false;
 
@@ -151,14 +152,20 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   assert.ok(captured.includes('id="pf-copy"'), 'copy-link control missing from the sidebar');
   assert.ok(captured.includes('https://circuits.com/aaa_electronics'), 'copy-link has the wrong URL');
 
-  // reviews are opt-in — with them off and none approved, the section must vanish
+  // reviews are opt-in per listing — with them off and none approved, the section must vanish
   assert.ok(captured.includes('Buyer reviews'), 'reviews section missing when enabled');
-  CO.reviews_enabled = false;
+  assert.strictEqual((captured.match(/class="pf-form review-form"/g) || []).length, 1,
+    'exactly one listing allows reviews, so exactly one review form');
+  assert.ok(captured.includes('data-app="l1"'), 'the review form does not say which listing it reviews');
+  assert.ok(captured.includes('id="kw-l1"') && !captured.includes('id="kw-l2"'),
+    'a listing with nothing to show still gets an empty section');
+  KWS[0].reviews_enabled = false;
   global.fetchReviews = async () => [];
   await initProfile();
   assert.ok(!captured.includes('Buyer reviews'),
-    'reviews section still renders for a company that does not accept reviews');
+    'reviews section still renders for a listing that does not accept reviews');
   assert.ok(!captured.includes('review-form'), 'review form still renders when reviews are off');
+  KWS[0].reviews_enabled = true;
 
   /* A claimed listing must not be labelled unclaimed, and an unclaimed one must
      say so plainly — a buyer needs to know the details are unconfirmed. */

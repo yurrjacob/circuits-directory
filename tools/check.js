@@ -651,17 +651,30 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     assert.ok(!portalHtml.includes(gone),
       `${gone} is back on the dashboard — it was removed on purpose (restore notes in backups/)`);
   }
-  for (const tab of ['data-tab="company"', 'data-tab="branding"', 'data-tab="showcase"']) {
-    assert.ok(portalHtml.includes(tab), `the dashboard lost its ${tab} tab`);
+  /* 2026-09-02 (Jacob): About & Branding folded into Company Details, and the
+     Showcase tab is gone — certifications, team, gallery and buyer reviews
+     belong to each keyword listing, edited under Listings, so no tab may carry
+     them at company level. */
+  for (const gone of ['data-tab="branding"', 'data-tab="showcase"', 'data-tab="jobs"', 'id="f-certs"', 'id="f-reviews-on"']) {
+    assert.ok(!portalHtml.includes(gone), `${gone} is back on the dashboard — showcase and jobs live under Listings now`);
   }
-  // every profile field still present somewhere across the three tabs
+  assert.ok(portalHtml.includes('data-tab="company"'), 'the dashboard lost its Company Details tab');
+  // every company-level field still present in the one tab
   for (const id of ['f-handle', 'f-name', 'f-contact', 'f-email', 'f-phone', 'f-website',
-                    'f-founded', 'f-employees', 'f-desc', 'f-socials', 'f-certs', 'f-team',
-                    'f-gallery', 'f-reviews-on']) {
-    assert.ok(portalHtml.includes(`id="${id}"`), `the profile form lost ${id} in the tab split`);
+                    'f-founded', 'f-employees', 'f-desc', 'f-socials', 'pt-logo']) {
+    assert.ok(portalHtml.includes(`id="${id}"`), `the profile form lost ${id} in the tab merge`);
   }
-  assert.strictEqual((portalHtml.match(/class="btn btn-primary pt-save"/g) || []).length, 3,
-    'each of the three profile tabs needs its own Save profile button');
+  assert.strictEqual((portalHtml.match(/class="btn btn-primary pt-save"/g) || []).length, 1,
+    'the merged profile tab should have exactly one Save profile button');
+  const portalJs = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
+  for (const need of ["'certs-' + open.id", "reviews_enabled: !!(el('ed-reviews-'", 'showcaseProblem(certifications, team)']) {
+    assert.ok(portalJs.includes(need), `the listing editor lost its showcase wiring (${need})`);
+  }
+  for (const need of ['certifications', 'team', 'gallery', 'reviews_enabled']) {
+    assert.ok(/const LISTING_OWNER_FIELDS = \[[^\]]*'/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')) &&
+      new RegExp("LISTING_OWNER_FIELDS = \\[[^\\]]*'" + need + "'").test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')),
+      `owners can no longer save ${need} on a listing`);
+  }
   for (const f of ['portal.html', 'portal.js', 'README.md']) {
     assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'dashboard-2026-08-20', f)),
       `the dashboard backup is missing ${f} — the removed tabs would be unrestorable`);
