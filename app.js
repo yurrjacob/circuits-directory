@@ -1126,32 +1126,12 @@ const msg = document.getElementById('msg');
       alert('Sorry, we couldn’t submit your request right now. Please try again.');
       return;
     }
-    /* Tell the founders a request came in, and send the requester a copy.
-       Best-effort: the request is already saved and visible in the admin
-       console, so a failed notification must not fail the submission. */
-    const kwList = keywords.map(cleanKw).join(', ') || '(none)';
-    const founderNotified = await sendFounderEmail('New Listing Request - ' + base.company, {
-      company: base.company,
-      contact: base.contact,
-      email: base.email,
-      phone: base.phone || '(not provided)',
-      website: base.website || '(none)',
-      logo: base.logo || '(none)',
-      keywords: kwList,
-      documentation: base.docs.length ? base.docs.map(d=>d.name).join(', ') : '(none)',
-      ideas: base.message || '(none)'
-    }, 'Thanks for your request to list ' + base.company + ' on Circuits.com! We received it and will respond within 1 business day.\n\n'
-      + 'Here is a copy of what you sent:\n'
-      + '- Company: ' + base.company + '\n'
-      + '- Contact: ' + base.contact + '\n'
-      + '- Email: ' + base.email + '\n'
-      + '- Phone: ' + (base.phone || '(not provided)') + '\n'
-      + '- Website: ' + (base.website || '(none)') + '\n'
-      + '- Keywords: ' + kwList + '\n'
-      + '- Documentation: ' + (base.docs.length ? base.docs.map(d=>d.name).join(', ') : '(none)') + '\n'
-      + '- Ideas: ' + (base.message || '(none)') + '\n\n'
-      + '- John & Mike, Circuits.com');
-    if(!founderNotified) console.warn('founder notification not delivered; the request is still saved and visible in the admin console');
+    /* The applicant gets a copy and the staff an alert, both from
+       notifications@circuits.com (FormSubmit is gone from this path, Jacob,
+       2026-09-02: every email from one place). Best-effort: the request is
+       already saved and visible in the admin console, so a failed email must
+       not fail the submission. */
+    await notifyListingRequest(base.email, base.company);
     if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Submit Request'; }
     const ok = document.getElementById('success');
     ok.classList.add('show');

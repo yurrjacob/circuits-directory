@@ -1066,6 +1066,24 @@ async function notifySupplier(slug, quote, token){
   }catch(err){ console.warn('supplier notification failed', err); return false; }
 }
 
+/* Get Listed / Get another listing: the rows are saved, this asks the notify
+   function to email the applicant a copy and the staff an alert, both from
+   notifications@circuits.com. The function finds the rows by email + company
+   and acknowledges each row once, so this can never mail anyone else.
+   Never throws: the request is already in the database either way. */
+async function notifyListingRequest(email, company){
+  try{
+    const res = await fetch(SUPABASE_URL + '/functions/v1/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY },
+      body: JSON.stringify({ kind: 'listing-request', email: email, company: company })
+    });
+    const out = await res.json().catch(() => null);
+    if(!out || !out.ok) console.warn('listing request not acknowledged by email:', out && out.error);
+    return !!(out && out.ok);
+  }catch(err){ console.warn('listing request email failed', err); return false; }
+}
+
 /* Every company, including suspended ones, staff only, enforced by the
    companies_read policy rather than by asking nicely here. */
 async function fetchAllCompanies(){

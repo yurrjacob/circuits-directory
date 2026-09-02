@@ -608,7 +608,7 @@ async function renderAccount(user, hostId, canDelete){
     msg.style.color = ''; msg.textContent = 'Saving…';
     const err = await changeEmail(v);
     if(err){ msg.style.color = '#b3261e'; msg.textContent = err; return; }
-    msg.textContent = 'Check ' + v + ' for a confirmation link. Your email changes once you click it.';
+    msg.textContent = 'Check ' + v + ' for a confirmation link. If a link also arrives at your current address, click both. Your sign-in email changes once that is done, and you will get a notice here.';
   };
 
   el('ac-save').onclick = async () => {
@@ -1890,7 +1890,8 @@ function wireAddListing(){
     try{ await addApplicationKeywords(base, kws); }
     catch(e){ submit.disabled = false; say('Could not send that just now. Try again in a moment.', true); return; }
     submit.disabled = false; kws = []; draw();
-    say('Requested. Each keyword shows above as Pending until Circuits.com approves it.');
+    say('Requested. Each keyword shows above as Pending until Circuits.com approves it. We have emailed you a copy.');
+    notifyListingRequest(base.email, base.company);   // copy to the company, alert to staff
     PT.listings = await fetchMyListings(PT.slug);
     renderListings();
   });
