@@ -342,8 +342,8 @@ async function initInbox(){
     }
     if(e.target.closest('.inbox-back')){ open = null; draw(); return; }
     if(e.target.closest('.inbox-readall')){
-      for(const n of items) if(!n.read_at){ n.read_at = new Date().toISOString(); markNotificationRead(n.id); }
-      badge(); draw();
+      for(const n of items) if(!n.read_at) n.read_at = new Date().toISOString();
+      badge(); draw(); markAllNotificationsRead();
     }
   });
   document.addEventListener('click', e => { if(!panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) show(false); });
