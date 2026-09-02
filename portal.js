@@ -368,6 +368,7 @@ async function loadCompany(slug){
   wireDirtyTracking();
   markClean();
   renderListings();
+  wireAddListing();
   renderPromote();
   renderJobs();
   renderJobBoard();
@@ -1712,6 +1713,50 @@ function wireRecruitSearch(){
     if(!c){ b.disabled = false; b.textContent = 'Unlock'; box.insertAdjacentHTML('beforeend', '<p class="pf-note" style="color:#b3261e">Could not unlock. Is your Talent Access still active?</p>'); return; }
     const resume = c.resume_path ? await resumeLink(c.resume_path) : '';
     box.innerHTML = talentContactHtml(c, resume);
+  });
+}
+
+/* ---- Get another listing: up to 10 keywords, filed as Pending under this
+   company. Company details come from the account, so nothing is retyped. ---- */
+function wireAddListing(){
+  const input = el('al-input'), tags = el('al-tags'), count = el('al-count'), msg = el('al-msg'), submit = el('al-submit');
+  if(!input || input.__wired) return;
+  input.__wired = true;
+  let kws = [];
+  const draw = () => {
+    tags.innerHTML = kws.map((k, i) => `<span class="kw-tag"><a class="kw-check-link" href="/results?q=${encodeURIComponent(k)}" target="_blank" rel="noopener">${escapeHtml(k)}</a><button type="button" data-i="${i}" aria-label="Remove">&times;</button></span>`).join('');
+    count.innerHTML = `<b>${kws.length}</b> of 10 keywords`;
+  };
+  const say = (t, bad) => { msg.textContent = t; msg.style.color = bad ? '#b3261e' : ''; };
+  const add = () => {
+    const k = cleanKw(input.value);
+    if(!k) return;
+    if(kws.includes(k)){ input.value = ''; return; }
+    if((PT.listings || []).some(l => l.keyword_norm === normKw(k))){ say('You already have a listing for "' + k + '".', true); return; }
+    if(kws.length >= 10){ say('Ten keywords at a time. Remove one to add another.', true); return; }
+    kws.push(k); input.value = ''; say(''); draw(); input.focus();
+  };
+  el('al-add').addEventListener('click', add);
+  input.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); add(); } });
+  el('al-check').addEventListener('click', () => { const k = cleanKw(input.value); if(!k){ input.focus(); return; } window.open('/results?q=' + encodeURIComponent(k), '_blank', 'noopener'); });
+  tags.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; kws.splice(+b.dataset.i, 1); draw(); });
+  submit.addEventListener('click', async () => {
+    if(input.value.trim()) add();
+    if(!kws.length){ say('Add at least one keyword. That is what buyers search to find you.', true); input.focus(); return; }
+    const co = PT.co || {};
+    const base = {
+      company: co.name, contact: co.contact || '', email: co.email || (PT.user && PT.user.email) || '',
+      phone: co.phone || '', website: co.website || '', logo: co.logo || '',
+      company_slug: PT.slug, company_handle: co.handle || null,
+      banner: false, badge: null, message: '', terms: true, status: 'Pending'
+    };
+    submit.disabled = true; say('Sending…');
+    try{ await addApplicationKeywords(base, kws); }
+    catch(e){ submit.disabled = false; say('Could not send that just now. Try again in a moment.', true); return; }
+    submit.disabled = false; kws = []; draw();
+    say('Requested. Each keyword shows above as Pending until Circuits.com approves it.');
+    PT.listings = await fetchMyListings(PT.slug);
+    renderListings();
   });
 }
 

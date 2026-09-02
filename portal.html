@@ -218,12 +218,23 @@
   <!-- listings: every keyword listing with its stats, badges, banners and upgrades -->
   <section class="pt-panel" id="tab-listings">
     <div class="pt-list" id="pt-listings"></div>
-    <div class="pf-form pt-addkw">
-      <div>
-        <h3>Want another Circuits-Keyword&trade;?</h3>
-        <p class="pf-note">Every keyword listing is free. Pick the keyword and we review it, then upgrade it here with a Trust Badge, a sponsor banner or a locked position.</p>
+    <!-- Get another listing (Jacob, 2026-09-02): step 02 of the old Get Listed
+         page, right here. Company details come from the account. -->
+    <div class="pf-form" id="pt-addkw">
+      <h3>Get another listing</h3>
+      <p class="pf-note">Choose up to 10 Circuits-Keywords&trade; to be listed under, for free. A person at Circuits.com reviews each one, and it shows above once approved.</p>
+      <div class="kw-input-row">
+        <input id="al-input" type="text" placeholder="e.g. semiconductors" maxlength="40" aria-label="Keyword">
+        <button type="button" class="mini-btn" id="al-check">Check</button>
+        <button type="button" class="mini-btn green" id="al-add">Add</button>
       </div>
-      <a class="btn btn-primary" href="/join">Get Listed</a>
+      <p class="field-hint">Want to see what your listing will look like? <b>Check</b> opens that keyword's live results page.</p>
+      <div class="kw-tags" id="al-tags"></div>
+      <div class="cat-count" id="al-count"><b>0</b> of 10 keywords</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px">
+        <button class="btn btn-primary" type="button" id="al-submit">Request listings</button>
+        <span class="pf-note" id="al-msg"></span>
+      </div>
     </div>
   </section>
 

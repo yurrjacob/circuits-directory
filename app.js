@@ -548,7 +548,7 @@ async function initResults(forcedTerm){
     </div></div>`;
   const listCta = (term) => `
     <div class="empty" style="margin:10px auto 26px">
-      <a class="btn btn-primary" href="/join" style="padding:14px 28px;font-size:1rem;display:inline-block;font-weight:700">Get Listed For <span class="tc">${term}</span></a>
+      <a class="btn btn-primary" href="/register" style="padding:14px 28px;font-size:1rem;display:inline-block;font-weight:700">Get Listed For <span class="tc">${term}</span></a>
     </div>`;
 
   if(!listings.length){
@@ -577,7 +577,7 @@ async function initResults(forcedTerm){
           <tbody><tr>
             <td><div class="co">
               <span class="co-logo" style="background:var(--dark)">${avatarSvg()}</span>
-              <a href="/join">Your Company</a>
+              <a href="/register">Your Company</a>
               <span class="lb" style="background:#c9a227">Authorized</span>
               <span class="doc-link">Website</span>
               <span class="doc-link">View Docs</span>
@@ -1484,7 +1484,7 @@ async function initBrowse(){
   if(!index.length){
     host.innerHTML = `<div class="empty">
       <div class="big">No keywords to browse yet</div>
-      <p>Circuits.com is new. <a href="/join">Be the first company listed</a>,
+      <p>Circuits.com is new. <a href="/register">Be the first company listed</a>,
       the first to claim a Circuits-Keyword&trade; holds its top position permanently.</p>
     </div>`;
     return;
@@ -1510,7 +1510,7 @@ async function initBrowse(){
         <p>Unclaimed Circuits-Keywords&trade; are first come, first served: the first company
         listed for one holds the top position permanently, for as long as the listing stays active.</p>
       </div>
-      <a class="btn btn-primary" href="/join">Claim your keyword</a>
+      <a class="btn btn-primary" href="/register">Claim your keyword</a>
     </div>`;
 }
 /* end */

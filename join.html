@@ -3,168 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Get Listed In The Circuits.com Global Directory</title>
-<meta name="description" content="List your company on Circuits.com and get discovered by buyers, engineers and partners across the circuits and electronics industry.">
-<link rel="canonical" href="https://circuits.com/join">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Circuits.com">
-<meta property="og:title" content="Get Listed In The Circuits.com Global Directory">
-<meta property="og:description" content="List your company on Circuits.com and get discovered by buyers, engineers and partners across the circuits and electronics industry.">
-<meta property="og:url" content="https://circuits.com/join">
-<meta property="og:image" content="https://circuits.com/assets/og-card.png">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Get Listed In The Circuits.com Global Directory">
-<meta name="twitter:description" content="List your company on Circuits.com and get discovered by buyers, engineers and partners across the circuits and electronics industry.">
-<meta name="twitter:image" content="https://circuits.com/assets/og-card.png">
-<link rel="icon" href="assets/favicon.png">
-<link rel="stylesheet" href="styles.css">
-<script src="/nav.js"></script>
-<script async src="/analytics.js"></script>
+<title>Get Listed | Circuits.com</title>
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://circuits.com/register">
+<meta http-equiv="refresh" content="0; url=/register">
+<link rel="icon" href="/assets/favicon.png">
 </head>
 <body>
-
-<header class="topbar">
-<div class="inner">
-<div class="brand"><a href="/"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-slogan">Connecting The Circuits Industry</span></div>
-    <nav class="nav">
-      <a href="/">Home</a>
-      <a href="/about">About</a>
-      <a href="/contact">Contact</a>
-      <a class="nav-auth" href="/portal">Sign In</a>
-      <a class="active cta" href="/join">Get Listed</a>
-    </nav>
-</div>
-</header>
-
-<div class="form-wrap">
-<h1>Free Directory Listing</h1>
-<p class="lede">Get found by the people searching for what you offer.<br>Claim your Circuits-Keyword™ and establish your presence where the circuits industry connects.</p>
-
-<!-- Progress: the form is long, and a wall of fields with no sense of
-     position is what makes people abandon it. Purely an indicator, it does
-     not gate anything, because hiding later steps hides the price. -->
-<nav class="wiz" id="wiz" aria-label="Request progress">
-  <ol>
-    <li data-step="0"><span class="wiz-n">1</span><span class="wiz-l">Details</span></li>
-    <li data-step="1"><span class="wiz-n">2</span><span class="wiz-l">Keywords</span></li>
-    <li data-step="2"><span class="wiz-n">3</span><span class="wiz-l">Submit</span></li>
-  </ol>
-</nav>
-
-<div id="success" class="success">
-<b>Request received.</b> Thanks! Our team will review your listing request and reach out within one business day.
-</div>
-
-<form id="join-form" autocomplete="off" novalidate>
-
-<!-- Section 1: who you are. Free listing request, no account, no password. -->
-<section class="step">
-<div class="step-head">
-<span class="step-num">01</span>
-<div><h2>Create Your Account</h2></div>
-</div>
-<div class="grid2">
-<div class="field">
-<label for="f-company">Company or Organization Name <span class="req">*</span></label>
-<input id="f-company" type="text" required placeholder="AAA Electronics, Inc.">
-</div>
-<div class="field">
-<label for="f-contact">Contact Person <span class="req">*</span></label>
-<input id="f-contact" type="text" required placeholder="Jane Doe, VP Sales">
-</div>
-<div class="field">
-<label for="f-email">Email <span class="req">*</span></label>
-<input id="f-email" type="email" required placeholder="sales@company.com" autocomplete="email">
-</div>
-<div class="field">
-<label for="f-phone">Phone # <span class="req">*</span></label>
-<input id="f-phone" type="tel" required placeholder="(555) 123-4567">
-</div>
-<div class="field">
-<label for="f-website">Website</label>
-<input id="f-website" type="url" placeholder="https://www.company.com">
-</div>
-<div class="field"></div>
-<div class="field" style="grid-column:1 / -1">
-<label for="logo-input">Logo or Headshot <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
-<input id="logo-input" type="file" accept="image/png,image/jpeg,image/webp">
-<p class="field-hint">PNG, JPG or WebP up to 5 MB.</p>
-<div id="logo-preview" class="logo-preview" style="display:none">
-<img id="logo-preview-img" alt="Logo preview">
-<span id="logo-name"></span>
-</div>
-</div>
-</div>
-</section>
-
-<!-- Step 2 -->
-<section class="step">
-<div class="step-head">
-<span class="step-num">02</span>
-<div>
-<h2>Claim Your Circuits-Keywords™</h2>
-<p>Choose up to 10 keywords to be Listed Under… For Free!</p>
-</div>
-</div>
-<p class="benefits-h">Benefits</p>
-<ul class="promo-benefits" style="margin:0 0 20px">
-<li>Get Found By Buyers Searching Your Keyword</li>
-<li>Create Lasting Digital Real Estate</li>
-<li>Establish Your Presence Where The Circuits Industry Connects</li>
-</ul>
-<div class="field"><!-- the .field wrapper is what lets the keyword requirement show its error -->
-<div class="kw-input-row">
-<input id="kw-input" type="text" placeholder="e.g. semiconductors" maxlength="40">
-<button type="button" class="mini-btn" id="kw-check">Check</button>
-<button type="button" class="mini-btn green" id="kw-add">Add</button>
-</div>
-<p class="field-hint">Want to see what your listing will look like? <b>Check</b> to preview your live listing.</p>
-<div class="kw-tags" id="kw-tags"></div>
-</div>
-<div class="cat-count" id="kw-count"><b>0</b> of 10 keywords</div>
-</section>
-
-<!-- Section 3 -->
-<section class="step">
-<div class="step-head">
-<span class="step-num">03</span>
-<div><h2>Have Any Ideas? Tell Us What You're Thinking</h2></div>
-</div>
-<div class="field">
-<label for="msg">Message (Optional)</label>
-<textarea id="msg" maxlength="600" placeholder="Tell us about your needs to reach viewers or any other questions."></textarea>
-<div class="charcount" id="msg-count">0 / 600</div>
-</div>
-<label class="terms">
-<input id="f-terms" type="checkbox" required>
-<span>I have authority to create a listing and accept the <a href="terms" target="_blank">Listing Terms</a> and <a href="terms#acceptable-use" target="_blank">Acceptable Use Policy</a>. <span class="req">*</span></span>
-</label>
-<div id="terms-err" class="err-msg" style="display:none">You must accept the Listing Terms and Acceptable Use Policy before submitting.</div>
-</section>
-
-<div class="form-foot">
-<span class="help">Have questions? <a href="contact">Contact Us</a></span>
-<button class="submit" type="submit">Submit Request</button>
-</div>
-</form>
-</div>
-
-<footer class="footer">
-<div class="inner">
-<div class="flinks">
-      <a href="/terms">Terms</a>
-      <a href="/privacy">Privacy</a>
-    </div>
-<div style="display:flex;align-items:center;gap:14px">
-<span>© 2026 Circuits.com</span>
-<span class="footer-brand"><img class="footer-mark" src="assets/favicon.png" alt="Circuits.com"></span>
-</div>
-</div>
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="store.js"></script>
-<script src="app.js"></script>
-<script>initJoin();</script>
+<!-- Get Listed moved (Jacob, 2026-09-02): a company registers at /register and
+     requests keyword listings from the Listings tab of its dashboard. This
+     stub keeps old links and bookmarks working. -->
+<p style="font-family:system-ui,sans-serif;padding:24px">Get Listed has moved. <a href="/register">Register your company</a> and request keyword listings from your dashboard.</p>
+<script>location.replace('/register');</script>
 </body>
 </html>
