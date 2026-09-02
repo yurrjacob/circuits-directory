@@ -19,12 +19,12 @@ function toast(text, ok){
 function renderMyProfile(me){
   const box = el('pt-me');
   if(!box) return;
-  if(!me){
-    box.innerHTML = `<p class="pf-note">This account has no Circuits.com address yet.
-      <a href="/register">Create a profile</a> to claim one.</p>`;
-    return;
-  }
+  /* No row yet (an account from before profiles existed): same form, and the
+     first save creates the profile. Jacob, 2026-09-02: "still dont see it". */
+  const fresh = !me;
+  if(fresh) me = { handle: '', display_name: '', keywords: [] };
   box.innerHTML = `
+    ${fresh ? '<p class="pf-note" style="color:#3f6300">This account has no Circuits.com address yet. Pick one below and save to create your profile.</p>' : ''}
     <div class="auth-field"><label>Your Circuits.com address</label>
       <div class="handle-row"><span class="handle-prefix">circuits.com/</span>
         <input id="me-handle" type="text" maxlength="32" spellcheck="false" value="${escapeHtml(me.handle)}"></div>
@@ -51,21 +51,22 @@ function renderMyProfile(me){
       <textarea id="me-bio" rows="4" maxlength="600" placeholder="What you do, what you are looking for.">${escapeHtml(me.bio || '')}</textarea></div>
     <div class="auth-field"><label>Resume <span class="cell-muted">(PDF, up to 10 MB, private)</span></label>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <span id="me-resume-state" class="pf-note" style="margin:0">${me.resume_path ? 'Resume on file.' : 'No resume yet.'}</span>
+        <span id="me-resume-state" class="pf-note" style="margin:0">${fresh ? 'Save your profile first, then upload a resume.' : me.resume_path ? 'Resume on file.' : 'No resume yet.'}</span>
         ${me.resume_path ? '<a class="mini-btn" href="#" id="me-resume-view">View</a><button class="mini-btn danger" type="button" id="me-resume-remove">Remove</button>' : ''}
-        <label class="mini-btn" style="cursor:pointer">${me.resume_path ? 'Replace' : 'Upload'}<input id="me-resume" type="file" accept="application/pdf" style="display:none"></label>
+        ${fresh ? '' : `<label class="mini-btn" style="cursor:pointer">${me.resume_path ? 'Replace' : 'Upload'}<input id="me-resume" type="file" accept="application/pdf" style="display:none"></label>`}
       </div></div>
     <label style="display:flex;gap:8px;align-items:center;margin:6px 0 14px;font-weight:600;cursor:pointer"><input id="me-listed" type="checkbox" style="width:auto;margin:0" ${me.talent_listed ? 'checked' : ''}>
       <span>List me in the Recruits Directory</span></label>
     ${me.talent_hidden ? '<p class="pf-note" style="color:#b3261e">Circuits.com staff have hidden this profile from the directory.</p>' : ''}
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <button class="btn btn-primary" type="button" id="me-save">Save profile</button>
-      <a class="mini-btn" href="/${escapeHtml(me.handle)}" target="_blank" rel="noopener">View profile ↗</a>
+      <button class="btn btn-primary" type="button" id="me-save">${fresh ? 'Create profile' : 'Save profile'}</button>
+      ${fresh ? '' : `<a class="mini-btn" href="/${escapeHtml(me.handle)}" target="_blank" rel="noopener">View profile ↗</a>`}
     </div>
     <div id="me-msg" class="pf-note"></div>`;
 
   /* resume: upload, view (signed link, 5 minutes), remove */
-  el('me-resume').addEventListener('change', async e => {
+  const up = el('me-resume');
+  if(up) up.addEventListener('change', async e => {
     const f = e.target.files && e.target.files[0]; if(!f) return;
     const st = el('me-resume-state');
     if(f.type !== 'application/pdf'){ st.textContent = 'Please choose a PDF.'; return; }
@@ -93,9 +94,13 @@ function renderMyProfile(me){
     const handle = el('me-handle').value.trim().toLowerCase();
     const name = el('me-name').value.trim();
     msg.textContent = 'Saving…'; msg.style.color = '';
-    if(handle !== me.handle){
+    if(fresh || handle !== me.handle){
       const why = await handleAvailable(handle);
       if(why){ msg.textContent = why; msg.style.color = '#b3261e'; return; }
+    }
+    if(fresh){
+      const err = await createMyProfile(handle, name);
+      if(err){ msg.textContent = err; msg.style.color = '#b3261e'; return; }
     }
     const yearsRaw = el('me-years').value.trim();
     const years = yearsRaw === '' ? null : parseInt(yearsRaw, 10);
@@ -110,6 +115,7 @@ function renderMyProfile(me){
     msg.textContent = bad || 'Saved. Your profile is at circuits.com/' + handle;
     msg.style.color = bad ? '#b3261e' : '#3f6300';
     if(!err){ me.handle = handle; if(kw.keywords) el('me-keywords').value = kw.keywords.join(', '); }
+    if(fresh && !bad){ renderMyProfile(await myProfile()); el('me-msg').textContent = msg.textContent; el('me-msg').style.color = '#3f6300'; }
   });
 }
 
@@ -209,13 +215,11 @@ async function initPortal(){
   /* A company owner is also a person with a profile: the Your Profile tab (and
      its Talent section, MVP2) used to exist only for accounts with no listing,
      so an owner could never reach it (Jacob, 2026-09-02). Same card, same tab. */
-  if(me){
-    show('pt-tab-me', true);
-    const card = el('pt-none') && el('pt-none').querySelector('.auth-card');
-    if(card){ el('tab-me').appendChild(card); card.querySelector('h1').textContent = 'Your profile'; }
-    renderMyProfile(me);
-    const sub = el('pt-none-email'); if(sub) sub.textContent = user.email;
-  }
+  show('pt-tab-me', true);
+  const card = el('pt-none') && el('pt-none').querySelector('.auth-card');
+  if(card){ el('tab-me').appendChild(card); card.querySelector('h1').textContent = 'Your profile'; }
+  renderMyProfile(me);
+  const sub = el('pt-none-email'); if(sub) sub.textContent = user.email;
   await loadCompany(cos[0].slug);
 }
 

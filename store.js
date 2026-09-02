@@ -460,6 +460,16 @@ async function myProfile(){
   if(error){ console.error('my_profile', error); return null; }
   return (data && data[0]) || null;
 }
+/* An account from before profiles existed (staff, early owners) has no row.
+   The portal creates one on first save instead of sending them to /register. */
+async function createMyProfile(handle, displayName){
+  if(!sb) return 'No connection';
+  const u = await currentUser();
+  if(!u) return 'Not signed in';
+  const { error } = await sb.from('profiles')
+    .insert({ user_id: u.id, handle, display_name: displayName || null, email: u.email });
+  return error ? error.message : '';
+}
 async function updateMyProfile(fields){
   if(!sb) return 'No connection';
   const u = await currentUser();
@@ -522,6 +532,105 @@ async function fetchTalentKeywords(userId){
   const { data, error } = await sb.from('talent_keywords').select('keyword').eq('user_id', userId).order('keyword');
   if(error){ console.warn('fetchTalentKeywords', error.message); return []; }
   return (data || []).map(r => r.keyword);
+}
+/* ---- jobs (MVP2): posted by a company owner, live once staff mark it paid ---- */
+async function postJob(slug, fields){
+  if(!sb) return { error: 'No connection' };
+  const { data, error } = await sb.from('jobs')
+    .insert({ company_slug: slug, title: fields.title, location: fields.location || null,
+              description: fields.description || null, apply_email: fields.apply_email || null })
+    .select('id').single();
+  if(error) return { error: error.message };
+  return { id: data.id };
+}
+async function updateJob(id, fields){
+  if(!sb) return 'No connection';
+  const { data, error } = await sb.from('jobs').update(fields).eq('id', id).select('id');
+  if(error) return error.message;
+  if(!data || !data.length) return 'That change was refused.';
+  return '';
+}
+async function setJobKeywords(id, keywords){
+  if(!sb) return { error: 'No connection' };
+  const { data, error } = await sb.rpc('set_job_keywords', { p_job: id, p_keywords: keywords || [] });
+  if(error) return { error: /keyword_limit/.test(error.message) ? 'Ten keywords is the limit.' : error.message };
+  return { keywords: data || [] };
+}
+/* a company's own jobs, with their keywords; owners see them paid or not */
+async function myJobs(slug){
+  if(!sb || !slug) return [];
+  const { data, error } = await sb.from('jobs').select('*, job_keywords(keyword)')
+    .eq('company_slug', slug).order('created_at', { ascending: false });
+  if(error){ console.error('myJobs', error); return []; }
+  return (data || []).map(j => ({ ...j, keywords: (j.job_keywords || []).map(k => k.keyword).sort() }));
+}
+/* the public board: live jobs under a keyword, or every live job when blank */
+async function jobSearch(keyword){
+  if(!sb) throw new Error('no connection');
+  const { data, error } = await sb.rpc('job_search', { p_keyword: keyword || '' });
+  if(error) throw error;
+  return data || [];
+}
+async function myApplications(){
+  if(!sb) return [];
+  const { data, error } = await sb.rpc('my_applications');
+  if(error) return [];
+  return data || [];
+}
+/* apply once; the employer is emailed by the notify function afterwards */
+async function applyToJob(jobId, note){
+  if(!sb) return 'No connection';
+  const u = await currentUser(); if(!u) return 'Not signed in';
+  const { error } = await sb.from('job_applications').insert({ job_id: jobId, user_id: u.id, note: (note || '').trim() || null });
+  if(error) return /duplicate|unique/i.test(error.message) ? 'You already applied to this job.' : error.message;
+  try{
+    const { data: s } = await sb.auth.getSession();
+    const jwt = s && s.session && s.session.access_token;
+    await fetch(SUPABASE_URL + '/functions/v1/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + jwt },
+      body: JSON.stringify({ kind: 'job-apply', job_id: jobId })
+    });
+  }catch(e){ console.warn('employer not notified', e); }
+  return '';
+}
+async function jobApplicants(jobId){
+  if(!sb) return [];
+  const { data, error } = await sb.rpc('job_applicants', { p_job: jobId });
+  if(error){ console.error('jobApplicants', error); return []; }
+  return data || [];
+}
+
+/* ---- staff: recruits, talent access, job payments ---- */
+async function fetchRecruits(){
+  if(!sb) return [];
+  const { data, error } = await sb.from('profiles')
+    .select('user_id, handle, display_name, title, years, talent_listed, talent_hidden, updated_at')
+    .eq('talent_listed', true).order('updated_at', { ascending: false }).limit(500);
+  if(error){ console.error('fetchRecruits', error); return []; }
+  return data || [];
+}
+async function setTalentHidden(userId, hidden){
+  if(!sb) return 'No connection';
+  const { data, error } = await sb.from('profiles').update({ talent_hidden: !!hidden }).eq('user_id', userId).select('user_id');
+  if(error) return error.message;
+  if(!data || !data.length) return 'That change was refused.';
+  return '';
+}
+async function setTalentAccess(slug, untilIso){
+  if(!sb) return 'No connection';
+  const { data, error } = await sb.from('companies').update({ talent_access_until: untilIso }).eq('slug', slug).select('slug');
+  if(error) return error.message;
+  if(!data || !data.length) return 'That change was refused.';
+  return '';
+}
+async function fetchAllJobs(){
+  if(!sb) return [];
+  const { data, error } = await sb.from('jobs').select('*, job_keywords(keyword), companies(name, handle)')
+    .order('created_at', { ascending: false }).limit(500);
+  if(error){ console.error('fetchAllJobs', error); return []; }
+  return (data || []).map(j => ({ ...j, keywords: (j.job_keywords || []).map(k => k.keyword).sort(),
+    company_name: j.companies ? j.companies.name : j.company_slug, company_handle: j.companies ? j.companies.handle : null }));
 }
 async function hasTalentAccess(){
   if(!sb) return false;
