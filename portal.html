@@ -254,8 +254,8 @@
     <button type="button" class="adm-tab active" data-adm="listings">Listings</button>
     <button type="button" class="adm-tab" data-adm="upgrades">Upgrades</button>
     <button type="button" class="adm-tab" data-adm="companies">Companies</button>
-    <button type="button" class="adm-tab" data-adm="employment">Employment</button>
-    <button type="button" class="adm-tab" data-adm="messages">Messages</button>
+    <button type="button" class="adm-tab" data-adm="employment">Recruiting</button>
+    <button type="button" class="adm-tab" data-adm="messages">Notifications</button>
     <button type="button" class="adm-tab" data-adm="activity">Activity</button>
   </div>
 
@@ -396,13 +396,24 @@
        does on its own (approvals, reviews, applicants...) arrives the same way
        from database triggers; this is for the human-written ones. -->
   <div class="panel" data-adm="messages">
-    <div class="panel-head"><h2>Send A Message</h2><span class="hint">Lands In Their Inbox Bell &mdash; To A Handle, An Email, Or Everyone / Individuals / Companies</span></div>
+    <div class="panel-head"><h2>Send a Notification</h2><span class="hint">Lands In Their Inbox Bell &mdash; One Copy Per Person However Many Ways They Match</span></div>
     <div class="panel-body">
       <div class="pf-form" id="notify-form">
         <div class="grid2">
-          <div class="auth-field"><label for="nt-to">To</label><input id="nt-to" type="text" maxlength="120" placeholder="handle, email, everyone, individuals, companies"></div>
+          <div class="auth-field"><label for="nt-aud">To</label>
+            <select id="nt-aud" onchange="notifyAudienceUI()">
+              <option value="users">Specific users</option>
+              <option value="keyword">Anyone listed under a keyword</option>
+              <option value="companies">Every company account</option>
+              <option value="individuals">Every individual account</option>
+              <option value="everyone">Every user on the site</option>
+            </select></div>
           <div class="auth-field"><label for="nt-link">Link <span class="cell-muted">(optional)</span></label><input id="nt-link" type="text" maxlength="300" placeholder="/portal or https://..."></div>
         </div>
+        <div class="auth-field" id="nt-users-field"><label for="nt-users">Usernames or emails <span class="cell-muted">(as many as you like, separated by commas or new lines)</span></label>
+          <textarea id="nt-users" rows="2" placeholder="jacob, mike@circuits.com, acme"></textarea></div>
+        <div class="auth-field" id="nt-kw-field" style="display:none"><label for="nt-kw">Keyword <span class="cell-muted">(every account behind a live listing for it, and every recruit who lists it)</span></label>
+          <input id="nt-kw" type="text" maxlength="80" placeholder="pcb layout"></div>
         <div class="auth-field"><label for="nt-subject">Subject</label><input id="nt-subject" type="text" maxlength="120" placeholder="Short and specific"></div>
         <div class="auth-field"><label for="nt-body">Message</label><textarea id="nt-body" rows="5" maxlength="4000" placeholder="Plain text. Blank lines make paragraphs."></textarea></div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">

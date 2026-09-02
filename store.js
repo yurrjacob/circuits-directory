@@ -611,13 +611,14 @@ async function deleteNotification(id){
   const { error } = await sb.from('notifications').delete().eq('id', id);
   if(error) console.error('deleteNotification', error);
 }
-/* Staff only (the RPC refuses everyone else). to: handle, email, or
-   everyone / individuals / companies. Resolves to how many inboxes it landed in. */
+/* Staff only (the RPC refuses everyone else). to: a list of handles/emails,
+   'keyword:<kw>', or everyone / individuals / companies. Resolves to
+   { sent, unknown[] } — unknown lists the names that matched nobody. */
 async function sendNotification(to, subject, body, link){
   if(!sb) return { error: 'No connection' };
   const { data, error } = await sb.rpc('send_notification', { p_to: to, p_subject: subject, p_body: body, p_link: link || null });
   if(error){ console.error('sendNotification', error); return { error: error.message }; }
-  return { sent: data };
+  return { sent: (data && data.sent) || 0, unknown: (data && data.unknown) || [] };
 }
 
 /* ---- jobs (MVP2): posted by a company owner, live once staff mark it paid ---- */

@@ -365,18 +365,25 @@ async function doneUpgrade(id){
 }
 
 /* ---- send a message: staff-written notification into one or many inboxes ---- */
+function notifyAudienceUI(){
+  const a = $('nt-aud').value;
+  $('nt-users-field').style.display = a === 'users' ? '' : 'none';
+  $('nt-kw-field').style.display = a === 'keyword' ? '' : 'none';
+}
 async function sendNotificationUI(){
   const v = id => ($(id).value || '').trim();
-  const to = v('nt-to'), subject = v('nt-subject'), body = v('nt-body'), link = v('nt-link'), msg = $('nt-msg');
-  if(!to || !subject || !body){ msg.textContent = 'To, subject and message are all needed.'; return; }
-  const wide = /^(everyone|all|\*|individuals|companies)$/i.test(to);
-  if(wide && !confirm(`Send "${subject}" to ${to.toLowerCase()}? This cannot be recalled.`)) return;
+  const aud = v('nt-aud'), subject = v('nt-subject'), body = v('nt-body'), link = v('nt-link'), msg = $('nt-msg');
+  const to = aud === 'users' ? v('nt-users') : aud === 'keyword' ? 'keyword:' + v('nt-kw') : aud;
+  const label = { users: 'those users', keyword: 'everyone listed under "' + v('nt-kw') + '"', companies: 'every company account', individuals: 'every individual account', everyone: 'every user on the site' }[aud];
+  if(!subject || !body || to === 'keyword:' || !to){ msg.textContent = 'Recipient, subject and message are all needed.'; return; }
+  if(aud !== 'users' && !confirm(`Send "${subject}" to ${label}? This cannot be recalled.`)) return;
   $('nt-send').disabled = true; msg.textContent = 'Sending…';
   const r = await sendNotification(to, subject, body, link);
   $('nt-send').disabled = false;
   if(r.error){ msg.textContent = 'Could not send: ' + r.error; return; }
-  if(!r.sent){ msg.textContent = 'Nobody matched "' + to + '". Use a handle, an email, or everyone / individuals / companies.'; return; }
-  msg.textContent = 'Sent to ' + r.sent + (r.sent === 1 ? ' inbox.' : ' inboxes.');
+  const missed = r.unknown.length ? ' Not found: ' + r.unknown.join(', ') + '.' : '';
+  if(!r.sent){ msg.textContent = 'Nobody matched.' + (missed || ' Nothing is listed under that keyword yet.'); return; }
+  msg.textContent = 'Sent to ' + r.sent + (r.sent === 1 ? ' inbox.' : ' inboxes.') + missed;
   ['nt-subject', 'nt-body', 'nt-link'].forEach(id => { $(id).value = ''; });
 }
 
@@ -547,6 +554,6 @@ window.initAdmin = async function(){
    tools/check.js fails if a new onclick appears without being listed here. */
 Object.assign(window, {
   editListing, editBadge, removeListing, togglePause, lockListing,
-  approveApp, rejectApp, setSuspended, setTalentAccessUI, hideRecruit, markJobPaid, closeJob, doneUpgrade, sendNotificationUI
+  approveApp, rejectApp, setSuspended, setTalentAccessUI, hideRecruit, markJobPaid, closeJob, doneUpgrade, sendNotificationUI, notifyAudienceUI
 });
 })();
