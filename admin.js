@@ -344,23 +344,62 @@ async function setTalentAccessUI(slug){
   await reloadCompanies();
 }
 
-/* ---- upgrade requests: badge / banner / locked position, asked from Listings ---- */
+/* ---- Upgrade Applications: badge / banner / locked position, asked from Listings ----
+   A Trust Badge request carries the label and colour the company chose;
+   Approve applies exactly that to the listing, Deny closes the request and
+   tells the company. Payment is taken outside the site first. */
 const UPGRADE_NAMES = { badge: 'Trust Badge', banner: 'Sponsor banner', lock: 'Locked position' };
+let openUpgrades = [];
 async function reloadUpgrades(){
   const body = $('upgrades-body'); if(!body) return;
-  const rows = await fetchUpgradeRequests();
-  body.innerHTML = rows.map(r => `
+  openUpgrades = await fetchUpgradeRequests();
+  body.innerHTML = openUpgrades.map(r => `
     <tr class="row-waiting">
       <td>${esc(r.company || r.company_slug)}</td>
       <td>${esc(r.keyword || 'none')}</td>
       <td><b>${esc(UPGRADE_NAMES[r.kind] || r.kind)}</b></td>
+      <td>${r.kind === 'badge' ? `<span class="lb" style="background:${esc(r.badge_color || '#c9a227')}">${esc(r.badge_text || '')}</span>` : r.kind === 'lock' ? 'Spot chosen on Approve' : 'Exclusive banner'}</td>
       <td class="cell-muted">${new Date(r.created_at).toLocaleDateString()}</td>
-      <td class="row-actions"><button class="mini-btn green" onclick="doneUpgrade('${esc(r.id)}')">Done</button></td></tr>`).join('');
-  $('upgrades-empty').style.display = rows.length ? 'none' : 'block';
+      <td class="row-actions">
+        <button class="mini-btn green" onclick="approveUpgrade('${esc(r.id)}')">Approve</button>
+        <button class="mini-btn danger" onclick="denyUpgrade('${esc(r.id)}')">Deny</button>
+      </td></tr>`).join('');
+  $('upgrades-empty').style.display = openUpgrades.length ? 'none' : 'block';
 }
-async function doneUpgrade(id){
-  if(!confirm('Mark this upgrade request done? Only do this once payment is taken and the upgrade is applied to the listing.')) return;
-  const err = await handleUpgradeRequest(id);
+async function approveUpgrade(id){
+  const r = openUpgrades.find(u => u.id === id); if(!r) return;
+  const l = allApps.find(a => a.id === r.application_id);
+  if(!l){ alert('That listing is gone.'); return; }
+  let fields;
+  if(r.kind === 'badge'){
+    fields = { badge: { text: (r.badge_text || '').slice(0, 18), color: r.badge_color || '#c9a227' } };
+    if(!fields.badge.text){ alert('This request has no badge label. Deny it and ask the company to request again.'); return; }
+  }else if(r.kind === 'banner'){
+    if(bannerConflict({ ...l, banner: true })){ alert('Blocked: "' + (l.keyword || '') + '" already has a live Exclusive Sponsor banner. Remove that one first.'); return; }
+    fields = { banner: true };
+  }else{
+    const raw = prompt('Lock ' + l.company + ' to which spot on “' + (l.keyword || '') + '”? (1 = top)', '1');
+    if(raw === null) return;
+    const n = parseInt(raw, 10);
+    if(!(n >= 1 && n <= 99)){ alert('Please enter a number from 1 to 99.'); return; }
+    fields = { locked_position: n };
+  }
+  if(!confirm('Approve this ' + UPGRADE_NAMES[r.kind] + ' for ' + l.company + '? Only do this once payment is taken. It goes live now.')) return;
+  const err = await updateApplication(l.id, fields);
+  if(err){
+    alert(/duplicate|unique|23505/i.test((err.message || '') + (err.code || ''))
+      ? 'That spot on “' + (l.keyword || '') + '” is already locked by another company.'
+      : 'Could not apply that: ' + (err.message || err));
+    return;
+  }
+  const derr = await handleUpgradeRequest(id, 'Approved');
+  if(derr) alert('Applied, but the request could not be closed: ' + derr);
+  await reload(); await reloadUpgrades();
+}
+async function denyUpgrade(id){
+  const r = openUpgrades.find(u => u.id === id); if(!r) return;
+  if(!confirm('Deny this ' + UPGRADE_NAMES[r.kind] + ' request? The company is told it was not approved.')) return;
+  const err = await handleUpgradeRequest(id, 'Denied');
   if(err){ alert('Could not do that: ' + err); return; }
   await reloadUpgrades();
 }
@@ -566,9 +605,9 @@ function showAdminGroup(g){
   try{ localStorage.setItem('cx_admin_group', g); }catch(e){}
 }
 document.querySelectorAll('.adm-tab').forEach(b => b.addEventListener('click', () => showAdminGroup(b.dataset.adm)));
-let remembered = 'listings';
+let remembered = 'companies';
 try{ remembered = localStorage.getItem('cx_admin_group') || remembered; }catch(e){}
-showAdminGroup(document.querySelector(`.adm-tab[data-adm="${remembered}"]`) ? remembered : 'listings');
+showAdminGroup(document.querySelector(`.adm-tab[data-adm="${remembered}"]`) ? remembered : 'companies');
 
 let started = false;
 window.initAdmin = async function(){
@@ -591,6 +630,6 @@ window.initAdmin = async function(){
    tools/check.js fails if a new onclick appears without being listed here. */
 Object.assign(window, {
   editListing, editBadge, removeListing, togglePause, lockListing,
-  approveApp, rejectApp, setSuspended, setTalentAccessUI, markJobPaid, closeJob, doneUpgrade, sendNotificationUI, notifyAudienceUI, setRecruitStatus, deleteCompanyUI
+  approveApp, rejectApp, setSuspended, setTalentAccessUI, markJobPaid, closeJob, approveUpgrade, denyUpgrade, sendNotificationUI, notifyAudienceUI, setRecruitStatus, deleteCompanyUI
 });
 })();

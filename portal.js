@@ -42,6 +42,37 @@ const saveBtn = (id) => `<div style="display:flex;gap:10px;align-items:center;fl
     <button class="btn btn-primary me-save" type="button">${ME_FRESH ? 'Create profile' : 'Save'}</button>
     <span id="${id}" class="pf-note me-msg"></span></div>`;
 
+/* The picture is squared in the browser (centre crop, 400px) and uploaded on
+   Save, so a cancelled edit uploads nothing.
+   ponytail: no drag-to-crop here, reuse the company logo cropper if people ask. */
+let ME_PHOTO = null, ME_PHOTO_CLEAR = false;
+function wireMePhoto(){
+  const inp = el('me-photo'), prev = el('me-photo-prev'), rm = el('me-photo-rm');
+  if(!inp) return;
+  inp.onchange = () => {
+    const file = inp.files && inp.files[0]; if(!file) return;
+    if(file.size > CROP_MAX_MB * 1024 * 1024){ toast(`That image is over ${CROP_MAX_MB}MB. Please pick a smaller one.`, false); inp.value = ''; return; }
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const side = Math.min(img.naturalWidth, img.naturalHeight);
+      if(!side){ toast('That file is not an image we can read.', false); return; }
+      const out = document.createElement('canvas'); out.width = out.height = 400;
+      out.getContext('2d').drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, 400, 400);
+      out.toBlob(blob => {
+        if(!blob){ toast('That picture could not be read. Try a PNG or JPEG.', false); return; }
+        ME_PHOTO = new File([blob], 'photo.png', { type: 'image/png' }); ME_PHOTO_CLEAR = false;
+        prev.innerHTML = `<img src="${out.toDataURL('image/png')}" alt="">`;
+        rm.style.display = '';
+        toast('Picture ready. Save to publish it.', true);
+      }, 'image/png');
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); toast('That file is not an image we can read.', false); };
+    img.src = url;
+  };
+  rm.onclick = () => { ME_PHOTO = null; ME_PHOTO_CLEAR = true; inp.value = ''; prev.innerHTML = avatarSvg(); rm.style.display = 'none'; };
+}
+
 function renderMeDetails(){
   const box = el('pt-me'); if(!box) return;
   box.innerHTML = `
@@ -55,6 +86,13 @@ function renderMeDetails(){
       <div class="auth-field"><label>Full name <span class="req">*</span></label>
         <input id="me-name" type="text" maxlength="120" required value="${escapeHtml(ME.display_name || '')}"></div>
     </div>
+    <div class="auth-field"><label for="me-photo">Profile picture <span class="cell-muted">(shown on your profile and to companies that unlock you)</span></label>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <span class="logo-thumb me-photo-prev" id="me-photo-prev">${ME.photo_url ? `<img src="${escapeHtml(ME.photo_url)}" alt="">` : avatarSvg()}</span>
+        <input id="me-photo" type="file" accept="image/png,image/jpeg,image/webp">
+        <button type="button" class="mini-btn" id="me-photo-rm" ${ME.photo_url ? '' : 'style="display:none"'}>Remove</button>
+      </div>
+    </div>
     <div class="grid2">
       <div class="auth-field"><label>Email <span class="req">*</span> <span class="cell-muted">(private until a company unlocks you)</span></label>
         <input id="me-email" type="email" readonly value="${escapeHtml(ME.email || (PT.user && PT.user.email) || '')}" title="Change it under Account Settings">
@@ -63,6 +101,8 @@ function renderMeDetails(){
         <input id="me-phone" type="tel" maxlength="40" required placeholder="(555) 123-4567" value="${escapeHtml(ME.phone || '')}"></div>
     </div>
     ${saveBtn('me-msg-1')}`;
+  ME_PHOTO = null; ME_PHOTO_CLEAR = false;
+  wireMePhoto();
 }
 
 function renderExperience(){
@@ -187,7 +227,7 @@ function renderRecruitPreview(){
   if(u) u.addEventListener('click', async () => {
     const priv = box.querySelector('.tal-private');
     const resume = ME.resume_path ? await resumeLink(ME.resume_path) : '';
-    priv.innerHTML = talentContactHtml({ handle: ME.handle, display_name: val('me-name') || ME.display_name, email: ME.email || (PT.user && PT.user.email) || '', phone: val('me-phone') || ME.phone || '' }, resume)
+    priv.innerHTML = talentContactHtml({ handle: ME.handle, display_name: val('me-name') || ME.display_name, email: ME.email || (PT.user && PT.user.email) || '', phone: val('me-phone') || ME.phone || '', photo_url: ME.photo_url }, resume)
       + '<button type="button" class="mini-btn rp-add" id="me-relock">Lock again</button>';
     priv.querySelector('#me-relock').addEventListener('click', renderRecruitPreview);
   });
@@ -219,9 +259,15 @@ function wireIndividual(){
       const err = await createMyProfile(handle, name);
       if(err){ say(err, true); return; }
     }
-    const err = await updateMyProfile({ handle, display_name: name || null, phone: val('me-phone') || null,
+    const fields = { handle, display_name: name || null, phone: val('me-phone') || null,
       title: val('me-title') || null, years, bio: val('me-bio') || null, credentials,
-      talent_listed: !!(el('me-listed') && el('me-listed').checked) });
+      talent_listed: !!(el('me-listed') && el('me-listed').checked) };
+    if(ME_PHOTO){
+      const url = await uploadImage(ME_PHOTO);
+      if(!url){ say('That picture could not be uploaded. Try a smaller PNG or JPEG.', true); return; }
+      fields.photo_url = url;
+    }else if(ME_PHOTO_CLEAR) fields.photo_url = null;
+    const err = await updateMyProfile(fields);
     const kw = err ? {} : await setTalentKeywords(keywords, kwOn);
     const bad = err || kw.error;
     if(bad){ say(bad, true); return; }
@@ -317,6 +363,8 @@ async function initPortal(){
   el('pt-title').textContent = 'Your Company Dashboard';
   wireJobs();
   wireRecruitSearch();
+  /* "Get Listed" while signed in sends people to /portal#listings (nav.js). */
+  if(location.hash === '#listings') activateTab('listings');
   await loadCompany(cos[0].slug);
 }
 
@@ -1381,15 +1429,31 @@ const UPGRADES = {
   banner: { name: 'Sponsor banner',   price: '$' + BANNER_FEE + '/month', why: 'The exclusive banner above every result for this keyword: logo, pitch, contact and documents.' },
   lock:   { name: 'Locked position',  price: 'Ask us',                    why: 'Results shuffle on every search. A locked position pins you to #1, #2 or #3 every time.' }
 };
+/* The Trust Badge is the one upgrade with attributes: the label and the colour
+   are chosen here, travel with the request, and staff approve exactly that. */
+const BADGE_COLORS = [['#c9a227', 'Gold'], ['#b06c22', 'Bronze'], ['#5d6a7e', 'Steel']];
+function badgeRequestForm(l){
+  return `<div class="pt-badge-req">
+    <input class="up-text" type="text" maxlength="18" placeholder="Label, e.g. Featured" aria-label="Badge label">
+    <select class="up-color" aria-label="Badge colour">${BADGE_COLORS.map(([hex, name]) => `<option value="${hex}">${name}</option>`).join('')}</select>
+    <span class="lb up-preview" style="background:${BADGE_COLORS[0][0]}">Your label</span>
+    <button class="mini-btn green" data-request="${l.id}" data-kind="badge">Request</button>
+  </div>`;
+}
 function upgradePanel(l){
-  const pend = new Set((PT.upgrades || []).filter(u => u.application_id === l.id).map(u => u.kind));
+  const mine = (PT.upgrades || []).filter(u => u.application_id === l.id);
+  const pend = new Map(mine.map(u => [u.kind, u]));
   const has = { badge: !!l.badge, banner: !!l.banner, lock: !!l.locked_position };
+  const requested = k => k === 'badge' && pend.get(k).badge_text
+    ? `<span class="badge pending">Requested</span> <span class="lb" style="background:${escapeHtml(pend.get(k).badge_color || '#c9a227')}">${escapeHtml(pend.get(k).badge_text)}</span>`
+    : '<span class="badge pending">Requested</span>';
   return `<div class="pt-upgrade">
     <b class="pt-upgrade-title">Upgrades</b>
     ${Object.entries(UPGRADES).map(([k, u]) => `<div class="pt-upgrade-row">
       <div><b>${u.name}</b> <span class="pf-note">${u.price}</span><p class="pf-note">${u.why}</p></div>
       ${has[k] ? '<span class="badge live">Active</span>'
-        : pend.has(k) ? '<span class="badge pending">Requested</span>'
+        : pend.has(k) ? requested(k)
+        : k === 'badge' ? badgeRequestForm(l)
         : `<button class="mini-btn green" data-request="${l.id}" data-kind="${k}">Request</button>`}
     </div>`).join('')}
     <p class="pf-note" style="margin:8px 0 0">We confirm each request by email, take payment, and switch it on.</p>
@@ -1476,8 +1540,14 @@ function wireListings(){
 
     const req = e.target.closest('[data-request]');
     if(req){
+      let badge = null;
+      if(req.dataset.kind === 'badge'){
+        const box = req.closest('.pt-badge-req');
+        badge = { text: box.querySelector('.up-text').value.trim(), color: box.querySelector('.up-color').value };
+        if(!badge.text){ toast('Type the label you want on your badge first.', false); box.querySelector('.up-text').focus(); return; }
+      }
       req.disabled = true;
-      const err = await requestUpgrade(req.dataset.request, PT.slug, req.dataset.kind);
+      const err = await requestUpgrade(req.dataset.request, PT.slug, req.dataset.kind, null, badge);
       if(err){ req.disabled = false; toast('Could not send that request: ' + err, false); return; }
       PT.upgrades = await myUpgradeRequests(PT.slug);
       renderListings();
@@ -1526,6 +1596,13 @@ function wireListings(){
     if(t.tagName === 'TEXTAREA' && t.id.startsWith('ed-desc-')){
       const c = el('ed-count-' + t.id.slice(8));
       if(c) c.textContent = t.value.length + '/300';
+    }
+    /* live preview of the badge being requested */
+    const box = t.closest('.pt-badge-req');
+    if(box){
+      const pv = box.querySelector('.up-preview');
+      pv.textContent = box.querySelector('.up-text').value.trim() || 'Your label';
+      pv.style.background = box.querySelector('.up-color').value;
     }
   };
 

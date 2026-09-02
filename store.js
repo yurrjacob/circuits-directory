@@ -444,7 +444,7 @@ async function profileRunByStaff(handle){
 /* Only these columns are readable by visitors: email, phone and resume_path are
    private (talent marketplace, 2026-09-02) and leave the table solely through
    my_profile() for the owner and talent_contact() for subscribed companies. */
-const PROFILE_PUBLIC_COLS = 'user_id, handle, display_name, created_at, updated_at, suspended_at, title, years, bio, talent_listed, talent_hidden, talent_status, account_type, credentials';
+const PROFILE_PUBLIC_COLS = 'user_id, handle, display_name, created_at, updated_at, suspended_at, title, years, bio, talent_listed, talent_hidden, talent_status, account_type, credentials, photo_url';
 async function fetchProfileByHandle(handle){
   if(!sb || !handle) return null;
   const { data, error } = await sb.from('profiles').select(PROFILE_PUBLIC_COLS)
@@ -495,15 +495,16 @@ async function listingSearchCounts(slug){
 }
 /* Paid upgrades (badge, banner, locked position) are recorded by staff; the
    owner raises a request here and staff see it in the console. */
-async function requestUpgrade(applicationId, slug, kind, note){
+async function requestUpgrade(applicationId, slug, kind, note, badge){
   if(!sb) return 'No connection';
   const { error } = await sb.from('upgrade_requests')
-    .insert({ application_id: applicationId, company_slug: slug, kind, note: note || null });
+    .insert({ application_id: applicationId, company_slug: slug, kind, note: note || null,
+              badge_text: badge ? badge.text : null, badge_color: badge ? badge.color : null });
   return error ? error.message : '';
 }
 async function myUpgradeRequests(slug){
   if(!sb || !slug) return [];
-  const { data, error } = await sb.from('upgrade_requests').select('id, application_id, kind, created_at, handled_at')
+  const { data, error } = await sb.from('upgrade_requests').select('id, application_id, kind, badge_text, badge_color, created_at, handled_at')
     .eq('company_slug', slug).is('handled_at', null);
   if(error){ console.error('myUpgradeRequests', error); return []; }
   return data || [];
@@ -511,14 +512,14 @@ async function myUpgradeRequests(slug){
 async function fetchUpgradeRequests(){
   if(!sb) return [];
   const { data, error } = await sb.from('upgrade_requests')
-    .select('id, application_id, company_slug, kind, note, created_at, handled_at, applications(keyword, company)')
+    .select('id, application_id, company_slug, kind, note, badge_text, badge_color, created_at, handled_at, applications(keyword, company)')
     .is('handled_at', null).order('created_at', { ascending: true });
   if(error){ console.error('fetchUpgradeRequests', error); return []; }
   return (data || []).map(r => ({ ...r, keyword: r.applications ? r.applications.keyword : '', company: r.applications ? r.applications.company : r.company_slug }));
 }
-async function handleUpgradeRequest(id){
+async function handleUpgradeRequest(id, decision){
   if(!sb) return 'No connection';
-  const { data, error } = await sb.from('upgrade_requests').update({ handled_at: new Date().toISOString() }).eq('id', id).select('id');
+  const { data, error } = await sb.from('upgrade_requests').update({ handled_at: new Date().toISOString(), decision: decision || null }).eq('id', id).select('id');
   if(error) return error.message;
   if(!data || !data.length) return 'That change was refused.';
   return '';

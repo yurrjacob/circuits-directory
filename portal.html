@@ -265,11 +265,11 @@
   <!-- One console, six rooms. Every panel below carries data-adm="<room>";
        admin.js shows one room at a time and remembers the last one opened. -->
   <div class="adm-tabs" role="tablist">
-    <button type="button" class="adm-tab active" data-adm="listings">Listings</button>
-    <button type="button" class="adm-tab" data-adm="upgrades">Upgrades</button>
-    <button type="button" class="adm-tab" data-adm="companies">Companies</button>
-    <button type="button" class="adm-tab" data-adm="employment">Recruiting Applications</button>
+    <button type="button" class="adm-tab active" data-adm="companies">All Companies</button>
+    <button type="button" class="adm-tab" data-adm="listings">Listings</button>
     <button type="button" class="adm-tab" data-adm="applications">Website Applications</button>
+    <button type="button" class="adm-tab" data-adm="upgrades">Upgrade Applications</button>
+    <button type="button" class="adm-tab" data-adm="employment">Recruiting Applications</button>
     <button type="button" class="adm-tab" data-adm="messages">Notifications</button>
     <button type="button" class="adm-tab" data-adm="activity">Activity</button>
   </div>
@@ -326,7 +326,7 @@
   </div>
 
   <!-- Keywords With Banners -->
-  <div class="panel" data-adm="upgrades">
+  <div class="panel" data-adm="listings">
     <div class="panel-head"><h2>Keywords With Banners</h2><span class="hint">Live Keywords Running A Sponsor Banner</span></div>
     <div class="panel-body">
       <div class="list-controls" data-panel="banners">
@@ -348,7 +348,7 @@
   </div>
 
   <!-- Keywords With Badges -->
-  <div class="panel" data-adm="upgrades">
+  <div class="panel" data-adm="listings">
     <div class="panel-head"><h2>Keywords With Badges</h2><span class="hint">Live Keywords Showing A Trust Badge</span></div>
     <div class="panel-body">
       <div class="list-controls" data-panel="badges">
@@ -446,11 +446,11 @@
        from its Listings tab. Staff take payment, apply it with the row controls
        above, then mark it done here. -->
   <div class="panel" data-adm="upgrades">
-    <div class="panel-head"><h2>Upgrade Requests</h2><span class="hint">Take Payment, Apply The Upgrade In Keyword Listings, Then Mark Done</span></div>
+    <div class="panel-head"><h2>Upgrade Applications</h2><span class="hint">Take Payment First. Approve Puts The Upgrade On The Listing, Deny Tells The Company</span></div>
     <div class="panel-body">
       <div class="table-scroll">
         <table class="dash-table">
-          <thead><tr><th>Company</th><th>Keyword</th><th>Upgrade</th><th>Asked</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Company</th><th>Keyword</th><th>Upgrade</th><th>Details</th><th>Asked</th><th>Actions</th></tr></thead>
           <tbody id="upgrades-body"></tbody>
         </table>
       </div>
@@ -495,7 +495,7 @@
 
   <!-- Companies: the only place suspension can be applied or lifted -->
   <div class="panel" data-adm="companies">
-    <div class="panel-head"><h2>Companies</h2><span class="hint" id="companies-hint">Suspend Hides Without Deleting. Talent Access Unlocks The Recruits Directory. Delete Removes The Company And Everything It Has</span></div>
+    <div class="panel-head"><h2>All Companies</h2><span class="hint" id="companies-hint">Suspend Hides Without Deleting. Talent Access Unlocks The Recruits Directory. Delete Removes The Company And Everything It Has</span></div>
     <div class="panel-body">
       <div class="table-scroll">
         <table class="dash-table">

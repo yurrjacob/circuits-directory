@@ -77,7 +77,7 @@ function personProfile(p, staffRun){
   setMeta('description', name + ' on Circuits.com.');
   return `
   <div class="pf-head">
-    <div class="pf-logo">${avatarSvg()}</div>
+    <div class="pf-logo pf-photo">${p.photo_url ? `<img src="${escapeHtml(p.photo_url)}" alt="${escapeHtml(name)}">` : avatarSvg()}</div>
     <div class="pf-id">
       <h1>${escapeHtml(name)}${staffRun ? ' ' + teamMarkHtml() : ''}</h1>
       <p class="pf-tagline">circuits.com/${escapeHtml(p.handle)}</p>
@@ -380,7 +380,7 @@ function rfqForm(co){
 
 function notFound(handle){
   return `<div class="empty"><div class="big">No profile at circuits.com/${escapeHtml(handle)}</div>
-    <p>That name is not taken yet. <a href="/register">Claim it here</a>, or <a href="/">search for a company</a>.</p></div>`;
+    <p>That name is not taken yet. <a href="/join">Claim it here</a>, or <a href="/">search for a company</a>.</p></div>`;
 }
 
 function setMeta(name, content){

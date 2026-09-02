@@ -36,6 +36,23 @@
 
   if(!signedIn()) return;
 
+  /* Get Listed while signed in (Jacob, 2026-09-02): every "Get Listed" button
+     on the site, static or rendered later, lands on the Listings tab of the
+     dashboard instead of the form. Signed out, the form needs no account.
+     An individual account has no Listings tab and may well be getting a
+     company listed, so its buttons keep going to the form. */
+  var kind = '';
+  try{ kind = localStorage.getItem('cx_account_type') || ''; }catch(e){}
+  if(kind !== 'individual'){
+    if(/^\/join(\.html)?$/.test(location.pathname)){ location.replace('/portal#listings'); return; }
+    document.addEventListener('click', function(e){
+      var a = e.target.closest && e.target.closest('a[href="/join"]');
+      if(!a) return;
+      e.preventDefault();
+      location.href = '/portal#listings';
+    });
+  }
+
   /* Hide the signed-out links before first paint, so nobody sees "Sign In"
      flash and then vanish. The Dashboard link itself has to wait for <body>. */
   var css = document.createElement('style');
@@ -76,6 +93,7 @@
   'use strict';
 
   function mount(){
+    if(!document.body) return;      // page already being replaced (signed-in /join)
     var bar = document.querySelector('.topbar .inner');
     if(bar && !bar.querySelector('.nav-burger') && bar.querySelector('.nav')){
       var nav = bar.querySelector('.nav');
