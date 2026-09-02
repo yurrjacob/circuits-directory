@@ -248,8 +248,19 @@
     <div class="stat"><div class="num" id="s-pending">0</div><div class="lbl">Pending Applications</div></div>
   </div>
 
+  <!-- One console, six rooms. Every panel below carries data-adm="<room>";
+       admin.js shows one room at a time and remembers the last one opened. -->
+  <div class="adm-tabs" role="tablist">
+    <button type="button" class="adm-tab active" data-adm="listings">Listings</button>
+    <button type="button" class="adm-tab" data-adm="upgrades">Upgrades</button>
+    <button type="button" class="adm-tab" data-adm="companies">Companies</button>
+    <button type="button" class="adm-tab" data-adm="employment">Employment</button>
+    <button type="button" class="adm-tab" data-adm="messages">Messages</button>
+    <button type="button" class="adm-tab" data-adm="activity">Activity</button>
+  </div>
+
   <!-- Keyword Listings -->
-  <div class="panel">
+  <div class="panel" data-adm="listings">
     <div class="panel-head"><h2>Keyword Listings</h2><span class="hint">Live Keywords List</span></div>
     <div class="panel-body">
       <div id="edit-form" class="listing-form" style="display:none">
@@ -300,7 +311,7 @@
   </div>
 
   <!-- Keywords With Banners -->
-  <div class="panel">
+  <div class="panel" data-adm="upgrades">
     <div class="panel-head"><h2>Keywords With Banners</h2><span class="hint">Live Keywords Running A Sponsor Banner</span></div>
     <div class="panel-body">
       <div class="list-controls" data-panel="banners">
@@ -322,7 +333,7 @@
   </div>
 
   <!-- Keywords With Badges -->
-  <div class="panel">
+  <div class="panel" data-adm="upgrades">
     <div class="panel-head"><h2>Keywords With Badges</h2><span class="hint">Live Keywords Showing A Trust Badge</span></div>
     <div class="panel-body">
       <div class="list-controls" data-panel="badges">
@@ -344,7 +355,7 @@
   </div>
 
   <!-- Pending applications -->
-  <div class="panel">
+  <div class="panel" data-adm="listings">
     <div class="panel-head"><h2>Pending Applications</h2><span class="hint">Each Keyword Awaiting Review</span></div>
     <div class="panel-body">
       <div class="list-controls" data-panel="pending">
@@ -368,7 +379,7 @@
   <!-- Ideas: what applicants typed into "Have Any Ideas? Tell Us What You're
        Thinking" on the Get Listed form. Moved here from the Website
        Applications sheet on 2026-09-01. -->
-  <div class="panel">
+  <div class="panel" data-adm="activity">
     <div class="panel-head"><h2>Ideas</h2><span class="hint">From The Get Listed Form &mdash; Not Shown On Any Profile</span></div>
     <div class="panel-body">
       <div class="table-scroll">
@@ -384,7 +395,7 @@
   <!-- Send a message: lands in the recipient's inbox bell. Everything the site
        does on its own (approvals, reviews, applicants...) arrives the same way
        from database triggers; this is for the human-written ones. -->
-  <div class="panel">
+  <div class="panel" data-adm="messages">
     <div class="panel-head"><h2>Send A Message</h2><span class="hint">Lands In Their Inbox Bell &mdash; To A Handle, An Email, Or Everyone / Individuals / Companies</span></div>
     <div class="panel-body">
       <div class="pf-form" id="notify-form">
@@ -405,7 +416,7 @@
   <!-- Upgrade requests: a company asked for a badge, banner or locked position
        from its Listings tab. Staff take payment, apply it with the row controls
        above, then mark it done here. -->
-  <div class="panel">
+  <div class="panel" data-adm="upgrades">
     <div class="panel-head"><h2>Upgrade Requests</h2><span class="hint">Take Payment, Apply The Upgrade In Keyword Listings, Then Mark Done</span></div>
     <div class="panel-body">
       <div class="table-scroll">
@@ -419,7 +430,7 @@
   </div>
 
   <!-- Recruits (MVP2): people who opted into the directory; Hide pulls one out -->
-  <div class="panel">
+  <div class="panel" data-adm="employment">
     <div class="panel-head"><h2>Recruits</h2><span class="hint">Listed In The Recruits Directory &mdash; Hide Pulls One Out Without Touching Their Profile</span></div>
     <div class="panel-body">
       <div class="table-scroll">
@@ -433,7 +444,7 @@
   </div>
 
   <!-- Jobs (MVP2): a post is invisible until Mark Paid; 30 days per payment -->
-  <div class="panel">
+  <div class="panel" data-adm="employment">
     <div class="panel-head"><h2>Jobs</h2><span class="hint">Mark Paid Starts (Or Extends) 30 Live Days</span></div>
     <div class="panel-body">
       <div class="table-scroll">
@@ -447,7 +458,7 @@
   </div>
 
   <!-- Companies: the only place suspension can be applied or lifted -->
-  <div class="panel">
+  <div class="panel" data-adm="companies">
     <div class="panel-head"><h2>Companies</h2><span class="hint" id="companies-hint">Suspend Hides A Listing Without Deleting Anything &mdash; Talent Access Unlocks The Recruits Directory</span></div>
     <div class="panel-body">
       <div class="table-scroll">
@@ -461,7 +472,7 @@
   </div>
 
   <!-- What people looked for, and who we could not answer -->
-  <div class="panel">
+  <div class="panel" data-adm="activity">
     <div class="panel-head"><h2>What People Search For</h2>
       <span class="hint">Anonymous &mdash; The Term And Whether It Landed, Nothing Else</span></div>
     <div class="panel-body">
@@ -487,7 +498,7 @@
   </div>
 
   <!-- Audit log: append-only, including our own actions -->
-  <div class="panel">
+  <div class="panel" data-adm="activity">
     <div class="panel-head"><h2>Staff Audit Log</h2><span class="hint">Append-Only &mdash; Cannot Be Edited Or Deleted, Including By Us</span></div>
     <div class="panel-body">
       <div class="table-scroll">

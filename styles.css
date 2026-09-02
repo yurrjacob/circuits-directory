@@ -966,9 +966,12 @@ tr.row-warn td{background:#fff3cd}
 .pf-form .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 
 /* portal */
-.pt-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 6px;border-bottom:1px solid var(--line)}
-.pt-tab{border:0;background:none;font:inherit;font-weight:600;padding:9px 14px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent}
-.pt-tab.active{color:var(--ink);border-bottom-color:var(--green)}
+.pt-tabs,.adm-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 6px;border-bottom:1px solid var(--line)}
+.pt-tab,.adm-tab{border:0;background:none;font:inherit;font-weight:600;padding:9px 14px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent}
+.pt-tab.active,.adm-tab.active{color:var(--ink);border-bottom-color:var(--green)}
+.adm-tabs{margin:-8px 0 22px}
+#tab-admin .panel[data-adm]{display:none}
+#tab-admin .panel[data-adm].adm-on{display:block}
 .pt-panel{display:none;padding-top:14px}
 .pt-panel.active{display:block}
 .pt-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}

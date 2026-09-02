@@ -514,6 +514,18 @@ document.addEventListener('change', e => {
 
 function syncControls(){ document.querySelectorAll('.list-controls').forEach(bar=>{ const p = panels[bar.dataset.panel]; if(!p) return; /* the searches bar keeps its own controls */ bar.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active', b.dataset.sort===p.sort)); const l = bar.querySelector('.lc-limit'); if(l) l.value = p.limit; }); } /* Opened from the Admin tab in the portal, not on page load: a company owner
    who is not staff never runs any of this, and never fetches any of it. */
+/* Sub-tabs: one room at a time (Listings / Upgrades / Companies / Employment /
+   Messages / Activity). Data still loads for every panel; only what is on screen changes. */
+function showAdminGroup(g){
+  document.querySelectorAll('.adm-tab').forEach(b => b.classList.toggle('active', b.dataset.adm === g));
+  document.querySelectorAll('#tab-admin .panel[data-adm]').forEach(p => p.classList.toggle('adm-on', p.dataset.adm === g));
+  try{ localStorage.setItem('cx_admin_group', g); }catch(e){}
+}
+document.querySelectorAll('.adm-tab').forEach(b => b.addEventListener('click', () => showAdminGroup(b.dataset.adm)));
+let remembered = 'listings';
+try{ remembered = localStorage.getItem('cx_admin_group') || remembered; }catch(e){}
+showAdminGroup(document.querySelector(`.adm-tab[data-adm="${remembered}"]`) ? remembered : 'listings');
+
 let started = false;
 window.initAdmin = async function(){
   if(started) return;
