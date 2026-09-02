@@ -120,7 +120,10 @@ function renderRecruit(){
       <label class="switch"><input id="me-listed" type="checkbox" ${ME.talent_listed ? 'checked' : ''}>
         <span class="knob" aria-hidden="true"></span><span class="sr-only">List me in the Recruits Directory</span></label>
     </div>
-    ${ME.talent_hidden ? '<p class="pf-note" style="color:#b3261e">Circuits.com staff have hidden this profile from the directory.</p>' : ''}
+    ${ME.talent_listed ? (
+        ME.talent_status === 'Approved' ? '<p class="pf-note" style="color:var(--green-dark)">Approved. Companies searching your keywords can find you.</p>'
+      : ME.talent_status === 'Denied'   ? '<p class="pf-note" style="color:#b3261e">Not approved. Reply through the <a href="/contact">Contact page</a> if you think this is a mistake.</p>'
+      : '<p class="pf-note">Waiting for Circuits.com to approve your listing. You get a message in your inbox when that is done.</p>') : ''}
     ${saveBtn('me-msg-3')}`;
   el('me-keywords').addEventListener('input', renderRecruitPreview);
   renderRecruitPreview();
@@ -220,6 +223,7 @@ async function initPortal(){
     wireIndividual();
     renderIndividual(me);
     activateTab('me');
+    renderJobBoard();
     return;
   }
 
@@ -366,6 +370,7 @@ async function loadCompany(slug){
   renderListings();
   renderPromote();
   renderJobs();
+  renderJobBoard();
 }
 
 /* Applying used to end in silence: the supplier refreshed the portal hoping,
@@ -1272,14 +1277,13 @@ function renderListings(){
         <div>
           <span class="pf-note">${escapeHtml(l.fee || 'Free')}</span>
           <button class="mini-btn" data-edit="${l.id}">Edit</button>
-          ${l.status === 'Approved' ? `<button class="mini-btn green" data-upgrade="${l.id}">Upgrade</button>
-            <button class="mini-btn" data-pause="${l.id}" data-to="${l.paused ? '0' : '1'}">${l.paused ? 'Resume' : 'Pause'}</button>` : ''}
+          ${l.status === 'Approved' ? `<button class="mini-btn" data-pause="${l.id}" data-to="${l.paused ? '0' : '1'}">${l.paused ? 'Resume' : 'Pause'}</button>` : ''}
         </div>
       </div>
       ${listingStats(l)}
       ${listingSummary(l)}
       ${PT.editing === l.id ? listingEditor(l) : ''}
-      ${PT.upgrading === l.id ? upgradePanel(l) : ''}
+      ${l.status === 'Approved' ? upgradePanel(l) : ''}
     </div>`).join('');
   el('pt-listings').innerHTML = rows || `<div class="pt-empty">
     <b>No listings yet</b>
@@ -1321,13 +1325,14 @@ function upgradePanel(l){
   const pend = new Set((PT.upgrades || []).filter(u => u.application_id === l.id).map(u => u.kind));
   const has = { badge: !!l.badge, banner: !!l.banner, lock: !!l.locked_position };
   return `<div class="pt-upgrade">
+    <b class="pt-upgrade-title">Upgrades</b>
     ${Object.entries(UPGRADES).map(([k, u]) => `<div class="pt-upgrade-row">
       <div><b>${u.name}</b> <span class="pf-note">${u.price}</span><p class="pf-note">${u.why}</p></div>
       ${has[k] ? '<span class="badge live">Active</span>'
         : pend.has(k) ? '<span class="badge pending">Requested</span>'
         : `<button class="mini-btn green" data-request="${l.id}" data-kind="${k}">Request</button>`}
     </div>`).join('')}
-    <p class="pf-note" style="margin:8px 0 0">We confirm each request by email, take payment, and switch it on. <button type="button" class="mini-btn" data-upclose="1">Close</button></p>
+    <p class="pf-note" style="margin:8px 0 0">We confirm each request by email, take payment, and switch it on.</p>
   </div>`;
 }
 
@@ -1342,7 +1347,7 @@ function listingSummary(l){
     n(l.certifications, 'certification', 'certifications'), n(l.team, 'team member', 'team members'),
     n(l.gallery, 'photo', 'photos'), l.reviews_enabled ? 'Buyer reviews on' : null].filter(Boolean);
   return `<div class="pt-listing-sum">
-    <p>${l.description ? escapeHtml(l.description) : '<i>No description. Buyers see only your company name on this keyword.</i>'}</p>
+    <p>${l.description ? escapeHtml(l.description) : '<i>No description. Buyers see only your company name and contact information on this keyword.</i>'}</p>
     <span class="pf-note">${bits.join(' · ')}</span>
   </div>`;
 }
@@ -1409,9 +1414,6 @@ function wireListings(){
     const edit = e.target.closest('[data-edit]');
     if(edit){ PT.editing = (PT.editing === edit.dataset.edit) ? null : edit.dataset.edit; renderListings(); return; }
 
-    const up = e.target.closest('[data-upgrade]');
-    if(up){ PT.upgrading = (PT.upgrading === up.dataset.upgrade) ? null : up.dataset.upgrade; renderListings(); return; }
-    if(e.target.closest('[data-upclose]')){ PT.upgrading = null; renderListings(); return; }
     const req = e.target.closest('[data-request]');
     if(req){
       req.disabled = true;
@@ -1713,12 +1715,40 @@ function wireRecruitSearch(){
   });
 }
 
+/* ---- Job Board (Jacob, 2026-09-02): both ends of recruiting in one place,
+   for anyone with an account. Open roles from companies on one side, people
+   in the Recruits Directory on the other. Names stay blurred here; a company
+   unlocks them through Search Recruits. ---- */
+async function renderJobBoard(){
+  const boxes = document.querySelectorAll('.pt-board');
+  if(!boxes.length) return;
+  boxes.forEach(b => { b.innerHTML = '<h2>Job Board</h2><p class="pf-note">Loading…</p>'; });
+  let jobs = [], people = [];
+  try{ [jobs, people] = await Promise.all([jobSearch(''), talentSearch('')]); }
+  catch(e){ boxes.forEach(b => { b.innerHTML = '<h2>Job Board</h2><p class="pf-note">The board could not load just now. Reload to try again.</p>'; }); return; }
+  const jobRow = j => `<div class="pt-board-row">
+      <div><b>${escapeHtml(j.title)}</b> <span class="cell-muted">${escapeHtml(j.company_name)}${j.location ? ', ' + escapeHtml(j.location) : ''}</span>
+        <div class="pf-note" style="margin:2px 0 0">${escapeHtml((j.keywords || []).join(', ') || 'No keywords')}</div></div>
+      <a class="mini-btn" href="/jobs?q=${encodeURIComponent((j.keywords || [])[0] || '')}" target="_blank" rel="noopener">View</a></div>`;
+  const personRow = r => `<div class="pt-board-row">
+      <div><b>${escapeHtml(r.title || 'Circuits industry professional')}</b> <span class="cell-muted">${r.years != null ? r.years + ' yr' + (Number(r.years) === 1 ? '' : 's') : ''}</span>
+        <div class="pf-note" style="margin:2px 0 0">${escapeHtml((r.keywords || []).join(', ') || 'No keywords')}</div></div>
+      <a class="mini-btn" href="/talent?q=${encodeURIComponent((r.keywords || [])[0] || '')}" target="_blank" rel="noopener">View</a></div>`;
+  const html = `<h2>Job Board</h2>
+    <p class="kit-intro">Everything on the Employment Board right now, both ends: roles companies are hiring for, and people looking.</p>
+    <div class="grid2 pt-board-grid">
+      <div><h3>Open roles <span class="cell-muted">(${jobs.length})</span></h3>${jobs.length ? jobs.map(jobRow).join('') : '<p class="pf-note">No open roles right now.</p>'}</div>
+      <div><h3>People looking <span class="cell-muted">(${people.length})</span></h3>${people.length ? people.map(personRow).join('') : '<p class="pf-note">Nobody is listed yet.</p>'}</div>
+    </div>`;
+  boxes.forEach(b => { b.innerHTML = html; });
+}
+
 /* ---- jobs (MVP2) ----
    A post is a row the owner writes; "live" is a fact staff record (paid_until)
    and the Job Board reads. Applicants come from job_applicants(), which the
    database only answers for the employer or staff. */
 function jobStateLabel(j){
-  if(j.closed_at) return null;   // the Live/Closed switch says it
+  if(j.closed_at) return null;   // the Live/Paused switch says it
   if(j.paid_until && new Date(j.paid_until) > new Date()) return { text: 'Live until ' + new Date(j.paid_until).toLocaleDateString(), cls: 'live' };
   if(j.paid_until) return { text: 'Expired. Contact us to renew.', cls: '' };
   return { text: 'Awaiting payment. We will confirm by email.', cls: 'pending' };
@@ -1735,7 +1765,7 @@ async function renderJobs(){
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${st ? `<span class="badge ${st.cls}">${escapeHtml(st.text)}</span>` : ''}
           <button type="button" class="mini-btn" data-applicants="${escapeHtml(j.id)}">New Applicants</button>
           <label class="switch pt-job-sw"><input type="checkbox" data-open="${escapeHtml(j.id)}" ${j.closed_at ? '' : 'checked'}>
-            <span class="knob" aria-hidden="true"></span><span class="sw-text">${j.closed_at ? 'Closed' : 'Live'}</span></label></div>
+            <span class="knob" aria-hidden="true"></span><span class="sw-text">${j.closed_at ? 'Paused' : 'Live'}</span></label></div>
       </div>
       <div class="pt-applicants" id="apps-${escapeHtml(j.id)}" style="display:none"></div>
     </div>`;
@@ -1770,7 +1800,7 @@ function wireJobs(){
       return;
     }
   });
-  /* Live/Closed switch: closing takes the post off the Employment Board at
+  /* Live/Paused switch: pausing takes the post off the Employment Board at
      once; switching it back on restores it (while payment still covers it). */
   box.addEventListener('change', async e => {
     const sw = e.target.closest('[data-open]'); if(!sw) return;

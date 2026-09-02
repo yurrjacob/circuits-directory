@@ -1394,6 +1394,13 @@ body.nav-open .nav-burger .x{display:block}
 .switch input:checked + .knob::after{left:23px}
 .switch input:focus-visible + .knob{box-shadow:0 0 0 3px rgba(118,192,0,.35)}
 .pt-job-sw{display:inline-flex;align-items:center;gap:8px;font-size:.85rem;font-weight:600;color:var(--muted)}
+.pt-upgrade-title{display:block;font-size:.9rem;margin:0 0 4px}
+.pt-board-grid h3{margin:0 0 10px;font-size:.95rem}
+.pt-board-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.pt-board-row:last-child{border-bottom:1px solid var(--line)}
+.adm-frame{display:block;width:100%;height:min(78vh,1100px);border:0;background:var(--card)}
+.embed .topbar,.embed .console-head,.embed .footer{display:none}
+.embed .console{padding:8px 0 24px}
 .pt-job-sw input:checked ~ .sw-text{color:var(--green-dark)}
 
 /* ---- Browse: every claimed keyword, A to Z ---- */

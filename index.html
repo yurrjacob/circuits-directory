@@ -71,12 +71,9 @@
     <h1 class="sr-only">Circuits.com: The Circuits Industry Directory for Suppliers, Parts and Engineers</h1>
     <a href="/" class="hero-link"><img class="logo-hero" src="assets/logo-home.png" alt="Circuits.com"><span class="beta-tag">BETA</span></a>
 
-    <!-- One search box, two indexes (Jacob, 2026-09-02): the directory, or the
-         Employment Board. The toggle only changes where the query goes. -->
-    <div class="search-mode" role="tablist" aria-label="What to search">
-      <button type="button" class="on" data-mode="directory" role="tab" aria-selected="true">Directory</button>
-      <button type="button" data-mode="employment" role="tab" aria-selected="false">Employment</button>
-    </div>
+    <!-- The Directory / Employment toggle is off for now (Jacob, 2026-09-02,
+         "temporarily remove"). The markup is in git at 9d6f087 and app.js still
+         honours data-mode="employment" on the form when it comes back. -->
     <form id="home-form" class="searchbox" autocomplete="off" data-mode="directory">
       <div class="search-pill">
         <input id="home-search" type="text" placeholder="Search products, services, professionals, education, or keywords..." aria-label="Search">

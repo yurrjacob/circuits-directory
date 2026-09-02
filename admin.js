@@ -317,6 +317,7 @@ async function reloadCompanies(){
           ? `<button class="mini-btn green" onclick="setSuspended('${esc(c.slug)}', false)">Reinstate</button>`
           : `<button class="mini-btn" onclick="setSuspended('${esc(c.slug)}', true)">Suspend</button>`}
         <button class="mini-btn" onclick="setTalentAccessUI('${esc(c.slug)}')">Talent Access</button>
+        <button class="mini-btn danger" onclick="deleteCompanyUI('${esc(c.slug)}')">Delete</button>
       </td></tr>`).join('');
   $('companies-empty').style.display = allCompanies.length ? 'none' : 'block';
 }
@@ -408,24 +409,26 @@ let allRecruits = [];
 async function reloadRecruits(){
   const body = $('recruits-body'); if(!body) return;
   allRecruits = await fetchRecruits();
+  const order = { Pending: 0, Approved: 1, Denied: 2 };
+  allRecruits.sort((a, b) => (order[a.talent_status] ?? 9) - (order[b.talent_status] ?? 9));
   body.innerHTML = allRecruits.map(r => `
-    <tr class="${r.talent_hidden ? 'row-waiting' : ''}">
+    <tr class="${r.talent_status === 'Pending' ? 'row-waiting' : ''}">
       <td><a href="/${esc(r.handle)}" target="_blank" rel="noopener">${esc(r.display_name || r.handle)}</a></td>
       <td>${esc(r.title || 'none')}</td>
       <td>${r.years == null ? 'none' : r.years}</td>
       <td class="cell-muted">${new Date(r.updated_at).toLocaleDateString()}</td>
-      <td>${r.talent_hidden ? '<b>Hidden</b>' : 'Listed'}</td>
+      <td>${r.talent_status === 'Pending' ? '<b>Pending</b>' : esc(r.talent_status)}</td>
       <td class="row-actions">
-        ${r.talent_hidden
-          ? `<button class="mini-btn green" onclick="hideRecruit('${esc(r.user_id)}', false)">Unhide</button>`
-          : `<button class="mini-btn" onclick="hideRecruit('${esc(r.user_id)}', true)">Hide</button>`}
+        ${r.talent_status !== 'Approved' ? `<button class="mini-btn green" onclick="setRecruitStatus('${esc(r.user_id)}', 'Approved')">Approve</button>` : ''}
+        ${r.talent_status !== 'Denied' ? `<button class="mini-btn" onclick="setRecruitStatus('${esc(r.user_id)}', 'Denied')">Deny</button>` : ''}
       </td></tr>`).join('');
   $('recruits-empty').style.display = allRecruits.length ? 'none' : 'block';
 }
-async function hideRecruit(userId, hide){
+async function setRecruitStatus(userId, status){
   const r = allRecruits.find(x => x.user_id === userId);
-  if(hide && !confirm('Hide ' + (r ? (r.display_name || r.handle) : 'this person') + ' from the Recruits Directory? Their profile stays as it is.')) return;
-  const err = await setTalentHidden(userId, hide);
+  const who = r ? (r.display_name || r.handle) : 'this person';
+  if(status === 'Denied' && !confirm('Deny ' + who + '? They leave the Recruits Directory and get a message saying so. Their profile stays as it is.')) return;
+  const err = await setTalentStatus(userId, status);
   if(err){ alert('Could not do that: ' + err); return; }
   await reloadRecruits();
 }
@@ -433,7 +436,7 @@ async function hideRecruit(userId, hide){
 /* ---- jobs (MVP2): live for 30 days per payment, recorded by staff ---- */
 let allJobs = [];
 function jobState(j){
-  if(j.closed_at) return 'Closed';
+  if(j.closed_at) return 'Paused';
   if(j.paid_until && new Date(j.paid_until) > new Date()) return 'Live until ' + new Date(j.paid_until).toLocaleDateString();
   if(j.paid_until) return 'Expired';
   return 'Awaiting payment';
@@ -449,8 +452,8 @@ async function reloadJobs(){
       <td class="cell-muted">${new Date(j.created_at).toLocaleDateString()}</td>
       <td>${esc(jobState(j))}</td>
       <td class="row-actions">
-        ${j.closed_at ? '' : `<button class="mini-btn green" onclick="markJobPaid('${esc(j.id)}')">Mark paid</button>
-        <button class="mini-btn" onclick="closeJob('${esc(j.id)}')">Close</button>`}
+        ${j.closed_at ? '' : `<button class="mini-btn green" onclick="markJobPaid('${esc(j.id)}')">Approve (30 days)</button>
+        <button class="mini-btn" onclick="closeJob('${esc(j.id)}')">Deny</button>`}
       </td></tr>`).join('');
   $('jobs-empty').style.display = allJobs.length ? 'none' : 'block';
 }
@@ -463,10 +466,25 @@ async function markJobPaid(id){
 }
 async function closeJob(id){
   const j = allJobs.find(x => x.id === id);
-  if(!confirm('Close ' + (j ? '"' + j.title + '"' : 'this job') + '? It leaves the Job Board and cannot be reopened.')) return;
+  if(!confirm('Deny ' + (j ? '"' + j.title + '"' : 'this job') + '? It is paused, comes off the Employment Board, and the company gets a message. They can switch it back to Live from their dashboard.')) return;
   const err = await updateJob(id, { closed_at: new Date().toISOString() });
   if(err){ alert('Could not do that: ' + err); return; }
   await reloadJobs();
+}
+
+/* Deletion is final: the company row, its listings, jobs, reviews and requests
+   all go. Typing the exact name is the confirmation; a reason goes in the log. */
+async function deleteCompanyUI(slug){
+  const co = allCompanies.find(c => c.slug === slug);
+  const name = co ? co.name : slug;
+  const typed = prompt('Delete ' + name + ' for good? This removes the company page, every keyword listing, job post, review and request it has. The owner keeps their sign-in.\n\nType the company name exactly to confirm:');
+  if(typed === null) return;
+  if(typed.trim() !== name.trim()){ alert('The name did not match. Nothing was deleted.'); return; }
+  const reason = prompt('Reason (goes in the permanent audit log):');
+  if(reason === null) return;
+  const err = await deleteCompany(slug, reason);
+  if(err){ alert('Could not delete: ' + err); return; }
+  await reloadCompanies(); reload();
 }
 
 async function setSuspended(slug, suspend){
@@ -542,6 +560,9 @@ function syncControls(){ document.querySelectorAll('.list-controls').forEach(bar
 function showAdminGroup(g){
   document.querySelectorAll('.adm-tab').forEach(b => b.classList.toggle('active', b.dataset.adm === g));
   document.querySelectorAll('#tab-admin .panel[data-adm]').forEach(p => p.classList.toggle('adm-on', p.dataset.adm === g));
+  /* the Website Applications sheet is its own page, framed in; it loads on first open */
+  const fr = $('apps-frame');
+  if(g === 'applications' && fr && !fr.src) fr.src = '/applications?embed=1';
   try{ localStorage.setItem('cx_admin_group', g); }catch(e){}
 }
 document.querySelectorAll('.adm-tab').forEach(b => b.addEventListener('click', () => showAdminGroup(b.dataset.adm)));
@@ -570,6 +591,6 @@ window.initAdmin = async function(){
    tools/check.js fails if a new onclick appears without being listed here. */
 Object.assign(window, {
   editListing, editBadge, removeListing, togglePause, lockListing,
-  approveApp, rejectApp, setSuspended, setTalentAccessUI, hideRecruit, markJobPaid, closeJob, doneUpgrade, sendNotificationUI, notifyAudienceUI
+  approveApp, rejectApp, setSuspended, setTalentAccessUI, markJobPaid, closeJob, doneUpgrade, sendNotificationUI, notifyAudienceUI, setRecruitStatus, deleteCompanyUI
 });
 })();

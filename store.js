@@ -444,7 +444,7 @@ async function profileRunByStaff(handle){
 /* Only these columns are readable by visitors: email, phone and resume_path are
    private (talent marketplace, 2026-09-02) and leave the table solely through
    my_profile() for the owner and talent_contact() for subscribed companies. */
-const PROFILE_PUBLIC_COLS = 'user_id, handle, display_name, created_at, updated_at, suspended_at, title, years, bio, talent_listed, talent_hidden, account_type, credentials';
+const PROFILE_PUBLIC_COLS = 'user_id, handle, display_name, created_at, updated_at, suspended_at, title, years, bio, talent_listed, talent_hidden, talent_status, account_type, credentials';
 async function fetchProfileByHandle(handle){
   if(!sb || !handle) return null;
   const { data, error } = await sb.from('profiles').select(PROFILE_PUBLIC_COLS)
@@ -692,16 +692,26 @@ async function jobApplicants(jobId){
 async function fetchRecruits(){
   if(!sb) return [];
   const { data, error } = await sb.from('profiles')
-    .select('user_id, handle, display_name, title, years, talent_listed, talent_hidden, updated_at')
+    .select('user_id, handle, display_name, title, years, talent_listed, talent_hidden, talent_status, updated_at')
     .eq('talent_listed', true).order('updated_at', { ascending: false }).limit(500);
   if(error){ console.error('fetchRecruits', error); return []; }
   return data || [];
 }
-async function setTalentHidden(userId, hidden){
+/* Staff decide who appears in the Recruits Directory: Pending, Approved or
+   Denied. The guard trigger silently reverts anyone else's change. */
+async function setTalentStatus(userId, status){
   if(!sb) return 'No connection';
-  const { data, error } = await sb.from('profiles').update({ talent_hidden: !!hidden }).eq('user_id', userId).select('user_id');
+  const { data, error } = await sb.from('profiles').update({ talent_status: status }).eq('user_id', userId).select('user_id');
   if(error) return error.message;
   if(!data || !data.length) return 'That change was refused.';
+  return '';
+}
+/* Staff only. Removes the company and everything hanging off it (listings,
+   jobs, reviews, requests); the owner's sign-in and personal profile stay. */
+async function deleteCompany(slug, reason){
+  if(!sb) return 'No connection';
+  const { error } = await sb.rpc('delete_company', { p_slug: slug, p_reason: reason || null });
+  if(error){ console.error('deleteCompany', error); return error.message; }
   return '';
 }
 async function setTalentAccess(slug, untilIso){

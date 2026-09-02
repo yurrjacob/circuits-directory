@@ -93,6 +93,8 @@
       <div class="pf-form" id="pt-recruit"></div>
       <div><h3 style="margin:0 0 10px">How companies see you</h3><div id="pt-recruit-preview"></div></div>
     </div>
+
+    <div class="pt-section pt-board"></div>
   </section>
 
   <!-- ===== account settings (both) ===== -->
@@ -209,6 +211,8 @@
       <div id="rs-note" class="tal-note"></div>
       <div id="rs-results"></div>
     </div>
+
+    <div class="pt-section pt-board"></div>
   </section>
 
   <!-- listings: every keyword listing with its stats, badges, banners and upgrades -->
@@ -238,7 +242,6 @@
       <h1>Admin console</h1>
       <p>Every keyword listing, banner and application across Circuits.com.</p>
     </div>
-    <a class="mini-btn green" href="applications">View Website Applications →</a>
   </div>
 
   <div class="stat-grid">
@@ -254,7 +257,8 @@
     <button type="button" class="adm-tab active" data-adm="listings">Listings</button>
     <button type="button" class="adm-tab" data-adm="upgrades">Upgrades</button>
     <button type="button" class="adm-tab" data-adm="companies">Companies</button>
-    <button type="button" class="adm-tab" data-adm="employment">Recruiting</button>
+    <button type="button" class="adm-tab" data-adm="employment">Recruiting Applications</button>
+    <button type="button" class="adm-tab" data-adm="applications">Website Applications</button>
     <button type="button" class="adm-tab" data-adm="messages">Notifications</button>
     <button type="button" class="adm-tab" data-adm="activity">Activity</button>
   </div>
@@ -445,7 +449,7 @@
 
   <!-- Recruits (MVP2): people who opted into the directory; Hide pulls one out -->
   <div class="panel" data-adm="employment">
-    <div class="panel-head"><h2>Recruits</h2><span class="hint">Listed In The Recruits Directory. Hide Pulls One Out Without Touching Their Profile</span></div>
+    <div class="panel-head"><h2>Recruits</h2><span class="hint">People Asking To Be In The Recruits Directory. Approve To List Them, Deny To Keep Them Out</span></div>
     <div class="panel-body">
       <div class="table-scroll">
         <table class="dash-table">
@@ -459,7 +463,7 @@
 
   <!-- Jobs (MVP2): a post is invisible until Mark Paid; 30 days per payment -->
   <div class="panel" data-adm="employment">
-    <div class="panel-head"><h2>Jobs</h2><span class="hint">Mark Paid Starts (Or Extends) 30 Live Days</span></div>
+    <div class="panel-head"><h2>Jobs</h2><span class="hint">Approve Once Paid: 30 Live Days, Extended Each Time. Deny Takes It Off The Board</span></div>
     <div class="panel-body">
       <div class="table-scroll">
         <table class="dash-table">
@@ -471,9 +475,16 @@
     </div>
   </div>
 
+  <!-- Website Applications: the Get Listed sheet (applications.html) framed in,
+       loaded the first time the tab opens. Same sign-in, same database. -->
+  <div class="panel" data-adm="applications">
+    <div class="panel-head"><h2>Website Applications</h2><span class="hint">Every Get Listed Submission. Click A Cell To Edit It</span></div>
+    <iframe id="apps-frame" class="adm-frame" title="Website Applications"></iframe>
+  </div>
+
   <!-- Companies: the only place suspension can be applied or lifted -->
   <div class="panel" data-adm="companies">
-    <div class="panel-head"><h2>Companies</h2><span class="hint" id="companies-hint">Suspend Hides A Listing Without Deleting Anything. Talent Access Unlocks The Recruits Directory</span></div>
+    <div class="panel-head"><h2>Companies</h2><span class="hint" id="companies-hint">Suspend Hides Without Deleting. Talent Access Unlocks The Recruits Directory. Delete Removes The Company And Everything It Has</span></div>
     <div class="panel-body">
       <div class="table-scroll">
         <table class="dash-table">
