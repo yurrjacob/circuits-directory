@@ -8,6 +8,20 @@ const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
 
+/* No em dashes anywhere on the site (Jacob, 2026-09-02: "now or ever").
+   Every page, script, stylesheet and doc, comments included, so nothing can
+   leak back into copy. backups/ is frozen history and stays as it was. */
+{
+  const walk = d => fs.readdirSync(d, { withFileTypes: true }).flatMap(e => {
+    const p = path.join(d, e.name);
+    if(e.isDirectory()) return ['backups', 'node_modules', '.git'].includes(e.name) ? [] : walk(p);
+    return /\.(html|js|css|md|txt|xml|json|svg)$/.test(e.name) ? [p] : [];
+  });
+  const dash = new RegExp(String.fromCharCode(0x2014) + '|&md' + 'ash;');   // spelled out so this file passes its own check
+  const dashed = walk(ROOT).filter(f => dash.test(fs.readFileSync(f, 'utf8'))).map(f => path.relative(ROOT, f));
+  assert.strictEqual(dashed.join(', '), '', `em dash found in: ${dashed.join(', ')}. Use a comma, a full stop, a colon or brackets instead.`);
+}
+
 /* --- slugify must agree with the SQL slugify(), or /company/<slug> 404s --- */
 const slugify = s => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
@@ -17,7 +31,7 @@ const CASES = [
   ["Mike's Electric",         'mike-s-electric'],
   ['Circuits.com',            'circuits-com'],
   ['  Spaced  Out  ',         'spaced-out'],
-  ['ACME—Ünïcode Ltd', 'acme-n-code-ltd'],
+  ['ACME–Ünïcode Ltd', 'acme-n-code-ltd'],
   ['123 Numbers',             '123-numbers'],
   ['A&B Semi',                'a-b-semi'],
   ['---',                     ''],
@@ -93,7 +107,7 @@ const RESERVED_IN_DB = ['about','admin','applications','browse','claim','compani
   'dashboard','data','directory','how-it-works','index','join','login','portal','profile',
   'privacy','register','reset','results','robots','search','server','sitemap','store','styles','talent','jobs','terms','thread','tools'];
 /* build-profiles.js writes one root page per live handle, so those files are
-   named after handles on purpose — that company already owns the name. Only
+   named after handles on purpose, that company already owns the name. Only
    hand-written pages need reserving.
 
    Generated pages are told apart by the marker build-profiles.js stamps into
@@ -108,7 +122,7 @@ for (const f of fs.readdirSync(ROOT)) {
   const name = f.replace(/\.html$/, '');
   if (name === '404' || isGeneratedProfile(f)) continue;
   assert.ok(RESERVED_IN_DB.includes(name),
-    `root page ${f} is not in the reserved handle list — a company could claim circuits.com/${name}`);
+    `root page ${f} is not in the reserved handle list, a company could claim circuits.com/${name}`);
 }
 
 /* --- one header, everywhere ---
@@ -148,14 +162,14 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
 {
   const home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   assert.ok(/class="popular"/.test(home),
-    'the Popular line is gone from the homepage — it seeds the search box');
+    'the Popular line is gone from the homepage, it seeds the search box');
   {
     const strip = (home.match(/<div class="popular">[\s\S]*?<\/div>/) || [''])[0];
     const links = strip.match(/href="([^"]+)"/g) || [];
     assert.ok(links.length >= 10, 'the Popular line lost most of its suggestions');
     for (const l of links) {
       assert.ok(/href="\/results\?q=/.test(l),
-        `the Popular line links to ${l} — every item must run a search, not open a page`);
+        `the Popular line links to ${l}, every item must run a search, not open a page`);
     }
     assert.ok(!/All Categories/.test(strip),
       'the Popular line still offers All Categories, and there is no category page');
@@ -226,7 +240,7 @@ for (const fn of ['fetchAllCompanies', 'fetchSecurityLog']) {
     // (?<![-a-z]) so max-width and min-width are not mistaken for width
     for (const p of rule[2].matchAll(/(?<![-a-z])(min-width|width)\s*:\s*(\d+)px/g)) {
       assert.ok(+p[2] <= BUDGET,
-        `${sel} sets ${p[1]}:${p[2]}px outside a media query — wider than a 320px phone`);
+        `${sel} sets ${p[1]}:${p[2]}px outside a media query, wider than a 320px phone`);
     }
   }
 }
@@ -234,7 +248,7 @@ for (const fn of ['fetchAllCompanies', 'fetchSecurityLog']) {
 /* --- the shared badge RENDERER must never present a paid label as certified ---
        The paid badge BUILDER moved off Get Listed in MVP1 (2026-08-31, backed
        up in backups/mvp1-baseline-2026-08-25/ for MVP2). Badges are still
-       rendered on approved listings that carry one, set by staff — so the
+       rendered on approved listings that carry one, set by staff, so the
        renderer and its safeguards stay. */
 const badgeApp = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
 /* Badges render through one helper now, so the explanation lives there rather
@@ -247,7 +261,7 @@ assert.ok(/not a certification/i.test(badgeApp),
 
 /* The Circuits.com mark is NOT a badge. A badge is a paid label a company
    picks for one keyword listing, and the same company may pick a different one
-   on another keyword — so a badge only ever renders against a listing. Our mark
+   on another keyword, so a badge only ever renders against a listing. Our mark
    belongs to the account and renders beside the name. Keeping these two apart
    is the whole point; badgeHtml() must not know about our mark at all. */
 assert.ok(/function teamMarkHtml/.test(badgeApp), 'the team mark renderer is gone');
@@ -260,11 +274,11 @@ assert.ok(/Circuits\.com team/i.test(badgeApp),
   const body = badgeApp.slice(from, badgeApp.indexOf('\n}', from));
   assert.ok(!/lb-cx/.test(body), 'a Trust Badge can still render as the team mark');
   assert.ok(!/\^circuits\\?\.com\$/i.test(body) && !/isCircuitsBadge/.test(body),
-    'badgeHtml() still branches on the badge text being our mark — it is not a badge');
+    'badgeHtml() still branches on the badge text being our mark, it is not a badge');
   assert.ok(!/favicon/.test(body), 'a Trust Badge can still render our logo');
 }
 assert.ok(!/function isCircuitsBadge/.test(badgeApp),
-  'isCircuitsBadge() is back — the team mark is not a kind of badge any more');
+  'isCircuitsBadge() is back, the team mark is not a kind of badge any more');
 
 const badgeProf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
 // the mark goes beside the name, and nothing else does
@@ -273,7 +287,7 @@ assert.ok(/<h1>[^`]*teamMarkHtml\(\)/.test(badgeProf),
 {
   const h1 = (badgeProf.match(/<h1>.*<\/h1>/) || [''])[0];
   assert.ok(!/badgeHtml/.test(h1),
-    'a paid Trust Badge is rendering beside the company name — badges belong on listings');
+    'a paid Trust Badge is rendering beside the company name, badges belong on listings');
 }
 // ...and the badge goes beside the listing, and only there
 assert.ok(/badgeHtml\(k\.badge, 'kw-lb'\)/.test(badgeProf),
@@ -307,7 +321,7 @@ assert.ok(/company_slug: slug/.test(notifyFn), 'the notification no longer ident
 assert.ok(!/\bto:|recipient|supplier_email/.test(notifyFn),
   'the browser is naming the email recipient, which would make this an open relay');
 assert.ok(/catch/.test(notifyFn) && /return false/.test(notifyFn),
-  'a failed notification is not swallowed — it would break the quote form');
+  'a failed notification is not swallowed, it would break the quote form');
 const rfqSrc = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
 assert.ok(/notifySupplier\(slug,/.test(rfqSrc), 'the quote form no longer notifies the supplier');
 assert.ok(!/await notifySupplier/.test(rfqSrc),
@@ -322,8 +336,7 @@ const security = fs.readFileSync(path.join(ROOT, 'SECURITY.md'), 'utf8');
 for (const doc of [readme, security]) {
   assert.ok(/service role key/i.test(doc), 'the docs no longer warn about the service role key');
 }
-// and no file may contain one. Match the *shape* of a secret, not the words —
-// looking for "service_role" also matches this check and every doc describing it.
+// and no file may contain one. Match the *shape* of a secret, not the words, // looking for "service_role" also matches this check and every doc describing it.
 const SECRET_SHAPES = [
   /sb_secret_[A-Za-z0-9_-]{8,}/,                              // current format
   /eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/ // legacy JWT format
@@ -386,7 +399,7 @@ const fields = [...fieldBlock.matchAll(/key:\s*'([a-z_]+)',\s*weight:\s*(\d+)/g)
   .map(m => ({ key: m[1], weight: +m[2] }));
 assert.ok(fields.length >= 6, `only ${fields.length} profile fields are scored`);
 const totalWeight = fields.reduce((a, f) => a + f.weight, 0);
-// an empty profile must read 0%, a full one exactly 100% — off-by-one here is
+// an empty profile must read 0%, a full one exactly 100%, off-by-one here is
 // the difference between "you're done" and a meter that never reaches the end
 assert.strictEqual(Math.round(0 / totalWeight * 100), 0, 'an empty profile does not read 0%');
 assert.strictEqual(Math.round(totalWeight / totalWeight * 100), 100, 'a full profile never reaches 100%');
@@ -394,7 +407,7 @@ for (const must of ['logo', 'description']) {
   const f = fields.find(x => x.key === must);
   assert.ok(f, `${must} is not counted towards profile completeness`);
   assert.ok(f.weight >= Math.max(...fields.map(x => x.weight)),
-    `${must} should carry the heaviest weight — it is what a buyer judges the listing on`);
+    `${must} should carry the heaviest weight, it is what a buyer judges the listing on`);
 }
 // unanswered buyers come before housekeeping
 const nextFn = dashSrc.slice(dashSrc.indexOf('function renderNextSteps'), dashSrc.indexOf('/* ---------- overview'));
@@ -405,10 +418,10 @@ assert.ok(/missing\.slice\(0, 3\)/.test(nextFn),
 assert.ok(/\.pt-meter\{/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
   'the completeness meter has no styling');
 /* The overview tab (and its pt-next block) is OFF the live dashboard since
-   2026-08-20 — the markup lives in backups/dashboard-2026-08-20/portal.html,
+   2026-08-20, the markup lives in backups/dashboard-2026-08-20/portal.html,
    and everything above guards the dormant code so a restore still works. */
 assert.ok(fs.readFileSync(path.join(ROOT, 'backups', 'dashboard-2026-08-20', 'portal.html'), 'utf8').includes('id="pt-next"'),
-  'the backed-up portal.html lost the next-steps block — the overview would be unrestorable');
+  'the backed-up portal.html lost the next-steps block, the overview would be unrestorable');
 
 /* --- a supplier's reply has to actually reach the buyer ---
        sendFounderEmail() reads fields.email to set _replyto and to address the
@@ -481,7 +494,7 @@ for (const fn of ['fetchApprovedByKeyword', 'fetchCompanyByHandle', 'fetchProfil
   const body = lookupSrc.slice(lookupSrc.indexOf(`async function ${fn}(`));
   const guard = body.slice(0, body.indexOf('\n}'));
   assert.ok(/if\(error\)\{[^}]*throw error/.test(guard),
-    `${fn} swallows its error instead of throwing — a failed lookup would be shown as "available"`);
+    `${fn} swallows its error instead of throwing, a failed lookup would be shown as "available"`);
 }
 // and every caller has to actually handle the throw
 for (const [f, needle] of [['app.js', 'loadErrorHtml('], ['profile.js', 'loadErrorHtml('],
@@ -536,10 +549,10 @@ const btnCss = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
 for (const ctx of ['.auth-foot', '.info-card']) {
   const colours = new RegExp(`${ctx.replace('.', '\\.')} a\\{[^}]*color:`).test(btnCss);
   if (!colours) continue;
-  // must be the plain rule, not just the :hover one — match up to the brace
+  // must be the plain rule, not just the :hover one, match up to the brace
   const esc = ctx.replace('.', '\\.');
   assert.ok(new RegExp(`${esc} a\\.btn-primary[,{]`).test(btnCss),
-    `${ctx} colours its links but never exempts a.btn-primary — buttons there render green on green`);
+    `${ctx} colours its links but never exempts a.btn-primary, buttons there render green on green`);
 }
 
 /* --- no decorative arrows on the auth buttons --- */
@@ -583,7 +596,7 @@ assert.ok(gaIdx > fnIdx && fnIdx !== -1,
 assert.ok(/if \(c === 'yes'\) \{ loadGA\(\); return; \}/.test(an),
   'analytics loads without an explicit yes');
 assert.ok(/data-c="no"/.test(an) && /data-c="yes"/.test(an),
-  'the cookie banner no longer offers a real choice — decline must be possible');
+  'the cookie banner no longer offers a real choice, decline must be possible');
 
 // declining must also stop the first-party visitor id
 const storeAn = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
@@ -606,25 +619,25 @@ assert.ok(priv.includes('cookie-reset'), 'privacy policy has no way to change a 
 assert.ok(priv.includes('/contact'), 'privacy policy gives no route for a data request');
 
 /* --- contact form ---
-   The category dropdown was REMOVED on 2026-08-20 at Jacob's direction — a
+   The category dropdown was REMOVED on 2026-08-20 at Jacob's direction, a
    short form beats pre-sorted triage. It must stay gone, and the essentials
    must stay present. */
 const contactHtml = fs.readFileSync(path.join(ROOT, 'contact.html'), 'utf8');
 assert.ok(!contactHtml.includes('id="c-category"'),
-  'the category dropdown is back on the contact form — it was removed on purpose');
+  'the category dropdown is back on the contact form, it was removed on purpose');
 for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   assert.ok(contactHtml.includes(`id="${id}"`), `contact form is missing ${id}`);
 }
 
 /* --- every form gates its fields on format (Jacob, 2026-08-20) ---
    A value that is not the thing the field says it is must not reach the
-   database — on the public forms AND on the admin/portal editing surfaces. */
+   database, on the public forms AND on the admin/portal editing surfaces. */
 {
   const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
   const appSrc = read('app.js'), portalSrc = read('portal.js'), storeSrc = read('store.js');
   // one canonical set of validators, available to pages that load only store.js
   for (const fn of ['isValidEmail', 'isValidPhone', 'isValidWebsite', 'isValidYear']) {
-    assert.ok(storeSrc.includes(`function ${fn}`), `store.js lost ${fn} — the admin dashboard cannot validate without it`);
+    assert.ok(storeSrc.includes(`function ${fn}`), `store.js lost ${fn}, the admin dashboard cannot validate without it`);
   }
   assert.ok(/isValidEmail\(email\)/.test(appSrc),
     'registration no longer validates the email address format');
@@ -643,22 +656,22 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
 }
 
 /* --- the dashboard, after 2026-08-20 (Jacob's direction) ---
-   Overview, Quote requests and Reviews are OFF the dashboard for now — backed
-   up in backups/dashboard-2026-08-20/ — and Profile settings is split into
+   Overview, Quote requests and Reviews are OFF the dashboard for now, backed
+   up in backups/dashboard-2026-08-20/, and Profile settings is split into
    three tabs. The profile form spans all three, so every field must still be
    in the page and each tab needs its own working Save. */
 {
   const portalHtml = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
   for (const gone of ['data-tab="overview"', 'data-tab="inquiries"', 'data-tab="reviews"']) {
     assert.ok(!portalHtml.includes(gone),
-      `${gone} is back on the dashboard — it was removed on purpose (restore notes in backups/)`);
+      `${gone} is back on the dashboard, it was removed on purpose (restore notes in backups/)`);
   }
   /* 2026-09-02 (Jacob): About & Branding folded into Company Details, and the
-     Showcase tab is gone — certifications, team, gallery and buyer reviews
+     Showcase tab is gone, certifications, team, gallery and buyer reviews
      belong to each keyword listing, edited under Listings, so no tab may carry
      them at company level. */
   for (const gone of ['data-tab="branding"', 'data-tab="showcase"', 'data-tab="jobs"', 'id="f-certs"', 'id="f-reviews-on"']) {
-    assert.ok(!portalHtml.includes(gone), `${gone} is back on the dashboard — showcase and jobs live under Listings now`);
+    assert.ok(!portalHtml.includes(gone), `${gone} is back on the dashboard, showcase and jobs live under Listings now`);
   }
   assert.ok(portalHtml.includes('data-tab="company"'), 'the dashboard lost its Company Details tab');
   // every company-level field still present in the one tab
@@ -679,15 +692,14 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   }
   for (const f of ['portal.html', 'portal.js', 'README.md']) {
     assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'dashboard-2026-08-20', f)),
-      `the dashboard backup is missing ${f} — the removed tabs would be unrestorable`);
+      `the dashboard backup is missing ${f}, the removed tabs would be unrestorable`);
   }
 }
 
 /* --- admins are visibly ours, and never lose their own settings ---
    (Jacob, 2026-08-20) A staff member's PERSON profile carries the Circuits.com
    mark, decided by the database like the company version. And a staff account
-   with no company listing gets the console PLUS their profile/account card —
-   Mike was left with nothing but the admin panel. */
+   with no company listing gets the console PLUS their profile/account card, Mike was left with nothing but the admin panel. */
 {
   const storeSrc2 = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
   const profSrc = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
@@ -698,7 +710,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     'a staff-run person profile no longer shows the Circuits.com mark');
   /* 2026-09-02: two dashboards. An account with no company gets the
      Individual Dashboard (Individual Details / Experience / Employment /
-     Promote / Account Settings) — never a bare admin console. */
+     Promote / Account Settings), never a bare admin console. */
   const portalHtml2 = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
   for (const tab of ['data-tab="me"', 'data-tab="experience"', 'data-tab="recruit"', 'data-tab="employment"', 'data-tab="promote"', 'data-tab="account"']) {
     assert.ok(portalHtml2.includes(tab), `portal.html lost its ${tab} tab`);
@@ -767,9 +779,9 @@ assert.ok(/Deliberately the same outcome|If that account exists/.test(
        "Verified" or our own mark. The distinction is carried in the Terms. */
 const joinSrc = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
 assert.ok(!/data-text="Verified"/i.test(joinSrc),
-  'Verified is on sale again — a bought badge would be indistinguishable from a real check');
+  'Verified is on sale again, a bought badge would be indistinguishable from a real check');
 assert.ok(!/data-text="Circuits\.com"/i.test(joinSrc),
-  'our own mark is on sale — a bought badge would be indistinguishable from a real check');
+  'our own mark is on sale, a bought badge would be indistinguishable from a real check');
 const termsHtml = fs.readFileSync(path.join(ROOT, 'terms.html'), 'utf8');
 assert.ok(/Circuits\.com badge/.test(termsHtml) && /cannot be purchased/i.test(termsHtml),
   'the terms do not distinguish paid Trust Badges from our own mark');
@@ -825,7 +837,7 @@ for (const f of NAV_PAGES) {
        The separate employee login was a second door with its own rules. It is
        gone; everybody signs in at /portal and admins get an extra tab. */
 for (const gone of ['login.html', 'admin.html']) {
-  assert.ok(!fs.existsSync(path.join(ROOT, gone)), gone + ' is back — there should be one way in');
+  assert.ok(!fs.existsSync(path.join(ROOT, gone)), gone + ' is back, there should be one way in');
 }
 {
   const portalHtml = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
@@ -851,8 +863,7 @@ for (const gone of ['login.html', 'admin.html']) {
 
   /* ...but the table rows are HTML strings carrying onclick="foo(...)", and an
      inline handler is evaluated in global scope. Wrapping the file once put
-     every row button — Edit, Badge, Remove, Pause, Approve, Reject, Suspend —
-     out of reach of its own code, and they silently did nothing. Every name a
+     every row button, Edit, Badge, Remove, Pause, Approve, Reject, Suspend, out of reach of its own code, and they silently did nothing. Every name a
      row calls must be published on window. (The claims, reviews and buyers-
      waiting panels, with their Approve/Deny/Mark done buttons, were removed
      from the console on 2026-09-01, so the floor is 7.) */
@@ -864,7 +875,7 @@ for (const gone of ['login.html', 'admin.html']) {
     assert.ok(adminJs.includes('function ' + fn + '('),
       `the console calls ${fn}() from a row button but never defines it`);
     assert.ok(exported.includes(fn),
-      `${fn}() is called from a row button but is trapped inside the wrapper — that button does nothing`);
+      `${fn}() is called from a row button but is trapped inside the wrapper, that button does nothing`);
   }
   // and nothing may be exported that does not exist
   for (const fn of exported) {
@@ -882,11 +893,11 @@ assert.ok(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8').includes('[a-z0
 
 /* --- accounts are created on Register, and nowhere else ---
        Anyone may hold a profile. Get Listed became a FREE listing REQUEST in
-       MVP1 (2026-08-31) — it no longer creates an account — so Register is now
+       MVP1 (2026-08-31), it no longer creates an account, so Register is now
        the only door, and no other page may call signUp. */
 for (const f of ['app.js', 'portal.js', 'portal.html', 'claim.html', 'admin.js', 'company.html', 'profile.js']) {
   assert.ok(!fs.readFileSync(path.join(ROOT, f), 'utf8').includes('signUp('),
-    `${f} can create an account — that belongs on Register only (Get Listed is a free request in MVP1)`);
+    `${f} can create an account, that belongs on Register only (Get Listed is a free request in MVP1)`);
 }
 assert.ok(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8').includes('sb.auth.signUp'),
   'registerProfile() no longer creates the account');
@@ -915,7 +926,7 @@ const joinHtml = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
 for (const gone of ['id="acct-step"', 'id="f-handle"', 'id="f-pass"', 'id="promo-check"',
                     'id="badge-check"', 'id="quote-step"']) {
   assert.ok(!joinHtml.includes(gone),
-    `${gone} is back on Get Listed — MVP1 is a free request (that piece moved to backups/ for MVP2)`);
+    `${gone} is back on Get Listed, MVP1 is a free request (that piece moved to backups/ for MVP2)`);
 }
 for (const id of ['f-company', 'f-contact', 'f-email', 'f-phone', 'kw-input', 'f-terms']) {
   assert.ok(joinHtml.includes(`id="${id}"`), `join.html lost its request field ${id}`);
@@ -925,7 +936,7 @@ assert.ok(/up to 10 keywords/i.test(joinHtml), 'the free-keywords note is gone f
 
 const joinJs = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
 // a free request: an email to reply to, filed as Pending, and no account made
-assert.ok(!/await signUp\(/.test(joinJs), 'Get Listed creates an account again — MVP1 is a free request');
+assert.ok(!/await signUp\(/.test(joinJs), 'Get Listed creates an account again, MVP1 is a free request');
 assert.ok(/email: v\('f-email'\)/.test(joinJs), 'the request no longer takes its reply-to email from the form');
 assert.ok(/status: 'Pending'/.test(joinJs), 'the Get Listed request is not filed as Pending');
 
@@ -968,7 +979,7 @@ for (const trigger of ['renderQuote()']) {
        A missing closing brace once swallowed the quote form, the review form
        and the click tracking into wireCopyLink(), which has no `slug` or `co`.
        Everything still rendered, so the render check passed and the page looked
-       perfect — but every quote request threw on `slug` before it was saved,
+       perfect, but every quote request threw on `slug` before it was saved,
        and the buyer was told "Sorry, that didn't send". Nothing caught it.
 
        So: walk profile.js properly (strings, template literals and comments all
@@ -988,7 +999,7 @@ function scanFunctions(src) {
       if (c === '/' && n === '/') { mode = 'line'; skip(); }
       else if (c === '/' && n === '*') { mode = 'block'; skip(); }
       /* A regex literal, not division. Without this the `"` inside /[&<>"]/g
-         opens a phantom string and every brace after it is miscounted — which
+         opens a phantom string and every brace after it is miscounted, which
          is exactly how initJoin() appeared to run to the end of the file and
          swallow every function defined after it. */
       else if (c === '/' && /^$|[(,=:[!&|?{};+\-*%<>~^]/.test(prev)) { mode = 're'; skip(); }
@@ -1043,13 +1054,13 @@ function scanFunctions(src) {
 
   for (const name of ['slug', 'co']) {
     /* Only real variable reads. `entry.slug` is a property and `slug: x` is a
-       key — neither needs the variable to be in scope. */
+       key, neither needs the variable to be in scope. */
     const uses = new RegExp('(?<![.\\w$])' + name + '\\b(?!\\s*:)');
     const declares = new RegExp('(?:const|let|var)\\s+' + name + '\\b');
     for (const f of fns) {
       if (!uses.test(f.body)) continue;
       assert.ok(f.params.includes(name) || declares.test(f.body),
-        `${f.name}() (profile.js lines ${f.from}-${f.to}) uses \`${name}\` but never receives or declares it — ` +
+        `${f.name}() (profile.js lines ${f.from}-${f.to}) uses \`${name}\` but never receives or declares it, ` +
         `every handler bound in there throws the moment somebody uses it`);
     }
   }
@@ -1057,14 +1068,14 @@ function scanFunctions(src) {
   // the three things a buyer or supplier actually does must live where they work
   for (const call of ['submitInquiry(slug', 'notifySupplier(slug', 'submitReview(slug']) {
     assert.ok(wp.body.includes(call),
-      `${call}...) is not inside wireProfile() any more — it cannot see the company it is for`);
+      `${call}...) is not inside wireProfile() any more, it cannot see the company it is for`);
   }
 }
 
 /* --- app.js: nothing outside initJoin() may touch its private variables ---
        adoptExistingCompany() referenced handleMsg, which belongs to initJoin().
        Reading it threw a ReferenceError and the function abandoned the rest of
-       its work silently; ASSIGNING to handleState did something worse — with no
+       its work silently; ASSIGNING to handleState did something worse, with no
        'use strict' it created a brand new global that nothing reads, so the
        code looked like it worked and changed nothing at all. */
 {
@@ -1073,13 +1084,13 @@ function scanFunctions(src) {
   assert.ok(join, 'initJoin is gone from app.js');
 
   /* Every name declared directly inside initJoin(). Declarations share a
-     statement — `const a = x, b = y;` — so the comma list has to be walked,
+     statement, `const a = x, b = y;`, so the comma list has to be walked,
      not just the name straight after const/let/var. */
   const declaredIn = body => {
     const names = new Set();
     for (const m of body.matchAll(/(?:const|let|var)\s+([^;{}]+)/g)) {
       for (const part of m[1].split(',')) {
-        /* only `name =` or a bare trailing `name` — this skips the fragments
+        /* only `name =` or a bare trailing `name`, this skips the fragments
            that splitting on commas carves out of a call like el(a, b) */
         const id = /^\s*([A-Za-z0-9_$]+)\s*(?:=[^=]|$)/.exec(part);
         if (id) names.add(id[1]);
@@ -1091,7 +1102,7 @@ function scanFunctions(src) {
 
   for (const f of fns) {
     /* Functions nested INSIDE initJoin() close over its variables quite
-       legitimately — only code declared outside it is the problem. */
+       legitimately, only code declared outside it is the problem. */
     if (f.from >= join.from && f.to <= join.to) continue;
     for (const name of privates) {
       const uses = new RegExp('(?<![.\\w$])' + name + '\\b(?!\\s*:)');
@@ -1114,7 +1125,7 @@ function scanFunctions(src) {
   assert.ok(/from\('searches'\)\.insert/.test(logFn), 'searches are no longer recorded');
   for (const pii of ['visitor', 'auth.uid', 'ip', 'user_id', 'email']) {
     assert.ok(!new RegExp('\\b' + pii.replace('.', '\\.') + '\\b').test(logFn),
-      `logSearch now records ${pii} — a search log must not identify anybody`);
+      `logSearch now records ${pii}, a search log must not identify anybody`);
   }
   const priv = fs.readFileSync(path.join(ROOT, 'privacy.html'), 'utf8');
   assert.ok(/What people search for/i.test(priv),
@@ -1136,7 +1147,7 @@ require('child_process').execFileSync(process.execPath,
 // same reason: it evaluates part of portal.js and must not share globals
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'completeness-check.js')], { stdio: 'inherit' });
-// likewise — the logo cropper's arithmetic, checked without a browser
+// likewise, the logo cropper's arithmetic, checked without a browser
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'crop-check.js')], { stdio: 'inherit' });
 // and the search results page, driven the way a buyer drives it
@@ -1145,16 +1156,16 @@ require('child_process').execFileSync(process.execPath,
 // and the quote-request inbox, driven the way a supplier drives it
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'inbox-check.js')], { stdio: 'inherit' });
-// and the claim evidence staff decide on — the false "verified" is the failure
+// and the claim evidence staff decide on, the false "verified" is the failure
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'claim-check.js')], { stdio: 'inherit' });
-// and the buyer's side of a quote request — the reply used to reach nobody
+// and the buyer's side of a quote request, the reply used to reach nobody
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'thread-check.js')], { stdio: 'inherit' });
 // and the boundary on what a supplier may edit on their own listing
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'listing-edit-check.js')], { stdio: 'inherit' });
-// and the admin row buttons, actually clicked — a dead button looks like a live one
+// and the admin row buttons, actually clicked, a dead button looks like a live one
 require('child_process').execFileSync(process.execPath,
   [require('path').join(__dirname, 'admin-check.js')], { stdio: 'inherit' });
 
@@ -1270,7 +1281,7 @@ assert.ok(!/NaN|Infinity/.test(flat), 'an all-zero series broke the chart scale'
 /* The chart must scale uniformly. preserveAspectRatio="none" stretched x and y
    independently, which is what made every label look squashed. */
 assert.ok(!/preserveAspectRatio\s*=\s*"none"/.test(svg),
-  'chart stretches non-uniformly again — labels will be distorted');
+  'chart stretches non-uniformly again, labels will be distorted');
 assert.ok(/viewBox="0 0 \d+ \d+"/.test(svg), 'chart lost its viewBox');
 const cssSrc = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
 const chartCss = (cssSrc.match(/\.g-chart\{[^}]*\}/) || [''])[0];
@@ -1278,7 +1289,7 @@ assert.ok(/height:\s*auto/.test(chartCss),
   '.g-chart needs height:auto, or a fixed height forces a non-uniform scale');
 
 /* Axis labels must stay readable at every range, so they must thin out as the
-   series gets denser — 365 daily labels would be an unreadable smear. */
+   series gets denser, 365 daily labels would be an unreadable smear. */
 const labelCount = s => (lineChartSvg(s, d => 'xx').match(/class="g-xlbl"/g) || []).length;
 for (const [span, bucket, cap] of [
   [864e5, 'hour', 24], [7 * 864e5, 'day', 7], [30 * 864e5, 'day', 30],
@@ -1287,7 +1298,7 @@ for (const [span, bucket, cap] of [
   const s = bucketSeries([], new Date(2026, 0, 1), new Date(2026, 0, 1 + span / 864e5), bucket);
   const labels = labelCount(s);
   assert.ok(labels >= 2, `range with ${s.length} points drew only ${labels} axis labels`);
-  assert.ok(labels <= 10, `range with ${s.length} points drew ${labels} axis labels — they will overlap`);
+  assert.ok(labels <= 10, `range with ${s.length} points drew ${labels} axis labels, they will overlap`);
   assert.ok(s.length <= cap + 2, `${bucket} bucketing produced ${s.length} points, expected about ${cap}`);
 }
 
@@ -1298,7 +1309,7 @@ for (const [bucket, days] of [['hour', 1], ['day', 7], ['day', 30], ['week', 182
   const xs = [...lineChartSvg(s, d => 'Sep 30').matchAll(/class="g-xlbl" x="([\d.]+)"/g)].map(m => Number(m[1]));
   for (let i = 1; i < xs.length; i++) {
     assert.ok(xs[i] - xs[i - 1] >= 70,
-      `${bucket} range: axis labels only ${(xs[i] - xs[i - 1]).toFixed(0)}px apart — they overlap`);
+      `${bucket} range: axis labels only ${(xs[i] - xs[i - 1]).toFixed(0)}px apart, they overlap`);
   }
 }
 

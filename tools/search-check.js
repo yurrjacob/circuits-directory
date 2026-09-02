@@ -2,12 +2,12 @@
 /* The search results page, driven without a browser.
 
    An empty keyword opens with the banner-available pitch (mocked-up sponsor
-   card and listing row — Jacob's chosen layout, restored 2026-08-20; the
+   card and listing row, Jacob's chosen layout, restored 2026-08-20; the
    buyer's "tell me when someone lists" capture was removed 2026-09-01). Any
    keyword page without a sponsor shows the same example banner and the
    "Get Listed" button (2026-09-01). The other invariants stand: every search
    logged, empty pages noindexed, and a failed lookup never mistaken for an
-   unclaimed keyword — that would sell a keyword twice. */
+   unclaimed keyword, that would sell a keyword twice. */
 const fs = require('fs'), path = require('path'), assert = require('assert');
 
 const src = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
@@ -92,11 +92,11 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   assert.ok(/<span class="doc-link">Website<\/span>/.test(captured) && /<span class="doc-link">View Docs<\/span>/.test(captured),
     'the example listing lost its Website / View Docs placeholders');
   assert.ok(!/<a[^>]*>(Website|View Docs)<\/a>/.test(captured),
-    'a placeholder Website / View Docs label is a real link — it must not go anywhere');
+    'a placeholder Website / View Docs label is a real link, it must not go anywhere');
   assert.ok(!/wanted-form|Tell me when someone lists|Looking to buy/.test(captured),
     'the "tell me when someone lists" capture is back (removed 2026-09-01)');
   assert.ok(captured.indexOf('This Banner is Available') < captured.indexOf('Get Listed For'),
-    'the Get Listed button is not at the bottom — the pitch should come first');
+    'the Get Listed button is not at the bottom, the pitch should come first');
 
   /* --- every search is recorded, hit or miss --- */
   assert.deepStrictEqual(logged, { term: 'oscillators', hits: 0 },
@@ -104,7 +104,7 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
 
   /* --- an empty page must not invite Google in --- */
   assert.ok(headMeta && /noindex/.test(headMeta.content),
-    'a keyword with no listings is left indexable — Google would fill up with empty pages');
+    'a keyword with no listings is left indexable, Google would fill up with empty pages');
 
   /* --- a lookup that FAILED must never look like an unclaimed keyword --- */
   lookupThrows = true; logged = null;
@@ -170,7 +170,7 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
                         contact: 'Pat', phone: '(555) 4', email: 'n@b.co', docs: [] }];
   await initResults('sample');
   assert.ok(headMeta && /noindex/.test(headMeta.content),
-    'the sample fixture page is indexable — fake companies would reach Google');
+    'the sample fixture page is indexable, fake companies would reach Google');
   listingsToReturn = [{ company: 'Acme', company_handle: 'acme', keyword: 'oscillators',
                         contact: 'Sam', phone: '(555) 2', email: 'a@b.co', docs: [] }];
   await initResults('oscillators');
@@ -180,7 +180,7 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
      contact path now, so those must stay. */
   const tbodyEmail = captured.slice(captured.indexOf('<tbody>'));
   assert.ok(/mailto:a@b\.co/.test(tbodyEmail),
-    'the results table lost its email column — buyers cannot email straight from the list');
+    'the results table lost its email column, buyers cannot email straight from the list');
   assert.ok(/tel:/.test(tbodyEmail),
     'the results table lost its phone links');
   assert.ok(!/Request a Quote/.test(captured),
@@ -215,14 +215,14 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   assert.ok(/Exclusive Sponsor/.test(captured), 'the sponsor banner stopped rendering');
   const tbody = captured.slice(captured.indexOf('<tbody>'));
   assert.ok(!/Sponsor Co/.test(tbody),
-    'the Exclusive Sponsor is still listed in the table as well as in the banner — it is shown twice');
+    'the Exclusive Sponsor is still listed in the table as well as in the banner, it is shown twice');
   assert.ok(/Acme/.test(tbody) && /Bell/.test(tbody), 'the ordinary listings stopped rendering');
 
   /* numbering runs over what is actually in the list, so pulling the sponsor
      out must not leave a gap at the top */
   const ranks = [...tbody.matchAll(/class="rank"[^>]*>(\d+)</g)].map(m => m[1]);
   assert.deepStrictEqual(ranks, ['1', '2'],
-    `the list is numbered ${ranks.join(',')} — removing the sponsor left a hole in the sequence`);
+    `the list is numbered ${ranks.join(',')}, removing the sponsor left a hole in the sequence`);
 
   /* the sponsor banner shows the supplier's own contact details (no quote button) */
   assert.ok(/premium-contact[\s\S]*?mailto:s@b\.co/.test(captured),
@@ -233,5 +233,5 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   assert.ok(!/This Banner is Available|Get Listed For|John Doe/.test(captured),
     'the example banner or Get Listed button is showing on a keyword that already has a sponsor');
 
-  console.log('search results OK — banner pitch on empty and unsponsored lists, numbered rows, sponsor not listed twice');
+  console.log('search results OK, banner pitch on empty and unsponsored lists, numbered rows, sponsor not listed twice');
 })();

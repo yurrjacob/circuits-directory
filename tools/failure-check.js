@@ -4,7 +4,7 @@
    screens on Circuits.com are sales pitches: the results page offers to sell
    the keyword, and the profile page offers to sell the address. If a failed
    lookup falls through to those, we advertise things that already belong to
-   paying customers — and could sell the same keyword twice.
+   paying customers, and could sell the same keyword twice.
    Run on its own, or via tools/check.js which requires it. */
 const fs = require('fs');
 const path = require('path');
@@ -103,5 +103,5 @@ function checkProfile(){
 module.exports = Promise.resolve()
   .then(checkSearch)
   .then(checkProfile)
-  .then(() => { console.log('failure-mode check passed — a dead database sells nothing'); })
+  .then(() => { console.log('failure-mode check passed, a dead database sells nothing'); })
   .catch(e => { console.error(e.message); process.exit(1); });

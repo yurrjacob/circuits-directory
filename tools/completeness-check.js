@@ -2,7 +2,7 @@
 /* The profile completeness meter drives what the portal nags a supplier about,
    so the arithmetic needs to be right at both ends: an untouched profile must
    read 0% and a finished one exactly 100%. A meter that never reaches the end
-   is worse than no meter — it tells a paying customer they are never done.
+   is worse than no meter, it tells a paying customer they are never done.
 
    Only the two pure pieces of portal.js are evaluated here, so no DOM is
    needed. Run on its own, or via tools/check.js. */
@@ -30,7 +30,7 @@ const done = profileCompleteness(full);
 assert.strictEqual(done.pct, 100, `a finished profile reads ${done.pct}%, expected 100`);
 assert.strictEqual(done.missing.length, 0, 'a finished profile still lists missing fields');
 
-// whitespace is not content — " " must not count as a filled field
+// whitespace is not content, " " must not count as a filled field
 const blank = {};
 PROFILE_FIELDS.forEach(f => { blank[f.key] = '   '; });
 assert.strictEqual(profileCompleteness(blank).pct, 0, 'spaces are being counted as a filled field');
@@ -45,7 +45,7 @@ assert.ok(!partial.missing.some(f => f.key === 'logo'), 'a present logo is wrong
 assert.strictEqual(profileCompleteness({ logo: null, description: undefined }).pct, 0);
 assert.strictEqual(profileCompleteness(null).pct, 0, 'a missing company object crashes the meter');
 
-console.log(`profile completeness OK — empty 0%, full 100%, sample partial ${partial.pct}%`);
+console.log(`profile completeness OK, empty 0%, full 100%, sample partial ${partial.pct}%`);
 
 /* --- "up 18%" has to survive a month with no previous activity ---
    Percentage change divides by the previous period, which is zero for every
@@ -68,7 +68,7 @@ assert.ok(!/NaN|Infinity|undefined/.test(allCases), `change label produced ${all
 // PostgREST returns bigint columns as strings; the maths must not silently concatenate
 assert.ok(/↑ 100%/.test(changeLabel('20', '10')), 'string counts from the database break the calculation');
 
-console.log('change-vs-previous OK — no NaN, no Infinity, no divide by zero');
+console.log('change-vs-previous OK, no NaN, no Infinity, no divide by zero');
 
 /* --- saved suppliers live in the visitor's own browser ---
    No account, no server, so the whole thing rests on localStorage behaving.
@@ -109,8 +109,7 @@ store['cx_saved'] = '{"not":"an array"}';
 assert.deepStrictEqual(savedList(), [], 'a non-array in storage should read as empty');
 
 globalThis.localStorage.setItem = () => { throw new Error('QuotaExceededError'); };
-/* the app logs this failure on purpose; swallow it so a passing run stays silent
-   — a healthy run that prints a stack trace teaches everyone to ignore output */
+/* the app logs this failure on purpose; swallow it so a passing run stays silent, a healthy run that prints a stack trace teaches everyone to ignore output */
 {
   const real = console.warn;
   let warned = false;
@@ -119,9 +118,9 @@ globalThis.localStorage.setItem = () => { throw new Error('QuotaExceededError');
     assert.doesNotThrow(() => toggleSaved({ slug:'z', handle:'z', name:'Z' }),
       'a browser that blocks storage would crash the profile page');
   } finally { console.warn = real; }
-  /* silence is only safe if the swallow is still deliberate — if the app ever
+  /* silence is only safe if the swallow is still deliberate, if the app ever
      stops noticing that the save failed, this should start failing */
   assert.ok(warned, 'a blocked save is now silent in the app, so nobody would ever find out');
 }
 
-console.log('saved suppliers OK — no duplicates, capped, survives corrupt and blocked storage');
+console.log('saved suppliers OK, no duplicates, capped, survives corrupt and blocked storage');

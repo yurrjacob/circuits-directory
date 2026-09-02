@@ -3,7 +3,7 @@
 
    The Badge button silently did nothing for days. The cause was one word:
    editBadge() read `all` where the array is called `allApps`, so the handler
-   threw ReferenceError before it did anything. Nothing caught it — the file is
+   threw ReferenceError before it did anything. Nothing caught it, the file is
    valid JavaScript, the button renders, the export check passed, and an
    exception inside an inline onclick just disappears into the console.
 
@@ -14,18 +14,18 @@
    onclick handlers reference, and fail on ReferenceError.
 
    Every handler is called with an id that does not exist, which is the safe
-   early-return path in each one — nothing is mutated, but the lookup that
+   early-return path in each one, nothing is mutated, but the lookup that
    would blow up still runs. */
 const fs = require('fs'), path = require('path'), vm = require('vm'), assert = require('assert');
 
 const src = fs.readFileSync(path.join(__dirname, '..', 'admin.js'), 'utf8');
 
 /* Every name an inline handler calls: onclick="fname(".
-   Anchored to a real HTML attribute — whitespace, a lowercase event name and an
-   opening quote — because `on\w+` alone also matches inside `textContent =`. */
+   Anchored to a real HTML attribute, whitespace, a lowercase event name and an
+   opening quote, because `on\w+` alone also matches inside `textContent =`. */
 const portalAdmin = fs.readFileSync(path.join(__dirname, '..', 'portal.html'), 'utf8').split('id="tab-admin"')[1] || '';
 const handlers = [...new Set([...(src + portalAdmin).matchAll(/\son[a-z]+\s*=\s*"\s*([A-Za-z0-9_$]+)\s*\(/g)].map(m => m[1]))];
-assert.ok(handlers.length, 'no inline handlers found in admin.js — has the markup changed?');
+assert.ok(handlers.length, 'no inline handlers found in admin.js, has the markup changed?');
 
 const noop = () => {};
 const el = () => new Proxy({}, {
@@ -55,7 +55,7 @@ sandbox.globalThis = sandbox;
 vm.createContext(sandbox);
 /* Load the real store.js rather than stubbing its API. Without window.supabase
    its `sb` is null and every function returns early, so nothing touches the
-   network — and admin.js is checked against the functions that actually exist
+   network, and admin.js is checked against the functions that actually exist
    instead of a stub list that silently rots as store.js changes. */
 vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'store.js'), 'utf8'), sandbox, { filename: 'store.js' });
 vm.runInContext(src, sandbox, { filename: 'admin.js' });
@@ -63,7 +63,7 @@ vm.runInContext(src, sandbox, { filename: 'admin.js' });
 /* Exclusive Sponsor exclusivity has to be expressed in the SAME terms search
    uses. The database index was keyed on lower(keyword) while search matches on
    the normalised form, so "oscillator" and "oscillators" were two sponsorships
-   to the index and one keyword to a buyer — sold twice, both banners on the
+   to the index and one keyword to a buyer, sold twice, both banners on the
    same page. The index is now on keyword_norm; this keeps the console honest
    about it, since staff rely on its warning before promising exclusivity. */
 {
@@ -72,17 +72,17 @@ vm.runInContext(src, sandbox, { filename: 'admin.js' });
   assert.ok(from >= 0 && to > from, 'bannerConflict is gone from admin.js');
   const body = src.slice(from, to);
   assert.ok(/normKw\(/.test(body),
-    'bannerConflict no longer normalises the keyword — it would miss the plural of a keyword ' +
+    'bannerConflict no longer normalises the keyword, it would miss the plural of a keyword ' +
     'that is already sponsored, and staff would promise exclusivity the database then refuses');
   assert.ok(!/\.toLowerCase\(\)\s*===/.test(body),
-    'bannerConflict compares raw lowercased keywords — that is the bug that let oscillator and ' +
+    'bannerConflict compares raw lowercased keywords, that is the bug that let oscillator and ' +
     'oscillators both be sold as exclusive');
 }
 
 (async () => {
   const missing = handlers.filter(h => typeof sandbox[h] !== 'function');
   assert.strictEqual(missing.join(', '), '',
-    `admin.js has onclick handlers that are not reachable from global scope: ${missing.join(', ')} — ` +
+    `admin.js has onclick handlers that are not reachable from global scope: ${missing.join(', ')}, ` +
     'the IIFE traps them, so those buttons do nothing when clicked');
 
   for(const h of handlers){
@@ -92,12 +92,12 @@ vm.runInContext(src, sandbox, { filename: 'admin.js' });
     }catch(err){
       /* `err instanceof ReferenceError` is false here: the error comes from the
          vm's own realm, so it does not share this file's intrinsics. Match on
-         the name — getting this wrong made the check silently pass. */
+         the name, getting this wrong made the check silently pass. */
       assert.ok(!(err && err.name === 'ReferenceError'),
-        `${h}() throws ReferenceError: ${err.message}. That button does nothing when clicked — ` +
+        `${h}() throws ReferenceError: ${err.message}. That button does nothing when clicked, ` +
         'an exception inside an inline onclick is swallowed, so the page looks fine and the click is lost.');
-      // any other error is the stub's fault, not the code's — ignore it
+      // any other error is the stub's fault, not the code's, ignore it
     }
   }
-  console.log(`admin buttons OK — ${handlers.length} handlers reachable and none throw on a missing row`);
+  console.log(`admin buttons OK, ${handlers.length} handlers reachable and none throw on a missing row`);
 })();

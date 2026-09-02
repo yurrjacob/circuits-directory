@@ -4,7 +4,7 @@
    What matters here is behaviour, not markup: a list you can open, a thread
    that shows the original message, and an unread count that only drops for the
    request you actually opened. The old screen expanded every request at once
-   and marked them all read the moment the tab was clicked — both of which
+   and marked them all read the moment the tab was clicked, both of which
    looked fine in a screenshot. */
 const fs = require('fs'), path = require('path'), assert = require('assert');
 
@@ -67,7 +67,7 @@ assert.strictEqual((html().match(/data-open=/g) || []).length, 3, 'expected one 
 assert.ok(/Dana Ruiz/.test(html()) && /Sam Okoye/.test(html()), 'the list does not name the senders');
 assert.ok(/q-unread/.test(html()), 'a New request is not marked unread in the list');
 // the list is a summary: no reply boxes, no full bodies, and nothing fetched yet
-assert.ok(!/textarea/.test(html()), 'the list is rendering reply boxes — that was the old expanded view');
+assert.ok(!/textarea/.test(html()), 'the list is rendering reply boxes, that was the old expanded view');
 assert.ok(!/data-send/.test(html()), 'the list is rendering send buttons');
 assert.strictEqual(threadFetches, 0, 'the list fetched threads before anything was opened');
 assert.ok(!html().includes('x'.repeat(200)), 'the list is dumping the whole message body');
@@ -80,7 +80,7 @@ assert.ok(/data-back/.test(html()), 'there is no way back to the list');
 assert.ok(/textarea/.test(html()) && /data-send="q1"/.test(html()), 'the open request has no reply box');
 assert.ok(/dana@northgate\.example/.test(html()), 'the open request does not show how to reach them');
 assert.ok(/LM317T/.test(html()) && /500/.test(html()), 'the open request lost the part and quantity');
-assert.ok(!/Sam Okoye/.test(html()), 'the other request is still on screen — this is not one thread at a time');
+assert.ok(!/Sam Okoye/.test(html()), 'the other request is still on screen, this is not one thread at a time');
 assert.ok(/data-status="q1"/.test(html()), 'the open request cannot be moved along the pipeline');
 
 /* --- the thread reads as a conversation, starting with what they sent --- */
@@ -121,5 +121,5 @@ assert.ok(/data-status="q1"/.test(html()), 'the open request cannot be moved alo
     'exactly the unopened request should still be unread');
   assert.ok(/Lee Park/.test(html()), 'the still-unread request vanished from the list');
 
-  console.log('quote request inbox OK — a list you open one at a time, and only what you open is marked read');
+  console.log('quote request inbox OK, a list you open one at a time, and only what you open is marked read');
 })();

@@ -3,8 +3,7 @@
 
    What could go wrong and cost us: the company drags or zooms until the square
    contains blank edges, uploads it, and every listing shows a logo with a white
-   strip down one side. So the only thing worth asserting is the invariant —
-   the picture always covers the box, at every zoom level, after any drag. */
+   strip down one side. So the only thing worth asserting is the invariant, the picture always covers the box, at every zoom level, after any drag. */
 const fs = require('fs'), path = require('path'), assert = require('assert');
 
 const src = fs.readFileSync(path.join(__dirname, '..', 'portal.js'), 'utf8');
@@ -85,4 +84,4 @@ for (const [nw, nh] of shapes) {
   assert.ok(drawn.x <= 0 && drawn.x + drawn.w >= OUT, 'the saved crop does not fill its canvas');
 }
 
-console.log('logo cropper OK — the square is always filled, at every zoom and drag');
+console.log('logo cropper OK, the square is always filled, at every zoom and drag');

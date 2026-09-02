@@ -8,7 +8,7 @@
 
    Deliberately no dependencies and no browser: it checks status codes and the
    HTML that arrives. It cannot catch anything that only appears after
-   JavaScript runs — say so rather than implying wider coverage than it has. */
+   JavaScript runs, say so rather than implying wider coverage than it has. */
 
 const BASE = (process.argv[2] || 'https://circuits.com').replace(/\/$/, '');
 const bust = () => '?smoke=' + Date.now();
@@ -48,7 +48,7 @@ const MUST_LOAD = [
 /* URLs that must NOT exist. Old dead paths that used to 404 noisily in Search
    Console, and the stray root copies of the directory pages. */
 /* `/tools/*` is served too, because Pages publishes everything in the repo.
-   That is not a leak — the repo is public and holds no secrets (check.js fails
+   That is not a leak, the repo is public and holds no secrets (check.js fails
    the build if a secret key ever appears). Not worth excluding. */
 const MUST_404 = ['/parts', '/search', '/data.js', '/server.js',
                   '/buyers.html', '/check.js',
@@ -58,7 +58,7 @@ const MUST_404 = ['/parts', '/search', '/data.js', '/server.js',
                   // search box and a search, so people browsed instead of searching
                   '/directory', '/directory/buyers', '/directory/motion-control-ics'];
 
-/* Not dead — deliberately kept alive as redirects, so old links and anything
+/* Not dead, deliberately kept alive as redirects, so old links and anything
    Google still has indexed lands somewhere useful instead of on a 404. */
 const MUST_REDIRECT = [
   ['/how-it-works', '/about'],

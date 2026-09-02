@@ -61,7 +61,7 @@ const el = (id) => ({ set innerHTML(v){ if(id==='profile-body') captured = v; },
   textContent:'', title:'' });
 
 /* Saved suppliers live in localStorage. Node has none, and the site must not
-   fall over in a browser that blocks it either — so stub it and let the real
+   fall over in a browser that blocks it either, so stub it and let the real
    try/catch in profile.js do its job. */
 global.localStorage = {
   _v: {},
@@ -95,12 +95,12 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
                      'aaa_electronics']){
     assert.ok(captured.includes(need), 'missing from render: ' + need);
   }
-  /* The in-page quote form was removed 2026-08-21 (Jacob) — the profile
+  /* The in-page quote form was removed 2026-08-21 (Jacob), the profile
      provides contact details instead, and nothing may render or link it. */
   assert.ok(!/id="rfq-form"|id="rfq-open"|#rfq/.test(captured),
     'the removed Request a Quote form (or a link to it) is back on the profile');
   /* Opening hours were removed from profiles on 2026-08-20 at Jacob's
-     direction — stored hours data must no longer render. */
+     direction, stored hours data must no longer render. */
   assert.ok(!captured.includes('Opening hours'), 'the removed Opening hours section is back');
   /* Listing documents must not get their own profile section either; the
      keyword tags now carry the visitor to the listing page instead. */
@@ -116,7 +116,7 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   // sidebar values must be single-line: the tooltip carries the untruncated text
   assert.ok(captured.includes('pf-row-v" title='), 'sidebar rows lost their full-value tooltip');
   /* Everything a company asserts about itself must still be traceable to the
-     company rather than to us — a buyer picking a supplier on the strength of
+     company rather than to us, a buyer picking a supplier on the strength of
      "ISO 9001" is deciding on something nobody checked. The wording moved out
      of a paragraph under every section and into one line at the foot of the
      page plus hover text, but it must not disappear altogether. */
@@ -148,11 +148,11 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   assert.ok(captured.includes('id="pf-save"'), 'the save-supplier control is missing');
   assert.ok(captured.includes('data-slug="aaa"'), 'the save control does not identify the company');
 
-  // the short link must be copyable — it is what goes on adverts
+  // the short link must be copyable, it is what goes on adverts
   assert.ok(captured.includes('id="pf-copy"'), 'copy-link control missing from the sidebar');
   assert.ok(captured.includes('https://circuits.com/aaa_electronics'), 'copy-link has the wrong URL');
 
-  // reviews are opt-in per listing — with them off and none approved, the section must vanish
+  // reviews are opt-in per listing, with them off and none approved, the section must vanish
   assert.ok(captured.includes('Buyer reviews'), 'reviews section missing when enabled');
   assert.strictEqual((captured.match(/class="pf-form review-form"/g) || []).length, 1,
     'exactly one listing allows reviews, so exactly one review form');
@@ -168,7 +168,7 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   KWS[0].reviews_enabled = true;
 
   /* A claimed listing must not be labelled unclaimed, and an unclaimed one must
-     say so plainly — a buyer needs to know the details are unconfirmed. */
+     say so plainly, a buyer needs to know the details are unconfirmed. */
   assert.ok(!captured.includes('lb-unclaimed'), 'a claimed listing was labelled Unclaimed');
   global.companyClaimed = async () => false;
   await initProfile();
@@ -211,7 +211,7 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
       'a company with no sponsored keyword is showing a star on a keyword');
     assert.ok(!/marks a Circuits-Keyword/.test(captured),
       'a company with no sponsor banner is still told what the star means');
-    // the section itself must survive — only the note goes
+    // the section itself must survive, only the note goes
     assert.ok(/Keyword Listings/.test(captured), 'the keyword section vanished with the note');
     assert.ok(/kw-lb/.test(captured), 'the listing badges vanished with the note');
     global.fetchCompanyKeywords = saved;
@@ -232,10 +232,10 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
     'an admin-run profile does not show the Circuits.com mark next to its name');
   assert.ok(/Circuits\.com team/.test(heading()), 'the mark on the name lost its hover text');
   assert.ok(!/lb-cx/.test(listings()),
-    'the Circuits.com mark is being rendered against a keyword listing — it is not a badge');
+    'the Circuits.com mark is being rendered against a keyword listing, it is not a badge');
   assert.ok(!/paid label/.test(heading()),
     'the team mark is carrying the paid-badge disclaimer');
   global.companyRunByStaff = async () => false;
 
-  console.log('render smoke test passed —', opens, 'balanced block tags, reviews and claim states OK');
+  console.log('render smoke test passed:', opens, 'balanced block tags, reviews and claim states OK');
 })();

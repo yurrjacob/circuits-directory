@@ -3,7 +3,7 @@
 
    The thing that must not break is the boundary. applications_lock_billing()
    silently reverts keyword, banner, badge, price, fee and status for anyone who
-   is not staff — no error, the update just does nothing. So a form that offered
+   is not staff, no error, the update just does nothing. So a form that offered
    those fields would look like it saved and change nothing, and the supplier
    would believe they had cancelled their sponsorship or renamed their keyword.
 
@@ -25,7 +25,7 @@ const allowed = m[1].split(',').map(s => s.trim().replace(/^['"]|['"]$/g, '')).f
    commercial term that is not theirs to set. */
 const OWNER_OK = ['certifications', 'description', 'docs', 'gallery', 'reviews_enabled', 'team'];
 assert.deepStrictEqual(allowed.slice().sort(), OWNER_OK,
-  `a supplier may now edit ${allowed.join(', ')} — anything beyond the listing's own words, documents and showcase is not theirs to set`);
+  `a supplier may now edit ${allowed.join(', ')}, anything beyond the listing's own words, documents and showcase is not theirs to set`);
 
 /* ---- run the real function against a fake client ---- */
 let sent = null;
@@ -41,7 +41,7 @@ global.sb = { from(){ return { update(f){ sent = f; return { eq: async () => ({ 
 }
 
 (async () => {
-  /* every locked column, offered at once — none may reach the database */
+  /* every locked column, offered at once, none may reach the database */
   await updateMyListing('x', {
     description: 'ok', docs: [{name:'a',url:'b'}], certifications: [], team: [], gallery: [], reviews_enabled: true,
     keyword: 'stolen', banner: true, badge: {text:'Verified'}, status: 'Approved',
@@ -50,7 +50,7 @@ global.sb = { from(){ return { update(f){ sent = f; return { eq: async () => ({ 
     keywords: ['stolen'], created_at: '1970-01-01'
   });
   assert.deepStrictEqual(Object.keys(sent).sort(), OWNER_OK,
-    `updateMyListing sent ${Object.keys(sent).join(', ')} — the extra fields are silently reverted by the ` +
+    `updateMyListing sent ${Object.keys(sent).join(', ')}, the extra fields are silently reverted by the ` +
     'database, so the supplier would be told it saved when nothing changed');
   assert.strictEqual(sent.keyword, undefined, 'a supplier must not be able to rename their own keyword');
   assert.strictEqual(sent.banner, undefined, 'a supplier must not be able to grant themselves the sponsor banner');
@@ -77,8 +77,8 @@ global.sb = { from(){ return { update(f){ sent = f; return { eq: async () => ({ 
     assert.ok(portal.includes(bad), `the listing editor lost its ${bad} control`);
   }
   assert.ok(/updateMyListing/.test(portal) && !/updateApplication\(/.test(portal),
-    'the portal calls updateApplication directly — it must go through updateMyListing, which is what drops ' +
+    'the portal calls updateApplication directly, it must go through updateMyListing, which is what drops ' +
     'the locked fields');
 
-  say('listing editor OK — suppliers own their words and documents, nothing else');
+  say('listing editor OK, suppliers own their words and documents, nothing else');
 })();

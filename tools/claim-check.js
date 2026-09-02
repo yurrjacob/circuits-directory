@@ -3,7 +3,7 @@
 
    Approving a claim hands someone else's quote requests to whoever asked, and
    there is no undo for the ones already delivered. The failure that matters is
-   not "no signal shown" — it is a signal that says VERIFIED when it should not,
+   not "no signal shown", it is a signal that says VERIFIED when it should not,
    because a reassuring green label is worse than none at all. Two ways that has
    already happened and must not come back:
 
@@ -45,7 +45,7 @@ function verdict(co, email){
 assert.strictEqual(siteDomain('https://acme.co.uk'), 'acme.co.uk',
   'a .co.uk site collapses to the public suffix, so unrelated British companies would match each other');
 assert.notStrictEqual(siteDomain('https://bbc.co.uk'), siteDomain('https://acme.co.uk'),
-  'two different .co.uk companies produce the same domain — a claim from one would verify against the other');
+  'two different .co.uk companies produce the same domain, a claim from one would verify against the other');
 assert.strictEqual(verdict({ website: 'https://circuits.com', email: 'jacob@gmail.com' }, 'stranger@gmail.com'),
   'free-mailbox',
   'a listing that uses a free mailbox is matching every user of that provider as its "listed address"');
@@ -64,4 +64,4 @@ assert.strictEqual(verdict({ website: '', email: 'ops@bell.co.uk' }, 'dana@bell.
    listing" prompts, so there is no renderer left to check here. The domain
    rules above still mirror the SQL, which is still in the database. */
 
-console.log('claim evidence OK — domain rules mirror the SQL (claim panel retired 2026-09-01)');
+console.log('claim evidence OK, domain rules mirror the SQL (claim panel retired 2026-09-01)');

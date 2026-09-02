@@ -6,7 +6,7 @@
    Run from the repo root:  node tools/build-profiles.js
    Re-run after approving, removing or renaming listings, then commit.
 
-   Reads through the public anon key — same data any visitor can already see. */
+   Reads through the public anon key, same data any visitor can already see. */
 
 const fs = require('fs');
 const path = require('path');
@@ -16,11 +16,10 @@ const SUPABASE_KEY = 'sb_publishable_zmOQinynNkuWdHUeHrFdDA_y6UnLyL4';
 const SITE = 'https://circuits.com';
 const ROOT = path.join(__dirname, '..');
 
-/* Which root files this script created last time. Only these may be deleted —
-   without it, a stale handle could take about.html with it on cleanup. */
+/* Which root files this script created last time. Only these may be deleted, without it, a stale handle could take about.html with it on cleanup. */
 const MANIFEST = path.join(__dirname, '.generated-profiles.json');
 
-// /browse exists but is hidden for now (no links, noindexed) — keep it out of
+// /browse exists but is hidden for now (no links, noindexed), keep it out of
 // the sitemap until Jacob decides to switch it on.
 const STATIC_PAGES = [
   ['/', '1.0'], ['/join', '0.9'],
@@ -38,13 +37,13 @@ async function api(q) {
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 /* The test fixture under the keyword "sample". These profiles have to be
-   reachable — that is the whole point of test data — but they are fake
+   reachable, that is the whole point of test data, but they are fake
    companies on a live domain, so they must never reach a search engine.
    Keyed off the slug prefix the seed function uses. */
 const isSample = co => /^sample-/.test(co.slug || '') || /^sample-/.test(co.handle || '');
 
 function pageFor(template, co) {
-  const title = co.name + ' — Supplier Profile | Circuits.com';
+  const title = co.name + ' | Supplier Profile | Circuits.com';
   const raw = co.tagline || co.description ||
     (co.name + ' is listed on Circuits.com, the integrated circuits directory. See documentation and contact details, or request a quote.');
   const desc = raw.replace(/\s+/g, ' ').trim().slice(0, 155);
@@ -99,7 +98,7 @@ function pageFor(template, co) {
     // never clobber a hand-written page; reserved_handles should prevent this,
     // but a rename slipping through must not silently eat about.html
     if (fs.existsSync(target) && !previous.includes(file)) {
-      console.error('SKIPPED ' + file + ' — a file with that name already exists.');
+      console.error('SKIPPED ' + file + ', a file with that name already exists.');
       continue;
     }
     fs.writeFileSync(target, pageFor(template, co));
