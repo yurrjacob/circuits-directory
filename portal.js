@@ -32,11 +32,61 @@ function renderMyProfile(me){
     </div>
     <div class="auth-field"><label>Display name</label>
       <input id="me-name" type="text" maxlength="120" value="${escapeHtml(me.display_name || '')}"></div>
+    <h3 style="margin-top:22px">Talent profile</h3>
+    <p class="pf-note" style="margin:0 0 10px">Optional. Fill this in and tick the box to appear in the
+      Recruits Directory. Employers see your title, experience, keywords and summary; your name,
+      contact details and resume stay hidden until a company with talent access unlocks them.</p>
+    <div class="grid2">
+      <div class="auth-field"><label>Job title</label>
+        <input id="me-title" type="text" maxlength="80" placeholder="RF Design Engineer" value="${escapeHtml(me.title || '')}"></div>
+      <div class="auth-field"><label>Years of experience</label>
+        <input id="me-years" type="number" min="0" max="60" placeholder="8" value="${me.years == null ? '' : me.years}"></div>
+    </div>
+    <div class="auth-field"><label>Phone <span class="cell-muted">(private)</span></label>
+      <input id="me-phone" type="tel" maxlength="40" placeholder="(555) 123-4567" value="${escapeHtml(me.phone || '')}"></div>
+    <div class="auth-field"><label>Keywords <span class="cell-muted">(up to 10, comma separated)</span></label>
+      <input id="me-keywords" type="text" placeholder="rf design, pcb layout, fpga" value="${escapeHtml((me.keywords || []).join(', '))}">
+      <div class="pf-note">Same words employers search for on Circuits.com. One idea per keyword: <b>pcb layout</b>, not <b>pcb layout and test</b>.</div></div>
+    <div class="auth-field"><label>Summary</label>
+      <textarea id="me-bio" rows="4" maxlength="600" placeholder="What you do, what you are looking for.">${escapeHtml(me.bio || '')}</textarea></div>
+    <div class="auth-field"><label>Resume <span class="cell-muted">(PDF, up to 10 MB, private)</span></label>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <span id="me-resume-state" class="pf-note" style="margin:0">${me.resume_path ? 'Resume on file.' : 'No resume yet.'}</span>
+        ${me.resume_path ? '<a class="mini-btn" href="#" id="me-resume-view">View</a><button class="mini-btn danger" type="button" id="me-resume-remove">Remove</button>' : ''}
+        <label class="mini-btn" style="cursor:pointer">${me.resume_path ? 'Replace' : 'Upload'}<input id="me-resume" type="file" accept="application/pdf" style="display:none"></label>
+      </div></div>
+    <label style="display:flex;gap:8px;align-items:center;margin:6px 0 14px;font-weight:600;cursor:pointer"><input id="me-listed" type="checkbox" style="width:auto;margin:0" ${me.talent_listed ? 'checked' : ''}>
+      <span>List me in the Recruits Directory</span></label>
+    ${me.talent_hidden ? '<p class="pf-note" style="color:#b3261e">Circuits.com staff have hidden this profile from the directory.</p>' : ''}
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <button class="btn btn-primary" type="button" id="me-save">Save profile</button>
       <a class="mini-btn" href="/${escapeHtml(me.handle)}" target="_blank" rel="noopener">View profile ↗</a>
     </div>
     <div id="me-msg" class="pf-note"></div>`;
+
+  /* resume: upload, view (signed link, 5 minutes), remove */
+  el('me-resume').addEventListener('change', async e => {
+    const f = e.target.files && e.target.files[0]; if(!f) return;
+    const st = el('me-resume-state');
+    if(f.type !== 'application/pdf'){ st.textContent = 'Please choose a PDF.'; return; }
+    if(f.size > 10 * 1024 * 1024){ st.textContent = 'That PDF is over 10 MB.'; return; }
+    st.textContent = 'Uploading…';
+    const r = await uploadResume(f);
+    if(r.error){ st.textContent = 'Upload failed: ' + r.error; return; }
+    me.resume_path = r.path; renderMyProfile(me);
+  });
+  const view = el('me-resume-view');
+  if(view) view.addEventListener('click', async e => {
+    e.preventDefault(); const url = await resumeLink(me.resume_path);
+    if(url) window.open(url, '_blank', 'noopener'); else el('me-resume-state').textContent = 'Could not open the resume just now.';
+  });
+  const rm = el('me-resume-remove');
+  if(rm) rm.addEventListener('click', async () => {
+    if(!confirm('Remove your resume from Circuits.com?')) return;
+    const err = await removeResume();
+    if(err){ el('me-resume-state').textContent = err; return; }
+    me.resume_path = null; renderMyProfile(me);
+  });
 
   el('me-save').addEventListener('click', async ()=>{
     const msg = el('me-msg');
@@ -47,10 +97,19 @@ function renderMyProfile(me){
       const why = await handleAvailable(handle);
       if(why){ msg.textContent = why; msg.style.color = '#b3261e'; return; }
     }
-    const err = await updateMyProfile({ handle, display_name: name || null });
-    msg.textContent = err || 'Saved. Your profile is at circuits.com/' + handle;
-    msg.style.color = err ? '#b3261e' : '#3f6300';
-    if(!err) me.handle = handle;
+    const yearsRaw = el('me-years').value.trim();
+    const years = yearsRaw === '' ? null : parseInt(yearsRaw, 10);
+    if(yearsRaw !== '' && !(years >= 0 && years <= 60)){ msg.textContent = 'Years of experience should be 0 to 60.'; msg.style.color = '#b3261e'; return; }
+    const keywords = el('me-keywords').value.split(',').map(s => s.trim()).filter(Boolean);
+    if(keywords.length > 10){ msg.textContent = 'Ten keywords is the limit.'; msg.style.color = '#b3261e'; return; }
+    const err = await updateMyProfile({ handle, display_name: name || null,
+      title: el('me-title').value.trim() || null, years, phone: el('me-phone').value.trim() || null,
+      bio: el('me-bio').value.trim() || null, talent_listed: el('me-listed').checked });
+    const kw = err ? {} : await setTalentKeywords(keywords);
+    const bad = err || kw.error;
+    msg.textContent = bad || 'Saved. Your profile is at circuits.com/' + handle;
+    msg.style.color = bad ? '#b3261e' : '#3f6300';
+    if(!err){ me.handle = handle; if(kw.keywords) el('me-keywords').value = kw.keywords.join(', '); }
   });
 }
 

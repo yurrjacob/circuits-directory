@@ -84,8 +84,12 @@ function personProfile(p, staffRun){
     </div>
   </div>
   <div class="pf-layout"><div class="pf-main">
-    ${section('About', `<p class="pf-prose">This is a Circuits.com profile. Profiles are people;
+    ${p.title || p.bio || (p.years != null)
+      ? section('About', `${p.title ? `<p class="pf-prose"><b>${escapeHtml(p.title)}</b>${p.years != null ? ` &middot; ${p.years} year${p.years === 1 ? '' : 's'} of experience` : ''}</p>` : ''}
+          ${p.bio ? `<p class="pf-prose">${escapeHtml(p.bio)}</p>` : ''}`)
+      : section('About', `<p class="pf-prose">This is a Circuits.com profile. Profiles are people;
       company listings are separate, and a profile can claim one to manage it.</p>`)}
+    ${(p.keywords || []).length ? section('Keywords', `<div class="kw-tags">${p.keywords.map(k => `<span class="kw-tag">${escapeHtml(k)}</span>`).join('')}</div>`) : ''}
   </div>
   <aside class="pf-side">
     <div class="pf-side-card">
@@ -109,7 +113,10 @@ async function initProfile(){
   let co, person;
   try {
     co = await fetchCompanyByHandle(handle);
-    if(!co) person = await fetchProfileByHandle(handle);
+    if(!co){
+      person = await fetchProfileByHandle(handle);
+      if(person && typeof fetchTalentKeywords === 'function') person.keywords = await fetchTalentKeywords(person.user_id);
+    }
   } catch(err){
     console.error('profile lookup failed', err);
     root.innerHTML = loadErrorHtml('circuits.com/' + handle);

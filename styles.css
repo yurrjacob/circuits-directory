@@ -856,6 +856,14 @@ tr.row-warn td{background:#fff3cd}
 .pf-review-head .pf-note{margin:0;margin-left:auto}
 .pf-reply{margin-top:9px;padding:9px 11px;background:var(--bg-soft);border-radius:8px;font-size:.86rem}
 .pf-form{border:1px solid var(--line);border-radius:var(--radius);padding:18px;background:var(--bg-soft)}
+/* register: person or company, side by side */
+.reg-kind{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 24px}
+.reg-kind-card{display:block;padding:14px 16px;border:1px solid var(--line);border-radius:12px;text-decoration:none;color:var(--ink);background:var(--card)}
+.reg-kind-card.active{border-color:var(--green);background:#f7fcec}
+.reg-kind-card:hover{border-color:var(--green)}
+.reg-kind-card b{display:block;margin-bottom:4px}
+.reg-kind-card span{font-size:.85rem;color:var(--muted);line-height:1.4}
+@media(max-width:600px){.reg-kind{grid-template-columns:1fr}}
 .pf-form h3{margin:0 0 12px;font-size:.95rem}
 .pf-form input,.pf-form textarea,.pf-form select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--input-bg)}
 .pf-form input:focus,.pf-form textarea:focus{outline:2px solid var(--green);outline-offset:-1px;border-color:var(--green)}

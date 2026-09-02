@@ -442,9 +442,13 @@ async function profileRunByStaff(handle){
 }
 
 /* ---- profiles: a person, separate from any company listing ---- */
+/* Only these columns are readable by visitors: email, phone and resume_path are
+   private (talent marketplace, 2026-09-02) and leave the table solely through
+   my_profile() for the owner and talent_contact() for subscribed companies. */
+const PROFILE_PUBLIC_COLS = 'user_id, handle, display_name, created_at, updated_at, suspended_at, title, years, bio, talent_listed, talent_hidden';
 async function fetchProfileByHandle(handle){
   if(!sb || !handle) return null;
-  const { data, error } = await sb.from('profiles').select('*')
+  const { data, error } = await sb.from('profiles').select(PROFILE_PUBLIC_COLS)
     .ilike('handle', (handle||'').trim()).maybeSingle();
   // same reasoning as fetchCompanyByHandle: never invent a free address
   if(error){ console.error('fetchProfileByHandle', error); throw error; }
@@ -460,10 +464,69 @@ async function updateMyProfile(fields){
   if(!sb) return 'No connection';
   const u = await currentUser();
   if(!u) return 'Not signed in';
-  const { data, error } = await sb.from('profiles').update(fields).eq('user_id', u.id).select();
+  const { data, error } = await sb.from('profiles').update(fields).eq('user_id', u.id).select('user_id');
   if(error) return error.message;
   if(!data || !data.length) return 'That change was refused.';
   return '';
+}
+
+/* ---- talent marketplace (MVP2): a profile that opts in to the Recruits Directory ---- */
+/* the keywords the owner wants to be found under; the database normalises,
+   de-duplicates and caps them at ten */
+async function setTalentKeywords(keywords){
+  if(!sb) return { error: 'No connection' };
+  const { data, error } = await sb.rpc('set_talent_keywords', { p_keywords: keywords || [] });
+  if(error) return { error: /keyword_limit/.test(error.message) ? 'Ten keywords is the limit.' : error.message };
+  return { keywords: data || [] };
+}
+/* the resume: one PDF per person at <user_id>/resume.pdf in the private bucket */
+async function uploadResume(file){
+  if(!sb || !file) return { error: 'No file' };
+  const u = await currentUser(); if(!u) return { error: 'Not signed in' };
+  const path = u.id + '/resume.pdf';
+  const { error } = await sb.storage.from('resumes').upload(path, file, { contentType: 'application/pdf', upsert: true });
+  if(error) return { error: error.message };
+  const err = await updateMyProfile({ resume_path: path });
+  return err ? { error: err } : { path };
+}
+async function removeResume(){
+  if(!sb) return 'No connection';
+  const u = await currentUser(); if(!u) return 'Not signed in';
+  await sb.storage.from('resumes').remove([u.id + '/resume.pdf']);
+  return updateMyProfile({ resume_path: null });
+}
+/* a short-lived link to a resume: works for the owner and for subscribed companies */
+async function resumeLink(path){
+  if(!sb || !path) return '';
+  const { data, error } = await sb.storage.from('resumes').createSignedUrl(path, 300);
+  if(error){ console.warn('resumeLink', error.message); return ''; }
+  return data.signedUrl;
+}
+/* the directory: public metadata only, never a name or a handle */
+async function talentSearch(keyword){
+  if(!sb) throw new Error('no connection');
+  const { data, error } = await sb.rpc('talent_search', { p_keyword: keyword || '' });
+  if(error) throw error;
+  return data || [];
+}
+/* the unblur: only answers for the owner, staff, or a company whose talent
+   subscription (companies.talent_access_until) is active */
+async function talentContact(userId){
+  if(!sb) return null;
+  const { data, error } = await sb.rpc('talent_contact', { p_user: userId });
+  if(error) return null;
+  return (data && data[0]) || null;
+}
+async function fetchTalentKeywords(userId){
+  if(!sb || !userId) return [];
+  const { data, error } = await sb.from('talent_keywords').select('keyword').eq('user_id', userId).order('keyword');
+  if(error){ console.warn('fetchTalentKeywords', error.message); return []; }
+  return (data || []).map(r => r.keyword);
+}
+async function hasTalentAccess(){
+  if(!sb) return false;
+  const { data } = await sb.rpc('has_talent_access');
+  return !!data;
 }
 /* Register: the account and the circuits.com address are created together.
    The handle rides along as signup metadata because email confirmation means
