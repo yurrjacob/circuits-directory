@@ -135,6 +135,27 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   assert.deepStrictEqual(logged, { term: 'oscillators', hits: 1 },
     'a search that found something was not recorded with its hit count');
 
+  /* --- paid locked spots pin to their number; everyone else shuffles around
+         them (2026-09-01). Bell pays for #2 and must land there on every deal. --- */
+  for(let deal = 0; deal < 25; deal++){
+    listingsToReturn = [
+      { company: 'Acme', company_handle: 'acme', company_slug: 'acme', keyword: 'oscillators', contact: 'Sam', phone: '1', email: 'a@b.co', docs: [] },
+      { company: 'Bell', company_handle: 'bell', company_slug: 'bell', keyword: 'oscillators', contact: 'Dana', phone: '2', email: 'b@b.co', docs: [], locked_position: 2 },
+      { company: 'Cove', company_handle: 'cove', company_slug: 'cove', keyword: 'oscillators', contact: 'Lee', phone: '3', email: 'c@b.co', docs: [] }
+    ];
+    await initResults('oscillators');
+    const order = [...captured.matchAll(/<tr data-slug="([^"]+)">/g)].map(m => m[1]);
+    assert.strictEqual(order[1], 'bell', `Bell paid for #2 but the list came out ${order.join(',')}`);
+    assert.ok(/<td class="rank" data-label="#">2<span class="lock"/.test(captured),
+      'the locked row does not show the lock next to its number');
+    assert.ok(/Position locked\.[\s\S]*?holds #2 for &ldquo;oscillators&rdquo;[\s\S]*?href="\/contact"/.test(captured),
+      'the lock tooltip does not say the spot is locked, name the spot, and offer the CTA');
+    assert.strictEqual((captured.match(/class="lock"/g) || []).length, 1, 'unlocked rows are showing a lock');
+  }
+  listingsToReturn = [{ company: 'Acme', company_handle: 'acme', keyword: 'oscillators',
+                        contact: 'Sam', phone: '(555) 2', email: 'a@b.co', docs: [] }];
+  await initResults('oscillators');
+
   /* --- a page with real listings is the page we WANT found --- */
   assert.ok(headMeta && /^index/.test(headMeta.content),
     'a keyword with live listings is still hidden from Google');
