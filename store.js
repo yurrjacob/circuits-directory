@@ -606,6 +606,11 @@ async function markAllNotificationsRead(){
   const { error } = await sb.from('notifications').update({ read_at: new Date().toISOString() }).is('read_at', null);
   if(error) console.error('markAllNotificationsRead', error);
 }
+async function deleteNotification(id){
+  if(!sb) return;
+  const { error } = await sb.from('notifications').delete().eq('id', id);
+  if(error) console.error('deleteNotification', error);
+}
 /* Staff only (the RPC refuses everyone else). to: handle, email, or
    everyone / individuals / companies. Resolves to how many inboxes it landed in. */
 async function sendNotification(to, subject, body, link){

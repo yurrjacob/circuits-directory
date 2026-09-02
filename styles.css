@@ -374,7 +374,13 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 .inbox-readall,.inbox-back{border:0;background:transparent;color:var(--green-dark);font:inherit;font-size:.82rem;font-weight:600;cursor:pointer;padding:4px 6px;border-radius:6px}
 .inbox-readall:hover,.inbox-back:hover{background:var(--bg-soft)}
 .inbox-back{font-size:1.1rem;line-height:1}
-.inbox-item{display:flex;gap:12px;width:100%;text-align:left;padding:12px 14px;border:0;border-bottom:1px solid var(--line);background:transparent;font:inherit;color:var(--ink);cursor:pointer}
+.inbox-row{position:relative}
+.inbox-x{position:absolute;top:8px;right:6px;width:26px;height:26px;border:0;border-radius:50%;background:transparent;color:var(--muted);font:inherit;font-size:1.15rem;line-height:1;cursor:pointer;opacity:.55}
+.inbox-row:hover .inbox-x,.inbox-x:focus-visible{opacity:1}
+.inbox-x:hover{background:var(--line);color:var(--ink)}
+.inbox-del{border:0;background:transparent;color:var(--muted);font:inherit;font-size:.82rem;font-weight:600;cursor:pointer;padding:4px 6px;border-radius:6px}
+.inbox-del:hover{background:var(--bg-soft);color:#b3261e}
+.inbox-item{display:flex;gap:12px;width:100%;text-align:left;padding:12px 34px 12px 14px;border:0;border-bottom:1px solid var(--line);background:transparent;font:inherit;color:var(--ink);cursor:pointer}
 .inbox-item:hover{background:var(--bg-soft)}
 .inbox-item.unread{background:#f7fcec}
 .inbox-item.unread .inbox-subject{font-weight:700}

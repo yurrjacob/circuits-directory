@@ -312,7 +312,7 @@ async function initInbox(){
     if(items === null){ panel.innerHTML = '<div class="inbox-head"><b>Notifications</b></div><p class="inbox-empty">Loading…</p>'; return; }
     if(open){
       const n = open;
-      panel.innerHTML = `<div class="inbox-head"><button type="button" class="inbox-back" aria-label="Back to notifications">&larr;</button><b>${escapeHtml(n.subject)}</b></div>
+      panel.innerHTML = `<div class="inbox-head"><button type="button" class="inbox-back" aria-label="Back to notifications">&larr;</button><b>${escapeHtml(n.subject)}</b><button type="button" class="inbox-del" data-del="${escapeHtml(n.id)}">Delete</button></div>
         <div class="inbox-msg">
           <div class="inbox-from">${avatar(n)}<div><b>${escapeHtml(n.sender_name)}</b><span>${escapeHtml(when(n.created_at))}</span></div></div>
           <div class="inbox-body"><p>${escapeHtml(n.body).replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>')}</p></div>
@@ -321,12 +321,12 @@ async function initInbox(){
       return;
     }
     panel.innerHTML = `<div class="inbox-head"><b>Notifications</b>${items.some(x => !x.read_at) ? '<button type="button" class="inbox-readall">Mark all read</button>' : ''}</div>` +
-      (items.length ? items.map(n => `<button type="button" class="inbox-item${n.read_at ? '' : ' unread'}" data-id="${escapeHtml(n.id)}">
+      (items.length ? items.map(n => `<div class="inbox-row"><button type="button" class="inbox-item${n.read_at ? '' : ' unread'}" data-id="${escapeHtml(n.id)}">
           ${avatar(n)}
           <span class="inbox-text"><span class="inbox-who"><b>${escapeHtml(n.sender_name)}</b><span>${escapeHtml(when(n.created_at))}</span></span>
             <span class="inbox-subject">${escapeHtml(n.subject)}</span>
             <span class="inbox-snip">${escapeHtml(n.body.replace(/\s+/g, ' ').slice(0, 90))}${n.body.length > 90 ? '…' : ''}</span></span>
-        </button>`).join('') : '<p class="inbox-empty">Nothing here yet.</p>');
+        </button><button type="button" class="inbox-x" data-del="${escapeHtml(n.id)}" aria-label="Delete notification">&times;</button></div>`).join('') : '<p class="inbox-empty">Nothing here yet.</p>');
   };
   const load = async () => { items = await fetchNotifications(); badge(); draw(); };
   const show = on => { panel.hidden = !on; btn.setAttribute('aria-expanded', on ? 'true' : 'false'); if(!on) open = null; };
@@ -334,6 +334,13 @@ async function initInbox(){
   btn.addEventListener('click', async () => { if(panel.hidden){ open = null; show(true); draw(); if(items === null) await load(); else draw(); } else show(false); });
   panel.addEventListener('click', async e => {
     e.stopPropagation();   // a redraw detaches the clicked row; the outside-click test below must not see it
+    const del = e.target.closest('[data-del]');
+    if(del){
+      const id = del.dataset.del;
+      items = items.filter(x => x.id !== id);
+      if(open && open.id === id) open = null;
+      badge(); draw(); deleteNotification(id); return;
+    }
     const item = e.target.closest('.inbox-item');
     if(item){
       open = items.find(x => x.id === item.dataset.id) || null;
