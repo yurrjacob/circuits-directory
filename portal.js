@@ -1718,7 +1718,7 @@ function wireRecruitSearch(){
    and the Job Board reads. Applicants come from job_applicants(), which the
    database only answers for the employer or staff. */
 function jobStateLabel(j){
-  if(j.closed_at) return { text: 'Closed', cls: '' };
+  if(j.closed_at) return null;   // the Live/Closed switch says it
   if(j.paid_until && new Date(j.paid_until) > new Date()) return { text: 'Live until ' + new Date(j.paid_until).toLocaleDateString(), cls: 'live' };
   if(j.paid_until) return { text: 'Expired. Contact us to renew.', cls: '' };
   return { text: 'Awaiting payment. We will confirm by email.', cls: 'pending' };
@@ -1732,9 +1732,10 @@ async function renderJobs(){
       <div class="pt-job-head">
         <div><b>${escapeHtml(j.title)}</b>${j.location ? ' <span class="cell-muted">' + escapeHtml(j.location) + '</span>' : ''}
           <div class="pf-note" style="margin:4px 0 0">${escapeHtml((j.keywords || []).join(', ') || 'No keywords yet')}</div></div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="badge ${st.cls}">${escapeHtml(st.text)}</span>
-          <button type="button" class="mini-btn" data-applicants="${escapeHtml(j.id)}">Applicants</button>
-          ${j.closed_at ? '' : `<button type="button" class="mini-btn danger" data-close="${escapeHtml(j.id)}">Close</button>`}</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${st ? `<span class="badge ${st.cls}">${escapeHtml(st.text)}</span>` : ''}
+          <button type="button" class="mini-btn" data-applicants="${escapeHtml(j.id)}">New Applicants</button>
+          <label class="switch pt-job-sw"><input type="checkbox" data-open="${escapeHtml(j.id)}" ${j.closed_at ? '' : 'checked'}>
+            <span class="knob" aria-hidden="true"></span><span class="sw-text">${j.closed_at ? 'Closed' : 'Live'}</span></label></div>
       </div>
       <div class="pt-applicants" id="apps-${escapeHtml(j.id)}" style="display:none"></div>
     </div>`;
@@ -1768,13 +1769,17 @@ function wireJobs(){
       if(url) window.open(url, '_blank', 'noopener'); else toast('Could not open that resume just now.', false);
       return;
     }
-    const c = e.target.closest('[data-close]');
-    if(c){
-      if(!confirm('Close this job? It leaves the Job Board and cannot be reopened.')) return;
-      const err = await updateJob(c.dataset.close, { closed_at: new Date().toISOString() });
-      if(err){ toast(err, false); return; }
-      renderJobs();
-    }
+  });
+  /* Live/Closed switch: closing takes the post off the Employment Board at
+     once; switching it back on restores it (while payment still covers it). */
+  box.addEventListener('change', async e => {
+    const sw = e.target.closest('[data-open]'); if(!sw) return;
+    const live = sw.checked;
+    sw.disabled = true;
+    const err = await updateJob(sw.dataset.open, { closed_at: live ? null : new Date().toISOString() });
+    sw.disabled = false;
+    if(err){ sw.checked = !live; toast(err, false); return; }
+    renderJobs();
   });
   post.addEventListener('click', async () => {
     const msg = el('job-msg');

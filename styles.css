@@ -1393,6 +1393,8 @@ body.nav-open .nav-burger .x{display:block}
 .switch input:checked + .knob{background:var(--green)}
 .switch input:checked + .knob::after{left:23px}
 .switch input:focus-visible + .knob{box-shadow:0 0 0 3px rgba(118,192,0,.35)}
+.pt-job-sw{display:inline-flex;align-items:center;gap:8px;font-size:.85rem;font-weight:600;color:var(--muted)}
+.pt-job-sw input:checked ~ .sw-text{color:var(--green-dark)}
 
 /* ---- Browse: every claimed keyword, A to Z ---- */
 .browse-wrap{max-width:var(--maxw);margin:0 auto;padding:36px 24px 72px}
