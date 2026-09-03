@@ -299,8 +299,8 @@ async function reloadCompanies(){
   allCompanies = await fetchAllCompanies();
   const susp = allCompanies.filter(c => c.suspended_at).length;
   $('companies-hint').textContent = susp
-    ? susp + (susp === 1 ? ' company suspended' : ' companies suspended')
-    : 'Suspend Hides A Listing Without Deleting Anything';
+    ? susp + (susp === 1 ? ' profile suspended' : ' profiles suspended')
+    : 'Every Account On The Site. Suspend Hides Without Deleting. Talent Access Unlocks Seeking Employment Details';
   $('companies-body').innerHTML = allCompanies.map(c => `
     <tr class="${c.suspended_at ? 'row-waiting' : ''}">
       <td><a href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener">${esc(c.name)}</a></td>

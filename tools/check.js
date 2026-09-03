@@ -768,7 +768,11 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   assert.ok(/<title>Recruiting: Hiring \| Circuits\.com<\/title>/.test(fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8')), '/jobs is not titled Recruiting: Hiring');
   assert.ok(/<title>Recruiting: Seeking Employment \| Circuits\.com<\/title>/.test(fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8')), '/talent is not titled Recruiting: Seeking Employment');
   for (const f of ['jobs.html', 'talent.html']) {
-    assert.ok(!/Company Dashboard|Individual Dashboard|Recruits Directory|Employment Board/.test(fs.readFileSync(path.join(ROOT, f), 'utf8')), `${f} still uses the old names`);
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    assert.ok(!/Company Dashboard|Individual Dashboard|Recruits Directory|Employment Board/.test(src), `${f} still uses the old names`);
+    /* Recruiting is live from the homepage search (Jacob, 2026-09-03), so Google may have it */
+    assert.ok(!/noindex/.test(src), `${f} is still hidden from search engines`);
+    assert.ok(new RegExp('circuits\\.com/' + f.replace('.html', '') + '<').test(fs.readFileSync(path.join(ROOT, 'sitemap.xml'), 'utf8')), `the sitemap does not list /${f.replace('.html', '')}`);
   }
 }
 
@@ -1394,7 +1398,7 @@ for (const [m, y, what] of [[BASE, BASE_Y, 'listing'], [BANNER, BANNER_Y, 'banne
 {
   const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
   const tabs = [...ph.matchAll(/class="adm-tab[^"]*" data-adm="([a-z]+)">([^<]+)</g)].map(m => m[1] + ':' + m[2]);
-  assert.deepStrictEqual(tabs, ['companies:All Companies', 'listings:Listings', 'applications:Website Applications',
+  assert.deepStrictEqual(tabs, ['companies:All Profiles', 'listings:Listings', 'applications:Website Applications',
     'upgrades:Upgrade Applications', 'employment:Recruiting Applications', 'messages:Notifications', 'activity:Activity'],
     'the admin sub-tabs are out of order or renamed: ' + tabs.join(', '));
   for (const h of ['Keywords With Banners', 'Keywords With Badges']) {
