@@ -69,8 +69,22 @@ function row(label, value, opts){
        + `<span class="pf-row-v" title="${escapeHtml(value)}">${inner}</span></div>`;
 }
 
-/* A person's profile. Deliberately thin: a profile is an identity and a link,
-   not a listing. Anything commercial lives on a company listing they claim. */
+/* The experience a person filled in under Seeking Employment: position
+   desired, years, statement, certifications, keywords. Shared by the company
+   page (folded in below About) and the plain person page. */
+function personExperience(p){
+  const creds = (Array.isArray(p.credentials) ? p.credentials : []).filter(c => c && (c.name || '').trim());
+  let inner = '';
+  if(p.title || (p.years != null)) inner += `<p class="pf-prose"><b>${escapeHtml(p.title || 'Circuits industry professional')}</b>${p.years != null ? ` &middot; ${p.years} year${p.years === 1 ? '' : 's'} of experience` : ''}</p>`;
+  if(p.bio) inner += `<p class="pf-prose">${escapeHtml(p.bio)}</p>`;
+  if(creds.length) inner += `<h3 class="pf-sub">Certifications &amp; degrees</h3><ul class="pf-certs" title="Listed by the person. Circuits.com has not checked these.">${creds.map(c =>
+      `<li><b>${escapeHtml(c.name.trim())}</b>${c.issuer ? `, ${escapeHtml(c.issuer)}` : ''}${c.year ? ` (${escapeHtml(String(c.year))})` : ''}</li>`).join('')}</ul>`;
+  if((p.keywords || []).length) inner += `<div class="kw-tags">${p.keywords.map(k => `<span class="kw-tag">${escapeHtml(k)}</span>`).join('')}</div>`;
+  return section('Experience', inner);
+}
+
+/* A person's profile with no company row behind it (accounts older than the
+   one-account model). */
 function personProfile(p, staffRun){
   const name = p.display_name || p.handle;
   document.title = name + ' | Profile | Circuits.com';
@@ -84,15 +98,7 @@ function personProfile(p, staffRun){
     </div>
   </div>
   <div class="pf-layout"><div class="pf-main">
-    ${p.title || p.bio || (p.years != null)
-      ? section('About', `${p.title ? `<p class="pf-prose"><b>${escapeHtml(p.title)}</b>${p.years != null ? ` &middot; ${p.years} year${p.years === 1 ? '' : 's'} of experience` : ''}</p>` : ''}
-          ${p.bio ? `<p class="pf-prose">${escapeHtml(p.bio)}</p>` : ''}`)
-      : section('About', `<p class="pf-prose">This is a Circuits.com profile. Profiles are people;
-      company listings are separate, and a profile can claim one to manage it.</p>`)}
-    ${(Array.isArray(p.credentials) ? p.credentials : []).filter(c => c && (c.name || '').trim()).length
-      ? section('Certifications & degrees', `<ul class="pf-certs" title="Listed by the person. Circuits.com has not checked these.">${p.credentials.filter(c => c && (c.name || '').trim()).map(c =>
-          `<li><b>${escapeHtml(c.name.trim())}</b>${c.issuer ? `, ${escapeHtml(c.issuer)}` : ''}${c.year ? ` (${escapeHtml(String(c.year))})` : ''}</li>`).join('')}</ul>`) : ''}
-    ${(p.keywords || []).length ? section('Keywords', `<div class="kw-tags">${p.keywords.map(k => `<span class="kw-tag">${escapeHtml(k)}</span>`).join('')}</div>`) : ''}
+    ${personExperience(p) || section('About', `<p class="pf-prose">This is a Circuits.com profile.</p>`)}
   </div>
   <aside class="pf-side">
     <div class="pf-side-card">
@@ -109,17 +115,17 @@ async function initProfile(){
   const root = document.getElementById('profile-body');
   if(!handle){ root.innerHTML = notFound(''); return false; }
 
-  /* One namespace, two kinds of occupant. A company listing takes priority
-     because it is the older claim; a person's profile is checked next.
+  /* One namespace, one kind of account (2026-09-03): every account has a
+     profiles row (the person) and usually a companies row that shares the
+     address (the page, the listings, the jobs). The company page is drawn
+     when that row exists, with the person's experience folded in; an address
+     with only a profiles row (older accounts) gets the plain person page.
      A failed lookup must never reach notFound(), that page tells the visitor
      the address is free to claim, and this address may well belong to someone. */
   let co, person;
   try {
-    co = await fetchCompanyByHandle(handle);
-    if(!co){
-      person = await fetchProfileByHandle(handle);
-      if(person && typeof fetchTalentKeywords === 'function') person.keywords = await fetchTalentKeywords(person.user_id);
-    }
+    [co, person] = await Promise.all([fetchCompanyByHandle(handle), fetchProfileByHandle(handle)]);
+    if(person && typeof fetchTalentKeywords === 'function') person.keywords = await fetchTalentKeywords(person.user_id);
   } catch(err){
     console.error('profile lookup failed', err);
     root.innerHTML = loadErrorHtml('circuits.com/' + handle);
@@ -262,6 +268,10 @@ async function initProfile(){
       <h2 class="pf-sec-h"><a href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}" class="tc">${escapeHtml(k.keyword)}</a>${k.banner ? ' ★' : ''}${badgeHtml(k.badge, 'kw-lb')}</h2>
       ${inner}</section>`;
   }
+
+  /* ---- the person behind the account: experience from the Seeking
+     Employment tab, public bits only (name and picture are the page's own) ---- */
+  if(person) html += personExperience(person);
 
   /* The in-page quote form is OFF (Jacob, 2026-08-21: "Request a quote part
      of the profile should be removed. Just make it provide their emails and

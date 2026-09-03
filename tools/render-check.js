@@ -47,6 +47,11 @@ const KWS = [
     team:[{name:'Jane Doe',role:'VP Sales',email:'jane@aaa.example.com'}], gallery:[{url:'https://x/1.png',caption:'Warehouse'}] },
   { id:'l2', keyword:'voltage regulator', banner:false, badge:null, docs:[], reviews_enabled:false, certifications:[], team:[], gallery:[] }];
 global.fetchCompanyByHandle = async () => CO;
+/* one account (2026-09-03): the person behind the page, whose experience is
+   folded into the company page */
+global.fetchProfileByHandle = async () => ({ user_id:'u1', handle:'aaa_electronics', display_name:'Jane Doe',
+  title:'RF Design Engineer', years:8, bio:'Analog and RF.', credentials:[{name:'BSEE', issuer:'MIT', year:2010}] });
+global.fetchTalentKeywords = async () => ['rf design'];
 global.fetchCompanyKeywords = async () => KWS;
 global.fetchReviews = async () => ([{ application_id:'l1', rating:5, author_name:'Bob', body:'Great', reply:'Thanks', created_at:'2026-08-01T00:00:00Z' }]);
 global.companyClaimed = async () => true;
@@ -92,7 +97,7 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
 
   for(const need of ['pf-layout','pf-main','pf-side','pf-side-card','pf-cta','pf-rows',
                      'id="pf-email-cta"','id="pf-phone"','id="pf-email"','id="pf-site"',
-                     'aaa_electronics']){
+                     'aaa_electronics', 'RF Design Engineer', '8 years of experience', 'BSEE', 'rf design']){
     assert.ok(captured.includes(need), 'missing from render: ' + need);
   }
   /* The in-page quote form was removed 2026-08-21 (Jacob), the profile

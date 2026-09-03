@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Supplier Portal | Circuits.com</title>
+<title>Your Profile | Circuits.com</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="stylesheet" href="/styles.css">
@@ -51,8 +51,8 @@
 <main class="console console-wide" id="pt-app" style="display:none">
   <div class="console-head">
     <div>
-      <h1 id="pt-title">Your Circuits.com profile</h1>
-      <p id="pt-sub">Everything a buyer sees for <b id="pt-name"></b>, and every request they send you.</p>
+      <h1 id="pt-title">Your Profile</h1>
+      <p id="pt-sub">Everything on Circuits.com for <b id="pt-name"></b>: your page, your listings, and both sides of Recruiting.</p>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select id="pt-company" style="height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px"></select>
@@ -62,48 +62,45 @@
 
   <div id="pt-toast" style="display:none;font-weight:600;margin-bottom:10px"></div>
 
-  <!-- Two dashboards, one page (Jacob, 2026-09-02). portal.js puts
-       acct-company or acct-individual on <body>; the CSS hides the other set
-       of tabs. Overview, Quote requests and Reviews stay off (2026-08-20,
+  <!-- One dashboard for every account (Jacob, 2026-09-03: "there is only one
+       type of account and login", called a profile). Every tab shows for
+       everyone. Overview, Quote requests and Reviews stay off (2026-08-20,
        backups/dashboard-2026-08-20/). -->
   <div class="pt-tabs">
-    <!-- company -->
-    <button class="pt-tab tab-co active" data-tab="company">Company Details</button>
-    <button class="pt-tab tab-co" data-tab="employment">Employment</button>
-    <button class="pt-tab tab-co" data-tab="listings">Listings</button>
-    <!-- individual -->
-    <button class="pt-tab tab-ind" data-tab="me">Personal Details</button>
-    <button class="pt-tab tab-ind" data-tab="experience">Experience</button>
-    <button class="pt-tab tab-ind" data-tab="recruit">Seek Employment</button>
-    <!-- both -->
+    <button class="pt-tab active" data-tab="profile">Profile Details</button>
+    <button class="pt-tab" data-tab="listings">Listings</button>
+    <button class="pt-tab" data-tab="hiring">Hiring</button>
+    <button class="pt-tab" data-tab="seeking">Seeking Employment</button>
     <button class="pt-tab" data-tab="promote">Promote</button>
     <button class="pt-tab" data-tab="account" id="pt-tab-account">Account Settings</button>
     <!-- shown by portal.js only when the signed-in account is a Circuits.com admin -->
     <button class="pt-tab" data-tab="admin" id="pt-tab-admin" style="display:none">Admin</button>
   </div>
 
-  <!-- ===== individual: details / experience / employment (one saved profile) ===== -->
-  <section class="pt-panel" id="tab-me"><div class="pf-form" id="pt-me"></div></section>
-  <section class="pt-panel" id="tab-experience"><div class="pf-form" id="pt-experience"></div></section>
-  <section class="pt-panel" id="tab-recruit">
-    <p class="kit-intro">Companies search the Recruits Directory by Circuits-Keyword&trade;. Pick the keywords a
-      recruiter would type to find someone like you, and switch the listing on. They see the preview below;
-      your name, contact details and resume stay blurred until a company pays to unlock them.</p>
+  <!-- ===== seeking employment: your experience, your keywords, your listing (one saved profile) ===== -->
+  <section class="pt-panel" id="tab-seeking">
+    <p class="kit-intro">The Seeking Employment side of Recruiting. Companies that are hiring search it by
+      Circuits-Keyword&trade;. Fill in your experience, pick the keywords a recruiter would type to find someone
+      like you, and switch the listing on. They see the preview; your name, contact details and resume stay
+      blurred until a company pays to unlock them.</p>
     <div class="pt-recruit-grid">
-      <div class="pf-form" id="pt-recruit"></div>
+      <div>
+        <div class="pf-form" id="pt-experience"></div>
+        <div class="pf-form" id="pt-recruit" style="margin-top:18px"></div>
+      </div>
       <div><h3 style="margin:0 0 10px">Preview How Companies See You</h3><div id="pt-recruit-preview"></div></div>
     </div>
 
     <div class="pt-section pt-board"></div>
   </section>
 
-  <!-- ===== account settings (both) ===== -->
+  <!-- ===== account settings ===== -->
   <section class="pt-panel" id="tab-account"><div id="pt-account-owner"></div></section>
 
-  <!-- ===== company ===== -->
-  <!-- company details -->
-  <section class="pt-panel active" id="tab-company">
+  <!-- ===== profile details: one form for the person or the company behind the account ===== -->
+  <section class="pt-panel active" id="tab-profile">
     <div class="pf-form">
+      <div id="pt-fresh-note"></div>
       <div class="auth-field" style="max-width:520px">
         <label for="f-handle">Your Circuits.com address</label>
         <div class="handle-row">
@@ -116,32 +113,33 @@
       </div>
 
       <div class="pt-row">
-        <div class="auth-field"><label for="f-name">Company name</label><input id="f-name" type="text" maxlength="120">
-          <p class="pf-note">Your heading on your profile and the name buyers see in search results.</p></div>
+        <div class="auth-field"><label for="f-name">Name <span class="req">*</span></label><input id="f-name" type="text" maxlength="120" required>
+          <p class="pf-note">Your name, or your company's. The heading on your profile and the name people see in search results.</p></div>
         <div class="auth-field"><label for="f-contact">Contact person</label><input id="f-contact" type="text">
-          <p class="pf-note">The person a buyer asks for.</p></div>
-        <div class="auth-field"><label for="f-email">Public email</label><input id="f-email" type="email"></div>
+          <p class="pf-note">For a company: the person a buyer asks for.</p></div>
+        <div class="auth-field"><label for="f-email">Public email</label><input id="f-email" type="email">
+          <p class="pf-note">Shown on your profile. Your sign-in email is under Account Settings.</p></div>
       </div>
       <div class="pt-row">
         <div class="auth-field"><label for="f-tagline">Tagline</label><input id="f-tagline" type="text" maxlength="160" placeholder="Authorised distributor of analog and power ICs"></div>
       </div>
       <div class="pt-row">
-        <div class="auth-field"><label for="f-phone">Phone</label><input id="f-phone" type="text"></div>
+        <div class="auth-field"><label for="f-phone">Public phone</label><input id="f-phone" type="text"></div>
         <div class="auth-field"><label for="f-website">Website</label><input id="f-website" type="text" placeholder="https://…"></div>
         <div class="auth-field"><label for="f-address">Address</label><input id="f-address" type="text"></div>
       </div>
       <div class="pt-row">
         <div class="auth-field"><label for="f-founded">Founded</label><input id="f-founded" type="text" placeholder="1998"></div>
-        <div class="auth-field"><label for="f-employees">Employees</label><input id="f-employees" type="text" placeholder="50–200"></div>
+        <div class="auth-field"><label for="f-employees">Employees</label><input id="f-employees" type="text" placeholder="50 to 200"></div>
       </div>
-      <p class="pf-note">Contact person, phone, email, website and logo update everywhere: your profile,
-      every keyword listing and your sponsor banner.</p>
+      <p class="pf-note">Everything here is public. Contact person, phone, email, website and picture update everywhere:
+      your profile, every keyword listing and your sponsor banner.</p>
 
       <!-- Logo, About and Social profiles used to be an "About & Branding" tab
            (merged here 2026-09-02, Jacob: fewer tabs). One form, one Save. -->
       <h3 style="margin-top:22px">About &amp; branding</h3>
       <div class="pt-row">
-        <div class="auth-field"><label for="pt-logo">Logo</label>
+        <div class="auth-field"><label for="pt-logo">Logo or profile picture</label>
           <div style="display:flex;gap:10px;align-items:center">
             <span class="logo-thumb" id="pt-logo-prev" style="width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center"></span>
             <input id="pt-logo" type="file" accept="image/png,image/jpeg,image/webp">
@@ -152,7 +150,7 @@
             <label class="crop-zoom">Zoom
               <input id="pt-crop-z" type="range" min="1" max="4" step="0.01" value="1">
             </label>
-            <p class="pf-note">Drag the image to move it. Your logo is saved as a square.</p>
+            <p class="pf-note">Drag the image to move it. It is saved as a square.</p>
             <div class="crop-btns">
               <button type="button" class="mini-btn" id="pt-crop-ok">Use this</button>
               <button type="button" class="mini-btn" id="pt-crop-no">Cancel</button>
@@ -160,8 +158,8 @@
           </div>
         </div>
       </div>
-      <div class="auth-field"><label for="f-desc">About your company</label>
-        <textarea id="f-desc" rows="6" maxlength="2000" placeholder="What you supply, which lines you carry, who you serve."></textarea>
+      <div class="auth-field"><label for="f-desc">About</label>
+        <textarea id="f-desc" rows="6" maxlength="2000" placeholder="What you do, what you supply, who you serve."></textarea>
         <p class="pf-note">Shown on your profile page. The blurb in your Exclusive Sponsor banner on
         search results is written by Circuits.com and is not changed here.</p>
       </div>
@@ -172,12 +170,12 @@
     </div>
   </section>
 
-  <!-- employment: post a job, search recruits -->
-  <section class="pt-panel" id="tab-employment">
+  <!-- hiring: the Hiring side of Recruiting. Post a job, search the people seeking employment. -->
+  <section class="pt-panel" id="tab-hiring">
     <div class="pt-section" style="margin-top:0;padding-top:0;border-top:0">
-      <h2>Recruiting Listing</h2>
-      <p class="kit-intro">Post an open role under the Circuits-Keywords&trade; you hire for. Once Circuits.com approves it,
-        the post is live for 30 days on the Job Board below, and each person who applies appears under New Applicants
+      <h2>Hiring Listing</h2>
+      <p class="kit-intro">The Hiring side of Recruiting. Post an open role under the Circuits-Keywords&trade; you hire for. Once Circuits.com approves it,
+        the post is live for 30 days on the Hiring board, and each person who applies appears under New Applicants
         on that post.</p>
       <div class="pt-list" id="pt-jobs"></div>
     <div class="pf-form" id="pt-job-form">
@@ -190,7 +188,7 @@
         <input id="job-keywords" type="text" placeholder="rf design, pcb layout"></div>
       <div class="auth-field"><label for="job-desc">Description</label>
         <textarea id="job-desc" rows="6" maxlength="4000" placeholder="The role, the team, what you need."></textarea></div>
-      <div class="auth-field"><label for="job-email">Send applications to <span class="cell-muted">(optional, defaults to your company email)</span></label>
+      <div class="auth-field"><label for="job-email">Send applications to <span class="cell-muted">(optional, defaults to your public email)</span></label>
         <input id="job-email" type="email" maxlength="120" placeholder="hiring@company.com"></div>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="btn btn-primary" type="button" id="job-post">Post job</button>
@@ -198,14 +196,13 @@
       </div>
     </div>
     </div>
-    </div>
 
     <div class="pt-section">
-      <h2>Search Recruits</h2>
-      <p class="kit-intro">Search the Recruits Directory by the Circuits-Keyword&trade; you are hiring for. Searching is free.
+      <h2>Search People Seeking Employment</h2>
+      <p class="kit-intro">Search the Seeking Employment side by the Circuits-Keyword&trade; you are hiring for. Searching is free.
         Names, contact details and resumes are blurred until you unlock them with Talent Access.</p>
       <form id="rs-form" class="mini-search" autocomplete="off" style="max-width:520px">
-        <input id="rs-q" type="text" placeholder="rf design, pcb layout, test engineer" aria-label="Search recruits">
+        <input id="rs-q" type="text" placeholder="rf design, pcb layout, test engineer" aria-label="Search people seeking employment">
         <button type="submit" class="search-go mini" aria-label="Search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
       </form>
       <div id="rs-note" class="tal-note"></div>
@@ -419,8 +416,6 @@
             <select id="nt-aud" onchange="notifyAudienceUI()">
               <option value="users">Specific users</option>
               <option value="keyword">Anyone listed under a keyword</option>
-              <option value="companies">Every company account</option>
-              <option value="individuals">Every individual account</option>
               <option value="everyone">Every user on the site</option>
             </select></div>
           <div class="auth-field"><label for="nt-link">Link <span class="cell-muted">(optional)</span></label><input id="nt-link" type="text" maxlength="300" placeholder="/portal or https://..."></div>
@@ -460,7 +455,7 @@
 
   <!-- Recruits (MVP2): people who opted into the directory; Hide pulls one out -->
   <div class="panel" data-adm="employment">
-    <div class="panel-head"><h2>Recruits</h2><span class="hint">People Asking To Be In The Recruits Directory. Approve To List Them, Deny To Keep Them Out</span></div>
+    <div class="panel-head"><h2>Recruits</h2><span class="hint">People Asking To Be Listed Under Seeking Employment. Approve To List Them, Deny To Keep Them Out</span></div>
     <div class="panel-body">
       <div class="table-scroll">
         <table class="dash-table">
@@ -495,7 +490,7 @@
 
   <!-- Companies: the only place suspension can be applied or lifted -->
   <div class="panel" data-adm="companies">
-    <div class="panel-head"><h2>All Companies</h2><span class="hint" id="companies-hint">Suspend Hides Without Deleting. Talent Access Unlocks The Recruits Directory. Delete Removes The Company And Everything It Has</span></div>
+    <div class="panel-head"><h2>All Companies</h2><span class="hint" id="companies-hint">Every Account Is Here. Suspend Hides Without Deleting. Talent Access Unlocks Seeking Employment Details. Delete Removes The Profile And Everything It Has</span></div>
     <div class="panel-body">
       <div class="table-scroll">
         <table class="dash-table">
@@ -570,7 +565,6 @@
 <script src="/portal.js"></script>
 <script src="/admin.js"></script>
 <script>
-/* three Save profile buttons, one per profile tab, all save the whole profile */
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));
 initPortal();
 </script>

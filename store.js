@@ -469,8 +469,10 @@ async function createMyProfile(handle, displayName){
     .insert({ user_id: u.id, handle, display_name: displayName || null, email: u.email });
   return error ? error.message : '';
 }
-/* A company account's own companies row, created on its first portal visit
-   (register_company() is idempotent: it returns the slug it already owns). */
+/* Every account's own companies row, created on its first portal visit; it
+   shares the profile's address and is what listings, job posts and Talent
+   Access hang off (register_company() is idempotent: it returns the slug it
+   already owns). */
 async function registerCompany(){
   if(!sb) return { error: 'No connection' };
   const { data, error } = await sb.rpc('register_company');
@@ -740,13 +742,12 @@ async function hasTalentAccess(){
    The handle rides along as signup metadata because email confirmation means
    there is no session yet, a trigger turns it into the profile row, so the
    address is held from the moment the account exists. */
-async function registerProfile(email, password, handle, displayName, accountType){
+async function registerProfile(email, password, handle, displayName){
   if(!sb) return 'No connection';
   const { error } = await sb.auth.signUp({
     email, password,
     options: {
-      data: { handle: (handle||'').toLowerCase().trim(), display_name: displayName || '',
-              account_type: accountType === 'company' ? 'company' : 'individual' },
+      data: { handle: (handle||'').toLowerCase().trim(), display_name: displayName || '' },
       emailRedirectTo: location.origin + '/portal'   // confirmation lands on the portal, not the reset sheet
     }
   });

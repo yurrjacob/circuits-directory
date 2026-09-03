@@ -673,7 +673,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   for (const gone of ['data-tab="branding"', 'data-tab="showcase"', 'data-tab="jobs"', 'id="f-certs"', 'id="f-reviews-on"']) {
     assert.ok(!portalHtml.includes(gone), `${gone} is back on the dashboard, showcase and jobs live under Listings now`);
   }
-  assert.ok(portalHtml.includes('data-tab="company"'), 'the dashboard lost its Company Details tab');
+  assert.ok(portalHtml.includes('data-tab="profile"'), 'the dashboard lost its Profile Details tab');
   // every company-level field still present in the one tab
   for (const id of ['f-handle', 'f-name', 'f-contact', 'f-email', 'f-phone', 'f-website',
                     'f-founded', 'f-employees', 'f-desc', 'f-socials', 'pt-logo']) {
@@ -708,22 +708,68 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     'store.js no longer asks the database whether a person profile is staff-run');
   assert.ok(/personProfile\(p, staffRun\)/.test(profSrc) && /staffRun \? ' ' \+ teamMarkHtml\(\)/.test(profSrc),
     'a staff-run person profile no longer shows the Circuits.com mark');
-  /* 2026-09-02: two dashboards. An account with no company gets the
-     Individual Dashboard (Individual Details / Experience / Employment /
-     Promote / Account Settings), never a bare admin console. */
+  /* 2026-09-03 (Jacob): ONE account type, called a profile. One dashboard
+     with every tab for everyone: Profile Details / Listings / Hiring /
+     Seeking Employment / Promote / Account Settings (+ Admin for staff).
+     No account kind anywhere: not on /register, not in signup metadata, not
+     as a body class, not in the header label. */
   const portalHtml2 = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
-  for (const tab of ['data-tab="me"', 'data-tab="experience"', 'data-tab="recruit"', 'data-tab="employment"', 'data-tab="promote"', 'data-tab="account"']) {
-    assert.ok(portalHtml2.includes(tab), `portal.html lost its ${tab} tab`);
+  const tabStrip = portalHtml2.match(/<div class="pt-tabs">[\s\S]*?<\/div>/)[0];
+  const tabs = [...tabStrip.matchAll(/data-tab="([a-z]+)"/g)].map(m => m[1]);
+  assert.deepStrictEqual(tabs, ['profile', 'listings', 'hiring', 'seeking', 'promote', 'account', 'admin'],
+    'the dashboard tabs are not Profile Details / Listings / Hiring / Seeking Employment / Promote / Account Settings / Admin');
+  assert.ok(!/tab-co|tab-ind|acct-company|acct-individual/.test(portalHtml2 + portalSrc2 + fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
+    'the two-dashboard split is back (tab-co / tab-ind / acct-*)');
+  assert.ok(!/account_type|cx_account_type/.test(portalSrc2 + fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8') + fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')),
+    'an account kind is being chosen or displayed somewhere (account_type)');
+  assert.ok(!/account_type/.test(storeSrc2.slice(storeSrc2.indexOf('async function registerProfile'), storeSrc2.indexOf('async function registerProfile') + 600)),
+    'registration still sends an account type');
+  const regHtml = fs.readFileSync(path.join(ROOT, 'register.html'), 'utf8');
+  assert.ok(!/reg-kind|r-kind/.test(regHtml), 'the Individual / Company choice is back on /register');
+  assert.ok(/id="r-name"[^>]*required/.test(regHtml), 'a name is no longer required at registration');
+  /* every account gets its companies row on first visit (listings, jobs and
+     Talent Access hang off it), and the Profile Details save creates both
+     rows for an account that has neither */
+  assert.ok(/if\(!cos\.length && me\)\{\s*const r = await registerCompany\(\)/.test(portalSrc2),
+    'an account with no companies row never gets one (register_company)');
+  assert.ok(/const e1 = await createMyProfile\(wantHandle, fields\.name\)/.test(portalSrc2) && /const r = await registerCompany\(\);\s*if\(r\.error\)/.test(portalSrc2),
+    'the first Profile Details save does not create the profile and its company row');
+  /* the person and the page share name, picture and address */
+  assert.ok(/const mine = \{ display_name: fields\.name \};[\s\S]*mine\.photo_url = fields\.logo;[\s\S]*mine\.handle = fields\.handle;/.test(portalSrc2),
+    'Profile Details no longer mirrors name, picture and address onto the person');
+  /* the Seeking Employment tab holds experience, keywords, the private phone and the listing switch */
+  for (const id of ['id="me-title"', 'id="me-years"', 'id="me-bio"', 'id="f-creds"', 'id="me-resume"', 'id="me-kw-rows"', 'id="me-phone"', 'id="me-listed"']) {
+    assert.ok(portalSrc2.includes(id), `the Seeking Employment tab lost ${id}`);
   }
-  assert.ok(/kind === 'individual'\)\{[\s\S]*renderIndividual\(me\)/.test(portalSrc2),
-    'an account with no company no longer gets the Individual Dashboard');
-  assert.ok(/registerCompany\(\)/.test(portalSrc2),
-    'a company account with no companies row never gets one (register_company)');
-  const css2 = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
-  assert.ok(css2.includes('.acct-company .pt-tab.tab-ind') && css2.includes('.acct-individual .pt-tab.tab-co'),
-    'the CSS no longer hides the other dashboard\'s tabs');
-  assert.ok(/cx_account_type/.test(portalSrc2) && /cx_account_type/.test(fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8')),
-    'the header cannot say Company Dashboard / Individual Dashboard');
+  assert.ok(!/id="me-handle"|id="me-name"|id="me-photo"/.test(portalSrc2), 'Seeking Employment still asks for address, name or picture, those live on Profile Details now');
+  /* the Hiring tab: post a job, search people, the board */
+  for (const id of ['id="pt-jobs"', 'id="job-post"', 'id="rs-form"']) {
+    assert.ok(portalHtml2.includes(id), `the Hiring tab lost ${id}`);
+  }
+  assert.strictEqual((portalHtml2.match(/class="pt-section pt-board"/g) || []).length, 2, 'the Recruiting board should sit on both the Hiring and Seeking Employment tabs');
+  /* header label for a signed-in user */
+  assert.ok(/a\.textContent = 'Your Profile'/.test(fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8')), 'the header button no longer says Your Profile');
+  /* the public page: the company row (the page) plus the person's experience */
+  assert.ok(/\[co, person\] = await Promise\.all\(\[fetchCompanyByHandle\(handle\), fetchProfileByHandle\(handle\)\]\)/.test(profSrc)
+    && /if\(person\) html \+= personExperience\(person\)/.test(profSrc),
+    'circuits.com/<name> no longer folds the person\'s experience into the page');
+}
+
+/* --- the search is split: Directory, or Recruiting with two sides (Jacob, 2026-09-03) --- */
+{
+  const home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  assert.ok(/data-mode="directory"[^>]*role="tab"/.test(home) && /data-mode="recruiting"/.test(home), 'the homepage lost the Directory / Recruiting toggle');
+  assert.ok(/data-side="hiring"/.test(home) && /data-side="seeking"/.test(home), 'Recruiting lost its Hiring / Seeking Employment sides');
+  assert.ok(/id="search-side"[^>]*hidden/.test(home), 'the Recruiting sides should be hidden until Recruiting is picked');
+  const appHome = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+  assert.ok(/t === 'seeking' \? '\/talent' : '\/jobs'/.test(appHome) && /if\(t === 'directory'\)\{ gotoSearch\(q\); return; \}/.test(appHome),
+    'the homepage search does not route Directory to /results, Hiring to /jobs and Seeking Employment to /talent');
+  assert.ok(/\.search-mode\[hidden\]\{display:none\}/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'a hidden .search-mode would still show (inline-flex beats [hidden])');
+  assert.ok(/<title>Recruiting: Hiring \| Circuits\.com<\/title>/.test(fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8')), '/jobs is not titled Recruiting: Hiring');
+  assert.ok(/<title>Recruiting: Seeking Employment \| Circuits\.com<\/title>/.test(fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8')), '/talent is not titled Recruiting: Seeking Employment');
+  for (const f of ['jobs.html', 'talent.html']) {
+    assert.ok(!/Company Dashboard|Individual Dashboard|Recruits Directory|Employment Board/.test(fs.readFileSync(path.join(ROOT, f), 'utf8')), `${f} still uses the old names`);
+  }
 }
 
 /* --- somebody who forgets their password must not be locked out forever --- */
@@ -918,32 +964,19 @@ assert.ok(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8').includes('fetch
   'circuits.com/<name> no longer resolves a person, only a company');
 const joinHtml = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
 
-/* --- MVP1 (2026-08-31): Get Listed is a FREE listing REQUEST ---
-       No account, no password, no pricing or paid upgrades. It collects company
-       details + up to 10 free keywords + a message and files a Pending request;
-       staff follow up by email. The full account/upgrade/pricing version is
-       preserved in backups/mvp1-baseline-2026-08-25/ for MVP2. */
-for (const gone of ['id="acct-step"', 'id="f-handle"', 'id="f-pass"', 'id="promo-check"',
-                    'id="badge-check"', 'id="quote-step"']) {
-  assert.ok(!joinHtml.includes(gone),
-    `${gone} is back on Get Listed, MVP1 is a free request (that piece moved to backups/ for MVP2)`);
-}
-for (const id of ['f-company', 'f-contact', 'f-email', 'f-phone', 'kw-input', 'f-terms']) {
-  assert.ok(joinHtml.includes(`id="${id}"`), `join.html lost its request field ${id}`);
-}
-assert.ok(/Submit Request/.test(joinHtml), 'the Get Listed button no longer says Submit Request');
-assert.ok(/up to 10 keywords/i.test(joinHtml), 'the free-keywords note is gone from Get Listed');
-
+/* --- Listings need an account (Jacob, 2026-09-03) ---
+       "Users need an account to create listings on any part of the site."
+       /join is a redirect now: signed out to /register, signed in to the
+       Listings tab, where "Get another listing" files the request. The old
+       anonymous form is kept in backups/join-2026-09-03/. Every Get Listed
+       button may keep href="/join"; nav.js still routes signed-in clicks. */
+assert.ok(!/id="join-form"|id="f-company"|Submit Request/.test(joinHtml), 'the anonymous Get Listed form is back on /join, listings need an account');
+assert.ok(/location\.replace\(on \? '\/portal#listings' : '\/register'\)/.test(joinHtml), '/join no longer sends people to /register (signed out) or the Listings tab (signed in)');
+assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'join-2026-09-03', 'join.html')), 'the old Get Listed form backup is missing');
+assert.ok(!/circuits\.com\/join</.test(fs.readFileSync(path.join(ROOT, 'sitemap.xml'), 'utf8')), 'the sitemap still lists /join');
 const joinJs = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
-// a free request: an email to reply to, filed as Pending, and no account made
-assert.ok(!/await signUp\(/.test(joinJs), 'Get Listed creates an account again, MVP1 is a free request');
-assert.ok(/email: v\('f-email'\)/.test(joinJs), 'the request no longer takes its reply-to email from the form');
-assert.ok(/status: 'Pending'/.test(joinJs), 'the Get Listed request is not filed as Pending');
+assert.ok(/status: 'Pending'/.test(joinJs), 'a listing request is not filed as Pending');
 
-/* --- Get Listed, signed in vs out (Jacob, 2026-09-02) ---
-       Signed out: every Get Listed button goes to the /join form, no account
-       needed. Signed in: nav.js sends the same buttons (and /join itself) to
-       the Listings tab, where "Get another listing" is the old step 02. */
 const navSrc = fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8');
 assert.ok(/a\[href="\/join"\]/.test(navSrc) && /\/portal#listings/.test(navSrc), 'nav.js no longer sends signed-in Get Listed clicks to /portal#listings');
 assert.ok(/\/join\(\\\.html\)\?\$/.test(navSrc), 'nav.js no longer redirects a signed-in visit to /join');
@@ -952,7 +985,7 @@ for (const id of ['al-input', 'al-add', 'al-check', 'al-tags', 'al-submit']) {
   assert.ok(portalListings.includes(`id="${id}"`), `the Listings tab lost its Get another listing field ${id}`);
 }
 const portalJsSrc = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
-assert.ok(/location\.hash === '#listings'/.test(portalJsSrc), 'portal.js no longer opens the Listings tab for /portal#listings');
+assert.ok(/const tab = \(location\.hash \|\| ''\)\.replace\('#', ''\);[\s\S]{0,120}activateTab\(tab\)/.test(portalJsSrc), 'portal.js no longer opens the tab named in the hash (/portal#listings, /portal#seeking)');
 assert.ok(/company_slug: PT\.slug/.test(portalJsSrc), 'a requested listing is not tied to the company that asked for it');
 assert.ok(/status: 'Pending'/.test(portalJsSrc), 'a requested listing is not filed as Pending');
 assert.ok(/kws\.length >= 10/.test(portalJsSrc), 'the ten-keyword cap is gone from Get another listing');
@@ -1378,10 +1411,10 @@ for (const [m, y, what] of [[BASE, BASE_Y, 'listing'], [BANNER, BANNER_Y, 'banne
   const aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
   assert.ok(/function approveUpgrade/.test(aj) && /function denyUpgrade/.test(aj), 'Upgrade Applications lost Approve or Deny');
   assert.ok(/badge: \{ text: \(r\.badge_text \|\| ''\)\.slice\(0, 18\), color: r\.badge_color/.test(aj), 'Approve does not apply the label and colour the company chose');
-  /* profile pictures for individuals: picked on Personal Details, shown on
-     circuits.com/<handle> and in the unlocked contact block, never on the
-     anonymous recruit card */
-  assert.ok(/id="me-photo"/.test(pj) && /fields\.photo_url = url/.test(pj), 'Personal Details lost the profile picture');
+  /* the profile picture: the Profile Details logo, mirrored onto the person
+     (photo_url), shown on circuits.com/<handle> and in the unlocked contact
+     block, never on the anonymous recruit card */
+  assert.ok(/mine\.photo_url = fields\.logo/.test(pj), 'Profile Details no longer mirrors the picture onto the person');
   assert.ok(/photo_url/.test(st.match(/const PROFILE_PUBLIC_COLS = '[^']+'/)[0]), 'store.js does not read photo_url');
   assert.ok(/p\.photo_url/.test(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8')), 'the person profile page does not show the picture');
   const appSrc2 = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
@@ -1390,9 +1423,6 @@ for (const [m, y, what] of [[BASE, BASE_Y, 'listing'], [BANNER, BANNER_Y, 'banne
   /* every live email leaves from notifications@circuits.com: a listing request
      (Get Listed or Get another listing) is acknowledged by the notify function,
      not by FormSubmit */
-  const joinFn = appSrc2.slice(appSrc2.indexOf('function initJoin('), appSrc2.indexOf('async function initReset('));
-  assert.ok(/notifyListingRequest\(base\.email, base\.company\)/.test(joinFn), 'Get Listed no longer emails the applicant and staff through the notify function');
-  assert.ok(!/sendFounderEmail\(/.test(joinFn), 'Get Listed went back to FormSubmit');
   assert.ok(/notifyListingRequest\(base\.email, base\.company\)/.test(pj), 'Get another listing does not email a copy');
   assert.ok(/kind: 'listing-request'/.test(st), 'store.js lost notifyListingRequest');
 }

@@ -37,24 +37,11 @@
 </header>
 
 <div class="form-wrap form-wrap-narrow">
-<h1>Create Your Account</h1>
+<h1>Create Your Profile</h1>
 
-<!-- Step one is only this choice (Jacob, 2026-09-02): pick a card, and the
-     same registration form appears below for either kind of account. -->
-<div class="reg-kind" id="reg-kind">
-  <button type="button" class="reg-kind-card" data-kind="individual"><b>Individual</b>
-    <ul>
-      <li>Create Your Free Profile &amp; Circuits.com Address</li>
-      <li>Get Found Under Your Circuits-Keywords&trade;</li>
-      <li>Build Your Employment Profile &amp; Get Recruited</li>
-    </ul></button>
-  <button type="button" class="reg-kind-card" data-kind="company"><b>Company</b>
-    <ul>
-      <li>View Your Free Account &amp; Keyword Listings</li>
-      <li>Claim Keyword Upgrades</li>
-      <li>Create Employment Profile For Posting &amp; Searching</li>
-    </ul></button>
-</div>
+<p class="lede" style="margin:0 0 18px">One account does everything on Circuits.com: your page at circuits.com/yourname,
+Directory listings under your Circuits-Keywords&trade;, and both sides of Recruiting, hiring and seeking employment.
+You need an account to list anything.</p>
 
 <div id="reg-success" class="success">
 <b>Profile created.</b> <span id="reg-success-handle"></span>
@@ -62,8 +49,7 @@ Check your inbox to confirm your email address, then sign in at
 <a href="/portal">circuits.com/portal</a>.
 </div>
 
-<form id="reg-form" autocomplete="off" novalidate style="display:none">
-<input type="hidden" id="r-kind" value="individual">
+<form id="reg-form" autocomplete="off" novalidate>
 
 <!-- Step 0 -->
 <section class="step">
@@ -89,8 +75,9 @@ hyphens or underscores between them.</p>
 
 <div class="grid2">
 <div class="field">
-<label for="r-name" id="r-name-label">Display Name <span class="cell-muted" style="font-weight:400">(Optional)</span></label>
-<input id="r-name" type="text" maxlength="120" placeholder="Jacob Kennedy">
+<label for="r-name" id="r-name-label">Name <span class="req">*</span></label>
+<input id="r-name" type="text" maxlength="120" placeholder="Jacob Kennedy or AAA Electronics" required>
+<p class="field-hint">Your name, or your company's. Change it any time.</p>
 </div>
 <div class="field">
 <label for="r-email">Email <span class="req">*</span></label>
@@ -121,7 +108,7 @@ hyphens or underscores between them.</p>
 </div>
 </form>
 
-<div class="reg-next" id="reg-next" style="display:none">
+<div class="reg-next" id="reg-next">
 <h2 class="pf-sec-h">What happens next</h2>
 <ol class="reg-steps">
 <li><b>Account created</b>: circuits.com/yourname is yours.</li>

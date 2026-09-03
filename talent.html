@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Recruits Directory | Circuits.com</title>
+<title>Recruiting: Seeking Employment | Circuits.com</title>
 <!-- noindex until the talent marketplace launches (MVP2, 2026-09-02) -->
 <meta name="robots" content="noindex, nofollow">
 <meta name="description" content="Find engineers, technicians, recruiters, researchers and educators in the circuits industry by Circuits-Keyword™.">
@@ -34,14 +34,14 @@
       <button type="submit" class="search-go mini" aria-label="Search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
     </form>
     <div class="subbar-meta">
-      <span class="kw-line">Recruits Directory</span>
+      <span class="kw-line">Recruiting: Seeking Employment</span>
       <span class="count-line">Showing <b id="result-count">0</b> Recruits for <b data-term>…</b></span>
     </div>
   </div>
 </div>
 
 <div class="page prose tal-intro">
-  <p class="lede">People in the circuits industry, listed under the Circuits-Keywords&trade; they work in. Titles, experience and keywords are open to everyone. Names, contact details and resumes unlock for companies with Talent Access.</p>
+  <p class="lede">The Seeking Employment side of Recruiting: people in the circuits industry, listed under the Circuits-Keywords&trade; they work in. Titles, experience and keywords are open to everyone. Names, contact details and resumes unlock for companies with Talent Access. Looking for a job instead? See who is <a href="/jobs">hiring</a>.</p>
   <div id="tal-access-note" class="tal-note"></div>
 </div>
 
@@ -64,7 +64,7 @@
 <script src="store.js"></script>
 <script src="app.js"></script>
 <script>
-/* The Recruits Directory. Every card shows public metadata; the private block
+/* Seeking Employment. Every card shows public metadata; the private block
    is a blur until a company with Talent Access (companies.talent_access_until,
    set by staff after payment) clicks Unlock, which asks talent_contact(). The
    database is the gate; this page only decides what to draw. */
@@ -83,20 +83,20 @@
   const access = user ? await hasTalentAccess() : false;
   const note = document.getElementById('tal-access-note');
   note.innerHTML = access
-    ? '<b>Talent Access is active.</b> Unlock any recruit to see their name, contact details and resume.'
+    ? '<b>Talent Access is active.</b> Unlock anyone to see their name, contact details and resume.'
     : (user
         ? 'Your account has no Talent Access. It is a monthly subscription for companies. <a href="/contact">Contact us</a> to add it.'
-        : '<a href="/portal">Sign in</a> to your Company Dashboard to search and unlock recruits. Not on Circuits.com yet? <a href="/register">Create a free profile</a>.');
+        : '<a href="/portal">Sign in</a> to search and unlock people from the Hiring tab of your profile. Not on Circuits.com yet? <a href="/register">Create a free profile</a>.');
 
   body.innerHTML = loadingHtml('Searching…');
   let rows = [];
   try { rows = await talentSearch(q); }
-  catch(e){ body.innerHTML = loadErrorHtml('the Recruits Directory', 'Try again'); return; }
+  catch(e){ body.innerHTML = loadErrorHtml('Seeking Employment', 'Try again'); return; }
   document.getElementById('result-count').textContent = rows.length;
 
   if(!rows.length){
-    body.innerHTML = `<div class="empty"><div class="big">No recruits listed${q ? ' for &ldquo;' + escapeHtml(q) + '&rdquo;' : ''} yet</div>
-      <p>Are you one? <a href="/register">Create a free profile</a>, add your keywords and tick <b>List me in the Recruits Directory</b>.</p></div>`;
+    body.innerHTML = `<div class="empty"><div class="big">Nobody seeking employment${q ? ' for &ldquo;' + escapeHtml(q) + '&rdquo;' : ''} yet</div>
+      <p>Are you one? <a href="/register">Create a free profile</a>, add your keywords under Seeking Employment and switch on <b>List me under Seeking Employment</b>.</p></div>`;
     return;
   }
 

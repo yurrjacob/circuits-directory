@@ -38,20 +38,15 @@
 
   /* Get Listed while signed in (Jacob, 2026-09-02): every "Get Listed" button
      on the site, static or rendered later, lands on the Listings tab of the
-     dashboard instead of the form. Signed out, the form needs no account.
-     An individual account has no Listings tab and may well be getting a
-     company listed, so its buttons keep going to the form. */
-  var kind = '';
-  try{ kind = localStorage.getItem('cx_account_type') || ''; }catch(e){}
-  if(kind !== 'individual'){
-    if(/^\/join(\.html)?$/.test(location.pathname)){ location.replace('/portal#listings'); return; }
-    document.addEventListener('click', function(e){
-      var a = e.target.closest && e.target.closest('a[href="/join"]');
-      if(!a) return;
-      e.preventDefault();
-      location.href = '/portal#listings';
-    });
-  }
+     dashboard. Signed out, /join goes to registration: listings need an
+     account (Jacob, 2026-09-03), and every account has a Listings tab. */
+  if(/^\/join(\.html)?$/.test(location.pathname)){ location.replace('/portal#listings'); return; }
+  document.addEventListener('click', function(e){
+    var a = e.target.closest && e.target.closest('a[href="/join"]');
+    if(!a) return;
+    e.preventDefault();
+    location.href = '/portal#listings';
+  });
 
   /* Hide the signed-out links before first paint, so nobody sees "Sign In"
      flash and then vanish. The Dashboard link itself has to wait for <body>. */
@@ -70,11 +65,8 @@
     var a = document.createElement('a');
     a.className = 'cta nav-dash';
     a.href = '/portal';
-    /* "Company Dashboard" / "Individual Dashboard" (Jacob, 2026-09-02). The
-       portal stores the account type once it knows it; until then, plain. */
-    var kind = '';
-    try{ kind = localStorage.getItem('cx_account_type') || ''; }catch(e){}
-    a.textContent = kind === 'company' ? 'Company Dashboard' : kind === 'individual' ? 'Individual Dashboard' : 'Dashboard';
+    /* One account type, called a profile (Jacob, 2026-09-03). */
+    a.textContent = 'Your Profile';
     nav.appendChild(a);
   }
 

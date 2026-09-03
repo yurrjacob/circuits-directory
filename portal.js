@@ -1,4 +1,4 @@
-/* ===== Circuits.com, supplier portal =====
+/* ===== Circuits.com, the profile dashboard =====
    Everything here is gated by RLS, not by this file. Hiding a button is a
    convenience; the database is what actually refuses the write. */
 
@@ -15,99 +15,32 @@ function toast(text, ok){
   setTimeout(() => { t.style.display = 'none'; }, 4000);
 }
 
-/* ===== the individual dashboard: Individual Details / Experience / Employment =====
-   Three tabs, one saved profile. Every field stays in the page whichever tab
-   shows, so any Save button saves all of them (the same rule the company form
-   follows). An account from before profiles existed has no row yet: the form
-   still draws, and the first save creates it. */
+/* ===== Seeking Employment: experience, keywords, the listing (one saved profile) =====
+   One account type since 2026-09-03: the same account has a Profile Details
+   form (the public page, saved by saveProfile below) and this private side,
+   the person behind it as recruiters see them. ME is the profiles row; an
+   account from before profiles existed, or one made by the old Get Listed
+   form, has no row yet: Profile Details creates it on first save. */
 let ME = null, ME_FRESH = false;
 
-function renderIndividual(me){
+function renderSeeking(me){
   ME_FRESH = !me;
   ME = me || { handle: '', display_name: '', keywords: [], credentials: [] };
-  renderMeDetails(); renderExperience(); renderRecruit();
-  /* Promote reuses the company kit with the person as the subject */
-  PT.co = ME.handle ? { handle: ME.handle, name: ME.display_name || ME.handle, tagline: ME.title || '', logo: null,
-                        contact: null, phone: ME.phone || '', socials: {} } : null;
-  PT.listings = [];
-  renderPromote();
-  el('pt-title').textContent = 'Your Individual Dashboard';
-  el('pt-sub').innerHTML = ME.handle ? 'Your profile lives at <b id="pt-name">circuits.com/' + escapeHtml(ME.handle) + '</b>.' : 'Pick your Circuits.com address to create your profile.';
-  el('pt-view').href = ME.handle ? '/' + ME.handle : '#';
-  el('pt-view').style.display = ME.handle ? '' : 'none';
-  el('pt-company').style.display = 'none';
+  renderExperience(); renderRecruit();
 }
 
 const saveBtn = (id) => `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px">
-    <button class="btn btn-primary me-save" type="button">${ME_FRESH ? 'Create profile' : 'Save'}</button>
+    <button class="btn btn-primary me-save" type="button">Save</button>
     <span id="${id}" class="pf-note me-msg"></span></div>`;
 
-/* The picture is squared in the browser (centre crop, 400px) and uploaded on
-   Save, so a cancelled edit uploads nothing.
-   ponytail: no drag-to-crop here, reuse the company logo cropper if people ask. */
-let ME_PHOTO = null, ME_PHOTO_CLEAR = false;
-function wireMePhoto(){
-  const inp = el('me-photo'), prev = el('me-photo-prev'), rm = el('me-photo-rm');
-  if(!inp) return;
-  inp.onchange = () => {
-    const file = inp.files && inp.files[0]; if(!file) return;
-    if(file.size > CROP_MAX_MB * 1024 * 1024){ toast(`That image is over ${CROP_MAX_MB}MB. Please pick a smaller one.`, false); inp.value = ''; return; }
-    const url = URL.createObjectURL(file), img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const side = Math.min(img.naturalWidth, img.naturalHeight);
-      if(!side){ toast('That file is not an image we can read.', false); return; }
-      const out = document.createElement('canvas'); out.width = out.height = 400;
-      out.getContext('2d').drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, 400, 400);
-      out.toBlob(blob => {
-        if(!blob){ toast('That picture could not be read. Try a PNG or JPEG.', false); return; }
-        ME_PHOTO = new File([blob], 'photo.png', { type: 'image/png' }); ME_PHOTO_CLEAR = false;
-        prev.innerHTML = `<img src="${out.toDataURL('image/png')}" alt="">`;
-        rm.style.display = '';
-        toast('Picture ready. Save to publish it.', true);
-      }, 'image/png');
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); toast('That file is not an image we can read.', false); };
-    img.src = url;
-  };
-  rm.onclick = () => { ME_PHOTO = null; ME_PHOTO_CLEAR = true; inp.value = ''; prev.innerHTML = avatarSvg(); rm.style.display = 'none'; };
-}
-
-function renderMeDetails(){
-  const box = el('pt-me'); if(!box) return;
-  box.innerHTML = `
-    ${ME_FRESH ? '<p class="pf-note" style="color:#3f6300;margin-top:0">This account has no Circuits.com address yet. Pick one below and save to create your profile.</p>' : ''}
-    <div class="grid2">
-      <div class="auth-field"><label>Your Circuits.com address</label>
-        <div class="handle-row"><span class="handle-prefix">circuits.com/</span>
-          <input id="me-handle" type="text" maxlength="32" spellcheck="false" value="${escapeHtml(ME.handle)}"></div>
-        <div id="me-handle-msg" class="pf-note"></div>
-      </div>
-      <div class="auth-field"><label>Full name <span class="req">*</span></label>
-        <input id="me-name" type="text" maxlength="120" required value="${escapeHtml(ME.display_name || '')}"></div>
-    </div>
-    <div class="auth-field"><label for="me-photo">Profile picture <span class="cell-muted">(shown on your profile and to companies that unlock you)</span></label>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <span class="logo-thumb me-photo-prev" id="me-photo-prev">${ME.photo_url ? `<img src="${escapeHtml(ME.photo_url)}" alt="">` : avatarSvg()}</span>
-        <input id="me-photo" type="file" accept="image/png,image/jpeg,image/webp">
-        <button type="button" class="mini-btn" id="me-photo-rm" ${ME.photo_url ? '' : 'style="display:none"'}>Remove</button>
-      </div>
-    </div>
-    <div class="grid2">
-      <div class="auth-field"><label>Email <span class="req">*</span> <span class="cell-muted">(private until a company unlocks you)</span></label>
-        <input id="me-email" type="email" readonly value="${escapeHtml(ME.email || (PT.user && PT.user.email) || '')}" title="Change it under Account Settings">
-        <div class="pf-note">This is your sign-in email. Change it under Account Settings.</div></div>
-      <div class="auth-field"><label>Phone <span class="req">*</span> <span class="cell-muted">(private until a company unlocks you)</span></label>
-        <input id="me-phone" type="tel" maxlength="40" required placeholder="(555) 123-4567" value="${escapeHtml(ME.phone || '')}"></div>
-    </div>
-    ${saveBtn('me-msg-1')}`;
-  ME_PHOTO = null; ME_PHOTO_CLEAR = false;
-  wireMePhoto();
-}
+const freshNote = () => `<div class="pt-empty"><b>Save your Profile Details first</b>
+    <p>Pick your Circuits.com address and name on the Profile Details tab and save. This tab opens up right after.</p></div>`;
 
 function renderExperience(){
   const box = el('pt-experience'); if(!box) return;
+  if(ME_FRESH){ box.innerHTML = freshNote(); return; }
   box.innerHTML = `
+    <h3 style="margin-top:0">Experience</h3>
     <div class="grid2">
       <div class="auth-field"><label>Position Desired</label>
         <input id="me-title" type="text" maxlength="80" placeholder="RF Design Engineer" value="${escapeHtml(ME.title || '')}"></div>
@@ -119,9 +52,9 @@ function renderExperience(){
     <details class="pt-fold" open><summary>Certifications &amp; degrees <span class="pf-note" id="fold-creds-n"></span></summary><div class="pt-list" id="f-creds"></div></details>
     <details class="pt-fold" open><summary>Resume <span class="pf-note">${ME.resume_path ? '· on file' : '· none yet'}</span></summary>
       <div class="pt-list"><div class="pt-item" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <span id="me-resume-state" class="pf-note" style="margin:0;flex:1">${ME_FRESH ? 'Save your profile first, then upload a resume.' : ME.resume_path ? 'Resume on file. PDF, private until a company unlocks you.' : 'No resume yet. PDF, up to 10 MB, private until a company unlocks you.'}</span>
+        <span id="me-resume-state" class="pf-note" style="margin:0;flex:1">${ME.resume_path ? 'Resume on file. PDF, private until a company unlocks you.' : 'No resume yet. PDF, up to 10 MB, private until a company unlocks you.'}</span>
         ${ME.resume_path ? '<a class="mini-btn rp-add" href="#" id="me-resume-view">View</a><button class="mini-btn rp-add danger" type="button" id="me-resume-remove">Remove</button>' : ''}
-        ${ME_FRESH ? '' : `<label class="mini-btn green rp-add" style="cursor:pointer">${ME.resume_path ? 'Replace' : '+ Upload'}<input id="me-resume" type="file" accept="application/pdf" style="display:none"></label>`}
+        <label class="mini-btn green rp-add" style="cursor:pointer">${ME.resume_path ? 'Replace' : '+ Upload'}<input id="me-resume" type="file" accept="application/pdf" style="display:none"></label>
       </div></div></details>
     ${saveBtn('me-msg-2')}`;
   renderRepeater('creds', ME.credentials, ['name', 'issuer', 'year'], ['Certification or degree', 'Issued by', 'Year']);
@@ -172,9 +105,11 @@ function drawKwTable(){
 }
 function renderRecruit(){
   const box = el('pt-recruit'); if(!box) return;
+  if(ME_FRESH){ box.innerHTML = ''; renderRecruitPreview(); return; }
   KW_ROWS = kwRowsFromMe();
   if(!KW_ROWS.length) KW_ROWS.push({ keyword: '', enabled: true });
   box.innerHTML = `
+    <h3 style="margin-top:0">Your listing</h3>
     <div class="auth-field"><label>Your Circuits-Keywords&trade; <span class="cell-muted">(up to 10)</span></label>
       <div class="table-scroll"><table class="dash-table kw-table">
         <thead><tr><th>Keyword</th><th>On / Off</th><th></th></tr></thead>
@@ -184,11 +119,18 @@ function renderRecruit(){
         <button type="button" class="mini-btn green rp-add" id="me-kw-add">+ Add keyword</button>
         <span class="pf-note" id="me-kw-n" style="margin:0"></span></div>
       <div class="pf-note">The words a recruiter searches for. One idea per keyword: <b>pcb layout</b>, not <b>pcb layout and test</b>. Off keeps a keyword without being found by it.</div></div>
+    <div class="grid2">
+      <div class="auth-field"><label>Email for recruiters <span class="cell-muted">(private until a company unlocks you)</span></label>
+        <input id="me-email" type="email" readonly value="${escapeHtml(ME.email || (PT.user && PT.user.email) || '')}" title="Change it under Account Settings">
+        <div class="pf-note">Your sign-in email. Change it under Account Settings.</div></div>
+      <div class="auth-field"><label>Phone for recruiters <span class="req">*</span> <span class="cell-muted">(private until a company unlocks you)</span></label>
+        <input id="me-phone" type="tel" maxlength="40" placeholder="(555) 123-4567" value="${escapeHtml(ME.phone || '')}"></div>
+    </div>
     <div class="pt-setting">
-      <div class="pt-setting-text"><b>List me in the Recruits Directory</b>
+      <div class="pt-setting-text"><b>List me under Seeking Employment</b>
         <p class="pf-note">Companies searching your keywords see the preview. Switch it off any time.</p></div>
       <label class="switch"><input id="me-listed" type="checkbox" ${ME.talent_listed ? 'checked' : ''}>
-        <span class="knob" aria-hidden="true"></span><span class="sr-only">List me in the Recruits Directory</span></label>
+        <span class="knob" aria-hidden="true"></span><span class="sr-only">List me under Seeking Employment</span></label>
     </div>
     ${ME.talent_listed ? (
         ME.talent_status === 'Approved' ? '<p class="pf-note" style="color:var(--green-dark)">Approved. Companies searching your keywords can find you.</p>'
@@ -211,6 +153,7 @@ function renderRecruit(){
 /* the card exactly as a searching company sees it: public bits open, private bits blurred */
 function renderRecruitPreview(){
   const box = el('pt-recruit-preview'); if(!box) return;
+  if(ME_FRESH){ box.innerHTML = '<p class="pf-note">Your card appears here once your Profile Details are saved.</p>'; return; }
   const on = KW_ROWS.filter(r => r.keyword.trim() && r.enabled).map(r => r.keyword.trim());
   const pk = PREVIEW_KW && KW_ROWS.find(r => r.keyword.trim() === PREVIEW_KW);
   const kw = pk ? [PREVIEW_KW].concat(on.filter(k => k !== PREVIEW_KW)) : on;
@@ -227,26 +170,23 @@ function renderRecruitPreview(){
   if(u) u.addEventListener('click', async () => {
     const priv = box.querySelector('.tal-private');
     const resume = ME.resume_path ? await resumeLink(ME.resume_path) : '';
-    priv.innerHTML = talentContactHtml({ handle: ME.handle, display_name: val('me-name') || ME.display_name, email: ME.email || (PT.user && PT.user.email) || '', phone: val('me-phone') || ME.phone || '', photo_url: ME.photo_url }, resume)
+    priv.innerHTML = talentContactHtml({ handle: ME.handle, display_name: ME.display_name, email: ME.email || (PT.user && PT.user.email) || '', phone: val('me-phone') || ME.phone || '', photo_url: ME.photo_url }, resume)
       + '<button type="button" class="mini-btn rp-add" id="me-relock">Lock again</button>';
     priv.querySelector('#me-relock').addEventListener('click', renderRecruitPreview);
   });
 }
 
-function wireIndividual(){
+function wireSeeking(){
   document.addEventListener('click', async e => {
     const b = e.target.closest('.me-save'); if(!b) return;
-    const msgs = [...document.querySelectorAll('.me-msg')];
-    const say = (t, bad) => msgs.forEach(m => { m.textContent = t; m.style.color = bad ? '#b3261e' : '#3f6300'; });
-    const handle = val('me-handle').toLowerCase();
-    const name = val('me-name');
-    say('Saving…', false); msgs.forEach(m => m.style.color = '');
-    if(ME_FRESH || handle !== ME.handle){
-      const why = await handleAvailable(handle);
-      if(why){ say(why, true); return; }
-    }
-    if(!name){ say('Your full name is needed.', true); activateTab('me'); el('me-name').focus(); return; }
-    if(!isValidPhone(val('me-phone'))){ say('A phone number (at least 10 digits) is needed.', true); activateTab('me'); el('me-phone').focus(); return; }
+    /* looked up on every call: a save re-renders the tab, and a message on the
+       old, detached elements is a message nobody sees */
+    const say = (t, bad) => document.querySelectorAll('.me-msg').forEach(m => { m.textContent = t; m.style.color = bad ? '#b3261e' : (t === 'Saving…' ? '' : '#3f6300'); });
+    if(ME_FRESH){ say('Save your Profile Details first.', true); activateTab('profile'); return; }
+    say('Saving…', false);
+    const listed = !!(el('me-listed') && el('me-listed').checked);
+    if(listed && !isValidPhone(val('me-phone'))){ say('A phone number (at least 10 digits) is needed to be listed. It stays private until a company unlocks you.', true); el('me-phone').focus(); return; }
+    if(val('me-phone') && !isValidPhone(val('me-phone'))){ say('That phone number needs at least 10 digits.', true); el('me-phone').focus(); return; }
     const yearsRaw = val('me-years');
     const years = yearsRaw === '' ? null : parseInt(yearsRaw, 10);
     if(yearsRaw !== '' && !(years >= 0 && years <= 60)){ say('Years of experience should be 0 to 60.', true); return; }
@@ -255,25 +195,15 @@ function wireIndividual(){
     if(keywords.length > 10){ say('Ten keywords is the limit.', true); return; }
     const credentials = (el('f-creds') && el('f-creds').__list || []).filter(o => Object.values(o).some(v => (v || '').trim()));
     for(const c of credentials){ if((c.year || '').trim() && !isValidYear(c.year)){ say(`"${c.name || '(unnamed)'}" needs a 4-digit year.`, true); return; } }
-    if(ME_FRESH){
-      const err = await createMyProfile(handle, name);
-      if(err){ say(err, true); return; }
-    }
-    const fields = { handle, display_name: name || null, phone: val('me-phone') || null,
+    const fields = { phone: val('me-phone') || null,
       title: val('me-title') || null, years, bio: val('me-bio') || null, credentials,
-      talent_listed: !!(el('me-listed') && el('me-listed').checked) };
-    if(ME_PHOTO){
-      const url = await uploadImage(ME_PHOTO);
-      if(!url){ say('That picture could not be uploaded. Try a smaller PNG or JPEG.', true); return; }
-      fields.photo_url = url;
-    }else if(ME_PHOTO_CLEAR) fields.photo_url = null;
+      talent_listed: listed };
     const err = await updateMyProfile(fields);
     const kw = err ? {} : await setTalentKeywords(keywords, kwOn);
     const bad = err || kw.error;
     if(bad){ say(bad, true); return; }
-    try{ localStorage.setItem('cx_account_type', 'individual'); }catch(e){}
-    renderIndividual(await myProfile());
-    say('Saved. Your profile is at circuits.com/' + handle, false);
+    renderSeeking(await myProfile());
+    say('Saved.', false);
   });
 }
 
@@ -281,20 +211,20 @@ function wireIndividual(){
 async function initPortal(){
   const user = await currentUser();
   if(!user){ show('pt-auth', true); show('pt-app', false); wireAuth(); return; }
+  PT.user = user;
 
+  /* One account type (Jacob, 2026-09-03). Every account has a profiles row
+     (its address) and a companies row that shares the address: the company
+     row is what keyword listings, job posts and Talent Access hang off, so an
+     account that has never opened the portal gets one now (register_company
+     is idempotent). An account with no profiles row at all (made by the old
+     Get Listed form, or older than profiles) picks its address on the Profile
+     Details tab; saveProfile creates both rows then. */
   let [cos, me] = await Promise.all([myCompanies(), myProfile()]);
-
-  /* Which dashboard: owning a company makes it the Company Dashboard; otherwise
-     the choice made at registration. A company account that has not opened
-     the portal before gets its companies row now (register_company). */
-  let kind = cos.length ? 'company' : ((me && me.account_type) || 'individual');
-  if(kind === 'company' && !cos.length){
+  if(!cos.length && me){
     const r = await registerCompany();
     if(!r.error) cos = await myCompanies();
-    if(!cos.length) kind = 'individual';
   }
-  try{ localStorage.setItem('cx_account_type', kind); }catch(e){}
-  document.body.classList.add('acct-' + kind);
   show('pt-auth', false); show('pt-app', true);
 
   /* An applicant who has not clicked the confirmation link yet: ownership is
@@ -319,16 +249,16 @@ async function initPortal(){
 
   wireTabs();
   await wireAdminTab();
-  /* Account Settings for both kinds; only an individual may delete the account
-     here (a company listing is paid for and may be shared). */
-  PT.user = user;
-  renderAccount(user, 'pt-account-owner', kind === 'individual');
+  renderAccount(user, 'pt-account-owner', true);
+  wireSeeking();
+  renderSeeking(me);
+  wireJobs();
+  wireRecruitSearch();
+  renderJobBoard();
 
-  if(kind === 'individual'){
-    wireIndividual();
-    renderIndividual(me);
-    activateTab('me');
-    renderJobBoard();
+  if(!cos.length){
+    /* no rows yet: the Profile Details form in "create" mode */
+    renderFresh();
     return;
   }
 
@@ -360,12 +290,27 @@ async function initPortal(){
     loadCompany(picker.value);
   });
 
-  el('pt-title').textContent = 'Your Company Dashboard';
-  wireJobs();
-  wireRecruitSearch();
-  /* "Get Listed" while signed in sends people to /portal#listings (nav.js). */
-  if(location.hash === '#listings') activateTab('listings');
+  /* "Get Listed" while signed in sends people to /portal#listings (nav.js);
+     inbox notices about recruiting land on /portal#seeking. */
+  const tab = (location.hash || '').replace('#', '');
+  if(tab && document.querySelector(`.pt-tab[data-tab="${tab}"]`)) activateTab(tab);
   await loadCompany(cos[0].slug);
+}
+
+/* No profiles row and no company: the Profile Details form with nothing in it,
+   and a note above it. Everything else waits for the first save. */
+function renderFresh(){
+  PT.slug = null; PT.co = { handle: '', name: '' }; PT.listings = []; PT.stats = {}; PT.upgrades = [];
+  el('pt-name').textContent = PT.user.email || '';
+  el('pt-view').style.display = 'none';
+  el('pt-company').style.display = 'none';
+  el('pt-fresh-note').innerHTML = '<p class="pf-note" style="color:#3f6300;margin:0 0 12px">This account has no Circuits.com address yet. Pick one below, add your name and save to create your profile.</p>';
+  renderProfileForm();
+  wireDirtyTracking();
+  markClean();
+  renderListings();
+  renderPromote();
+  const jobs = el('pt-jobs'); if(jobs) jobs.innerHTML = freshNote();
 }
 
 function activateTab(name){
@@ -425,8 +370,8 @@ let PT_DIRTY = false;
 function markDirty(){ PT_DIRTY = true; }
 function markClean(){ PT_DIRTY = false; }
 function wireDirtyTracking(){
-  /* the whole company profile is one tab again (2026-09-02) */
-  const panel = el('tab-company');
+  /* the whole public profile is one tab (2026-09-02) */
+  const panel = el('tab-profile');
   if(panel && !panel.__dirtyWired){
     panel.__dirtyWired = true;
     panel.addEventListener('input', markDirty);
@@ -464,6 +409,8 @@ async function loadCompany(slug){
   if(!PT.co){ toast('Could not load that company.', false); return; }
   el('pt-name').textContent = PT.co.name;
   el('pt-view').href = profileUrl(PT.co.handle) || '#';
+  el('pt-view').style.display = PT.co.handle ? '' : 'none';
+  el('pt-fresh-note').innerHTML = '';
   /* Overview, Quote requests and Reviews are off the dashboard for now
      (Jacob, 2026-08-20, full copies in backups/dashboard-2026-08-20/), so
      their data is not fetched either. Their render functions stay below,
@@ -590,7 +537,8 @@ async function renderAccount(user, hostId, canDelete){
       <hr class="ac-rule">
       <button class="mini-btn ac-danger" type="button" id="ac-delete">Delete my account</button>
       <p class="pf-note">Permanent. Your Circuits.com address is released and can be taken by
-        someone else. Company listings are not deleted this way. Contact us for those.</p>
+        someone else. An account with a live keyword listing or a paid job post cannot be
+        deleted here, those are paid for and may be shared. Contact us for those.</p>
       <div id="ac-del-msg" class="pf-note"></div>` : `
       <hr class="ac-rule">
       <p class="pf-note">Need to close this account or hand the listing to a colleague?
@@ -644,8 +592,8 @@ async function renderAccount(user, hostId, canDelete){
     if(res === 'deleted'){ await signOut(); location.href = '/'; return; }
     msg.style.color = '#b3261e';
     msg.textContent = res === 'still_owns_listing'
-      ? 'This account manages a company listing, so it cannot be deleted here. '
-        + 'Listings are paid for and may be shared with colleagues. Contact us and we will sort it out.'
+      ? 'This account has a live keyword listing or a paid job post, so it cannot be deleted here. '
+        + 'Those are paid for and may be shared with colleagues. Contact us and we will sort it out.'
       : 'Your account could not be deleted just now. Please try again or contact us.';
   };
 }
@@ -1224,7 +1172,7 @@ function wireHandleCheck(){
     if(input.value === (PT.co.handle || '')){ msg.textContent = ''; return; }
     msg.textContent = 'Checking…'; msg.style.color = '';
     handleTimer = setTimeout(async () => {
-      const why = await handleAvailable(input.value, PT.slug);
+      const why = await handleAvailable(input.value, PT.slug, PT.user && PT.user.id);
       msg.textContent = why || ('circuits.com/' + input.value + ' is available.');
       msg.style.color = why ? '#b3261e' : '#3f6300';
     }, 400);
@@ -1313,8 +1261,11 @@ async function saveProfile(){
      field was empty or invalid, which silently threw away every other edit, change your contact person with a blank address and nothing persisted. */
   const wantHandle = val('f-handle');
   const handleChanged = wantHandle !== (PT.co.handle || '');
+  const fresh = !PT.slug;   // no rows yet: this save creates the profile and its company row
+  if(fresh && !wantHandle){ btn.disabled = false; toast('Pick your Circuits.com address first.', false); el('f-handle').focus(); return; }
+  if(!val('f-name')){ btn.disabled = false; toast('Not saved: a name is needed. Yours, or your company\'s.', false); el('f-name').focus(); return; }
   if(handleChanged && wantHandle){
-    const why = await handleAvailable(wantHandle, PT.slug);
+    const why = await handleAvailable(wantHandle, PT.slug, PT.user && PT.user.id);
     if(why){ btn.disabled = false; toast('Address not saved: ' + why + ' Your other changes were not saved either. Fix the address or put the old one back.', false); return; }
   }
   const socials = {};
@@ -1357,17 +1308,42 @@ async function saveProfile(){
   }
   else if(PT.clearLogo){ fields.logo = null; }
 
+  if(fresh){
+    /* first save: the profiles row (the address), then the company row that
+       shares it, then the rest of the form lands on that row below */
+    const e1 = await createMyProfile(wantHandle, fields.name);
+    if(e1){ btn.disabled = false; toast('Could not create your profile: ' + e1, false); return; }
+    const r = await registerCompany();
+    if(r.error){ btn.disabled = false; toast('Could not create your profile: ' + r.error, false); return; }
+    PT.slug = r.slug;
+    delete fields.handle;
+  }
+
   const err = await updateCompany(PT.slug, fields);
   btn.disabled = false;
   if(err){ toast('Could not save: ' + err, false); return; }
-  toast('Profile saved.', true);
+  /* the person behind the account shares the name, the picture and the
+     address, so recruiters and the public page agree */
+  const mine = { display_name: fields.name };
+  if('logo' in fields) mine.photo_url = fields.logo;
+  if(fields.handle) mine.handle = fields.handle;
+  const e2 = await updateMyProfile(mine);
+  if(e2) console.warn('profile mirror', e2);
+  toast(fresh ? 'Profile created. Your page is at circuits.com/' + wantHandle : 'Profile saved.', true);
   markClean();
+  if(fresh){
+    renderSeeking(await myProfile());
+    await loadCompany(PT.slug);
+    return;
+  }
   PT.co = await fetchCompany(PT.slug);
+  ME = (await myProfile()) || ME;
   el('pt-name').textContent = PT.co.name;
   const opt = el('pt-company') && el('pt-company').querySelector(`option[value="${PT.slug}"]`);
   if(opt) opt.textContent = PT.co.name;
   renderProfileForm();
   renderPromote();
+  renderRecruitPreview();
   markClean();
 }
 
@@ -1394,8 +1370,8 @@ function renderListings(){
       ${l.status === 'Approved' ? upgradePanel(l) : ''}
     </div>`).join('');
   el('pt-listings').innerHTML = rows || `<div class="pt-empty">
-    <b>No listings yet</b>
-    <p>Once Circuits.com approves a Circuits-Keyword™ for you, it appears here and you can pause or resume it.</p>
+    <b>No Directory listings yet</b>
+    <p>Ask for one below. Once Circuits.com approves a Circuits-Keyword™ for you, it appears here and you can pause or resume it.</p>
   </div>`;
   const open = PT.listings.find(l => l.id === PT.editing);
   if(open){
@@ -1820,7 +1796,7 @@ function qrSvg(text){
 }
 
 /* ---------- search recruits (company Employment tab) ----------
-   The same search the Recruits Directory page runs, inside the dashboard.
+   The same search the Seeking Employment page runs, inside the dashboard.
    The database gates the private details; this only decides what to draw. */
 function wireRecruitSearch(){
   const form = el('rs-form'), out = el('rs-results'), note = el('rs-note');
@@ -1833,12 +1809,12 @@ function wireRecruitSearch(){
     out.innerHTML = loadingHtml('Searching…');
     if(access === null) access = await hasTalentAccess();
     note.innerHTML = access
-      ? '<b>Talent Access is active.</b> Unlock any recruit to see their name, contact details and resume.'
-      : 'Searching is free. Unlocking a recruit needs Talent Access, a monthly subscription. <a href="/contact">Contact us</a> to add it.';
+      ? '<b>Talent Access is active.</b> Unlock anyone to see their name, contact details and resume.'
+      : 'Searching is free. Unlocking someone needs Talent Access, a monthly subscription. <a href="/contact">Contact us</a> to add it.';
     let rows = [];
     try{ rows = await talentSearch(q); }
-    catch(err){ out.innerHTML = loadErrorHtml('the Recruits Directory', 'Try again'); return; }
-    if(!rows.length){ out.innerHTML = `<div class="empty"><div class="big">No recruits listed${q ? ' for &ldquo;' + escapeHtml(q) + '&rdquo;' : ''} yet</div></div>`; return; }
+    catch(err){ out.innerHTML = loadErrorHtml('Seeking Employment', 'Try again'); return; }
+    if(!rows.length){ out.innerHTML = `<div class="empty"><div class="big">Nobody seeking employment${q ? ' for &ldquo;' + escapeHtml(q) + '&rdquo;' : ''} yet</div></div>`; return; }
     out.innerHTML = `<div class="tal-grid">${rows.map(r => talentCardHtml(r, { locked: true, access, signedIn: true, kwHref: null })).join('')}</div>`;
   });
   out.addEventListener('click', async e => {
@@ -1878,6 +1854,7 @@ function wireAddListing(){
   tags.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; kws.splice(+b.dataset.i, 1); draw(); });
   submit.addEventListener('click', async () => {
     if(input.value.trim()) add();
+    if(!PT.slug){ say('Save your Profile Details first, then ask for listings here.', true); activateTab('profile'); return; }
     if(!kws.length){ say('Add at least one keyword. That is what buyers search to find you.', true); input.focus(); return; }
     const co = PT.co || {};
     const base = {
@@ -1897,17 +1874,17 @@ function wireAddListing(){
   });
 }
 
-/* ---- Job Board (Jacob, 2026-09-02): both ends of recruiting in one place,
-   for anyone with an account. Open roles from companies on one side, people
-   in the Recruits Directory on the other. Names stay blurred here; a company
-   unlocks them through Search Recruits. ---- */
+/* ---- Recruiting board (Jacob, 2026-09-02): both sides in one place, for
+   anyone with an account. Hiring (open roles) on one side, Seeking Employment
+   (people looking) on the other. Names stay blurred here; a company unlocks
+   them through the search on the Hiring tab. ---- */
 async function renderJobBoard(){
   const boxes = document.querySelectorAll('.pt-board');
   if(!boxes.length) return;
-  boxes.forEach(b => { b.innerHTML = '<h2>Job Board</h2><p class="pf-note">Loading…</p>'; });
+  boxes.forEach(b => { b.innerHTML = '<h2>Recruiting Board</h2><p class="pf-note">Loading…</p>'; });
   let jobs = [], people = [];
   try{ [jobs, people] = await Promise.all([jobSearch(''), talentSearch('')]); }
-  catch(e){ boxes.forEach(b => { b.innerHTML = '<h2>Job Board</h2><p class="pf-note">The board could not load just now. Reload to try again.</p>'; }); return; }
+  catch(e){ boxes.forEach(b => { b.innerHTML = '<h2>Recruiting Board</h2><p class="pf-note">The board could not load just now. Reload to try again.</p>'; }); return; }
   const jobRow = j => `<div class="pt-board-row">
       <div><b>${escapeHtml(j.title)}</b> <span class="cell-muted">${escapeHtml(j.company_name)}${j.location ? ', ' + escapeHtml(j.location) : ''}</span>
         <div class="pf-note" style="margin:2px 0 0">${escapeHtml((j.keywords || []).join(', ') || 'No keywords')}</div></div>
@@ -1916,11 +1893,11 @@ async function renderJobBoard(){
       <div><b>${escapeHtml(r.title || 'Circuits industry professional')}</b> <span class="cell-muted">${r.years != null ? r.years + ' yr' + (Number(r.years) === 1 ? '' : 's') : ''}</span>
         <div class="pf-note" style="margin:2px 0 0">${escapeHtml((r.keywords || []).join(', ') || 'No keywords')}</div></div>
       <a class="mini-btn" href="/talent?q=${encodeURIComponent((r.keywords || [])[0] || '')}" target="_blank" rel="noopener">View</a></div>`;
-  const html = `<h2>Job Board</h2>
-    <p class="kit-intro">Everything on the Employment Board right now, both ends: roles companies are hiring for, and people looking.</p>
+  const html = `<h2>Recruiting Board</h2>
+    <p class="kit-intro">Everything in Recruiting right now, both sides: who is hiring, and who is seeking employment.</p>
     <div class="grid2 pt-board-grid">
-      <div><h3>Open roles <span class="cell-muted">(${jobs.length})</span></h3>${jobs.length ? jobs.map(jobRow).join('') : '<p class="pf-note">No open roles right now.</p>'}</div>
-      <div><h3>People looking <span class="cell-muted">(${people.length})</span></h3>${people.length ? people.map(personRow).join('') : '<p class="pf-note">Nobody is listed yet.</p>'}</div>
+      <div><h3>Hiring <span class="cell-muted">(${jobs.length})</span></h3>${jobs.length ? jobs.map(jobRow).join('') : '<p class="pf-note">No open roles right now.</p>'}</div>
+      <div><h3>Seeking Employment <span class="cell-muted">(${people.length})</span></h3>${people.length ? people.map(personRow).join('') : '<p class="pf-note">Nobody is listed yet.</p>'}</div>
     </div>`;
   boxes.forEach(b => { b.innerHTML = html; });
 }
@@ -1982,7 +1959,7 @@ function wireJobs(){
       return;
     }
   });
-  /* Live/Paused switch: pausing takes the post off the Employment Board at
+  /* Live/Paused switch: pausing takes the post off the Hiring board at
      once; switching it back on restores it (while payment still covers it). */
   box.addEventListener('change', async e => {
     const sw = e.target.closest('[data-open]'); if(!sw) return;
@@ -1995,6 +1972,7 @@ function wireJobs(){
   });
   post.addEventListener('click', async () => {
     const msg = el('job-msg');
+    if(!PT.slug){ msg.textContent = 'Save your Profile Details first, then post here.'; msg.style.color = '#b3261e'; activateTab('profile'); return; }
     const title = val('job-title');
     if(!title){ msg.textContent = 'A job title is needed.'; msg.style.color = '#b3261e'; return; }
     const keywords = val('job-keywords').split(',').map(s => s.trim()).filter(Boolean);
@@ -2018,7 +1996,7 @@ function renderPromote(){
   const co = PT.co;
   if(!co || !co.handle){
     kit.innerHTML = `<div class="pt-empty"><b>Pick your address first</b>
-      <p>Everything here is built around circuits.com/&lt;your name&gt;. Set it on the first tab, save, and these appear.</p></div>`;
+      <p>Everything here is built around circuits.com/&lt;your name&gt;. Set it under Profile Details, save, and these appear.</p></div>`;
     return;
   }
 

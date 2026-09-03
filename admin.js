@@ -429,7 +429,7 @@ async function sendNotificationUI(){
   const v = id => ($(id).value || '').trim();
   const aud = v('nt-aud'), subject = v('nt-subject'), body = v('nt-body'), link = v('nt-link'), msg = $('nt-msg');
   const to = aud === 'users' ? ntUserList().join(', ') : aud === 'keyword' ? 'keyword:' + v('nt-kw') : aud;
-  const label = { users: 'those users', keyword: 'everyone listed under "' + v('nt-kw') + '"', companies: 'every company account', individuals: 'every individual account', everyone: 'every user on the site' }[aud];
+  const label = { users: 'those users', keyword: 'everyone listed under "' + v('nt-kw') + '"', companies: 'every account', individuals: 'every individual account', everyone: 'every user on the site' }[aud];
   if(!subject || !body || to === 'keyword:' || !to){ msg.textContent = 'Recipient, subject and message are all needed.'; return; }
   if(aud !== 'users' && !confirm(`Send "${subject}" to ${label}? This cannot be recalled.`)) return;
   $('nt-send').disabled = true; msg.textContent = 'Sending…';

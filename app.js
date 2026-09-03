@@ -7,34 +7,51 @@ function gotoSearch(term){
   window.location.href = '/results?q=' + encodeURIComponent(q);
 }
 
-/* Home page search wiring */
+/* Home page search wiring. Directory searches the supplier directory;
+   Recruiting has two sides (Jacob, 2026-09-03): Hiring is the open roles on
+   /jobs, Seeking Employment is the people on /talent. */
+const HOME_PLACEHOLDER = {
+  directory: 'Search products, services, professionals, education, or keywords...',
+  hiring:    'Search open roles by title or keyword...',
+  seeking:   'Search people by position or keyword...'
+};
+const HOME_HINT = {
+  hiring:  'Hiring: open roles posted by companies on Circuits.com.',
+  seeking: 'Seeking Employment: people looking for work, listed by their Circuits-Keywords\u2122.'
+};
+function homeTarget(form){
+  if(form.dataset.mode !== 'recruiting') return 'directory';
+  return form.dataset.side === 'seeking' ? 'seeking' : 'hiring';
+}
 function initHome(){
   const input = document.getElementById('home-search');
   const form  = document.getElementById('home-form');
-  if(form){
-    form.addEventListener('submit', e=>{
-      e.preventDefault();
-      if(form.dataset.mode === 'employment'){
-        const q = (input.value || '').trim();
-        location.href = '/jobs' + (q ? '?q=' + encodeURIComponent(q) : '');
-        return;
-      }
-      gotoSearch(input.value);
-    });
+  if(!form) return;
+  const side = document.getElementById('search-side'), hint = document.getElementById('search-hint');
+  function refresh(){
+    const t = homeTarget(form);
+    input.placeholder = HOME_PLACEHOLDER[t];
+    if(side) side.hidden = t === 'directory';
+    if(hint){ hint.hidden = t === 'directory'; hint.textContent = HOME_HINT[t] || ''; }
   }
-  /* Directory or Employment Board: same box, different index */
-  document.querySelectorAll('.search-mode [data-mode]').forEach(b => b.addEventListener('click', () => {
-    document.querySelectorAll('.search-mode [data-mode]').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b ? 'true' : 'false'); });
-    form.dataset.mode = b.dataset.mode;
-    input.placeholder = b.dataset.mode === 'employment'
-      ? 'Search jobs by title or keyword...'
-      : 'Search products, services, professionals, education, or keywords...';
-    input.focus();
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const t = homeTarget(form), q = (input.value || '').trim();
+    if(t === 'directory'){ gotoSearch(q); return; }
+    location.href = (t === 'seeking' ? '/talent' : '/jobs') + (q ? '?q=' + encodeURIComponent(q) : '');
+  });
+  const pick = (sel, key) => document.querySelectorAll(sel).forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll(sel).forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b ? 'true' : 'false'); });
+    form.dataset[key] = b.dataset[key];
+    refresh(); input.focus();
   }));
+  pick('.search-mode [data-mode]', 'mode');
+  pick('.search-side [data-side]', 'side');
+  refresh();
 }
 
-/* ---- Recruits Directory card (shared by /talent, the company dashboard and
-   the individual's own preview). Public bits open; the private block is a
+/* ---- Seeking Employment card (shared by /talent, the Hiring tab and the
+   person's own preview). Public bits open; the private block is a
    blur until a company with Talent Access unlocks it. ---- */
 function talentCardHtml(r, o){
   o = o || {};
@@ -1358,19 +1375,6 @@ function initRegister(){
   const handleInput = el('r-handle'), handleMsg = el('r-handle-msg');
   const passEl = el('r-pass'), pass2El = el('r-pass2'), passMsg = el('r-pass-msg');
   const errBox = el('r-err'), submitBtn = el('r-submit');
-  /* Step one is the choice of account. Nothing else shows until a card is
-     picked; the form is the same for both, only the labels change. */
-  document.querySelectorAll('#reg-kind .reg-kind-card').forEach(card => card.addEventListener('click', () => {
-    const kind = card.dataset.kind;
-    document.querySelectorAll('#reg-kind .reg-kind-card').forEach(c => c.classList.toggle('active', c === card));
-    el('r-kind').value = kind;
-    el('reg-h2').textContent = kind === 'company' ? 'Register your company' : 'Register';
-    el('r-name-label').innerHTML = kind === 'company' ? 'Company Name <span class="req">*</span>'
-      : 'Display Name <span class="cell-muted" style="font-weight:400">(Optional)</span>';
-    el('r-name').placeholder = kind === 'company' ? 'AAA Electronics' : 'Jacob Kennedy';
-    form.style.display = ''; const next = el('reg-next'); if(next) next.style.display = '';
-    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }));
   let handleState = '', handleTimer = null;
 
   function fail(msg){
@@ -1413,7 +1417,7 @@ function initRegister(){
     const handle = v('r-handle'), email = v('r-email');
 
     if(!handle) return fail('Choose the username that will be your circuits.com address.');
-    if(v('r-kind') === 'company' && !v('r-name')) return fail('Please enter your company name.');
+    if(!v('r-name')) return fail('Please enter your name, or your company\'s.');
     if(!isValidEmail(email)) return fail('Please enter a valid email address (e.g. you@company.com). It is how you sign in.');
     if(passEl.value.length < 8) return fail('Your password must be at least 8 characters.');
     if(passEl.value !== pass2El.value) return fail('The two passwords do not match.');
@@ -1431,7 +1435,7 @@ function initRegister(){
       return fail('That address just became unavailable.');
     }
 
-    const err = await registerProfile(email, passEl.value, handle, v('r-name'), v('r-kind'));
+    const err = await registerProfile(email, passEl.value, handle, v('r-name'));
     if(err){
       submitBtn.disabled = false; submitBtn.textContent = 'Create Profile';
       return fail(/already registered|already exists/i.test(err)
