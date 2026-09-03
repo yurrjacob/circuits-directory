@@ -398,6 +398,9 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 .inbox-avatar{flex:none;width:38px;height:38px;border-radius:50%;overflow:hidden;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:center}
 .inbox-avatar img{width:100%;height:100%;object-fit:cover;display:block}
 .inbox-avatar .silhouette{width:22px;height:22px}
+/* one colour per kind of notice: red needs attention, green approved, amber in review, blue from a person, grey update */
+.inbox-avatar.k-bad{background:#b3261e}.inbox-avatar.k-good{background:#3f6300}.inbox-avatar.k-wait{background:#b8860b}.inbox-avatar.k-people{background:#1f5fbf}.inbox-avatar.k-note{background:#5d6a7e}
+.inbox-row.k-bad{box-shadow:inset 4px 0 0 #b3261e}.inbox-row.k-good{box-shadow:inset 4px 0 0 #3f6300}.inbox-row.k-wait{box-shadow:inset 4px 0 0 #b8860b}.inbox-row.k-people{box-shadow:inset 4px 0 0 #1f5fbf}.inbox-row.k-note{box-shadow:inset 4px 0 0 #5d6a7e}
 .inbox-text{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
 .inbox-who{display:flex;justify-content:space-between;gap:10px;font-size:.82rem}
 .inbox-who span{color:var(--muted);white-space:nowrap}

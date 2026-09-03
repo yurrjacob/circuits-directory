@@ -320,7 +320,26 @@ async function initInbox(){
   let items = null, open = null;
   const when = iso => { const d = new Date(iso), days = (Date.now() - d) / 864e5;
     return days < 1 ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : days < 7 ? d.toLocaleDateString([], { weekday: 'short' }) : d.toLocaleDateString(); };
-  const avatar = n => `<span class="inbox-avatar">${n.sender_avatar ? `<img src="${escapeHtml(n.sender_avatar)}" alt="">` : avatarSvg()}</span>`;
+  /* Each kind of notice looks different (Jacob, 2026-09-03): the icon and its
+     colour say what happened before the subject is read. Decided from the
+     wording, so every trigger in the database is covered without a column.
+     ponytail: word tests, add a kind column when they start misfiring. */
+  const KINDS = {
+    bad:    { label: 'Needs attention', path: '<path d="M12 8v5"/><path d="M12 17h.01"/><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>' },
+    good:   { label: 'Approved',        path: '<path d="M20 6 9 17l-5-5"/>' },
+    wait:   { label: 'In review',       path: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>' },
+    people: { label: 'From a person',   path: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>' },
+    note:   { label: 'Update',          path: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/>' }
+  };
+  const kindOf = n => {
+    const s = (n.subject + ' ' + (n.body || '').slice(0, 120)).toLowerCase();
+    if(/not approved|denied|removed|ended|suspended|is off|paused|refused|expired/.test(s)) return 'bad';
+    if(/approved|is live|is on |is back|added|you are listed|welcome|active again|can now find you/.test(s)) return 'good';
+    if(/received|waiting|under review|requested|sent:|posted:/.test(s)) return 'wait';
+    if(/applicant|applied|review of|message from|replied|reply/.test(s)) return 'people';
+    return 'note';
+  };
+  const avatar = n => { const k = KINDS[kindOf(n)]; return `<span class="inbox-avatar k-${kindOf(n)}" title="${k.label}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${k.path}</svg></span>`; };
   const badge = () => {
     const n = (items || []).filter(x => !x.read_at).length, b = btn.querySelector('.inbox-n');
     b.textContent = n > 9 ? '9+' : String(n); b.hidden = !n;
@@ -332,14 +351,14 @@ async function initInbox(){
       const n = open;
       panel.innerHTML = `<div class="inbox-head"><button type="button" class="inbox-back" aria-label="Back to notifications">&larr;</button><b>${escapeHtml(n.subject)}</b><button type="button" class="inbox-del" data-del="${escapeHtml(n.id)}">Delete</button></div>
         <div class="inbox-msg">
-          <div class="inbox-from">${avatar(n)}<div><b>${escapeHtml(n.sender_name)}</b><span>${escapeHtml(when(n.created_at))}</span></div></div>
+          <div class="inbox-from">${avatar(n)}<div><b>${escapeHtml(n.sender_name)}</b><span>${escapeHtml(KINDS[kindOf(n)].label)} · ${escapeHtml(when(n.created_at))}</span></div></div>
           <div class="inbox-body"><p>${escapeHtml(n.body).replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>')}</p></div>
           ${n.link ? `<a class="btn btn-primary inbox-open" href="${escapeHtml(n.link)}">Open</a>` : ''}
         </div>`;
       return;
     }
     panel.innerHTML = `<div class="inbox-head"><b>Notifications</b>${items.some(x => !x.read_at) ? '<button type="button" class="inbox-readall">Mark all read</button>' : ''}</div>` +
-      (items.length ? items.map(n => `<div class="inbox-row"><button type="button" class="inbox-item${n.read_at ? '' : ' unread'}" data-id="${escapeHtml(n.id)}">
+      (items.length ? items.map(n => `<div class="inbox-row k-${kindOf(n)}"><button type="button" class="inbox-item${n.read_at ? '' : ' unread'}" data-id="${escapeHtml(n.id)}">
           ${avatar(n)}
           <span class="inbox-text"><span class="inbox-who"><b>${escapeHtml(n.sender_name)}</b><span>${escapeHtml(when(n.created_at))}</span></span>
             <span class="inbox-subject">${escapeHtml(n.subject)}</span>
