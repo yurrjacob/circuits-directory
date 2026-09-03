@@ -1442,13 +1442,33 @@ function upgradeCell(l, k){
   return sw;
 }
 
+/* What a row is counted for: what is already on, what has been asked for, and
+   what has just been switched on. Active and Requested are in the total from
+   the start (Jacob, 2026-09-03), so the price is what the keyword costs, not
+   only what was added in this sitting. */
+function rowKinds(l){
+  const p = pick(l.id);
+  const has = { badge: !!l.badge, banner: !!l.banner, lock: !!l.locked_position };
+  const pend = k => (PT.upgrades || []).some(u => u.application_id === l.id && u.kind === k);
+  const on = Object.keys(UPGRADES).filter(k => has[k] || pend(k) || p[k]);
+  const fresh = Object.keys(UPGRADES).filter(k => p[k] && !has[k] && !pend(k));
+  return { on, fresh };
+}
+const rowTotal = (l, b) => rowKinds(l).on.reduce((t, k) => t + UPGRADES[k][b], 0);
+
 function renderUpgrades(){
   const live = (PT.listings || []).filter(l => l.status === 'Approved');
   const waiting = (PT.listings || []).length - live.length;
-  const rowTotal = l => { const p = pick(l.id);
-    return Object.keys(UPGRADES).filter(k => p[k]).reduce((t, k) => t + UPGRADES[k][BILLING], 0); };
 
-  const rows = live.map((l, i) => { const p = pick(l.id), t = rowTotal(l), any = t > 0; return `
+  /* what yearly would save on everything counted, shown whichever way the
+     toggle is set, so the saving is visible before it is taken */
+  const save = live.reduce((t, l) => t + rowTotal(l, 'month') * 12 - rowTotal(l, 'year'), 0);
+  const saveEl = el('pt-billing-save');
+  if(saveEl) saveEl.textContent = save > 0
+    ? (BILLING === 'year' ? 'Yearly is saving you $' + save + ' a year' : 'Yearly would save you $' + save + ' a year')
+    : 'Yearly works out cheaper: ' + saving(UPGRADES.banner) + ' on the banner alone';
+
+  const rows = live.map((l, i) => { const t = rowTotal(l, BILLING), any = t > 0, fresh = rowKinds(l).fresh.length; return `
     <tr>
       <td class="rank" data-label="#">${i + 1}</td>
       <td data-label="Keyword"><b>${escapeHtml(l.keyword || '(no keyword)')}</b></td>
@@ -1456,7 +1476,7 @@ function renderUpgrades(){
       <td data-label="Sponsor Banner">${upgradeCell(l, 'banner')}</td>
       <td data-label="Locked Position">${upgradeCell(l, 'lock')}</td>
       <td data-label="Price">${any ? `<b>${BILLING === 'year' ? '$' + t + '/yr' : '$' + t + '/mo'}</b>` : DASH}</td>
-      <td class="row-actions" data-label=""><button class="mini-btn btn-upgrade-sm" data-req-row="${l.id}" ${any ? '' : 'disabled'}>Request</button></td>
+      <td class="row-actions" data-label=""><button class="mini-btn btn-upgrade-sm" data-req-row="${l.id}" ${fresh ? '' : 'disabled'}>Request</button></td>
     </tr>`; }).join('');
 
   el('pt-upgrades').innerHTML = (live.length ? `<div class="table-wrap"><table class="listings-table pt-uptable">
@@ -1469,7 +1489,7 @@ function renderUpgrades(){
       </tr></thead>
       <tbody>${rows}</tbody>
     </table></div>
-    <p class="pf-note pt-up-foot">Nothing is charged here. A request goes to Circuits.com, who confirm by email and take payment before switching it on.${BILLING === 'year' ? ' Yearly is billed once a year, ' + saving(UPGRADES.banner) + ' on the banner alone.' : ''}</p>`
+    <p class="pf-note pt-up-foot">Nothing is charged here. A request goes to Circuits.com, who confirm by email and take payment before switching it on.${BILLING === 'year' ? ' Yearly is billed once a year.' : ''}</p>`
    : `<div class="pt-empty"><b>No approved keywords to upgrade yet</b>
       <p>Upgrades attach to a keyword listing. Once Circuits.com approves one, it appears here with its extras.</p></div>`)
    + (waiting ? `<p class="pf-note">${waiting} keyword${waiting === 1 ? '' : 's'} still waiting on approval; upgrades open up once ${waiting === 1 ? 'it is' : 'they are'} live.</p>` : '');
@@ -1507,7 +1527,8 @@ function wireUpgrades(){
     const req = e.target.closest('[data-req-row]');
     if(!req) return;
     const id = req.dataset.reqRow, p = pick(id);
-    const kinds = Object.keys(UPGRADES).filter(k => p[k]);
+    const l = (PT.listings || []).find(x => x.id === id);
+    const kinds = l ? rowKinds(l).fresh : [];
     if(!kinds.length) return;
     if(p.badge && !p.badgeText){ toast('Type the label you want on your badge first.', false); return; }
     req.disabled = true; req.textContent = 'Sending…';

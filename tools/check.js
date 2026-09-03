@@ -151,6 +151,12 @@ for (const f of NAV_PAGES) {
      rather than building one after the page is drawn (Jacob, 2026-09-03). */
   assert.ok(nav.includes('nav-signin') && nav.includes('nav-dash'),
     `${f} nav is missing the Sign In / Dashboard pair, so its header will shift after load`);
+  /* the bell too: it used to be built at DOMContentLoaded, after an await, and
+     shoved the header sideways on every load; about, privacy and terms did not
+     load app.js at all so they never grew one (Jacob, 2026-09-03) */
+  assert.ok(/<button type="button" class="inbox-btn"/.test(src),
+    `${f} has no notifications bell in its markup, so its header will shift after load`);
+  assert.ok(/["\/]app\.js"/.test(src), `${f} does not load app.js, so its bell can never be filled in`);
   assert.ok((nav.match(/class="[^"]*\bactive\b/g) || []).length <= 1,
     `${f} nav marks more than one item active`);
 }
@@ -786,8 +792,17 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   const navHeader2 = navSrc2.slice(0, navSrc2.indexOf('phone menu + skip link'));
   assert.ok(!/createElement\('a'\)|insertBefore|signIn\.remove\(\)/.test(navHeader2),
     'nav.js builds or removes header links again; that reflows the bar after first paint');
-  assert.ok(/\.nav a\.nav-dash\{display:none\}/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
+  const cssSrc2 = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
+  assert.ok(/\.nav a\.nav-dash\{display:none\}/.test(cssSrc2),
     'Dashboard is not hidden by default, so a signed-out or no-JS visitor sees both it and Sign In');
+  assert.ok(/\.inbox-btn\{display:inline-flex\}/.test(navSrc2), 'nav.js no longer reveals the bell before first paint');
+  assert.ok(/\.inbox-btn\{position:relative;display:none;/.test(cssSrc2),
+    'the bell is not display:none by default, or its size is set somewhere that revealing it could change');
+  const appSrc2 = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+  assert.ok(!/btn\.className = 'inbox-btn'/.test(appSrc2) && !/insertBefore\(btn,/.test(appSrc2),
+    'app.js builds and inserts the bell again; that reflows the header after first paint');
+  assert.ok(/const btn = bar && bar\.querySelector\('\.inbox-btn'\)/.test(appSrc2),
+    'initInbox no longer wires the bell that is already in the header');
   assert.ok(!/nav-join\{display:none\}|\/portal#listings/.test(navSrc2), 'nav.js still hides or reroutes Get Listed when signed in');
   /* the public page: the company row (the page) plus the person's experience */
   assert.ok(/\[co, person\] = await Promise\.all\(\[fetchCompanyByHandle\(handle\), fetchProfileByHandle\(handle\)\]\)/.test(profSrc)
@@ -1505,6 +1520,13 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   assert.ok(/data-req-row="\$\{l\.id\}"/.test(pj), 'the Upgrades table lost its Request button');
   assert.ok(/data-billing="month"/.test(ph) && /data-billing="year"/.test(ph) && /saving\(UPGRADES\.banner\)/.test(pj),
     'the Upgrades tab lost the monthly / yearly choice or the yearly saving');
+  /* Active and Requested count towards a row's price from the start, and the
+     billing toggle says what yearly saves (Jacob, 2026-09-03) */
+  assert.ok(/has\[k\] \|\| pend\(k\) \|\| p\[k\]/.test(pj),
+    "a row's price no longer counts the upgrades that are already Active or Requested");
+  assert.ok(/rowKinds\(l\)\.fresh/.test(pj), 'Request sends upgrades that are already Active or Requested again');
+  assert.ok(/id="pt-billing-save"/.test(ph) && /Yearly would save you \$/.test(pj),
+    'the monthly / yearly toggle does not say what yearly saves');
   assert.ok(/id="pt-go-upgrades"/.test(ph) && /activateTab\('upgrades'\)/.test(pj),
     'Your Listings has no call to action leading to the Upgrades tab');
   assert.ok(/\.pt-tab-upgrades\{color:#1f5fbf\}/.test(ptCss) && /\.btn-upgrade\{background:#1f5fbf/.test(ptCss),

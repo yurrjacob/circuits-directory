@@ -284,7 +284,13 @@ function storedSession(){
    messages); opening one marks it read. */
 async function initInbox(){
   const bar = document.querySelector('.topbar .inner');
-  if(!bar || bar.querySelector('.inbox-btn')) return;
+  const btn = bar && bar.querySelector('.inbox-btn');
+  /* The button is already in the markup and already visible or not, decided by
+     nav.js before first paint. Nothing here may add it, move it or resize it:
+     this runs at DOMContentLoaded, after an await, so any change it made to the
+     header would land after the page was drawn (Jacob, 2026-09-03). */
+  if(!btn || btn.dataset.wired) return;
+  btn.dataset.wired = '1';
   /* The homepage does not load the data client. If the stored session says
      somebody is signed in (the same check nav.js makes for the Dashboard
      button), pull the client in now; a signed-out visitor pays nothing. */
@@ -296,16 +302,10 @@ async function initInbox(){
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;
   try{ user = await currentUser(); }catch(e){}
-  if(!user) return;
-
-  const btn = document.createElement('button');
-  btn.type = 'button'; btn.className = 'inbox-btn'; btn.setAttribute('aria-label', 'Notifications'); btn.setAttribute('aria-expanded', 'false');
-  btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="inbox-n" hidden></span>';
-  /* In the header itself, not inside the nav: on a phone the nav folds into
-     the burger menu and the bell must stay visible in the corner. It sits
-     just before the last control (the burger on public pages, Sign out in
-     the portal). */
-  bar.insertBefore(btn, bar.querySelector('.nav-burger') || bar.querySelector('.signout') || null);
+  /* nav.js shows the bell from the stored session, which can be stale. Rather
+     than remove it and shift the header, point it at /portal, which does the
+     real check. */
+  if(!user){ btn.addEventListener('click', () => { location.href = '/portal'; }); return; }
 
   const panel = document.createElement('div');
   panel.className = 'inbox-panel'; panel.hidden = true; panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Notifications');

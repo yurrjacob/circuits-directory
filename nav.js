@@ -43,7 +43,7 @@
      on screen, so the bar never changes shape after the page is drawn, which
      is what used to make every navigation look like a jump. */
   var css = document.createElement('style');
-  css.textContent = '.nav a.nav-signin{display:none}.nav a.nav-dash{display:block}';
+  css.textContent = '.nav a.nav-signin{display:none}.nav a.nav-dash{display:block}.inbox-btn{display:inline-flex}';
   document.head.appendChild(css);
 })();
 
