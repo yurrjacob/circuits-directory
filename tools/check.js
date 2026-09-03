@@ -765,14 +765,13 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
 /* --- the search is split: Directory, or Recruiting with two sides (Jacob, 2026-09-03) --- */
 {
   const home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  /* one row (Jacob, 2026-09-03, "how can we make this look better"): Directory, then the
-     Recruiting pair, Hiring and Seeking Employment, in a bracket with a caption */
-  assert.ok(/data-target="directory"[^>]*role="tab"/.test(home) && /class="search-group"[^>]*><i>Recruiting<\/i>/.test(home), 'the homepage lost the Directory / Recruiting row');
-  assert.ok(/data-target="hiring"/.test(home) && /data-target="seeking"/.test(home), 'Recruiting lost its Hiring / Seeking Employment sides');
-  assert.ok(!/search-side|data-mode=/.test(home), 'the stacked second toggle is back');
+  assert.ok(/data-mode="directory"[^>]*role="tab"/.test(home) && /data-mode="recruiting"/.test(home), 'the homepage lost the Directory / Recruiting toggle');
+  assert.ok(/data-side="hiring"/.test(home) && /data-side="seeking"/.test(home), 'Recruiting lost its Hiring / Seeking Employment sides');
+  assert.ok(/id="search-side"[^>]*hidden/.test(home), 'the Recruiting sides should be hidden until Recruiting is picked');
   const appHome = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
   assert.ok(/t === 'seeking' \? '\/talent' : '\/jobs'/.test(appHome) && /if\(t === 'directory'\)\{ gotoSearch\(q\); return; \}/.test(appHome),
     'the homepage search does not route Directory to /results, Hiring to /jobs and Seeking Employment to /talent');
+  assert.ok(/\.search-mode\[hidden\]\{display:none\}/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'a hidden .search-mode would still show (inline-flex beats [hidden])');
   assert.ok(/<title>Recruiting: Hiring \| Circuits\.com<\/title>/.test(fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8')), '/jobs is not titled Recruiting: Hiring');
   assert.ok(/<title>Recruiting: Seeking Employment \| Circuits\.com<\/title>/.test(fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8')), '/talent is not titled Recruiting: Seeking Employment');
   for (const f of ['jobs.html', 'talent.html']) {

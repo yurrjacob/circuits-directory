@@ -7,9 +7,9 @@ function gotoSearch(term){
   window.location.href = '/results?q=' + encodeURIComponent(q);
 }
 
-/* Home page search wiring. One row of three (Jacob, 2026-09-03): Directory
-   searches the supplier directory; the Recruiting pair, Hiring (open roles on
-   /jobs) and Seeking Employment (people on /talent), sits under one caption. */
+/* Home page search wiring. Directory searches the supplier directory;
+   Recruiting has two sides (Jacob, 2026-09-03): Hiring is the open roles on
+   /jobs, Seeking Employment is the people on /talent. */
 const HOME_PLACEHOLDER = {
   directory: 'Search products, services, professionals, education, or keywords...',
   hiring:    'Search open roles by title or keyword...',
@@ -19,15 +19,19 @@ const HOME_HINT = {
   hiring:  'Hiring: open roles posted by companies on Circuits.com.',
   seeking: 'Seeking Employment: people looking for work, listed by their Circuits-Keywords\u2122.'
 };
-function homeTarget(form){ return form.dataset.target || 'directory'; }
+function homeTarget(form){
+  if(form.dataset.mode !== 'recruiting') return 'directory';
+  return form.dataset.side === 'seeking' ? 'seeking' : 'hiring';
+}
 function initHome(){
   const input = document.getElementById('home-search');
   const form  = document.getElementById('home-form');
   if(!form) return;
-  const hint = document.getElementById('search-hint');
+  const side = document.getElementById('search-side'), hint = document.getElementById('search-hint');
   function refresh(){
     const t = homeTarget(form);
     input.placeholder = HOME_PLACEHOLDER[t];
+    if(side) side.hidden = t === 'directory';
     if(hint){ hint.hidden = t === 'directory'; hint.textContent = HOME_HINT[t] || ''; }
   }
   form.addEventListener('submit', e => {
@@ -36,11 +40,13 @@ function initHome(){
     if(t === 'directory'){ gotoSearch(q); return; }
     location.href = (t === 'seeking' ? '/talent' : '/jobs') + (q ? '?q=' + encodeURIComponent(q) : '');
   });
-  document.querySelectorAll('.search-mode [data-target]').forEach(b => b.addEventListener('click', () => {
-    document.querySelectorAll('.search-mode [data-target]').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b ? 'true' : 'false'); });
-    form.dataset.target = b.dataset.target;
+  const pick = (sel, key) => document.querySelectorAll(sel).forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll(sel).forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b ? 'true' : 'false'); });
+    form.dataset[key] = b.dataset[key];
     refresh(); input.focus();
   }));
+  pick('.search-mode [data-mode]', 'mode');
+  pick('.search-side [data-side]', 'side');
   refresh();
 }
 
