@@ -495,8 +495,8 @@ tr.row-warn td{background:#fff3cd}
 @media(max-width:860px){.pt-none-grid{grid-template-columns:1fr}}
 /* one dashboard for every account (2026-09-03); the left column of the
    Seeking Employment tab stacks the experience and listing forms */
-.pt-getlisted{margin-top:18px;text-align:left}
-.pt-getlisted .btn{margin-top:10px}
+.pt-getlisted{margin-top:18px}
+.pt-getlisted .btn{display:inline-block;margin-top:22px}
 .pt-recruit-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;align-items:start}
 @media(max-width:900px){.pt-recruit-grid{grid-template-columns:1fr}}
 .pt-stats{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.84rem;color:var(--muted);margin:8px 0 4px}
