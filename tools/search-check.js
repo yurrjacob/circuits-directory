@@ -79,9 +79,11 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   listingsToReturn = []; relatedToReturn = [];
   await initResults('oscillators');
 
-  assert.ok(/This Banner is Available/.test(captured),
-    'the empty result no longer opens with the banner-available pitch');
-  for (const ghost of ['Your Company', 'johndoe@yourcompany.com', '(555) 123-4567', 'John Doe']) {
+  /* the "This Banner is Available" line, "Circuits-Keyword" in the pitch and the
+     View Docs placeholders went on 2026-09-03 (Jacob); the sample phone is +1 (123) 456-7890 */
+  assert.ok(/Own the Exclusive Sponsor Banner for/.test(captured) && !/This Banner is Available|Own the Exclusive Circuits-Keyword/.test(captured),
+    'the empty result no longer opens with the sponsor banner pitch (or the old wording is back)');
+  for (const ghost of ['Your Company', 'johndoe@yourcompany.com', '+1 (123) 456-7890', 'John Doe']) {
     assert.ok(captured.includes(ghost),
       `the mocked-up example listing is missing its "${ghost}" placeholder`);
   }
@@ -89,13 +91,13 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
     'an old placeholder is back on the example listing');
   assert.ok(/Get Listed For <span class="tc">oscillators<\/span>/.test(captured),
     'the pitch lost its call to action (or the keyword is not wrapped for capitalising)');
-  assert.ok(/<span class="doc-link">Website<\/span>/.test(captured) && /<span class="doc-link">View Docs<\/span>/.test(captured),
-    'the example listing lost its Website / View Docs placeholders');
-  assert.ok(!/<a[^>]*>(Website|View Docs)<\/a>/.test(captured),
-    'a placeholder Website / View Docs label is a real link, it must not go anywhere');
+  assert.ok(/<span class="doc-link">Website<\/span>/.test(captured) && !/View Docs/.test(captured),
+    'the example listing lost its Website placeholder, or View Docs is back');
+  assert.ok(!/<a[^>]*>Website<\/a>/.test(captured),
+    'a placeholder Website label is a real link, it must not go anywhere');
   assert.ok(!/wanted-form|Tell me when someone lists|Looking to buy/.test(captured),
     'the "tell me when someone lists" capture is back (removed 2026-09-01)');
-  assert.ok(captured.indexOf('This Banner is Available') < captured.indexOf('Get Listed For'),
+  assert.ok(captured.indexOf('Exclusive Sponsor') < captured.indexOf('Get Listed For'),
     'the Get Listed button is not at the bottom, the pitch should come first');
 
   /* --- every search is recorded, hit or miss --- */
@@ -123,11 +125,11 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   assert.ok(!/wanted-form/.test(captured), 'the demand form shows even when results were found');
   /* nobody holds the banner here, so the example banner and the Get Listed
      button frame the list (2026-09-01) */
-  assert.ok(/This Banner is Available/.test(captured) && /Exclusive Sponsor/.test(captured),
+  assert.ok(/Own the Exclusive Sponsor Banner for/.test(captured) && /Exclusive Sponsor/.test(captured),
     'a keyword list with no sponsor does not show the example banner');
   assert.ok(/Get Listed For <span class="tc">oscillators<\/span>/.test(captured),
     'a keyword list with no sponsor has no Get Listed button');
-  assert.ok(captured.indexOf('This Banner is Available') < captured.indexOf('Acme')
+  assert.ok(captured.indexOf('Own the Exclusive Sponsor Banner') < captured.indexOf('Acme')
     && captured.indexOf('Acme') < captured.indexOf('Get Listed For'),
     'the example banner should sit above the list and the Get Listed button below it');
   assert.ok(!/Your Company<\/a>/.test(captured),
@@ -230,7 +232,7 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   assert.ok(!/Request a Quote/.test(captured),
     'a Request a Quote button is back on the sponsor banner (removed for MVP1)');
   /* a paid sponsor replaces the example banner and its Get Listed button */
-  assert.ok(!/This Banner is Available|Get Listed For|John Doe/.test(captured),
+  assert.ok(!/Own the Exclusive Sponsor Banner|Get Listed For|John Doe|View Docs/.test(captured),
     'the example banner or Get Listed button is showing on a keyword that already has a sponsor');
 
   console.log('search results OK, banner pitch on empty and unsponsored lists, numbered rows, sponsor not listed twice');

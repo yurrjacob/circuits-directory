@@ -98,6 +98,9 @@ img{max-width:100%}
 .search-mode{display:inline-flex;border:1px solid var(--line);border-radius:22px;padding:3px;background:var(--card);margin:0 0 14px}
 .search-mode button{border:0;background:transparent;font:inherit;font-weight:600;font-size:.88rem;padding:7px 18px;border-radius:18px;cursor:pointer;color:var(--muted)}
 .search-mode button.on{background:var(--green);color:#0f0f0f}
+.search-mode button:disabled{cursor:not-allowed;opacity:.55}
+/* the hidden attribute wins over any display rule (a Request button once stayed visible next to its own form) */
+[hidden]{display:none !important}
 /* three equal choices in one pill (Jacob, 2026-09-03) */
 .search-mode{gap:2px}
 @media(max-width:600px){.search-mode{flex-wrap:wrap;justify-content:center;border-radius:16px}}
@@ -399,6 +402,7 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 .inbox-avatar img{width:100%;height:100%;object-fit:cover;display:block}
 .inbox-avatar .silhouette{width:22px;height:22px}
 /* one colour per kind of notice: red needs attention, green approved, amber in review, blue from a person, grey update */
+.inbox-avatar.k-hello{background:#fff3c4}.inbox-row.k-hello{box-shadow:inset 4px 0 0 #f2c94c}.inbox-emoji{font-size:1.25rem;line-height:1}
 .inbox-avatar.k-bad{background:#b3261e}.inbox-avatar.k-good{background:#3f6300}.inbox-avatar.k-wait{background:#b8860b}.inbox-avatar.k-people{background:#1f5fbf}.inbox-avatar.k-note{background:#5d6a7e}
 .inbox-row.k-bad{box-shadow:inset 4px 0 0 #b3261e}.inbox-row.k-good{box-shadow:inset 4px 0 0 #3f6300}.inbox-row.k-wait{box-shadow:inset 4px 0 0 #b8860b}.inbox-row.k-people{box-shadow:inset 4px 0 0 #1f5fbf}.inbox-row.k-note{box-shadow:inset 4px 0 0 #5d6a7e}
 .inbox-text{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
@@ -503,6 +507,17 @@ tr.row-warn td{background:#fff3cd}
 .pt-recruit-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;align-items:start}
 @media(max-width:900px){.pt-recruit-grid{grid-template-columns:1fr}}
 .pt-stats{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.84rem;color:var(--muted);margin:8px 0 4px}
+.pt-chevron{border:0;background:none;font:inherit;font-size:1rem;cursor:pointer;color:var(--muted);padding:0 6px 0 0;line-height:1}
+.pt-chevron:hover{color:var(--ink)}
+.pt-list-sw .sw-text{font-size:.82rem;color:var(--muted)}
+.pt-upgrade-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.pt-billing{margin:0}
+.pt-billing button{padding:5px 12px;font-size:.8rem}
+.pt-price{font-weight:700;color:var(--green-dark);margin-left:6px}
+.pt-save{font-size:.78rem;color:#8a6100;background:#fff6db;border-radius:6px;padding:2px 7px;margin-left:4px}
+.pt-upgrade-total{display:flex;justify-content:space-between;gap:12px;align-items:baseline;padding:10px 0 0;border-top:2px solid var(--line);margin-top:4px;font-size:.9rem}
+.pt-upgrade-total b{font-size:1.1rem;color:var(--green-dark)}
+.pt-badge-req .up-word{padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:.85rem;background:#fff}
 .pt-upgrade{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--bg-soft)}
 .pt-upgrade-row{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
 .pt-upgrade-row:last-of-type{border-bottom:0}

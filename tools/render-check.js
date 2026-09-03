@@ -178,7 +178,8 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   global.companyClaimed = async () => false;
   await initProfile();
   assert.ok(captured.includes('lb-unclaimed'), 'an unclaimed listing is not marked as such');
-  assert.ok(captured.includes('pf-unclaimed-card'), 'the unclaimed listing does not say its details are unconfirmed');
+  /* the "this listing is unclaimed" card is gone (Jacob, 2026-09-03); the small chip stays */
+  assert.ok(!captured.includes('pf-unclaimed-card'), 'the unclaimed card is back on the profile');
   /* Claims were retired 2026-09-01 (Jacob): nothing on a profile may invite one,
      because there is no longer anywhere for staff to approve it. */
   assert.ok(!/\/claim\b|pf-claim"/.test(captured), 'a profile still links to the retired claim flow');

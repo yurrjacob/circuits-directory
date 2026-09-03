@@ -25,8 +25,10 @@ const REVIEW_PUBLIC_COLS = 'id, company_slug, application_id, author_name, ratin
    Beta rates. Original owners keep these for as long as their subscription
    stays active, so these numbers are a floor we honour, not a list price.
    Yearly works out to ten months, i.e. two months free. */
-const BASE_FEE = 99, BANNER_FEE = 399, BADGE_FEE = 49;
-const BASE_FEE_YEAR = 999, BANNER_FEE_YEAR = 3999, BADGE_FEE_YEAR = 399;
+/* Listings are free (2026-09-03). The extras: monthly, or yearly with roughly
+   two months off. */
+const BASE_FEE = 0, BANNER_FEE = 399, BADGE_FEE = 49, LOCK_FEE = 199;
+const BASE_FEE_YEAR = 0, BANNER_FEE_YEAR = 3999, BADGE_FEE_YEAR = 399, LOCK_FEE_YEAR = 1999;
 function effPrice(v, fallback){
   return (v==null || v==='' || isNaN(Number(v))) ? fallback : Number(v);
 }
@@ -34,9 +36,14 @@ function appPrice(a){
   let p = effPrice(a && a.listing_price, BASE_FEE);
   if(a && a.banner) p += effPrice(a.banner_price, BANNER_FEE);
   if(a && a.badge)  p += effPrice(a.badge_price, BADGE_FEE);
+  if(a && a.locked_position) p += LOCK_FEE;
   return p;
 }
-function appPriceLabel(a){ return (a && a.fee) ? a.fee : ('$' + appPrice(a) + '/mo'); }
+/* the same extras billed yearly (list prices; a hand-entered monthly price has no yearly twin) */
+function appPriceYear(a){
+  return (a && a.banner ? BANNER_FEE_YEAR : 0) + (a && a.badge ? BADGE_FEE_YEAR : 0) + (a && a.locked_position ? LOCK_FEE_YEAR : 0);
+}
+function appPriceLabel(a){ return (a && a.fee) ? a.fee : (appPrice(a) ? '$' + appPrice(a) + '/mo' : 'Free'); }
 
 /* ---- read ---- */
 async function fetchApplications(){

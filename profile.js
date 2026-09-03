@@ -301,13 +301,6 @@ async function initProfile(){
       ${socialLinks(co.socials)}
     </div>
 
-    ${claimed
-      ? ''
-      : `<div class="pf-unclaimed-card">
-           <b>This listing is unclaimed.</b>
-           <p>Nobody has connected a Circuits.com account to ${escapeHtml(co.name)} yet, so the
-           details here have not been confirmed by the company.</p>
-         </div>`}
   </aside></div>
   <p class="pf-source">Details, certifications and badges on this page are supplied by the company.
     <a href="/terms#what-we-check">What Circuits.com checks</a></p>`;

@@ -1344,26 +1344,29 @@ async function saveProfile(){
 }
 
 /* ---------- listings ---------- */
+/* The list is just the keywords (Jacob, 2026-09-03): one row each, closed by
+   default. The chevron or Edit opens the whole thing: the listing editor and
+   its upgrades. Approved listings carry an Active / Inactive switch. */
 function renderListings(){
-  const rows = PT.listings.map(l => `
-    <div class="pt-item">
+  const rows = PT.listings.map(l => { const open = PT.editing === l.id; return `
+    <div class="pt-item ${open ? 'is-open' : ''}">
       <div class="pt-item-head">
-        <div><b>${escapeHtml(l.keyword || '(no keyword)')}</b>
-          <span class="badge ${l.status === 'Approved' ? (l.paused ? '' : 'live') : l.status === 'Pending' ? 'pending' : ''}">${l.paused ? 'Paused' : l.status === 'Approved' ? 'Live' : escapeHtml(l.status)}</span>
+        <div><button type="button" class="pt-chevron" data-open="${l.id}" aria-expanded="${open}" aria-label="${open ? 'Close' : 'Open'} ${escapeHtml(l.keyword || '')}">${open ? '&#9662;' : '&#9656;'}</button>
+          <b>${escapeHtml(l.keyword || '(no keyword)')}</b>
+          <span class="badge ${l.status === 'Approved' ? (l.paused ? '' : 'live') : l.status === 'Pending' ? 'pending' : ''}">${l.status === 'Approved' ? (l.paused ? 'Inactive' : 'Active') : escapeHtml(l.status)}</span>
           ${l.badge ? `<span class="lb" style="background:${escapeHtml(l.badge.color)}">${escapeHtml(l.badge.text)}</span>` : ''}
         </div>
-        <div>
-          <button class="mini-btn" data-edit="${l.id}">Edit</button>
-          ${l.status === 'Approved' ? `<button class="mini-btn" data-pause="${l.id}" data-to="${l.paused ? '0' : '1'}">${l.paused ? 'Resume' : 'Pause'}</button>` : ''}
+        <div style="display:flex;gap:10px;align-items:center">
+          ${l.status === 'Approved' ? `<label class="switch pt-list-sw"><input type="checkbox" data-live="${l.id}" ${l.paused ? '' : 'checked'}><span class="knob" aria-hidden="true"></span><span class="sw-text">${l.paused ? 'Inactive' : 'Active'}</span></label>` : ''}
+          <button class="mini-btn" data-edit="${l.id}">${open ? 'Close' : 'Edit'}</button>
         </div>
       </div>
-      ${listingSummary(l)}
-      ${PT.editing === l.id ? listingEditor(l) : ''}
-      ${l.status === 'Approved' ? upgradePanel(l) : ''}
-    </div>`).join('');
+      ${open ? listingEditor(l) : ''}
+      ${open && l.status === 'Approved' ? upgradePanel(l) : ''}
+    </div>`; }).join('');
   el('pt-listings').innerHTML = rows || `<div class="pt-empty">
     <b>No Directory listings yet</b>
-    <p>Ask for one with Get Listed below. Once Circuits.com approves a Circuits-Keyword™ for you, it appears here and you can pause or resume it.</p>
+    <p>Ask for one with Get Listed below. Once Circuits.com approves a Circuits-Keyword™ for you, it appears here.</p>
   </div>`;
   const open = PT.listings.find(l => l.id === PT.editing);
   if(open){
@@ -1378,21 +1381,32 @@ function renderListings(){
    raises a request they see in the console; the price is what they charge.
    ponytail: no checkout, add Stripe when the volume justifies it. */
 const UPGRADES = {
-  badge:  { name: 'Trust Badge',              why: 'A short label in your colour beside this keyword.' },
-  banner: { name: 'Exclusive Sponsor Banner', why: 'Your banner above every result for this keyword.' },
-  lock:   { name: 'Locked position',          why: 'Pinned to #1, #2 or #3 instead of rotating.' }
+  badge:  { name: 'Trust Badge',              why: 'A short label in your colour beside this keyword.', month: BADGE_FEE,  year: BADGE_FEE_YEAR },
+  banner: { name: 'Exclusive Sponsor Banner', why: 'Your banner above every result for this keyword.', month: BANNER_FEE, year: BANNER_FEE_YEAR },
+  lock:   { name: 'Locked Position',          why: 'Pinned to #1, #2 or #3 instead of rotating.',      month: LOCK_FEE,   year: LOCK_FEE_YEAR }
 };
+/* Monthly or yearly, one choice for the whole dashboard; yearly shows what it saves. */
+let BILLING = 'month';
+const price = (u, b) => b === 'year' ? `$${u.year}/yr` : `$${u.month}/mo`;
+const saving = u => `save $${u.month * 12 - u.year} a year`;
+const BADGE_WORDS = ['Authorized', 'Featured', 'Preferred', 'Specialist'];
 /* The Trust Badge is the one upgrade with attributes: the label and the colour
    are chosen here, travel with the request, and staff approve exactly that. */
 const BADGE_COLORS = [['#c9a227', 'Gold'], ['#b06c22', 'Bronze'], ['#5d6a7e', 'Steel']];
 function badgeRequestForm(l){
   return `<button class="mini-btn green" data-badge-open="${l.id}">Request</button>
   <div class="pt-badge-req" id="badge-req-${l.id}" hidden>
-    <input class="up-text" type="text" maxlength="18" placeholder="Label, e.g. Featured" aria-label="Badge label">
+    <select class="up-word" aria-label="Badge wording">${BADGE_WORDS.map(w => `<option>${w}</option>`).join('')}<option value="">Custom</option></select>
+    <input class="up-text" type="text" maxlength="18" placeholder="Your own label" aria-label="Custom badge label" hidden>
     <select class="up-color" aria-label="Badge colour">${BADGE_COLORS.map(([hex, name]) => `<option value="${hex}">${name}</option>`).join('')}</select>
-    <span class="lb up-preview" style="background:${BADGE_COLORS[0][0]}">Your label</span>
+    <span class="lb up-preview" style="background:${BADGE_COLORS[0][0]}">${BADGE_WORDS[0]}</span>
     <button class="mini-btn green" data-request="${l.id}" data-kind="badge">Send request</button>
   </div>`;
+}
+/* the label the badge form currently spells out */
+function badgeFormValue(box){
+  const word = box.querySelector('.up-word').value;
+  return { text: word || box.querySelector('.up-text').value.trim(), color: box.querySelector('.up-color').value };
 }
 function upgradePanel(l){
   const mine = (PT.upgrades || []).filter(u => u.application_id === l.id);
@@ -1401,16 +1415,23 @@ function upgradePanel(l){
   const requested = k => k === 'badge' && pend.get(k).badge_text
     ? `<span class="badge pending">Requested</span> <span class="lb" style="background:${escapeHtml(pend.get(k).badge_color || '#c9a227')}">${escapeHtml(pend.get(k).badge_text)}</span>`
     : '<span class="badge pending">Requested</span>';
+  const on = Object.keys(UPGRADES).filter(k => has[k] || pend.has(k));
+  const total = b => on.reduce((t, k) => t + UPGRADES[k][b], 0);
   return `<div class="pt-upgrade">
-    <b class="pt-upgrade-title">Upgrades on this keyword</b>
+    <div class="pt-upgrade-head"><b class="pt-upgrade-title">Upgrades on this keyword</b>
+      <div class="search-mode pt-billing" role="tablist" aria-label="Billing">
+        <button type="button" class="${BILLING === 'month' ? 'on' : ''}" data-billing="month" role="tab">Monthly</button>
+        <button type="button" class="${BILLING === 'year' ? 'on' : ''}" data-billing="year" role="tab">Yearly</button>
+      </div></div>
     ${Object.entries(UPGRADES).map(([k, u]) => `<div class="pt-upgrade-row">
-      <div><b>${u.name}</b><p class="pf-note">${u.why}</p></div>
+      <div><b>${u.name}</b> <span class="pt-price">${price(u, BILLING)}</span>${BILLING === 'year' ? ` <span class="pt-save">${saving(u)}</span>` : ''}<p class="pf-note">${u.why}</p></div>
       ${has[k] ? '<span class="badge live">Active</span>'
         : pend.has(k) ? requested(k)
         : k === 'badge' ? badgeRequestForm(l)
         : `<button class="mini-btn green" data-request="${l.id}" data-kind="${k}">Request</button>`}
     </div>`).join('')}
-    <p class="pf-note" style="margin:8px 0 0">Active is on now. Requested is with us: we email you to confirm before switching it on.</p>
+    <div class="pt-upgrade-total"><span>Total for the upgrades that are on or requested</span><b>${BILLING === 'year' ? '$' + total('year') + '/yr' : '$' + total('month') + '/mo'}</b></div>
+    <p class="pf-note" style="margin:8px 0 0">Active is on now. Requested is with us: we email you to confirm before switching it on.${BILLING === 'year' ? ' Yearly is billed once a year.' : ''}</p>
   </div>`;
 }
 
@@ -1438,7 +1459,7 @@ function listingEditor(l){
       placeholder="What you supply under this keyword.">${escapeHtml(l.description || '')}</textarea>
     <div class="pf-note" id="ed-count-${l.id}">${(l.description || '').length}/300</div>
 
-    <label class="pt-lbl">Documents <span class="pf-note">datasheets and catalogues, shown as “View Docs”</span></label>
+    <label class="pt-lbl">Documents <span class="pf-note">datasheets and catalogues, shown on your profile page</span></label>
     <div class="pt-docs" id="ed-docs-${l.id}">
       ${docs.map((d, i) => `<span class="pt-doc">
         <a href="${escapeHtml(safeUrl(d.url))}" target="_blank" rel="noopener nofollow">${escapeHtml(d.name || 'Document')}</a>
@@ -1475,22 +1496,11 @@ function wireListings(){
   const root = el('pt-listings');
 
   root.onclick = async e => {
-    const pause = e.target.closest('[data-pause]');
-    if(pause){
-      pause.disabled = true;
-      const perr = await setPaused(pause.dataset.pause, pause.dataset.to === '1');
-      PT.listings = await fetchMyListings(PT.slug);
-      renderListings();
-      if(perr){
-        toast('That listing could not be updated. If it is under review or suspended, contact us and we will sort it out.', false);
-      }else{
-        toast(pause.dataset.to === '1' ? 'Listing paused.' : 'Listing resumed.', true);
-      }
-      return;
-    }
+    const bill = e.target.closest('[data-billing]');
+    if(bill){ BILLING = bill.dataset.billing; renderListings(); return; }
 
-    const edit = e.target.closest('[data-edit]');
-    if(edit){ PT.editing = (PT.editing === edit.dataset.edit) ? null : edit.dataset.edit; renderListings(); return; }
+    const edit = e.target.closest('[data-edit], [data-open]');
+    if(edit){ const id = edit.dataset.edit || edit.dataset.open; PT.editing = (PT.editing === id) ? null : id; renderListings(); return; }
 
     const open = e.target.closest('[data-badge-open]');
     if(open){ const f = el('badge-req-' + open.dataset.badgeOpen); f.hidden = false; open.hidden = true; f.querySelector('.up-text').focus(); return; }
@@ -1500,11 +1510,11 @@ function wireListings(){
       let badge = null;
       if(req.dataset.kind === 'badge'){
         const box = req.closest('.pt-badge-req');
-        badge = { text: box.querySelector('.up-text').value.trim(), color: box.querySelector('.up-color').value };
+        badge = badgeFormValue(box);
         if(!badge.text){ toast('Type the label you want on your badge first.', false); box.querySelector('.up-text').focus(); return; }
       }
       req.disabled = true;
-      const err = await requestUpgrade(req.dataset.request, PT.slug, req.dataset.kind, null, badge);
+      const err = await requestUpgrade(req.dataset.request, PT.slug, req.dataset.kind, BILLING === 'year' ? 'yearly' : 'monthly', badge);
       if(err){ req.disabled = false; toast('Could not send that request: ' + err, false); return; }
       PT.upgrades = await myUpgradeRequests(PT.slug);
       renderListings();
@@ -1557,14 +1567,29 @@ function wireListings(){
     /* live preview of the badge being requested */
     const box = t.closest('.pt-badge-req');
     if(box){
+      const custom = box.querySelector('.up-text');
+      custom.hidden = box.querySelector('.up-word').value !== '';
+      const v = badgeFormValue(box);
       const pv = box.querySelector('.up-preview');
-      pv.textContent = box.querySelector('.up-text').value.trim() || 'Your label';
-      pv.style.background = box.querySelector('.up-color').value;
+      pv.textContent = v.text || 'Your label';
+      pv.style.background = v.color;
+      if(!custom.hidden && t.classList.contains('up-word')) custom.focus();
     }
   };
 
   root.onchange = async e => {
     const f = e.target;
+    /* Active / Inactive switch: off hides the listing from search at once */
+    const sw = f.closest && f.closest('[data-live]');
+    if(sw){
+      sw.disabled = true;
+      const perr = await setPaused(sw.dataset.live, !sw.checked);
+      PT.listings = await fetchMyListings(PT.slug);
+      renderListings();
+      if(perr) toast('That listing could not be updated. If it is under review or suspended, contact us and we will sort it out.', false);
+      else toast(sw.checked ? 'Listing active.' : 'Listing inactive. It is hidden from search until you switch it back on.', true);
+      return;
+    }
     if(f.type !== 'file' || !f.id.startsWith('ed-file-')) return;
     const id = f.id.slice(8);
     const file = f.files && f.files[0]; if(!file) return;

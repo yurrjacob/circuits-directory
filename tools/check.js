@@ -767,9 +767,13 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   const home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   /* one row (Jacob, 2026-09-03, "how can we make this look better"): Directory, then the
      Recruiting pair, Hiring and Seeking Employment, in a bracket with a caption */
-  assert.ok(/data-target="directory"[^>]*role="tab"/.test(home), 'the homepage lost the Directory / Hiring / Seeking Employment row');
-  assert.ok(/data-target="hiring"/.test(home) && /data-target="seeking"/.test(home), 'Recruiting lost its Hiring / Seeking Employment sides');
-  assert.ok(!/search-side|data-mode=/.test(home), 'the stacked second toggle is back');
+  assert.ok(/data-target="directory"[^>]*role="tab"/.test(home), 'the homepage lost the Directory choice');
+  /* Recruiting is not open yet (Jacob, 2026-09-03): a disabled "Coming Soon" stands where Hiring /
+     Seeking Employment go; the routing in app.js stays for launch */
+  assert.ok(/<button type="button" disabled aria-disabled="true"[^>]*>Coming Soon<\/button>/.test(home), 'the homepage lost the disabled Coming Soon choice');
+  assert.ok(!/data-target="hiring"|data-target="seeking"/.test(home), 'Hiring / Seeking Employment are reachable from the homepage before launch');
+  assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'recruiting-2026-09-03', 'about-recruiting-section.html')), 'the archived About recruiting section is missing');
+  assert.ok(!/<h2 class="section-title">Recruiting on Circuits\.com/.test(fs.readFileSync(path.join(ROOT, 'about.html'), 'utf8')), 'the Recruiting section is back on About before launch');
   const appHome = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
   assert.ok(/t === 'seeking' \? '\/talent' : '\/jobs'/.test(appHome) && /if\(t === 'directory'\)\{ gotoSearch\(q\); return; \}/.test(appHome),
     'the homepage search does not route Directory to /results, Hiring to /jobs and Seeking Employment to /talent');
@@ -1031,6 +1035,7 @@ function appPrice(a){                      // mirrors store.js
   let p = effPrice(a && a.listing_price, BASE);
   if (a && a.banner) p += effPrice(a.banner_price, BANNER);
   if (a && a.badge)  p += effPrice(a.badge_price, BADGE);
+  if (a && a.locked_position) p += LOCK;
   return p;
 }
 for (const banner of [false, true]) {
@@ -1407,14 +1412,20 @@ for (const [peak, want] of [[1, 1], [3, 5], [7, 10], [12, 20], [45, 50], [230, 5
     `axis ceiling for a peak of ${peak} should be ${want}`);
 }
 
-/* --- yearly pricing must exist and undercut twelve monthly payments --- */
-const yearLine = storeSrc.match(/const BASE_FEE_YEAR = (\d+), BANNER_FEE_YEAR = (\d+), BADGE_FEE_YEAR = (\d+);/);
+/* --- yearly pricing must exist and undercut twelve monthly payments (listings are free since 2026-09-03) --- */
+const yearLine = storeSrc.match(/const BASE_FEE_YEAR = (\d+), BANNER_FEE_YEAR = (\d+), BADGE_FEE_YEAR = (\d+), LOCK_FEE_YEAR = (\d+);/);
 assert.ok(yearLine, 'yearly pricing constants missing from store.js');
-const [BASE_Y, BANNER_Y, BADGE_Y] = yearLine.slice(1).map(Number);
-for (const [m, y, what] of [[BASE, BASE_Y, 'listing'], [BANNER, BANNER_Y, 'banner'], [BADGE, BADGE_Y, 'badge']]) {
+const lockLine = storeSrc.match(/LOCK_FEE = (\d+);/);
+assert.ok(lockLine, 'LOCK_FEE missing from store.js');
+const [BASE_Y, BANNER_Y, BADGE_Y, LOCK_Y] = yearLine.slice(1).map(Number), LOCK = Number(lockLine[1]);
+assert.strictEqual(BASE, 0, 'a keyword listing is free');
+assert.strictEqual(BASE_Y, 0, 'a keyword listing is free yearly too');
+assert.deepStrictEqual([BADGE, BADGE_Y, BANNER, BANNER_Y, LOCK, LOCK_Y], [49, 399, 399, 3999, 199, 1999], 'the upgrade prices are not the ones Jacob set (2026-09-03)');
+for (const [m, y, what] of [[BANNER, BANNER_Y, 'banner'], [BADGE, BADGE_Y, 'badge'], [LOCK, LOCK_Y, 'locked position']]) {
   assert.ok(y < m * 12, what + ' yearly price is not cheaper than paying monthly');
   assert.ok(y > m, what + ' yearly price is below one month, which is surely wrong');
 }
+assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications.html'), 'utf8')), 'the applications sheet does not show the yearly price');
 
 /* --- Admin console order and Trust Badge attributes (Jacob, 2026-09-02) --- */
 {
@@ -1429,8 +1440,15 @@ for (const [m, y, what] of [[BASE, BASE_Y, 'listing'], [BANNER, BANNER_Y, 'banne
   }
   assert.ok(/#pt-tab-admin\{margin-left:auto/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the Admin tab no longer sits apart from the account tabs');
   const pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
-  assert.ok(/class="up-text"/.test(pj) && /class="up-color"/.test(pj), 'the Trust Badge request lost its label or colour field');
-  assert.ok(/requestUpgrade\(req\.dataset\.request, PT\.slug, req\.dataset\.kind, null, badge\)/.test(pj), 'the badge label and colour are not sent with the request');
+  assert.ok(/class="up-word"/.test(pj) && /class="up-text"/.test(pj) && /class="up-color"/.test(pj), 'the Trust Badge request lost its wording dropdown, custom label or colour field');
+  assert.ok(/requestUpgrade\(req\.dataset\.request, PT\.slug, req\.dataset\.kind, BILLING === 'year' \? 'yearly' : 'monthly', badge\)/.test(pj), 'the badge label, colour and billing choice are not sent with the request');
+  /* Your Listings (Jacob, 2026-09-03): rows closed by default, chevron or Edit opens editor + upgrades,
+     Active / Inactive switch, monthly / yearly prices with the yearly saving and a total */
+  assert.ok(/class="pt-chevron" data-open=/.test(pj) && /\$\{open \? listingEditor\(l\) : ''\}/.test(pj) && /open && l\.status === 'Approved' \? upgradePanel\(l\)/.test(pj), 'listings are not closed by default with a chevron to open them');
+  assert.ok(/class="switch pt-list-sw"><input type="checkbox" data-live=/.test(pj) && !/data-pause=/.test(pj), 'the Active / Inactive switch is missing (or Pause / Resume is back)');
+  assert.ok(/data-billing="month"/.test(pj) && /data-billing="year"/.test(pj) && /saving\(u\)/.test(pj) && /pt-upgrade-total/.test(pj), 'the upgrades panel lost the monthly / yearly choice, the saving or the total');
+  assert.ok(/month: BADGE_FEE,\s*year: BADGE_FEE_YEAR/.test(pj) && /month: LOCK_FEE,\s*year: LOCK_FEE_YEAR/.test(pj), 'the upgrade prices do not come from store.js');
+  assert.ok(/\[hidden\]\{display:none !important\}/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the hidden attribute can be overridden by display rules (duplicate Request button)');
   const st = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
   assert.ok(/badge_text: badge \? badge\.text : null/.test(st), 'store.js drops the badge attributes');
   assert.ok(/decision: decision \|\| null/.test(st), 'store.js no longer records the Approve/Deny decision');

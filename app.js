@@ -323,17 +323,19 @@ async function initInbox(){
     good:   { label: 'Approved',        path: '<path d="M20 6 9 17l-5-5"/>' },
     wait:   { label: 'In review',       path: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>' },
     people: { label: 'From a person',   path: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>' },
-    note:   { label: 'Update',          path: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/>' }
+    note:   { label: 'Update',          path: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/>' },
+    hello:  { label: 'Welcome',         emoji: '\uD83D\uDC4B' }
   };
   const kindOf = n => {
     const s = (n.subject + ' ' + (n.body || '').slice(0, 120)).toLowerCase();
+    if(/welcome/.test(s)) return 'hello';
     if(/not approved|denied|removed|ended|suspended|is off|paused|refused|expired/.test(s)) return 'bad';
-    if(/approved|is live|is on |is back|added|you are listed|welcome|active again|can now find you/.test(s)) return 'good';
+    if(/approved|is live|is on |is back|added|you are listed|active again|can now find you/.test(s)) return 'good';
     if(/received|waiting|under review|requested|sent:|posted:/.test(s)) return 'wait';
     if(/applicant|applied|review of|message from|replied|reply/.test(s)) return 'people';
     return 'note';
   };
-  const avatar = n => { const k = KINDS[kindOf(n)]; return `<span class="inbox-avatar k-${kindOf(n)}" title="${k.label}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${k.path}</svg></span>`; };
+  const avatar = n => { const k = KINDS[kindOf(n)]; return `<span class="inbox-avatar k-${kindOf(n)}" title="${k.label}">${k.emoji ? `<span class="inbox-emoji" aria-hidden="true">${k.emoji}</span>` : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${k.path}</svg>`}</span>`; };
   const badge = () => {
     const n = (items || []).filter(x => !x.read_at).length, b = btn.querySelector('.inbox-n');
     b.textContent = n > 9 ? '9+' : String(n); b.hidden = !n;
@@ -460,7 +462,8 @@ function safeUrl(u){
   if(/^[a-z0-9-]+(\.[a-z0-9-]+)+/i.test(s)) return 'https://' + s;
   return '';
 }
-/* "View Documentation" link(s) for a listing's uploaded documents */
+/* "View Docs" links are OFF the results page (Jacob, 2026-09-03); documents
+   still live on the profile page. Kept for that. */
 function docLinks(c){
   const docs = Array.isArray(c && c.docs) ? c.docs : [];
   const usable = docs.filter(d => d && safeUrl(d.url));
@@ -553,26 +556,25 @@ async function initResults(forcedTerm){
 
   /* The example sponsor banner and the "get listed" button. Shown on an empty
      keyword page, and on any keyword page where nobody holds the banner yet, so
-     every list carries the pitch (2026-09-01). The Website / View Docs labels are
-     spans on purpose: there is nothing to visit, so nothing should look like it
-     goes somewhere. The keyword is capitalised by CSS (.tc), the same way the
+     every list carries the pitch (2026-09-01). The Website label is a span on
+     purpose: there is nothing to visit, so nothing should look like it goes
+     somewhere. "View Docs" and the "This Banner is Available" line went on
+     2026-09-03. The keyword is capitalised by CSS (.tc), the same way the
      subbar shows it. */
   const exampleBanner = (term, extra = '') => `
-    <div class="empty" style="margin-bottom:4px">
-      <div class="big">This Banner is Available</div>
-      ${extra}
-    </div>
+    ${extra ? `<div class="empty" style="margin-bottom:4px">${extra}</div>` : ''}
     <div class="premium"><div class="premium-card">
       <span class="premium-badge">Exclusive Sponsor</span>
       <div class="premium-logo">${avatarSvg()}</div>
       <div class="premium-body">
         <h3>Your Company</h3>
-        <p>Own the Exclusive Circuits-Keyword&trade; Sponsor Banner for &ldquo;<span class="tc">${term}</span>&rdquo;.<br>Own the First Listing Every Viewer Sees.</p>
-        <div class="premium-links"><span class="doc-link">Website</span><span class="doc-link">View Docs</span></div>
+        <p>Own the Exclusive Sponsor Banner for &ldquo;<span class="tc">${term}</span>&rdquo;.<br>Own the First Listing Every Viewer Sees.</p>
+        <div class="premium-links"><span class="doc-link">Website</span></div>
       </div>
       <div class="premium-contact">
         <div class="pc-lines">
           <span class="pc-name">John Doe</span>
+          <span>+1 (123) 456-7890</span>
           <span>johndoe@yourcompany.com</span>
         </div>
       </div>
@@ -611,10 +613,9 @@ async function initResults(forcedTerm){
               <a href="/join">Your Company</a>
               <span class="lb" style="background:#c9a227">Authorized</span>
               <span class="doc-link">Website</span>
-              <span class="doc-link">View Docs</span>
             </div></td>
             <td class="cell-muted" data-label="Contact">John Doe</td>
-            <td class="cell-muted" data-label="Phone">(555) 123-4567</td>
+            <td class="cell-muted" data-label="Phone">+1 (123) 456-7890</td>
             <td class="cell-muted" data-label="Email">johndoe@yourcompany.com</td>
           </tr></tbody>
         </table>
@@ -670,7 +671,6 @@ async function initResults(forcedTerm){
         ${featured.description ? `<p>${escapeHtml(featured.description)}</p>` : ''}
         <div class="premium-links">
           ${safeUrl(featured.website) ? `<a class="doc-link" href="${escapeHtml(safeUrl(featured.website))}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
-          ${docLinks(featured)}
         </div>
       </div>
       <div class="premium-contact">
@@ -698,7 +698,6 @@ async function initResults(forcedTerm){
             : escapeHtml(c.company)}
           ${badgeHtml(c.badge)}
           ${safeUrl(c.website) ? `<a class="doc-link" href="${escapeHtml(safeUrl(c.website))}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
-          ${docLinks(c)}
         </div>
       </td>
       <td class="cell-muted" data-label="Contact">${escapeHtml(c.contact||'')}</td>
@@ -1456,10 +1455,10 @@ function initRegister(){
         : err);
     }
 
+    /* just the confirmation (Jacob, 2026-09-03): "Account Created", check your inbox, nothing else */
     form.style.display = 'none';
+    const steps = el('reg-steps'); if(steps) steps.style.display = 'none';
     const ok = el('reg-success');
-    const okHandle = el('reg-success-handle');
-    if(okHandle) okHandle.innerHTML = '<b>circuits.com/' + escapeHtml(handle) + '</b> is yours. ';
     if(ok) ok.style.display = 'block';
     window.scrollTo({ top:0, behavior:'smooth' });
   });

@@ -65,7 +65,7 @@
         <tr>
           <th>Date</th><th>Company</th><th>Contact</th>
           <th>Keyword &amp; Price</th><th>Premium Banner</th><th>Trust Badge</th><th>Profile Description</th>
-          <th>Total Price</th><th>Status</th><th>Actions</th>
+          <th>Total Price<br><span class="co-sub">monthly / yearly</span></th><th>Status</th><th>Actions</th>
         </tr>
       </thead>
       <tbody id="apps-body"><tr><td colspan="10" style="padding:20px;text-align:center;color:#5f6368">Loading…</td></tr></tbody>
@@ -175,7 +175,7 @@ function rowHtml(a){
       <span class="ce price" contenteditable data-price="badge_price" data-cell="badgeprice" data-ph="${money(BADGE_FEE)}">${money(effPrice(a.badge_price,BADGE_FEE))}</span>` : ''}
     </td>
     <td class="msg-cell"><span class="ce" contenteditable data-field="description" data-maxlen="300" data-ph="Add description…" title="Shown on the listing's Exclusive Sponsor banner once entered (max 300 characters)">${esc(a.description)}</span></td>
-    <td class="nowrap" data-cell="total"><b>$${totalPrice(a)}/mo</b></td>
+    <td class="nowrap" data-cell="total"><b>$${totalPrice(a)}/mo</b><div class="co-sub">$${appPriceYear(a)}/yr</div></td>
     <td class="nowrap">${statusBadge(a.status)}</td>
     <td class="row-actions">
       <button class="mini-btn green" data-act="approve" ${conflict?'disabled title="Blocked: this keyword already has a live Exclusive Sponsor banner. Remove that banner first."':''}>Approve</button>
@@ -221,7 +221,7 @@ async function resetRow(id){
 }
 
 /* ---------- inline editing ---------- */
-function updateTotalCell(tr, a){ tr.querySelector('[data-cell="total"]').innerHTML = `<b>$${totalPrice(a)}/mo</b>`; }
+function updateTotalCell(tr, a){ tr.querySelector('[data-cell="total"]').innerHTML = `<b>$${totalPrice(a)}/mo</b><div class="co-sub">$${appPriceYear(a)}/yr</div>`; }
 
 /* format gates for inline edits: a blank clears the field, but a filled-in
    value has to be the thing the column says it is (Jacob, 2026-08-20) */
