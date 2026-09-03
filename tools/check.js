@@ -147,6 +147,10 @@ for (const f of NAV_PAGES) {
   assert.strictEqual((nav.match(/class="[^"]*\bcta\b/g) || []).length, 1,
     `${f} nav should have exactly one Get Listed call to action`);
   assert.ok(nav.includes('nav-auth'), `${f} nav is missing the Sign In link`);
+  /* Both account links ship in the markup so nav.js can pick one in <head>
+     rather than building one after the page is drawn (Jacob, 2026-09-03). */
+  assert.ok(nav.includes('nav-signin') && nav.includes('nav-dash'),
+    `${f} nav is missing the Sign In / Dashboard pair, so its header will shift after load`);
   assert.ok((nav.match(/class="[^"]*\bactive\b/g) || []).length <= 1,
     `${f} nav marks more than one item active`);
 }
@@ -757,12 +761,30 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   /* the in-dashboard recruit search and the Recruiting board are gone (Jacob, 2026-09-03);
      searching happens on /talent and /jobs */
   assert.ok(!/pt-board|id="rs-form"/.test(portalHtml2) && !/renderJobBoard|wireRecruitSearch/.test(portalSrc2), 'the Recruiting board or the recruit search is back on the dashboard');
-  /* header label for a signed-in user */
+  /* the dashboard wears the same header as every other page, Get Listed included
+     (Jacob, 2026-09-03: "keep the get listed button on the top right when you go
+     to your dashboard"), and loads nav.js so the swap happens there too */
+  assert.ok(/<nav class="nav">/.test(portalHtml2) && /class="cta" href="\/join"/.test(portalHtml2),
+    'the dashboard lost the shared header or its Get Listed button');
+  assert.ok(/<script src="\/nav\.js"><\/script>/.test(portalHtml2), 'the dashboard does not load nav.js, so its header cannot show Dashboard');
   /* header, signed in (Jacob, 2026-09-03): Contact | Dashboard [Get Listed]. Dashboard takes the
-     Sign In slot (same separator line), Get Listed stays and goes to the real Get Listed page. */
+     Sign In slot (same separator line), Get Listed stays and goes to the real Get Listed page.
+
+     The swap is a stylesheet written in <head>, not a link built after the page
+     loads (Jacob, 2026-09-03: "it kinda shifts around"). Both links ship in the
+     markup of every header, so the bar is drawn once, in its final shape. A
+     header that inserts or removes a link on DOMContentLoaded reflows the whole
+     bar after first paint, on every single navigation. */
   const navSrc2 = fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8');
-  assert.ok(/a\.className = 'nav-auth nav-dash'/.test(navSrc2) && /a\.textContent = 'Dashboard'/.test(navSrc2) && /nav\.insertBefore\(a, join \|\| null\)/.test(navSrc2),
-    'the signed-in header is not "Contact | Dashboard [Get Listed]"');
+  assert.ok(/\.nav a\.nav-signin\{display:none\}\.nav a\.nav-dash\{display:block\}/.test(navSrc2),
+    'nav.js no longer swaps Sign In for Dashboard with a stylesheet before first paint');
+  /* only the header half: the burger and the skip link below it build elements
+     quite legitimately, they are not part of the nav bar's own layout */
+  const navHeader2 = navSrc2.slice(0, navSrc2.indexOf('phone menu + skip link'));
+  assert.ok(!/createElement\('a'\)|insertBefore|signIn\.remove\(\)/.test(navHeader2),
+    'nav.js builds or removes header links again; that reflows the bar after first paint');
+  assert.ok(/\.nav a\.nav-dash\{display:none\}/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
+    'Dashboard is not hidden by default, so a signed-out or no-JS visitor sees both it and Sign In');
   assert.ok(!/nav-join\{display:none\}|\/portal#listings/.test(navSrc2), 'nav.js still hides or reroutes Get Listed when signed in');
   /* the public page: the company row (the page) plus the person's experience */
   assert.ok(/\[co, person\] = await Promise\.all\(\[fetchCompanyByHandle\(handle\), fetchProfileByHandle\(handle\)\]\)/.test(profSrc)

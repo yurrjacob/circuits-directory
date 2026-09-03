@@ -36,33 +36,15 @@
 
   if(!signedIn()) return;
 
-  /* Get Listed stays in the header when signed in (Jacob, 2026-09-03): /join
-     is the Get Listed page itself, and it asks for an account when signed out.
-     Hide only "Sign In" before first paint, so nobody sees it flash and vanish;
-     the Dashboard link has to wait for <body>. */
+  /* Signed in, Dashboard takes the Sign In slot and Get Listed stays put
+     (Jacob, 2026-09-03). Both links are already in every header, so this only
+     chooses which of the two is shown, and it happens here in <head> before
+     the first paint. Nothing is added to or removed from the header once it is
+     on screen, so the bar never changes shape after the page is drawn, which
+     is what used to make every navigation look like a jump. */
   var css = document.createElement('style');
-  css.textContent = '.nav .nav-auth:not(.nav-dash){display:none}';
+  css.textContent = '.nav a.nav-signin{display:none}.nav a.nav-dash{display:block}';
   document.head.appendChild(css);
-
-  function mount(){
-    var nav = document.querySelector('.nav');
-    if(!nav || nav.querySelector('.nav-dash')) return;
-    var signIn = nav.querySelector('.nav-auth');
-    var join = nav.querySelector('.cta');
-
-    /* "Contact | Dashboard [Get Listed]" (Jacob, 2026-09-03): Dashboard takes
-       the Sign In slot, separator line included, and Get Listed stays. */
-    var a = document.createElement('a');
-    a.className = 'nav-auth nav-dash';
-    a.href = '/portal';
-    a.textContent = 'Dashboard';
-    if(/^\/portal/.test(location.pathname)) a.classList.add('active');
-    nav.insertBefore(a, join || null);
-    if(signIn) signIn.remove();
-  }
-
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
-  else mount();
 })();
 
 /* ===== phone menu + skip link ==============================================

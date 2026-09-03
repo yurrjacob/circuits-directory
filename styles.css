@@ -70,6 +70,11 @@ img{max-width:100%}
 .nav a.nav-auth{margin-left:14px;position:relative;color:#e8eaed;font-weight:600}
 .nav a.nav-auth::before{content:"";position:absolute;left:-14px;top:50%;transform:translateY(-50%);
   width:1px;height:20px;background:rgba(255,255,255,.35)}
+/* Sign In and Dashboard are both in the markup and occupy the same slot; the
+   signed-out one is the default so a visitor with no JavaScript still gets a
+   working header. nav.js flips this in <head>, before the first paint, so the
+   header never changes shape after the page is drawn. */
+.nav a.nav-dash{display:none}
 .nav a.cta{background:var(--green);color:#0f0f0f;font-weight:700;margin-left:4px}
 /* Dashboard, signed in (Jacob, 2026-09-03): a white button with black text beside the green Get Listed */
 .nav a.nav-dash{background:#fff;color:#0f0f0f;font-weight:700;margin-right:4px}
