@@ -5,23 +5,305 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Get Listed | Circuits.com</title>
 <meta name="description" content="List your company on Circuits.com and get discovered by buyers, engineers and partners across the circuits and electronics industry.">
-<link rel="canonical" href="https://circuits.com/register">
-<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="https://circuits.com/join">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Circuits.com">
+<meta property="og:title" content="Get Listed | Circuits.com">
+<meta property="og:description" content="List your company on Circuits.com and get discovered by buyers, engineers and partners across the circuits and electronics industry.">
+<meta property="og:url" content="https://circuits.com/join">
+<meta property="og:image" content="https://circuits.com/assets/og-card.png">
 <link rel="icon" href="assets/favicon.png">
-<!-- Listings need an account (Jacob, 2026-09-03: "users need an account to
-     create listings on any part of the site"). The old anonymous form is in
-     backups/join-2026-09-03/. Signed in, nav.js already sends /join to the
-     Listings tab; signed out, this page goes straight to registration. -->
-<script>
-(function(){
-  var on = false;
-  try{ for(var i = 0; i < localStorage.length; i++){ if(/^sb-.*-auth-token$/.test(localStorage.key(i) || '')) on = true; } }catch(e){}
-  location.replace(on ? '/portal#listings' : '/register');
-})();
-</script>
+<link rel="stylesheet" href="styles.css">
+<script src="/nav.js"></script>
+<script async src="/analytics.js"></script>
 </head>
 <body>
-<p style="font-family:system-ui,sans-serif;margin:40px;text-align:center">Listings are created from your profile.
-<a href="/register">Create your profile</a> or <a href="/portal#listings">sign in</a>.</p>
+
+<header class="topbar">
+<div class="inner">
+<div class="brand"><a href="/"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-slogan">Connecting The Circuits Industry</span></div>
+    <nav class="nav">
+      <a href="/">Home</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+      <a class="nav-auth" href="/portal">Sign In</a>
+      <a class="active cta" href="/join">Get Listed</a>
+    </nav>
+</div>
+</header>
+
+<!-- Listings need an account (Jacob, 2026-09-03). Signed out, this page sends
+     people to /register; signed in, it is THE place to get listed: keywords,
+     the Sponsor Banner and the Trust Badge, filed as Pending applications
+     with the company details taken from the account. The anonymous MVP1 form
+     is kept in backups/join-2026-09-03/. -->
+<div class="form-wrap">
+<h1>Get Listed</h1>
+<p class="lede">Get found by the people searching for what you offer.<br>Claim your Circuits-Keyword™ and establish your presence where the circuits industry connects.</p>
+
+<div id="join-load" class="pf-note">Loading your profile…</div>
+
+<div id="success" class="success">
+<b>Request received.</b> We have emailed you a copy. Our team reviews every keyword request and you hear back by email, usually within one business day.
+Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a> until then.
+</div>
+
+<form id="join-form" autocomplete="off" novalidate style="display:none">
+
+<section class="step">
+<div class="step-head">
+<span class="step-num">01</span>
+<div>
+<h2>Claim Your Circuits-Keyword™</h2>
+<p>Up to 10 keywords, listed for free. Listed as <b id="j-company"></b>; change the details under <a href="/portal">Dashboard</a>.</p>
+</div>
+</div>
+<p class="benefits-h">Benefits</p>
+<ul class="promo-benefits" style="margin:0 0 20px">
+<li>Ranked Listing Position Held While Your Subscription Is Active</li>
+<li>Higher Placement For Early Participants</li>
+<li>Create Lasting Digital Real Estate</li>
+</ul>
+<div class="field">
+<div class="kw-input-row">
+<input id="kw-input" type="text" placeholder="e.g. semiconductors" maxlength="40" aria-label="Keyword">
+<button type="button" class="mini-btn" id="kw-check">Check</button>
+<button type="button" class="mini-btn green" id="kw-add">Add</button>
+</div>
+<p class="field-hint">Not sure if a keyword is taken? <b>Check</b> opens its live results page in a new tab. Added keywords are clickable to check too.</p>
+<div class="kw-tags" id="kw-tags"></div>
+<div id="kw-err" class="err-msg" style="display:none"></div>
+</div>
+<div class="cat-count" id="kw-count"><b>0</b> of 10 keywords</div>
+</section>
+
+<section class="step">
+<div class="step-head">
+<span class="step-num">02</span>
+<div>
+<h2>Dominate Your Circuits-Keyword™ Listing</h2>
+<p>Optional. Get featured as the Exclusive Circuits-Keyword™ Sponsor on every keyword you claim.</p>
+</div>
+</div>
+<p class="benefits-h">Benefits</p>
+<ul class="promo-benefits" style="margin:0 0 20px">
+<li>Top Banner Placement</li>
+<li>Prominent Logo, Profile Description, And Exclusive Sponsor Badge</li>
+<li>Hold Your Position Ahead Of Competitors</li>
+</ul>
+<label class="promo promo-gold">
+<input type="checkbox" id="promo-check">
+<div class="promo-body">
+<div class="promo-title">Yes, Showcase My Listing As An Exclusive Sponsor</div>
+<p class="promo-sub" style="margin:4px 0 0">A paid add-on, <b id="j-banner-fee"></b> per keyword, separate from the free listing. One sponsor per keyword; we confirm availability when we approve.</p>
+</div>
+</label>
+</section>
+
+<section class="step">
+<div class="step-head">
+<span class="step-num">03</span>
+<div>
+<h2>Add Trust Upgrade</h2>
+<p>Optional. A Trust Badge shown next to your listing on every keyword you claim.</p>
+</div>
+</div>
+<p class="benefits-h">Benefits</p>
+<ul class="promo-benefits" style="margin:0 0 20px">
+<li>Build Instant Trust With Viewers</li>
+<li>Make Your Listing Stand Out From Competitors</li>
+<li>Highlight Your Status At A Glance</li>
+</ul>
+<label class="promo promo-gold" style="margin-bottom:20px">
+<input type="checkbox" id="badge-check">
+<div class="promo-body">
+<div class="promo-title">Yes, Add A Circuits.com Trust Badge To My Listings</div>
+<p class="promo-sub" style="margin:4px 0 0">A paid add-on, <b id="j-badge-fee"></b> per keyword. Tick the box, then pick your badge below.</p>
+</div>
+</label>
+<div id="badge-builder" style="display:none">
+<p class="field-hint" style="margin:0 0 8px">A Trust Badge is a label you choose, and it is shown as one. It cannot claim somebody else assessed you: not Certified, not ISO 9001, not Approved, not Verified. The Circuits.com badge itself cannot be bought.</p>
+<div class="opt-row" id="badge-opts">
+<button type="button" class="opt-btn selected" data-text="Authorized">Authorized</button>
+<button type="button" class="opt-btn" data-text="Featured">Featured</button>
+<button type="button" class="opt-btn" data-text="Preferred">Preferred</button>
+<button type="button" class="opt-btn" data-text="Specialist">Specialist</button>
+<button type="button" class="opt-btn" data-text="">Custom</button>
+</div>
+<input id="badge-custom" type="text" maxlength="18" placeholder="Type your custom badge" style="display:none;max-width:240px;margin:8px 0 4px">
+<span class="field-label">Badge Color</span>
+<div class="swatches" id="swatches">
+<button type="button" class="swatch selected" data-color="#c9a227" style="background:linear-gradient(135deg,#e9c95c,#c9a227)" aria-label="Gold"></button>
+<button type="button" class="swatch" data-color="#b06c22" style="background:linear-gradient(135deg,#d99a52,#b06c22)" aria-label="Bronze"></button>
+<button type="button" class="swatch" data-color="#5d6a7e" style="background:linear-gradient(135deg,#8f9cb0,#5d6a7e)" aria-label="Steel"></button>
+</div>
+<div class="badge-preview-box" style="margin:14px 0 0">
+<span class="preview-label">Live Preview</span>
+<div class="preview-stage">
+<span class="co-logo" id="preview-logo" style="background:var(--dark)"></span>
+<span class="preview-name" id="preview-name"></span>
+<span class="lb" id="badge-preview" style="background:#c9a227">Authorized</span>
+</div>
+</div>
+</div>
+</section>
+
+<section class="step">
+<div class="step-head">
+<span class="step-num">04</span>
+<div><h2>Pricing Estimate</h2>
+<p>Updates as you choose keywords and extras. Nothing is charged now. We confirm pricing when we approve your listing.</p></div>
+</div>
+<div class="quote">
+<div class="quote-lines" id="quote-lines"></div>
+<div class="quote-total"><span>Estimated monthly total</span><b id="quote-total">$0</b></div>
+<div class="quote-total quote-total-alt"><span>Or paid yearly</span><b id="quote-total-year">$0</b></div>
+<p class="field-hint beta-note"><b>Beta pricing.</b> Original owners lock in these beta fees for as long as they keep an active subscription.</p>
+</div>
+</section>
+
+<section class="step">
+<div class="step-head">
+<span class="step-num">05</span>
+<div><h2>Have Any Ideas? Tell Us What You're Thinking</h2></div>
+</div>
+<div class="field">
+<label for="msg">Message (Optional)</label>
+<textarea id="msg" maxlength="600" placeholder="Tell us about your needs to reach viewers or any other questions."></textarea>
+</div>
+<label class="terms">
+<input id="f-terms" type="checkbox" required>
+<span>I have authority to create a listing and accept the <a href="terms" target="_blank">Listing Terms</a> and <a href="terms#acceptable-use" target="_blank">Acceptable Use Policy</a>. <span class="req">*</span></span>
+</label>
+<div id="terms-err" class="err-msg" style="display:none">You must accept the Listing Terms and Acceptable Use Policy before submitting.</div>
+</section>
+
+<div class="form-foot">
+<span class="help">Have questions? <a href="contact">Contact Us</a></span>
+<button class="submit" type="submit" id="j-submit">Submit Request</button>
+</div>
+</form>
+</div>
+
+<footer class="footer">
+<div class="inner">
+<div class="flinks">
+      <a href="/terms">Terms</a>
+      <a href="/privacy">Privacy</a>
+    </div>
+<div style="display:flex;align-items:center;gap:14px">
+<span>© 2026 Circuits.com</span>
+<span class="footer-brand"><img class="footer-mark" src="assets/favicon.png" alt="Circuits.com"></span>
+</div>
+</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="store.js"></script>
+<script src="app.js"></script>
+<script>
+(async function initGetListed(){
+  const el = id => document.getElementById(id);
+  const user = await currentUser();
+  if(!user){ location.replace('/register'); return; }
+
+  /* the company row behind the account (every account has one; a brand new
+     account gets it here, an account with no address yet finishes that first) */
+  let cos = await myCompanies();
+  if(!cos.length){ const r = await registerCompany(); if(!r.error) cos = await myCompanies(); }
+  if(!cos.length){ location.replace('/portal'); return; }
+  const co = await fetchCompany(cos[0].slug);
+  const mine = await fetchMyListings(co.slug);
+  el('join-load').style.display = 'none';
+  el('join-form').style.display = '';
+  el('j-company').textContent = co.name;
+  el('j-banner-fee').textContent = '$' + BANNER_FEE + '/mo or $' + BANNER_FEE_YEAR + '/yr';
+  el('j-badge-fee').textContent = '$' + BADGE_FEE + '/mo or $' + BADGE_FEE_YEAR + '/yr';
+  el('preview-name').textContent = co.name;
+  el('preview-logo').innerHTML = isLogoUrl(co.logo) ? `<img src="${escapeHtml(co.logo)}" alt="">` : avatarSvg();
+
+  /* keywords */
+  let kws = [];
+  const input = el('kw-input'), tags = el('kw-tags'), err = el('kw-err');
+  const say = t => { err.textContent = t; err.style.display = t ? 'block' : 'none'; };
+  const draw = () => {
+    tags.innerHTML = kws.map((k, i) => `<span class="kw-tag"><a class="kw-check-link" href="/results?q=${encodeURIComponent(k)}" target="_blank" rel="noopener">${escapeHtml(k)}</a><button type="button" data-i="${i}" aria-label="Remove">&times;</button></span>`).join('');
+    el('kw-count').innerHTML = `<b>${kws.length}</b> of 10 keywords`;
+    quote();
+  };
+  const add = () => {
+    const k = cleanKw(input.value);
+    if(!k) return;
+    if(kws.includes(k)){ input.value = ''; return; }
+    if(mine.some(l => l.keyword_norm === normKw(k))){ say('You already have a listing for "' + k + '". See it under Your Listings.'); return; }
+    if(kws.length >= 10){ say('Ten keywords at a time. Remove one to add another.'); return; }
+    kws.push(k); input.value = ''; say(''); draw(); input.focus();
+  };
+  el('kw-add').addEventListener('click', add);
+  input.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); add(); } });
+  el('kw-check').addEventListener('click', () => { const k = cleanKw(input.value); if(!k){ input.focus(); return; } window.open('/results?q=' + encodeURIComponent(k), '_blank', 'noopener'); });
+  tags.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; kws.splice(+b.dataset.i, 1); draw(); });
+
+  /* badge builder */
+  let badgeText = 'Authorized', badgeColor = '#c9a227';
+  const preview = () => { const p = el('badge-preview'); p.textContent = badgeText || 'Your badge'; p.style.background = badgeColor; };
+  el('badge-check').addEventListener('change', e => { el('badge-builder').style.display = e.target.checked ? '' : 'none'; quote(); });
+  el('promo-check').addEventListener('change', quote);
+  el('badge-opts').addEventListener('click', e => {
+    const b = e.target.closest('.opt-btn'); if(!b) return;
+    document.querySelectorAll('#badge-opts .opt-btn').forEach(x => x.classList.toggle('selected', x === b));
+    const custom = b.dataset.text === '';
+    el('badge-custom').style.display = custom ? '' : 'none';
+    badgeText = custom ? el('badge-custom').value.trim() : b.dataset.text;
+    if(custom) el('badge-custom').focus();
+    preview();
+  });
+  el('badge-custom').addEventListener('input', e => { badgeText = e.target.value.trim(); preview(); });
+  el('swatches').addEventListener('click', e => {
+    const s = e.target.closest('.swatch'); if(!s) return;
+    document.querySelectorAll('#swatches .swatch').forEach(x => x.classList.toggle('selected', x === s));
+    badgeColor = s.dataset.color; preview();
+  });
+
+  /* estimate: listings are free, each extra is per keyword */
+  function quote(){
+    const n = kws.length, banner = el('promo-check').checked, badge = el('badge-check').checked;
+    const line = (label, each, eachY) => `<div class="quote-line"><span>${label}</span><span class="quote-each">${n} × $${each}/mo</span><b>$${n * each}</b></div>`;
+    let m = 0, y = 0, html = `<div class="quote-line"><span>Keyword listing${n === 1 ? '' : 's'}</span><span class="quote-each">${n} × free</span><b>$0</b></div>`;
+    if(banner){ html += line('Exclusive Sponsor Banner', BANNER_FEE); m += n * BANNER_FEE; y += n * BANNER_FEE_YEAR; }
+    if(badge){ html += line('Trust Badge', BADGE_FEE); m += n * BADGE_FEE; y += n * BADGE_FEE_YEAR; }
+    el('quote-lines').innerHTML = html;
+    el('quote-total').textContent = '$' + m;
+    el('quote-total-year').textContent = '$' + y;
+  }
+  draw();
+
+  /* submit: one Pending application per keyword, banner and badge riding on
+     each row exactly as the old form did; staff approve and take payment */
+  el('join-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    if(input.value.trim()) add();
+    if(!kws.length){ say('Add at least one keyword. That is what buyers search to find you.'); input.focus(); return; }
+    if(el('badge-check').checked && !badgeText){ el('badge-custom').focus(); say('Type your custom badge, or pick one of the ready-made ones.'); return; }
+    el('terms-err').style.display = el('f-terms').checked ? 'none' : 'block';
+    if(!el('f-terms').checked) return;
+    const base = {
+      company: co.name, contact: co.contact || '', email: co.email || user.email || '',
+      phone: co.phone || '', website: co.website || '', logo: co.logo || '',
+      company_slug: co.slug, company_handle: co.handle || null,
+      banner: el('promo-check').checked,
+      badge: el('badge-check').checked ? { text: badgeText, color: badgeColor } : null,
+      message: el('msg').value.trim(), terms: true, status: 'Pending'
+    };
+    const btn = el('j-submit'); btn.disabled = true; btn.textContent = 'Sending…';
+    try{ await addApplicationKeywords(base, kws); }
+    catch(ex){ btn.disabled = false; btn.textContent = 'Submit Request'; say((ex && ex.message) || 'Could not send that just now. Try again in a moment.'); return; }
+    notifyListingRequest(base.email, base.company);
+    el('join-form').style.display = 'none';
+    el('success').style.display = 'block';
+    window.scrollTo({ top: 0 });
+  });
+})();
+</script>
 </body>
 </html>

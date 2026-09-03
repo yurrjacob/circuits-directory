@@ -748,7 +748,7 @@ async function registerProfile(email, password, handle, displayName){
     email, password,
     options: {
       data: { handle: (handle||'').toLowerCase().trim(), display_name: displayName || '' },
-      emailRedirectTo: location.origin + '/portal'   // confirmation lands on the portal, not the reset sheet
+      emailRedirectTo: location.origin + '/join'   // confirming your email lands on Get Listed (Jacob, 2026-09-03)
     }
   });
   return error ? error.message : '';
@@ -1211,7 +1211,7 @@ async function resendConfirmation(email){
   const addr = (email || '').trim();
   if(!addr.includes('@')) return 'That does not look like an email address.';
   const { error } = await sb.auth.resend({ type: 'signup', email: addr,
-    options: { emailRedirectTo: location.origin + '/portal' } });
+    options: { emailRedirectTo: location.origin + '/join' } });
   if(error){
     console.warn('resendConfirmation', error.message);
     const secs = (/after (\d+) seconds?/i.exec(error.message || '') || [])[1];

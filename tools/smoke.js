@@ -28,7 +28,7 @@ const MUST_LOAD = [
   ['/',                  ['id="home-search"', 'Claim Your Free Directory Listing', 'data-mode="recruiting"']],
   ['/about',             ['<nav class="nav">']],
   ['/contact',           ['id="contact-form"', 'id="c-email"']],
-  ['/join',              ['/portal#listings', '/register']],   // a redirect page since 2026-09-03, no nav or footer
+  ['/join',              ['<nav class="nav">', 'id="join-form"', 'id="promo-check"', 'id="badge-check"']],
   ['/portal',            ['id="pt-auth-form"', 'id="pt-tab-admin"', 'id="tab-admin"', '/admin.js']],
   ['/register',          ['id="r-submit"']],
   ['/jobs',              ['Recruiting: Hiring']],
@@ -104,7 +104,7 @@ const MUST_REDIRECT = [
   }
 
   console.log('\nThe shared footer is on every page:');
-  for (const [p] of MUST_LOAD.filter(([p]) => (p.endsWith('/') || !p.includes('.')) && p !== '/join')) {
+  for (const [p] of MUST_LOAD.filter(([p]) => p.endsWith('/') || !p.includes('.'))) {
     try {
       const { body } = await get(p);
       if (!body.includes('<footer class="footer">')) { fail(`${p} has no footer`); continue; }

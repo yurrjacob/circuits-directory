@@ -36,22 +36,12 @@
 
   if(!signedIn()) return;
 
-  /* Get Listed while signed in (Jacob, 2026-09-02): every "Get Listed" button
-     on the site, static or rendered later, lands on the Listings tab of the
-     dashboard. Signed out, /join goes to registration: listings need an
-     account (Jacob, 2026-09-03), and every account has a Listings tab. */
-  if(/^\/join(\.html)?$/.test(location.pathname)){ location.replace('/portal#listings'); return; }
-  document.addEventListener('click', function(e){
-    var a = e.target.closest && e.target.closest('a[href="/join"]');
-    if(!a) return;
-    e.preventDefault();
-    location.href = '/portal#listings';
-  });
-
-  /* Hide the signed-out links before first paint, so nobody sees "Sign In"
-     flash and then vanish. The Dashboard link itself has to wait for <body>. */
+  /* Get Listed stays in the header when signed in (Jacob, 2026-09-03): /join
+     is the Get Listed page itself, and it asks for an account when signed out.
+     Hide only "Sign In" before first paint, so nobody sees it flash and vanish;
+     the Dashboard link has to wait for <body>. */
   var css = document.createElement('style');
-  css.textContent = '.nav .nav-auth,.nav .cta.nav-join{display:none}';
+  css.textContent = '.nav .nav-auth:not(.nav-dash){display:none}';
   document.head.appendChild(css);
 
   function mount(){
@@ -59,15 +49,16 @@
     if(!nav || nav.querySelector('.nav-dash')) return;
     var signIn = nav.querySelector('.nav-auth');
     var join = nav.querySelector('.cta');
-    if(join && !join.classList.contains('nav-dash')) join.classList.add('nav-join');
-    if(signIn) signIn.classList.add('nav-auth');
 
+    /* "Contact | Dashboard [Get Listed]" (Jacob, 2026-09-03): Dashboard takes
+       the Sign In slot, separator line included, and Get Listed stays. */
     var a = document.createElement('a');
-    a.className = 'cta nav-dash';
+    a.className = 'nav-auth nav-dash';
     a.href = '/portal';
-    /* One account type, called a profile (Jacob, 2026-09-03). */
-    a.textContent = 'Your Profile';
-    nav.appendChild(a);
+    a.textContent = 'Dashboard';
+    if(/^\/portal/.test(location.pathname)) a.classList.add('active');
+    nav.insertBefore(a, join || null);
+    if(signIn) signIn.remove();
   }
 
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);

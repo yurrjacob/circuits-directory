@@ -69,7 +69,7 @@ img{max-width:100%}
 .nav a.active{color:#fff;background:#1c1c1c}
 .nav a.nav-auth{margin-left:14px;position:relative;color:#e8eaed;font-weight:600}
 .nav a.nav-auth::before{content:"";position:absolute;left:-14px;top:50%;transform:translateY(-50%);
-  width:1px;height:20px;background:rgba(255,255,255,.18)}
+  width:1px;height:20px;background:rgba(255,255,255,.35)}
 .nav a.cta{background:var(--green);color:#0f0f0f;font-weight:700;margin-left:4px}
 .nav a.cta:hover{background:var(--green-dark);color:#fff}
 .brand{display:flex;align-items:center;gap:14px;min-width:0}
@@ -488,6 +488,8 @@ tr.row-warn td{background:#fff3cd}
 @media(max-width:860px){.pt-none-grid{grid-template-columns:1fr}}
 /* one dashboard for every account (2026-09-03); the left column of the
    Seeking Employment tab stacks the experience and listing forms */
+.pt-getlisted{margin-top:18px;text-align:left}
+.pt-getlisted .btn{margin-top:10px}
 .pt-recruit-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;align-items:start}
 @media(max-width:900px){.pt-recruit-grid{grid-template-columns:1fr}}
 .pt-stats{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.84rem;color:var(--muted);margin:8px 0 4px}

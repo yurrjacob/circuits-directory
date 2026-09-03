@@ -748,7 +748,12 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   }
   assert.strictEqual((portalHtml2.match(/class="pt-section pt-board"/g) || []).length, 2, 'the Recruiting board should sit on both the Hiring and Seeking Employment tabs');
   /* header label for a signed-in user */
-  assert.ok(/a\.textContent = 'Your Profile'/.test(fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8')), 'the header button no longer says Your Profile');
+  /* header, signed in (Jacob, 2026-09-03): Contact | Dashboard [Get Listed]. Dashboard takes the
+     Sign In slot (same separator line), Get Listed stays and goes to the real Get Listed page. */
+  const navSrc2 = fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8');
+  assert.ok(/a\.className = 'nav-auth nav-dash'/.test(navSrc2) && /a\.textContent = 'Dashboard'/.test(navSrc2) && /nav\.insertBefore\(a, join \|\| null\)/.test(navSrc2),
+    'the signed-in header is not "Contact | Dashboard [Get Listed]"');
+  assert.ok(!/nav-join\{display:none\}|\/portal#listings/.test(navSrc2), 'nav.js still hides or reroutes Get Listed when signed in');
   /* the public page: the company row (the page) plus the person's experience */
   assert.ok(/\[co, person\] = await Promise\.all\(\[fetchCompanyByHandle\(handle\), fetchProfileByHandle\(handle\)\]\)/.test(profSrc)
     && /if\(person\) html \+= personExperience\(person\)/.test(profSrc),
@@ -968,31 +973,38 @@ assert.ok(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8').includes('fetch
   'circuits.com/<name> no longer resolves a person, only a company');
 const joinHtml = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
 
-/* --- Listings need an account (Jacob, 2026-09-03) ---
-       "Users need an account to create listings on any part of the site."
-       /join is a redirect now: signed out to /register, signed in to the
-       Listings tab, where "Get another listing" files the request. The old
-       anonymous form is kept in backups/join-2026-09-03/. Every Get Listed
-       button may keep href="/join"; nav.js still routes signed-in clicks. */
-assert.ok(!/id="join-form"|id="f-company"|Submit Request/.test(joinHtml), 'the anonymous Get Listed form is back on /join, listings need an account');
-assert.ok(/location\.replace\(on \? '\/portal#listings' : '\/register'\)/.test(joinHtml), '/join no longer sends people to /register (signed out) or the Listings tab (signed in)');
+/* --- Get Listed needs an account, and is THE way to get listings (Jacob, 2026-09-03) ---
+       Signed out, /join goes to /register. Signed in, it is the Get Listed page:
+       up to 10 free keywords, the Exclusive Sponsor Banner and the Trust Badge
+       (label + colour) per keyword with a price estimate, filed as Pending
+       applications with the company details from the account. Confirming
+       your email lands here. The anonymous MVP1 form is in backups/join-2026-09-03/. */
+assert.ok(!/id="f-company"|id="f-email"/.test(joinHtml), 'the Get Listed page asks for company details again, they come from the account');
+assert.ok(/if\(!user\)\{ location\.replace\('\/register'\); return; \}/.test(joinHtml), '/join no longer asks a signed-out visitor to register');
+for (const id of ['kw-input', 'kw-check', 'kw-add', 'kw-tags', 'promo-check', 'badge-check', 'badge-opts', 'badge-custom', 'swatches', 'quote-lines', 'quote-total', 'quote-total-year', 'msg', 'f-terms']) {
+  assert.ok(joinHtml.includes(`id="${id}"`), `the Get Listed page lost ${id}`);
+}
+assert.ok(/banner: el\('promo-check'\)\.checked/.test(joinHtml) && /badge: el\('badge-check'\)\.checked \? \{ text: badgeText, color: badgeColor \} : null/.test(joinHtml),
+  'the banner and badge no longer ride on the application rows');
+assert.ok(/addApplicationKeywords\(base, kws\)/.test(joinHtml) && /notifyListingRequest\(base\.email, base\.company\)/.test(joinHtml), 'Get Listed does not file the request or email a copy');
+assert.ok(/BANNER_FEE_YEAR/.test(joinHtml) && /BADGE_FEE_YEAR/.test(joinHtml) && /× free/.test(joinHtml), 'the price estimate lost the free listing or the yearly prices');
 assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'join-2026-09-03', 'join.html')), 'the old Get Listed form backup is missing');
-assert.ok(!/circuits\.com\/join</.test(fs.readFileSync(path.join(ROOT, 'sitemap.xml'), 'utf8')), 'the sitemap still lists /join');
+assert.ok(/emailRedirectTo: location\.origin \+ '\/join'/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8').slice(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8').indexOf('async function registerProfile'))),
+  'confirming a new account no longer lands on Get Listed');
 const joinJs = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
 assert.ok(/status: 'Pending'/.test(joinJs), 'a listing request is not filed as Pending');
-
 const navSrc = fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8');
-assert.ok(/a\[href="\/join"\]/.test(navSrc) && /\/portal#listings/.test(navSrc), 'nav.js no longer sends signed-in Get Listed clicks to /portal#listings');
-assert.ok(/\/join\(\\\.html\)\?\$/.test(navSrc), 'nav.js no longer redirects a signed-in visit to /join');
 const portalListings = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
-for (const id of ['al-input', 'al-add', 'al-check', 'al-tags', 'al-submit']) {
-  assert.ok(portalListings.includes(`id="${id}"`), `the Listings tab lost its Get another listing field ${id}`);
-}
+/* Your Listings (Jacob, 2026-09-03): the listings with their upgrades, then a
+   Get Listed call to action pointing at the page; no inline request form */
+assert.ok(/data-tab="listings">Your Listings</.test(portalListings), 'the Listings tab is not called Your Listings');
+assert.ok(/class="pt-empty pt-getlisted"[\s\S]*?href="\/join"/.test(portalListings), 'Your Listings lost the Get Listed call to action');
+assert.ok(!/id="al-input"|id="pt-addkw"/.test(portalListings) && !/function wireAddListing/.test(fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8')), 'the inline Get another listing form is back, Get Listed is the page for that');
 const portalJsSrc = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
 assert.ok(/const tab = \(location\.hash \|\| ''\)\.replace\('#', ''\);[\s\S]{0,120}activateTab\(tab\)/.test(portalJsSrc), 'portal.js no longer opens the tab named in the hash (/portal#listings, /portal#seeking)');
-assert.ok(/company_slug: PT\.slug/.test(portalJsSrc), 'a requested listing is not tied to the company that asked for it');
-assert.ok(/status: 'Pending'/.test(portalJsSrc), 'a requested listing is not filed as Pending');
-assert.ok(/kws\.length >= 10/.test(portalJsSrc), 'the ten-keyword cap is gone from Get another listing');
+assert.ok(/company_slug: co\.slug/.test(joinHtml), 'a requested listing is not tied to the company that asked for it');
+assert.ok(/status: 'Pending'/.test(joinHtml), 'a requested listing is not filed as Pending');
+assert.ok(/kws\.length >= 10/.test(joinHtml), 'the ten-keyword cap is gone from Get Listed');
 
 /* --- the estimate shown on Get Listed must equal what admin bills ---
        Each keyword becomes its own application row, so extras are per keyword.
@@ -1427,7 +1439,7 @@ for (const [m, y, what] of [[BASE, BASE_Y, 'listing'], [BANNER, BANNER_Y, 'banne
   /* every live email leaves from notifications@circuits.com: a listing request
      (Get Listed or Get another listing) is acknowledged by the notify function,
      not by FormSubmit */
-  assert.ok(/notifyListingRequest\(base\.email, base\.company\)/.test(pj), 'Get another listing does not email a copy');
+  assert.ok(/notifyListingRequest\(base\.email, base\.company\)/.test(fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8')), 'Get Listed does not email a copy');
   assert.ok(/kind: 'listing-request'/.test(st), 'store.js lost notifyListingRequest');
 }
 

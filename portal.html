@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Your Profile | Circuits.com</title>
+<title>Dashboard | Circuits.com</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="stylesheet" href="/styles.css">
@@ -51,7 +51,7 @@
 <main class="console console-wide" id="pt-app" style="display:none">
   <div class="console-head">
     <div>
-      <h1 id="pt-title">Your Profile</h1>
+      <h1 id="pt-title">Dashboard</h1>
       <p id="pt-sub">Everything on Circuits.com for <b id="pt-name"></b>: your page, your listings, and both sides of Recruiting.</p>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -68,7 +68,7 @@
        backups/dashboard-2026-08-20/). -->
   <div class="pt-tabs">
     <button class="pt-tab active" data-tab="profile">Profile Details</button>
-    <button class="pt-tab" data-tab="listings">Listings</button>
+    <button class="pt-tab" data-tab="listings">Your Listings</button>
     <button class="pt-tab" data-tab="hiring">Hiring</button>
     <button class="pt-tab" data-tab="seeking">Seeking Employment</button>
     <button class="pt-tab" data-tab="promote">Promote</button>
@@ -212,26 +212,14 @@
     <div class="pt-section pt-board"></div>
   </section>
 
-  <!-- listings: every keyword listing with its stats, badges, banners and upgrades -->
+  <!-- Your Listings: every keyword listing with its stats, badges, banners and
+       upgrades, then the way to get more (the Get Listed page, Jacob 2026-09-03). -->
   <section class="pt-panel" id="tab-listings">
     <div class="pt-list" id="pt-listings"></div>
-    <!-- Get another listing (Jacob, 2026-09-02): step 02 of the old Get Listed
-         page, right here. Company details come from the account. -->
-    <div class="pf-form" id="pt-addkw">
-      <h3>Get another listing</h3>
-      <p class="pf-note">Choose up to 10 Circuits-Keywords&trade; to be listed under, for free. A person at Circuits.com reviews each one, and it shows above once approved.</p>
-      <div class="kw-input-row">
-        <input id="al-input" type="text" placeholder="e.g. semiconductors" maxlength="40" aria-label="Keyword">
-        <button type="button" class="mini-btn" id="al-check">Check</button>
-        <button type="button" class="mini-btn green" id="al-add">Add</button>
-      </div>
-      <p class="field-hint">Want to see what your listing will look like? <b>Check</b> opens that keyword's live results page.</p>
-      <div class="kw-tags" id="al-tags"></div>
-      <div class="cat-count" id="al-count"><b>0</b> of 10 keywords</div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px">
-        <button class="btn btn-primary" type="button" id="al-submit">Request listings</button>
-        <span class="pf-note" id="al-msg"></span>
-      </div>
+    <div class="pt-empty pt-getlisted">
+      <b>Get listed under more Circuits-Keywords&trade;</b>
+      <p>Up to 10 keywords per request, free. Add the Exclusive Sponsor Banner or a Trust Badge at the same time.</p>
+      <a class="btn btn-primary" href="/join">Get Listed</a>
     </div>
   </section>
 
