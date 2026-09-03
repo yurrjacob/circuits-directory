@@ -743,10 +743,12 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   }
   assert.ok(!/id="me-handle"|id="me-name"|id="me-photo"/.test(portalSrc2), 'Seeking Employment still asks for address, name or picture, those live on Profile Details now');
   /* the Hiring tab: post a job, search people, the board */
-  for (const id of ['id="pt-jobs"', 'id="job-post"', 'id="rs-form"']) {
+  for (const id of ['id="pt-jobs"', 'id="job-post"']) {
     assert.ok(portalHtml2.includes(id), `the Hiring tab lost ${id}`);
   }
-  assert.strictEqual((portalHtml2.match(/class="pt-section pt-board"/g) || []).length, 2, 'the Recruiting board should sit on both the Hiring and Seeking Employment tabs');
+  /* the in-dashboard recruit search and the Recruiting board are gone (Jacob, 2026-09-03);
+     searching happens on /talent and /jobs */
+  assert.ok(!/pt-board|id="rs-form"/.test(portalHtml2) && !/renderJobBoard|wireRecruitSearch/.test(portalSrc2), 'the Recruiting board or the recruit search is back on the dashboard');
   /* header label for a signed-in user */
   /* header, signed in (Jacob, 2026-09-03): Contact | Dashboard [Get Listed]. Dashboard takes the
      Sign In slot (same separator line), Get Listed stays and goes to the real Get Listed page. */

@@ -1430,9 +1430,6 @@ body.nav-open .nav-burger .x{display:block}
 .kw-switch{display:inline-flex;align-items:center;gap:8px;font-size:.82rem;font-weight:600;color:var(--muted)}
 .kw-switch input:checked ~ .sw-text{color:var(--green-dark)}
 .kw-tag.on{background:var(--green);color:#0f2a00;border-color:var(--green)}
-.pt-board-grid h3{margin:0 0 10px;font-size:.95rem}
-.pt-board-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
-.pt-board-row:last-child{border-bottom:1px solid var(--line)}
 .adm-frame{display:block;width:100%;height:min(78vh,1100px);border:0;background:var(--card)}
 .embed .topbar,.embed .console-head,.embed .footer{display:none}
 .embed .console{padding:8px 0 24px}

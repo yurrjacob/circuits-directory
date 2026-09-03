@@ -253,8 +253,6 @@ async function initPortal(){
   wireSeeking();
   renderSeeking(me);
   wireJobs();
-  wireRecruitSearch();
-  renderJobBoard();
 
   if(!cos.length){
     /* no rows yet: the Profile Details form in "create" mode */
@@ -424,7 +422,6 @@ async function loadCompany(slug){
   renderListings();
   renderPromote();
   renderJobs();
-  renderJobBoard();
 }
 
 /* Applying used to end in silence: the supplier refreshed the portal hoping,
@@ -1776,67 +1773,6 @@ function qrSvg(text){
   q.addData(text);
   q.make();
   return q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
-}
-
-/* ---------- search recruits (company Employment tab) ----------
-   The same search the Seeking Employment page runs, inside the dashboard.
-   The database gates the private details; this only decides what to draw. */
-function wireRecruitSearch(){
-  const form = el('rs-form'), out = el('rs-results'), note = el('rs-note');
-  if(!form || form.__wired) return;
-  form.__wired = true;
-  let access = null;
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-    const q = val('rs-q');
-    out.innerHTML = loadingHtml('Searching…');
-    if(access === null) access = await hasTalentAccess();
-    note.innerHTML = access
-      ? '<b>Talent Access is active.</b> Unlock anyone to see their name, contact details and resume.'
-      : 'Searching is free. Unlocking someone needs Talent Access, a monthly subscription. <a href="/contact">Contact us</a> to add it.';
-    let rows = [];
-    try{ rows = await talentSearch(q); }
-    catch(err){ out.innerHTML = loadErrorHtml('Seeking Employment', 'Try again'); return; }
-    if(!rows.length){ out.innerHTML = `<div class="empty"><div class="big">Nobody seeking employment${q ? ' for &ldquo;' + escapeHtml(q) + '&rdquo;' : ''} yet</div></div>`; return; }
-    out.innerHTML = `<div class="tal-grid">${rows.map(r => talentCardHtml(r, { locked: true, access, signedIn: true, kwHref: null })).join('')}</div>`;
-  });
-  out.addEventListener('click', async e => {
-    const b = e.target.closest('button.tal-unlock'); if(!b) return;
-    b.disabled = true; b.textContent = 'Unlocking…';
-    const c = await talentContact(b.dataset.uid);
-    const box = el('priv-' + b.dataset.uid);
-    if(!c){ b.disabled = false; b.textContent = 'Unlock'; box.insertAdjacentHTML('beforeend', '<p class="pf-note" style="color:#b3261e">Could not unlock. Is your Talent Access still active?</p>'); return; }
-    const resume = c.resume_path ? await resumeLink(c.resume_path) : '';
-    box.innerHTML = talentContactHtml(c, resume);
-  });
-}
-
-/* ---- Recruiting board (Jacob, 2026-09-02): both sides in one place, for
-   anyone with an account. Hiring (open roles) on one side, Seeking Employment
-   (people looking) on the other. Names stay blurred here; a company unlocks
-   them through the search on the Hiring tab. ---- */
-async function renderJobBoard(){
-  const boxes = document.querySelectorAll('.pt-board');
-  if(!boxes.length) return;
-  boxes.forEach(b => { b.innerHTML = '<h2>Recruiting Board</h2><p class="pf-note">Loading…</p>'; });
-  let jobs = [], people = [];
-  try{ [jobs, people] = await Promise.all([jobSearch(''), talentSearch('')]); }
-  catch(e){ boxes.forEach(b => { b.innerHTML = '<h2>Recruiting Board</h2><p class="pf-note">The board could not load just now. Reload to try again.</p>'; }); return; }
-  const jobRow = j => `<div class="pt-board-row">
-      <div><b>${escapeHtml(j.title)}</b> <span class="cell-muted">${escapeHtml(j.company_name)}${j.location ? ', ' + escapeHtml(j.location) : ''}</span>
-        <div class="pf-note" style="margin:2px 0 0">${escapeHtml((j.keywords || []).join(', ') || 'No keywords')}</div></div>
-      <a class="mini-btn" href="/jobs?q=${encodeURIComponent((j.keywords || [])[0] || '')}" target="_blank" rel="noopener">View</a></div>`;
-  const personRow = r => `<div class="pt-board-row">
-      <div><b>${escapeHtml(r.title || 'Circuits industry professional')}</b> <span class="cell-muted">${r.years != null ? r.years + ' yr' + (Number(r.years) === 1 ? '' : 's') : ''}</span>
-        <div class="pf-note" style="margin:2px 0 0">${escapeHtml((r.keywords || []).join(', ') || 'No keywords')}</div></div>
-      <a class="mini-btn" href="/talent?q=${encodeURIComponent((r.keywords || [])[0] || '')}" target="_blank" rel="noopener">View</a></div>`;
-  const html = `<h2>Recruiting Board</h2>
-    <p class="kit-intro">Everything in Recruiting right now, both sides: who is hiring, and who is seeking employment.</p>
-    <div class="grid2 pt-board-grid">
-      <div><h3>Hiring <span class="cell-muted">(${jobs.length})</span></h3>${jobs.length ? jobs.map(jobRow).join('') : '<p class="pf-note">No open roles right now.</p>'}</div>
-      <div><h3>Seeking Employment <span class="cell-muted">(${people.length})</span></h3>${people.length ? people.map(personRow).join('') : '<p class="pf-note">Nobody is listed yet.</p>'}</div>
-    </div>`;
-  boxes.forEach(b => { b.innerHTML = html; });
 }
 
 /* ---- jobs (MVP2) ----
