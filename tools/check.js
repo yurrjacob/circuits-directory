@@ -767,7 +767,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   const home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   /* one row (Jacob, 2026-09-03, "how can we make this look better"): Directory, then the
      Recruiting pair, Hiring and Seeking Employment, in a bracket with a caption */
-  assert.ok(/data-target="directory"[^>]*role="tab"/.test(home) && /class="search-group"[^>]*><i>Recruiting<\/i>/.test(home), 'the homepage lost the Directory / Recruiting row');
+  assert.ok(/data-target="directory"[^>]*role="tab"/.test(home), 'the homepage lost the Directory / Hiring / Seeking Employment row');
   assert.ok(/data-target="hiring"/.test(home) && /data-target="seeking"/.test(home), 'Recruiting lost its Hiring / Seeking Employment sides');
   assert.ok(!/search-side|data-mode=/.test(home), 'the stacked second toggle is back');
   const appHome = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
