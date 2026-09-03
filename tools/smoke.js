@@ -25,12 +25,14 @@ async function get(pathname) {
 /* Pages that must exist, and something on each that proves it rendered rather
    than merely returning 200 with an error page. */
 const MUST_LOAD = [
-  ['/',                  ['id="home-search"', 'Claim Your Circuits-Keyword']],
+  ['/',                  ['id="home-search"', 'Claim Your Free Directory Listing', 'data-mode="recruiting"']],
   ['/about',             ['<nav class="nav">']],
   ['/contact',           ['id="contact-form"', 'id="c-email"']],
-  ['/join',              ['<nav class="nav">']],
+  ['/join',              ['/portal#listings', '/register']],   // a redirect page since 2026-09-03, no nav or footer
   ['/portal',            ['id="pt-auth-form"', 'id="pt-tab-admin"', 'id="tab-admin"', '/admin.js']],
   ['/register',          ['id="r-submit"']],
+  ['/jobs',              ['Recruiting: Hiring']],
+  ['/talent',            ['Recruiting: Seeking Employment']],
   ['/reset',             ['id="rq-form"']],
   ['/claim',             ['<nav class="nav">']],
   ['/terms',             ['<nav class="nav">']],
@@ -102,7 +104,7 @@ const MUST_REDIRECT = [
   }
 
   console.log('\nThe shared footer is on every page:');
-  for (const [p] of MUST_LOAD.filter(([p]) => p.endsWith('/') || !p.includes('.'))) {
+  for (const [p] of MUST_LOAD.filter(([p]) => (p.endsWith('/') || !p.includes('.')) && p !== '/join')) {
     try {
       const { body } = await get(p);
       if (!body.includes('<footer class="footer">')) { fail(`${p} has no footer`); continue; }
