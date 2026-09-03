@@ -21,7 +21,20 @@
       for(var i = 0; i < localStorage.length; i++){
         var k = localStorage.key(i);
         if(!/^sb-.*-auth-token$/.test(k || '')) continue;
-        var v = JSON.parse(localStorage.getItem(k) || 'null');
+        var raw = localStorage.getItem(k);
+        if(!raw) continue;
+        /* supabase-js 2.40 and later store the session base64 encoded behind
+           this prefix; older versions store the JSON itself. Reading only the
+           JSON shape made every current client look signed out, which cost the
+           Dashboard link and the notifications bell (Jacob, 2026-09-03). */
+        if(raw.slice(0, 7) === 'base64-'){
+          try{ raw = atob(raw.slice(7)); }catch(e){ return true; }
+        }
+        var v;
+        /* A session we hold but cannot read is still a session. This is a
+           display hint, so leaning towards "signed in" costs a Dashboard link
+           that asks them to sign in; leaning the other way hides the header. */
+        try{ v = JSON.parse(raw); }catch(e){ return true; }
         if(!v) continue;
         var tok = v.access_token || (v.currentSession && v.currentSession.access_token);
         var exp = v.expires_at   || (v.currentSession && v.currentSession.expires_at);

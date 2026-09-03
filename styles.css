@@ -1038,6 +1038,7 @@ tr.row-warn td{background:#fff3cd}
 .pt-editor-row td{background:var(--bg-soft);padding:0 16px 16px}
 .pt-chevron{border:0;background:none;font:inherit;color:var(--muted);cursor:pointer;padding:0 6px 0 0}
 .th-price{display:block;font-size:.72rem;font-weight:700;color:#1f5fbf;letter-spacing:0;text-transform:none;margin-top:2px}
+.th-save{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:20px;background:#e9f7d0;color:#3f6300;font-weight:800}
 .pt-up-sw .knob{width:38px;height:22px}
 .pt-up-sw .knob::after{width:16px;height:16px}
 .pt-up-sw input:checked + .knob{background:#1f5fbf}

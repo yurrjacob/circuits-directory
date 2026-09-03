@@ -796,6 +796,11 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   assert.ok(/\.nav a\.nav-dash\{display:none\}/.test(cssSrc2),
     'Dashboard is not hidden by default, so a signed-out or no-JS visitor sees both it and Sign In');
   assert.ok(/\.inbox-btn\{display:inline-flex\}/.test(navSrc2), 'nav.js no longer reveals the bell before first paint');
+  /* supabase-js 2.40+ stores the session base64 encoded; reading only the JSON
+     shape made every current client look signed out, and the whole signed-in
+     header, Dashboard and bell alike, simply never appeared (Jacob, 2026-09-03) */
+  assert.ok(/raw\.slice\(0, 7\) === 'base64-'/.test(navSrc2) && /atob\(raw\.slice\(7\)\)/.test(navSrc2),
+    'nav.js cannot read a base64 encoded supabase session, so a signed-in visitor gets a signed-out header');
   assert.ok(/\.inbox-btn\{position:relative;display:none;/.test(cssSrc2),
     'the bell is not display:none by default, or its size is set somewhere that revealing it could change');
   const appSrc2 = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
@@ -1527,6 +1532,10 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   assert.ok(/rowKinds\(l\)\.fresh/.test(pj), 'Request sends upgrades that are already Active or Requested again');
   assert.ok(/id="pt-billing-save"/.test(ph) && /Yearly would save you \$/.test(pj),
     'the monthly / yearly toggle does not say what yearly saves');
+  /* and each column says what yearly saves on that one extra, beside its price */
+  assert.ok(/const savingShort = u => `save \$\$\{u\.month \* 12 - u\.year\}`/.test(pj)
+    && /const upHead = \(label, u\) =>/.test(pj) && /BILLING === 'year' \? ` <span class="th-save">\$\{savingShort\(u\)\}<\/span>` : ''/.test(pj),
+    'the Trust Badge / Sponsor Banner / Locked Position headings do not show what yearly saves on each');
   assert.ok(/id="pt-go-upgrades"/.test(ph) && /activateTab\('upgrades'\)/.test(pj),
     'Your Listings has no call to action leading to the Upgrades tab');
   assert.ok(/\.pt-tab-upgrades\{color:#1f5fbf\}/.test(ptCss) && /\.btn-upgrade\{background:#1f5fbf/.test(ptCss),

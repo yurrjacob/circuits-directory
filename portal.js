@@ -1411,6 +1411,12 @@ const UPGRADES = {
 let BILLING = 'month';
 const price = (u, b) => b === 'year' ? `$${u.year}/yr` : `$${u.month}/mo`;
 const saving = u => `save $${u.month * 12 - u.year} a year`;
+/* the same figure with nothing spare, for sitting beside a price in a column
+   heading where "/yr" has already said it is a year (Jacob, 2026-09-03) */
+const savingShort = u => `save $${u.month * 12 - u.year}`;
+/* a heading is the extra's name, its price on the billing currently chosen,
+   and, on yearly, what choosing yearly saves on that one extra */
+const upHead = (label, u) => `<th>${label}<span class="th-price">${price(u, BILLING)}${BILLING === 'year' ? ` <span class="th-save">${savingShort(u)}</span>` : ''}</span></th>`;
 const BADGE_WORDS = ['Authorized', 'Featured', 'Preferred', 'Specialist'];
 /* The Trust Badge is the one upgrade with attributes: the label and the colour
    are chosen here, travel with the request, and staff approve exactly that. */
@@ -1482,9 +1488,9 @@ function renderUpgrades(){
   el('pt-upgrades').innerHTML = (live.length ? `<div class="table-wrap"><table class="listings-table pt-uptable">
       <thead><tr>
         <th class="rank">#</th><th>Keyword</th>
-        <th>Trust Badge<span class="th-price">${price(UPGRADES.badge, BILLING)}</span></th>
-        <th>Sponsor Banner<span class="th-price">${price(UPGRADES.banner, BILLING)}</span></th>
-        <th>Locked Position<span class="th-price">${price(UPGRADES.lock, BILLING)}</span></th>
+        ${upHead('Trust Badge', UPGRADES.badge)}
+        ${upHead('Sponsor Banner', UPGRADES.banner)}
+        ${upHead('Locked Position', UPGRADES.lock)}
         <th>Price</th><th></th>
       </tr></thead>
       <tbody>${rows}</tbody>
