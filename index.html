@@ -76,14 +76,13 @@
          Recruiting has two sides, Hiring (open roles) and Seeking Employment
          (people looking). The toggles only change where the query goes. -->
     <div class="search-mode" role="tablist" aria-label="What to search">
-      <button type="button" class="on" data-mode="directory" role="tab" aria-selected="true">Directory</button>
-      <button type="button" data-mode="recruiting" role="tab" aria-selected="false">Recruiting</button>
+      <button type="button" class="on" data-target="directory" role="tab" aria-selected="true">Directory</button>
+      <span class="search-group" aria-label="Recruiting"><i>Recruiting</i>
+        <button type="button" data-target="hiring" role="tab" aria-selected="false">Hiring</button>
+        <button type="button" data-target="seeking" role="tab" aria-selected="false">Seeking Employment</button>
+      </span>
     </div>
-    <div class="search-mode search-side" id="search-side" role="tablist" aria-label="Which side of Recruiting" hidden>
-      <button type="button" class="on" data-side="hiring" role="tab" aria-selected="true">Hiring</button>
-      <button type="button" data-side="seeking" role="tab" aria-selected="false">Seeking Employment</button>
-    </div>
-    <form id="home-form" class="searchbox" autocomplete="off" data-mode="directory" data-side="hiring">
+    <form id="home-form" class="searchbox" autocomplete="off" data-target="directory">
       <div class="search-pill">
         <input id="home-search" type="text" placeholder="Search products, services, professionals, education, or keywords..." aria-label="Search">
         <button type="submit" class="search-go" aria-label="Search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
