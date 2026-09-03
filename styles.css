@@ -71,6 +71,9 @@ img{max-width:100%}
 .nav a.nav-auth::before{content:"";position:absolute;left:-14px;top:50%;transform:translateY(-50%);
   width:1px;height:20px;background:rgba(255,255,255,.35)}
 .nav a.cta{background:var(--green);color:#0f0f0f;font-weight:700;margin-left:4px}
+/* Dashboard, signed in (Jacob, 2026-09-03): a white button with black text beside the green Get Listed */
+.nav a.nav-dash{background:#fff;color:#0f0f0f;font-weight:700;margin-right:4px}
+.nav a.nav-dash:hover,.nav a.nav-dash.active{background:#e8eaed;color:#0f0f0f}
 .nav a.cta:hover{background:var(--green-dark);color:#fff}
 .brand{display:flex;align-items:center;gap:14px;min-width:0}
 .brand a{display:inline-flex;align-items:center}
