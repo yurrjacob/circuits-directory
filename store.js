@@ -420,7 +420,9 @@ async function handleAvailable(handle, ownSlug, ownUser){
   return HANDLE_WHY[data] || '';
 }
 
-/* Is a real account behind this listing? Drives the Unclaimed badge. */
+/* Is a real account behind this listing? Nothing calls this since the Unclaimed
+   chip came off profiles (Jacob, 2026-09-03); kept because the company_claimed
+   RPC is still in the database and staff tooling may want the answer. */
 async function companyClaimed(slug){
   if(!sb || !slug) return true;   // fail closed: never label a listing unclaimed by mistake
   const { data, error } = await sb.rpc('company_claimed', { p_slug: slug });

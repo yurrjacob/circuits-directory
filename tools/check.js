@@ -905,13 +905,18 @@ for (const f of ['index.html', 'join.html']) {
     `${f} still promises a permanent position without qualification`);
 }
 
-/* --- an unclaimed listing must say so --- */
+/* --- no profile says "Unclaimed" (Jacob, 2026-09-03) ---
+       The chip labelled every company we listed before its owner arrived, which
+       is most of them, and it read as a verdict on the company rather than on
+       our own records. The heading carries the name and the staff mark, nothing
+       else. companyClaimed() stays in store.js, and the RPC behind it stays in
+       the database, but no page calls it: a profile must not pay for a lookup
+       whose only purpose was the chip. */
 const profSrc2 = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
-assert.ok(profSrc2.includes('companyClaimed'), 'profile.js no longer checks whether a listing is claimed');
-assert.ok(profSrc2.includes('lb-unclaimed'), 'the Unclaimed marker is gone from the profile heading');
-assert.ok(storeReset.includes('function companyClaimed'), 'store.js is missing companyClaimed()');
-assert.ok(/return true;\s*\/\/ fail closed/.test(storeReset),
-  'companyClaimed must fail closed, or an outage would label real listings unclaimed');
+assert.ok(!/lb-unclaimed|Unclaimed/.test(profSrc2), 'the Unclaimed marker is back on the profile heading');
+assert.ok(!profSrc2.includes('companyClaimed'), 'profile.js still pays for the claimed lookup that only fed the Unclaimed chip');
+assert.ok(!/lb-unclaimed|pf-unclaimed-card/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
+  'the Unclaimed chip styles are back in styles.css');
 
 /* --- the footer carries legal links only ---
        Staff sign-in used to be advertised here. It is not any more: /login is

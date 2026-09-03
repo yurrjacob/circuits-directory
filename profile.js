@@ -143,8 +143,8 @@ async function initProfile(){
   }
 
   const slug = co.slug;   // internal key: everything else still hangs off this
-  const [kws, claimed, staffRun] = await Promise.all([
-    fetchCompanyKeywords(slug), companyClaimed(slug), companyRunByStaff(slug)
+  const [kws, staffRun] = await Promise.all([
+    fetchCompanyKeywords(slug), companyRunByStaff(slug)
   ]);
   /* Buyer reviews are off the site (Jacob, 2026-09-03). The rows, reviewForm()
      and submitReview stay dormant in case they come back. */
@@ -170,7 +170,7 @@ async function initProfile(){
   <div class="pf-head">
     <div class="pf-logo">${logo}</div>
     <div class="pf-id">
-      <h1>${escapeHtml(co.name)}${staffRun ? ' ' + teamMarkHtml() : ''}${claimed ? '' : ' <span class="lb lb-unclaimed">Unclaimed</span>'}</h1>
+      <h1>${escapeHtml(co.name)}${staffRun ? ' ' + teamMarkHtml() : ''}</h1>
       ${co.tagline ? `<p class="pf-tagline">${escapeHtml(co.tagline)}</p>` : ''}
       <div class="pf-meta">
         ${reviews.length ? `<span class="pf-rating">${stars(avg)} ${avg.toFixed(1)} <i>(${reviews.length})</i></span>` : ''}

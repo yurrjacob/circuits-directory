@@ -163,14 +163,13 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   assert.ok(captured.includes('id="kw-l1"') && !captured.includes('id="kw-l2"'),
     'a listing with nothing to show still gets an empty section');
 
-  /* A claimed listing must not be labelled unclaimed, and an unclaimed one must
-     say so plainly, a buyer needs to know the details are unconfirmed. */
+  /* No profile is labelled Unclaimed any more (Jacob, 2026-09-03), whichever way
+     the claimed lookup would have answered. Both cases are rendered, so putting
+     the chip back behind the unclaimed branch fails here. */
   assert.ok(!captured.includes('lb-unclaimed'), 'a claimed listing was labelled Unclaimed');
   global.companyClaimed = async () => false;
   await initProfile();
-  assert.ok(captured.includes('lb-unclaimed'), 'an unclaimed listing is not marked as such');
-  /* the "this listing is unclaimed" card is gone (Jacob, 2026-09-03); the small chip stays */
-  assert.ok(!captured.includes('pf-unclaimed-card'), 'the unclaimed card is back on the profile');
+  assert.ok(!/lb-unclaimed|pf-unclaimed-card|Unclaimed/.test(captured), 'an unclaimed listing is still labelled on the profile');
   /* Claims were retired 2026-09-01 (Jacob): nothing on a profile may invite one,
      because there is no longer anywhere for staff to approve it. */
   assert.ok(!/\/claim\b|pf-claim"/.test(captured), 'a profile still links to the retired claim flow');
