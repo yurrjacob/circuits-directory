@@ -682,10 +682,18 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   assert.strictEqual((portalHtml.match(/class="btn btn-primary pt-save"/g) || []).length, 1,
     'the merged profile tab should have exactly one Save profile button');
   const portalJs = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
-  for (const need of ["'certs-' + open.id", "reviews_enabled: !!(el('ed-reviews-'", 'showcaseProblem(certifications, team)']) {
+  for (const need of ["'certs-' + open.id", 'showcaseProblem(certifications, team)', 'class="pt-edit-grid"', 'class="pt-folds"']) {
     assert.ok(portalJs.includes(need), `the listing editor lost its showcase wiring (${need})`);
   }
-  for (const need of ['certifications', 'team', 'gallery', 'reviews_enabled']) {
+  /* Buyer reviews are off the site and the editor is kept short so the
+     upgrades get the room (Jacob, 2026-09-03). */
+  for (const gone of ['ed-reviews-', 'Buyer reviews on', 'set by Circuits.com. Contact us', 'shown to buyers searching']) {
+    assert.ok(!portalJs.includes(gone), `${gone} is back in the listing editor`);
+  }
+  assert.ok(!/fetchReviews\(slug\)/.test(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8')) &&
+    !fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8').includes('reviewForm(k.id)'),
+    'buyer reviews are back on the public profile');
+  for (const need of ['certifications', 'team', 'gallery']) {
     assert.ok(/const LISTING_OWNER_FIELDS = \[[^\]]*'/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')) &&
       new RegExp("LISTING_OWNER_FIELDS = \\[[^\\]]*'" + need + "'").test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')),
       `owners can no longer save ${need} on a listing`);

@@ -143,9 +143,12 @@ async function initProfile(){
   }
 
   const slug = co.slug;   // internal key: everything else still hangs off this
-  const [kws, reviews, claimed, staffRun] = await Promise.all([
-    fetchCompanyKeywords(slug), fetchReviews(slug), companyClaimed(slug), companyRunByStaff(slug)
+  const [kws, claimed, staffRun] = await Promise.all([
+    fetchCompanyKeywords(slug), companyClaimed(slug), companyRunByStaff(slug)
   ]);
+  /* Buyer reviews are off the site (Jacob, 2026-09-03). The rows, reviewForm()
+     and submitReview stay dormant in case they come back. */
+  const reviews = [];
 
   const docs = [];
   const seenDoc = new Set();
@@ -252,17 +255,13 @@ async function initProfile(){
           <div class="founder-role">${escapeHtml(t.role || '')}</div>
           ${t.email ? `<a class="founder-line" href="mailto:${escapeHtml(t.email)}">${escapeHtml(t.email)}</a>` : ''}</div>
         </div>`).join('')}</div>`;
-    /* Reviews are off by default per listing; a listing with them off and none
-       approved shows no review section at all. */
-    if(k.reviews_enabled || rv.length) inner += `<h3 class="pf-sub">Buyer reviews</h3>
-      ${rv.length ? `<div class="pf-reviews">${rv.map(r => `
+    if(rv.length) inner += `<h3 class="pf-sub">Buyer reviews</h3><div class="pf-reviews">${rv.map(r => `
       <div class="pf-review">
         <div class="pf-review-head">${stars(r.rating)} <b>${escapeHtml(r.author_name)}</b>
           <span class="pf-note">${new Date(r.created_at).toLocaleDateString()}</span></div>
         <p>${escapeHtml(r.body)}</p>
         ${r.reply ? `<div class="pf-reply"><b>${escapeHtml(co.name)} replied:</b> ${escapeHtml(r.reply)}</div>` : ''}
-      </div>`).join('')}</div>` : '<p class="empty-line">No reviews yet. Be the first to review this listing.</p>'}
-      ${k.reviews_enabled ? reviewForm(k.id) : ''}`;
+      </div>`).join('')}</div>`;
     if(!inner) continue;
     html += `<section class="pf-sec pf-listing" id="kw-${escapeHtml(k.id)}">
       <h2 class="pf-sec-h"><a href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}" class="tc">${escapeHtml(k.keyword)}</a>${k.banner ? ' ★' : ''}${badgeHtml(k.badge, 'kw-lb')}</h2>

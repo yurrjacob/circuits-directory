@@ -1116,8 +1116,18 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 .pt-listing-sum{margin:8px 0 0;padding-top:8px;border-top:1px solid var(--line)}
 .pt-listing-sum p{margin:0 0 4px;font-size:.9rem;color:var(--ink)}
 .pt-listing-sum i{color:var(--muted)}
-.pt-listing-edit{margin:10px 0 0;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
-.pt-lbl{font-size:.82rem;font-weight:600;color:var(--ink);margin-top:6px}
+.pt-listing-edit{margin:10px 0 0;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.pt-lbl{font-size:.82rem;font-weight:600;color:var(--ink);display:flex;justify-content:space-between;gap:8px;margin-bottom:4px}
+.pt-lbl .pf-note{margin:0;font-weight:400}
+/* the editor stays short so the upgrades below it get the room */
+.pt-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pt-edit-grid textarea{width:100%;box-sizing:border-box}
+.pt-edit-grid input[type=file]{margin-top:6px;font-size:.82rem}
+.pt-folds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pt-folds .pt-fold{margin:0}
+.pt-folds .pt-fold>summary{padding:9px 12px;font-size:.88rem}
+.pt-folds .pt-fold[open]{grid-column:1/-1}
+@media(max-width:680px){.pt-edit-grid,.pt-folds{grid-template-columns:1fr}}
 .pt-listing-edit textarea{font-family:inherit;font-size:.92rem;padding:10px 12px;border:1px solid var(--line);
   border-radius:9px;outline:0;background:var(--input-bg);resize:vertical;color:var(--ink)}
 .pt-listing-edit textarea:focus{border-color:var(--green)}

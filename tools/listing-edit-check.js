@@ -70,9 +70,11 @@ global.sb = { from(){ return { update(f){ sent = f; return { eq: async () => ({ 
   await updateMyListing('x', { keyword: 'nope' });
   assert.strictEqual(sent, null, 'an update with no permitted fields still hit the database');
 
-  /* ---- the UI keeps the same promise ---- */
-  assert.ok(/Keyword, sponsorship, badge and price are set by Circuits\.com/.test(portal),
-    'the editor no longer tells suppliers which fields are not theirs to change');
+  /* ---- the UI keeps the same promise: only owner fields are ever sent ----
+     (the "set by Circuits.com" note is gone, upgrades are requested below the
+     editor now, Jacob 2026-09-03) */
+  assert.ok(/updateMyListing\(id, \{ description: val\('ed-desc-' \+ id\), certifications, team, gallery \}\)/.test(portal),
+    'the editor sends something other than the owner fields');
   for(const bad of ['data-save', 'data-edit', 'data-cancel', 'data-rmdoc']){
     assert.ok(portal.includes(bad), `the listing editor lost its ${bad} control`);
   }

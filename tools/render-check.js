@@ -157,20 +157,11 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   assert.ok(captured.includes('id="pf-copy"'), 'copy-link control missing from the sidebar');
   assert.ok(captured.includes('https://circuits.com/aaa_electronics'), 'copy-link has the wrong URL');
 
-  // reviews are opt-in per listing, with them off and none approved, the section must vanish
-  assert.ok(captured.includes('Buyer reviews'), 'reviews section missing when enabled');
-  assert.strictEqual((captured.match(/class="pf-form review-form"/g) || []).length, 1,
-    'exactly one listing allows reviews, so exactly one review form');
-  assert.ok(captured.includes('data-app="l1"'), 'the review form does not say which listing it reviews');
+  // buyer reviews are off the site (Jacob, 2026-09-03), even with rows and the switch on
+  assert.ok(!captured.includes('Buyer reviews') && !captured.includes('review-form'),
+    'buyer reviews are back on the public profile');
   assert.ok(captured.includes('id="kw-l1"') && !captured.includes('id="kw-l2"'),
     'a listing with nothing to show still gets an empty section');
-  KWS[0].reviews_enabled = false;
-  global.fetchReviews = async () => [];
-  await initProfile();
-  assert.ok(!captured.includes('Buyer reviews'),
-    'reviews section still renders for a listing that does not accept reviews');
-  assert.ok(!captured.includes('review-form'), 'review form still renders when reviews are off');
-  KWS[0].reviews_enabled = true;
 
   /* A claimed listing must not be labelled unclaimed, and an unclaimed one must
      say so plainly, a buyer needs to know the details are unconfirmed. */

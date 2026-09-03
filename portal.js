@@ -1444,7 +1444,7 @@ function listingSummary(l){
   const n = (a, one, many) => Array.isArray(a) && a.length ? a.length + ' ' + (a.length === 1 ? one : many) : null;
   const bits = [docs.length ? docs.length + (docs.length === 1 ? ' document' : ' documents') : 'No documents',
     n(l.certifications, 'certification', 'certifications'), n(l.team, 'team member', 'team members'),
-    n(l.gallery, 'photo', 'photos'), l.reviews_enabled ? 'Buyer reviews on' : null].filter(Boolean);
+    n(l.gallery, 'photo', 'photos')].filter(Boolean);
   return `<div class="pt-listing-sum">
     <p>${l.description ? escapeHtml(l.description) : '<i>No description. Buyers see only your company name and contact information on this keyword.</i>'}</p>
     <span class="pf-note">${bits.join(' · ')}</span>
@@ -1453,41 +1453,34 @@ function listingSummary(l){
 
 function listingEditor(l){
   const docs = Array.isArray(l.docs) ? l.docs : [];
+  /* Kept short on purpose (Jacob, 2026-09-03): description and documents side
+     by side, showcase as three closed folds, so the upgrades below get the room. */
   return `<div class="pt-listing-edit">
-    <label class="pt-lbl" for="ed-desc-${l.id}">Description <span class="pf-note">shown to buyers searching “${escapeHtml(l.keyword || '')}”</span></label>
-    <textarea id="ed-desc-${l.id}" maxlength="300" rows="3"
-      placeholder="What you supply under this keyword.">${escapeHtml(l.description || '')}</textarea>
-    <div class="pf-note" id="ed-count-${l.id}">${(l.description || '').length}/300</div>
-
-    <label class="pt-lbl">Documents <span class="pf-note">datasheets and catalogues, shown on your profile page</span></label>
-    <div class="pt-docs" id="ed-docs-${l.id}">
-      ${docs.map((d, i) => `<span class="pt-doc">
-        <a href="${escapeHtml(safeUrl(d.url))}" target="_blank" rel="noopener nofollow">${escapeHtml(d.name || 'Document')}</a>
-        <button type="button" class="pt-doc-x" data-rmdoc="${l.id}" data-i="${i}" aria-label="Remove ${escapeHtml(d.name || 'document')}">×</button>
-      </span>`).join('') || '<span class="pf-note">None yet.</span>'}
-    </div>
-    <input type="file" id="ed-file-${l.id}" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg">
-
-    <label class="pt-lbl" style="margin-top:14px">Showcase <span class="pf-note">shown with this listing on your profile</span></label>
-    <details class="pt-fold"><summary>Certifications <span class="pf-note" id="fold-certs-${l.id}-n"></span></summary><div class="pt-list" id="f-certs-${l.id}"></div></details>
-    <details class="pt-fold"><summary>Team <span class="pf-note" id="fold-team-${l.id}-n"></span></summary><div class="pt-list" id="f-team-${l.id}"></div></details>
-    <details class="pt-fold"><summary>Gallery <span class="pf-note" id="fold-gallery-${l.id}-n"></span></summary><div class="pt-list" id="f-gallery-${l.id}"></div></details>
-    <div class="pt-setting">
-      <div class="pt-setting-text">
-        <b>Buyer reviews</b>
-        <p class="pf-note">Let buyers review this listing on your profile. Circuits.com checks every review before it appears, and you can reply publicly.</p>
+    <div class="pt-edit-grid">
+      <div>
+        <label class="pt-lbl" for="ed-desc-${l.id}">Description <span class="pf-note" id="ed-count-${l.id}">${(l.description || '').length}/300</span></label>
+        <textarea id="ed-desc-${l.id}" maxlength="300" rows="3"
+          placeholder="What you supply under this keyword.">${escapeHtml(l.description || '')}</textarea>
       </div>
-      <label class="switch">
-        <input id="ed-reviews-${l.id}" type="checkbox" ${l.reviews_enabled ? 'checked' : ''}>
-        <span class="knob" aria-hidden="true"></span>
-        <span class="sr-only">Allow buyers to review this listing</span>
-      </label>
+      <div>
+        <label class="pt-lbl" for="ed-file-${l.id}">Documents</label>
+        <div class="pt-docs" id="ed-docs-${l.id}">
+          ${docs.map((d, i) => `<span class="pt-doc">
+            <a href="${escapeHtml(safeUrl(d.url))}" target="_blank" rel="noopener nofollow">${escapeHtml(d.name || 'Document')}</a>
+            <button type="button" class="pt-doc-x" data-rmdoc="${l.id}" data-i="${i}" aria-label="Remove ${escapeHtml(d.name || 'document')}">×</button>
+          </span>`).join('')}
+        </div>
+        <input type="file" id="ed-file-${l.id}" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg">
+      </div>
     </div>
-
+    <div class="pt-folds">
+      <details class="pt-fold"><summary>Certifications <span class="pf-note" id="fold-certs-${l.id}-n"></span></summary><div class="pt-list" id="f-certs-${l.id}"></div></details>
+      <details class="pt-fold"><summary>Team <span class="pf-note" id="fold-team-${l.id}-n"></span></summary><div class="pt-list" id="f-team-${l.id}"></div></details>
+      <details class="pt-fold"><summary>Gallery <span class="pf-note" id="fold-gallery-${l.id}-n"></span></summary><div class="pt-list" id="f-gallery-${l.id}"></div></details>
+    </div>
     <div class="pt-edit-actions">
       <button class="btn btn-primary" data-save="${l.id}">Save</button>
       <button class="mini-btn" data-cancel="1">Cancel</button>
-      <span class="pf-note">Keyword, sponsorship, badge and price are set by Circuits.com. Contact us to change those.</span>
     </div>
   </div>`;
 }
@@ -1547,8 +1540,7 @@ function wireListings(){
       const bad = showcaseProblem(certifications, team);
       if(bad){ toast('Not saved: ' + bad, false); return; }
       save.disabled = true;
-      const err = await updateMyListing(id, { description: val('ed-desc-' + id), certifications, team, gallery,
-        reviews_enabled: !!(el('ed-reviews-' + id) && el('ed-reviews-' + id).checked) });
+      const err = await updateMyListing(id, { description: val('ed-desc-' + id), certifications, team, gallery });
       save.disabled = false;
       if(err){ toast('Could not save: ' + err, false); return; }
       PT.editing = null;
