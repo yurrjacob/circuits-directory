@@ -68,8 +68,10 @@ img{max-width:100%}
 .nav a:hover{background:#1c1c1c;color:#fff}
 /* Where you are, marked with a white underline (Jacob, 2026-09-03). An inset
    shadow rather than a border, so marking a link costs no layout at all. */
-.nav a.active:not(.nav-dash):not(.cta){color:#fff;background:transparent;box-shadow:inset 0 -2px 0 #fff}
-.nav a.active.nav-dash,.nav a.active.cta{box-shadow:inset 0 -2px 0 rgba(0,0,0,.55)}
+.nav a.active:not(.nav-dash):not(.cta){color:#fff;background:transparent;position:relative}
+.nav a.active:not(.nav-dash):not(.cta)::after{content:"";position:absolute;left:14px;right:14px;bottom:5px;
+  height:2px;border-radius:2px;background:#fff}
+.nav a.active.nav-dash,.nav a.active.cta{box-shadow:inset 0 -2px 0 rgba(0,0,0,.5)}
 .nav a.nav-auth{margin-left:14px;position:relative;color:#e8eaed;font-weight:600}
 .nav a.nav-auth::before{content:"";position:absolute;left:-14px;top:50%;transform:translateY(-50%);
   width:1px;height:20px;background:rgba(255,255,255,.35)}
@@ -471,6 +473,9 @@ tr.row-warn td{background:#fff3cd}
 .badge{display:inline-block;font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
 .badge.live{background:#e9f7d0;color:#3f6300}
 .badge.pending{background:#fff3d6;color:#8a6100}
+/* the plain badge, so a paused listing is chipped like every other state
+   instead of reading as loose bold text (Jacob, 2026-09-03) */
+.badge:not(.live):not(.pending):not(.sponsored){background:#eceef1;color:#5d6a7e}
 .badge.sponsored{background:#e7f0ff;color:#1a4ba0}
 .badge.accepted{background:#e9f7d0;color:#3f6300}
 .badge.denied{background:#fde2e1;color:#b3261e}
@@ -515,8 +520,13 @@ tr.row-warn td{background:#fff3cd}
 @media(max-width:860px){.pt-none-grid{grid-template-columns:1fr}}
 /* one dashboard for every account (2026-09-03); the left column of the
    Seeking Employment tab stacks the experience and listing forms */
-.pt-getlisted{margin-top:18px}
-.pt-getlisted .btn{display:inline-block;margin-top:22px}
+/* a call to action, not an empty state: it keeps the panel's frame but loses
+   its centring and its 180px of height */
+.pt-getlisted{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  margin-top:16px;padding:14px 18px;border-style:solid;background:var(--card)}
+.pt-getlisted,.pt-getlisted div{text-align:left}
+.pt-getlisted p{margin:2px 0 0;font-size:.85rem;color:var(--muted)}
+.pt-getlisted .btn{display:inline-block;margin-top:0;flex:none}
 .pt-recruit-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;align-items:start}
 @media(max-width:900px){.pt-recruit-grid{grid-template-columns:1fr}}
 .pt-stats{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.84rem;color:var(--muted);margin:8px 0 4px}
@@ -1032,9 +1042,34 @@ tr.row-warn td{background:#fff3cd}
 .pt-ktable .tick,.pt-uptable .tick{color:#3f6300;font-weight:800}
 .pt-ktable .dash,.pt-uptable .dash{color:#b6bbc1}
 .pt-pos{color:#1f5fbf}
-.pt-ktable .rank,.pt-uptable .rank{width:44px;color:var(--muted)}
-.pt-ktable .row-actions,.pt-uptable .row-actions{text-align:right;white-space:nowrap}
-.pt-ktable .row-actions .switch{vertical-align:middle;margin-right:10px}
+/* Fixed layout, and the widths must total 100% on their own: a px rank column
+   on top of percentages that already reached 100 pushed the last column out
+   past the table's rounded edge. */
+.pt-ktable,.pt-uptable{table-layout:fixed}
+.pt-ktable .rank,.pt-uptable .rank{color:var(--muted);font-variant-numeric:tabular-nums}
+.pt-ktable th:nth-child(1),.pt-uptable th:nth-child(1){width:5%}
+.pt-ktable th:nth-child(2){width:25%}
+.pt-ktable th:nth-child(3){width:10%}
+.pt-ktable th:nth-child(4),.pt-ktable th:nth-child(5),.pt-ktable th:nth-child(6){width:14%}
+.pt-ktable th:nth-child(7){width:18%}
+.pt-uptable th:nth-child(2){width:19%}
+.pt-uptable th:nth-child(3){width:21%}
+.pt-uptable th:nth-child(4),.pt-uptable th:nth-child(5){width:16%}
+.pt-uptable th:nth-child(6){width:10%}
+.pt-uptable th:nth-child(7){width:13%}
+.pt-ktable td,.pt-uptable td{height:60px;padding-top:0;padding-bottom:0}
+/* .row-actions is already display:flex for the admin sheets (line ~609), so
+   text-align could never right-align these; say it in flex's own terms. */
+.pt-ktable .row-actions,.pt-uptable .row-actions{display:flex;align-items:center;justify-content:flex-end;
+  gap:10px;flex-wrap:nowrap;white-space:nowrap}
+/* the switch and its word on one line: stacked, it made every row a different
+   height and the column ragged */
+.pt-ktable .row-actions .pt-list-sw{display:inline-flex;align-items:center;gap:8px;vertical-align:middle}
+.pt-ktable .row-actions .pt-list-sw .sw-text{min-width:52px;text-align:left}
+.pt-krow > td{border-bottom:1px solid var(--line)}
+.pt-krow.is-open > td{border-bottom:0;background:var(--bg-soft)}
+.pt-chevron{border:0;background:none;font:inherit;color:#9aa4ae;cursor:pointer;padding:0 8px 0 0;transition:color .15s}
+.pt-krow:hover .pt-chevron{color:var(--ink)}
 .pt-editor-row td{background:var(--bg-soft);padding:0 16px 16px}
 .pt-chevron{border:0;background:none;font:inherit;color:var(--muted);cursor:pointer;padding:0 6px 0 0}
 .th-price{display:block;font-size:.72rem;font-weight:700;color:#1f5fbf;letter-spacing:0;text-transform:none;margin-top:2px}
@@ -1042,11 +1077,14 @@ tr.row-warn td{background:#fff3cd}
 .pt-up-sw .knob{width:38px;height:22px}
 .pt-up-sw .knob::after{width:16px;height:16px}
 .pt-up-sw input:checked + .knob{background:#1f5fbf}
-.pt-up-opts{display:inline-flex;align-items:center;gap:6px;margin-left:8px;vertical-align:middle;flex-wrap:wrap}
-.pt-up-opts select{font:inherit;font-size:.8rem;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--card)}
+.pt-up-opts{display:inline-flex;align-items:center;gap:5px;margin-left:8px;vertical-align:middle;flex-wrap:wrap}
+.pt-up-opts select{font:inherit;font-size:.76rem;padding:3px 2px;max-width:76px;border:1px solid var(--line);border-radius:6px;background:var(--card)}
+.pt-up-opts .lb{font-size:.62rem}
+.pt-up-opts input.up-text{font:inherit;font-size:.78rem;padding:3px 6px;max-width:110px;border:1px solid var(--line);border-radius:6px}
+.pt-up-sw{vertical-align:middle}
 .pt-up-foot{margin:10px 0 0}
 .pt-upgrade-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 12px}
-.pt-save{font-size:.84rem;font-weight:700;color:#1f5fbf}
+.pt-save{font-size:.84rem;font-weight:700;color:#1f5fbf;margin-left:auto}
 .pt-tabs,.adm-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 6px;border-bottom:1px solid var(--line)}
 .pt-tab,.adm-tab{border:0;background:none;font:inherit;font-weight:600;padding:9px 14px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent}
 .pt-tab.active,.adm-tab.active{color:var(--ink);border-bottom-color:var(--green)}
