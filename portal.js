@@ -1349,13 +1349,10 @@ function renderListings(){
     <div class="pt-item">
       <div class="pt-item-head">
         <div><b>${escapeHtml(l.keyword || '(no keyword)')}</b>
-          <span class="badge ${l.status === 'Approved' ? (l.paused ? '' : 'live') : ''}">${l.paused ? 'Paused' : escapeHtml(l.status)}</span>
-          ${l.banner ? '<span class="badge sponsored">Sponsored</span>' : ''}
+          <span class="badge ${l.status === 'Approved' ? (l.paused ? '' : 'live') : l.status === 'Pending' ? 'pending' : ''}">${l.paused ? 'Paused' : l.status === 'Approved' ? 'Live' : escapeHtml(l.status)}</span>
           ${l.badge ? `<span class="lb" style="background:${escapeHtml(l.badge.color)}">${escapeHtml(l.badge.text)}</span>` : ''}
-          ${l.locked_position ? `<span class="badge">#${l.locked_position} locked</span>` : ''}
         </div>
         <div>
-          <span class="pf-note">${escapeHtml(l.fee || 'Free')}</span>
           <button class="mini-btn" data-edit="${l.id}">Edit</button>
           ${l.status === 'Approved' ? `<button class="mini-btn" data-pause="${l.id}" data-to="${l.paused ? '0' : '1'}">${l.paused ? 'Resume' : 'Pause'}</button>` : ''}
         </div>
@@ -1381,19 +1378,20 @@ function renderListings(){
    raises a request they see in the console; the price is what they charge.
    ponytail: no checkout, add Stripe when the volume justifies it. */
 const UPGRADES = {
-  badge:  { name: 'Trust Badge',      price: '$' + BADGE_FEE + '/month',  why: 'A short label beside your keyword, in the colour you choose. Cannot claim a certification.' },
-  banner: { name: 'Sponsor banner',   price: '$' + BANNER_FEE + '/month', why: 'The exclusive banner above every result for this keyword: logo, pitch, contact and documents.' },
-  lock:   { name: 'Locked position',  price: 'Ask us',                    why: 'Results shuffle on every search. A locked position pins you to #1, #2 or #3 every time.' }
+  badge:  { name: 'Trust Badge',              why: 'A short label in your colour beside this keyword.' },
+  banner: { name: 'Exclusive Sponsor Banner', why: 'Your banner above every result for this keyword.' },
+  lock:   { name: 'Locked position',          why: 'Pinned to #1, #2 or #3 instead of rotating.' }
 };
 /* The Trust Badge is the one upgrade with attributes: the label and the colour
    are chosen here, travel with the request, and staff approve exactly that. */
 const BADGE_COLORS = [['#c9a227', 'Gold'], ['#b06c22', 'Bronze'], ['#5d6a7e', 'Steel']];
 function badgeRequestForm(l){
-  return `<div class="pt-badge-req">
+  return `<button class="mini-btn green" data-badge-open="${l.id}">Request</button>
+  <div class="pt-badge-req" id="badge-req-${l.id}" hidden>
     <input class="up-text" type="text" maxlength="18" placeholder="Label, e.g. Featured" aria-label="Badge label">
     <select class="up-color" aria-label="Badge colour">${BADGE_COLORS.map(([hex, name]) => `<option value="${hex}">${name}</option>`).join('')}</select>
     <span class="lb up-preview" style="background:${BADGE_COLORS[0][0]}">Your label</span>
-    <button class="mini-btn green" data-request="${l.id}" data-kind="badge">Request</button>
+    <button class="mini-btn green" data-request="${l.id}" data-kind="badge">Send request</button>
   </div>`;
 }
 function upgradePanel(l){
@@ -1404,15 +1402,15 @@ function upgradePanel(l){
     ? `<span class="badge pending">Requested</span> <span class="lb" style="background:${escapeHtml(pend.get(k).badge_color || '#c9a227')}">${escapeHtml(pend.get(k).badge_text)}</span>`
     : '<span class="badge pending">Requested</span>';
   return `<div class="pt-upgrade">
-    <b class="pt-upgrade-title">Upgrades</b>
+    <b class="pt-upgrade-title">Upgrades on this keyword</b>
     ${Object.entries(UPGRADES).map(([k, u]) => `<div class="pt-upgrade-row">
-      <div><b>${u.name}</b> <span class="pf-note">${u.price}</span><p class="pf-note">${u.why}</p></div>
+      <div><b>${u.name}</b><p class="pf-note">${u.why}</p></div>
       ${has[k] ? '<span class="badge live">Active</span>'
         : pend.has(k) ? requested(k)
         : k === 'badge' ? badgeRequestForm(l)
         : `<button class="mini-btn green" data-request="${l.id}" data-kind="${k}">Request</button>`}
     </div>`).join('')}
-    <p class="pf-note" style="margin:8px 0 0">We confirm each request by email, take payment, and switch it on.</p>
+    <p class="pf-note" style="margin:8px 0 0">Active is on now. Requested is with us: we email you to confirm before switching it on.</p>
   </div>`;
 }
 
@@ -1493,6 +1491,9 @@ function wireListings(){
 
     const edit = e.target.closest('[data-edit]');
     if(edit){ PT.editing = (PT.editing === edit.dataset.edit) ? null : edit.dataset.edit; renderListings(); return; }
+
+    const open = e.target.closest('[data-badge-open]');
+    if(open){ const f = el('badge-req-' + open.dataset.badgeOpen); f.hidden = false; open.hidden = true; f.querySelector('.up-text').focus(); return; }
 
     const req = e.target.closest('[data-request]');
     if(req){
