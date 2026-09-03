@@ -277,6 +277,10 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 .promo-benefits li::marker{color:#9aa4ae}
 .badge-premium{display:inline-block;background:linear-gradient(180deg,#f2f4f7,#aab3bd);color:#2b3138;font-size:.66rem;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:20px;text-transform:uppercase;vertical-align:middle}
 .promo-gold{border:1px solid #c9ced6;background:#f6f8fa}
+/* Get Listed add-ons (Jacob, 2026-09-03): grey until ticked, green once ticked */
+.promo-pick{border:1px solid #c9ced6;background:#f6f8fa}
+.promo-pick input{accent-color:var(--green)}
+.promo-pick:has(input:checked){border-color:var(--green);background:#f1fae0}
 .promo-gold:hover{box-shadow:0 0 0 3px rgba(154,164,174,.28)}
 .promo-gold input{accent-color:#7d8894}
 /* uploaded logo inside preview boxes */

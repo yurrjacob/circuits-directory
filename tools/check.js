@@ -981,13 +981,20 @@ const joinHtml = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
        your email lands here. The anonymous MVP1 form is in backups/join-2026-09-03/. */
 assert.ok(!/id="f-company"|id="f-email"/.test(joinHtml), 'the Get Listed page asks for company details again, they come from the account');
 assert.ok(/if\(!user\)\{ location\.replace\('\/register'\); return; \}/.test(joinHtml), '/join no longer asks a signed-out visitor to register');
-for (const id of ['kw-input', 'kw-check', 'kw-add', 'kw-tags', 'promo-check', 'badge-check', 'badge-opts', 'badge-custom', 'swatches', 'quote-lines', 'quote-total', 'quote-total-year', 'msg', 'f-terms']) {
+for (const id of ['kw-input', 'kw-check', 'kw-add', 'kw-tags', 'promo-check', 'badge-check', 'badge-opts', 'badge-custom', 'swatches', 'bp-logo', 'bp-company', 'bp-contact', 'badge-preview', 'msg', 'f-terms']) {
   assert.ok(joinHtml.includes(`id="${id}"`), `the Get Listed page lost ${id}`);
 }
+/* no prices on Get Listed (Jacob, 2026-09-03); both previews and the badge
+   builder show before the box is ticked; a ticked box turns green */
+assert.ok(!/\$\d|_FEE|quote-/.test(joinHtml), 'Get Listed shows prices again');
+assert.ok(!/assessed you/.test(joinHtml), 'the badge disclaimer is back on Get Listed');
+assert.ok(!/id="badge-builder"/.test(joinHtml) && joinHtml.indexOf('id="badge-preview"') < joinHtml.indexOf('id="badge-check"') && joinHtml.indexOf('id="bp-company"') < joinHtml.indexOf('id="promo-check"'),
+  'the previews must show before the boxes, not behind them');
+assert.ok(/\.promo-pick:has\(input:checked\)\{border-color:var\(--green\)/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')) && (joinHtml.match(/class="promo promo-pick"/g) || []).length === 2,
+  'a ticked add-on box does not turn green');
 assert.ok(/banner: el\('promo-check'\)\.checked/.test(joinHtml) && /badge: el\('badge-check'\)\.checked \? \{ text: badgeText, color: badgeColor \} : null/.test(joinHtml),
   'the banner and badge no longer ride on the application rows');
 assert.ok(/addApplicationKeywords\(base, kws\)/.test(joinHtml) && /notifyListingRequest\(base\.email, base\.company\)/.test(joinHtml), 'Get Listed does not file the request or email a copy');
-assert.ok(/BANNER_FEE_YEAR/.test(joinHtml) && /BADGE_FEE_YEAR/.test(joinHtml) && /× free/.test(joinHtml), 'the price estimate lost the free listing or the yearly prices');
 assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'join-2026-09-03', 'join.html')), 'the old Get Listed form backup is missing');
 assert.ok(/emailRedirectTo: location\.origin \+ '\/join'/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8').slice(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8').indexOf('async function registerProfile'))),
   'confirming a new account no longer lands on Get Listed');

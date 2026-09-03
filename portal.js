@@ -300,7 +300,7 @@ async function initPortal(){
 /* No profiles row and no company: the Profile Details form with nothing in it,
    and a note above it. Everything else waits for the first save. */
 function renderFresh(){
-  PT.slug = null; PT.co = { handle: '', name: '' }; PT.listings = []; PT.stats = {}; PT.upgrades = [];
+  PT.slug = null; PT.co = { handle: '', name: '' }; PT.listings = []; PT.upgrades = [];
   el('pt-name').textContent = PT.user.email || '';
   el('pt-view').style.display = 'none';
   el('pt-company').style.display = 'none';
@@ -415,8 +415,8 @@ async function loadCompany(slug){
      (Jacob, 2026-08-20, full copies in backups/dashboard-2026-08-20/), so
      their data is not fetched either. Their render functions stay below,
      dormant, for an easy restore. */
-  const [listings, stats, upgrades] = await Promise.all([fetchMyListings(slug), listingSearchCounts(slug), myUpgradeRequests(slug)]);
-  PT.listings = listings; PT.stats = stats; PT.upgrades = upgrades;
+  const [listings, upgrades] = await Promise.all([fetchMyListings(slug), myUpgradeRequests(slug)]);
+  PT.listings = listings; PT.upgrades = upgrades;
   renderReviewStatus();
   renderProfileForm();
   wireDirtyTracking();
@@ -1363,7 +1363,6 @@ function renderListings(){
           ${l.status === 'Approved' ? `<button class="mini-btn" data-pause="${l.id}" data-to="${l.paused ? '0' : '1'}">${l.paused ? 'Resume' : 'Pause'}</button>` : ''}
         </div>
       </div>
-      ${listingStats(l)}
       ${listingSummary(l)}
       ${PT.editing === l.id ? listingEditor(l) : ''}
       ${l.status === 'Approved' ? upgradePanel(l) : ''}
@@ -1379,21 +1378,6 @@ function renderListings(){
     renderRepeater('gallery-' + open.id, open.gallery, ['url', 'caption'], ['Image', 'Caption'], ['img', 'text']);
   }
   wireListings();
-}
-
-/* Stats and standing of one listing: searches for its keyword in the last 30
-   days (from the searches table), and which paid extras it carries. */
-function listingStats(l){
-  const n = (PT.stats || {})[l.keyword_norm];
-  const pend = (PT.upgrades || []).filter(u => u.application_id === l.id).map(u => u.kind);
-  const bits = [
-    n == null ? null : `<b>${n}</b> search${n === 1 ? '' : 'es'} for this keyword in the last 30 days`,
-    'Trust Badge: ' + (l.badge ? escapeHtml(l.badge.text) : 'none'),
-    'Sponsor banner: ' + (l.banner ? 'running' : 'none'),
-    'Position: ' + (l.locked_position ? '#' + l.locked_position + ' locked' : 'rotates with every search'),
-    pend.length ? '<span style="color:#8a6100">Upgrade requested: ' + pend.map(k => UPGRADES[k].name).join(', ') + '</span>' : null
-  ].filter(Boolean);
-  return `<div class="pt-stats">${bits.map(b => `<span>${b}</span>`).join('')}</div>`;
 }
 
 /* Paid extras. Payment is recorded by Circuits.com staff for now, so a click

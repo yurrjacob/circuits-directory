@@ -91,11 +91,24 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
 <li>Prominent Logo, Profile Description, And Exclusive Sponsor Badge</li>
 <li>Hold Your Position Ahead Of Competitors</li>
 </ul>
-<label class="promo promo-gold">
+<div class="badge-preview-box banner-preview" style="margin:0 0 20px">
+<span class="preview-label">Live Preview</span>
+<div class="premium-card">
+<span class="premium-badge">Exclusive Sponsor</span>
+<div class="premium-logo" id="bp-logo"></div>
+<div class="premium-body">
+<h3 id="bp-company"></h3>
+<p id="bp-message"></p>
+</div>
+<div class="premium-contact" id="bp-contact"></div>
+</div>
+<p class="preview-hint">This Is How Your Exclusive Sponsor Banner Would Look Live!</p>
+</div>
+<label class="promo promo-pick">
 <input type="checkbox" id="promo-check">
 <div class="promo-body">
 <div class="promo-title">Yes, Showcase My Listing As An Exclusive Sponsor</div>
-<p class="promo-sub" style="margin:4px 0 0">A paid add-on, <b id="j-banner-fee"></b> per keyword, separate from the free listing. One sponsor per keyword; we confirm availability when we approve.</p>
+<p class="promo-sub" style="margin:4px 0 0">A paid add-on, separate from the free listing. One sponsor per keyword; we confirm availability when we approve.</p>
 </div>
 </label>
 </section>
@@ -114,15 +127,6 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
 <li>Make Your Listing Stand Out From Competitors</li>
 <li>Highlight Your Status At A Glance</li>
 </ul>
-<label class="promo promo-gold" style="margin-bottom:20px">
-<input type="checkbox" id="badge-check">
-<div class="promo-body">
-<div class="promo-title">Yes, Add A Circuits.com Trust Badge To My Listings</div>
-<p class="promo-sub" style="margin:4px 0 0">A paid add-on, <b id="j-badge-fee"></b> per keyword. Tick the box, then pick your badge below.</p>
-</div>
-</label>
-<div id="badge-builder" style="display:none">
-<p class="field-hint" style="margin:0 0 8px">A Trust Badge is a label you choose, and it is shown as one. It cannot claim somebody else assessed you: not Certified, not ISO 9001, not Approved, not Verified. The Circuits.com badge itself cannot be bought.</p>
 <div class="opt-row" id="badge-opts">
 <button type="button" class="opt-btn selected" data-text="Authorized">Authorized</button>
 <button type="button" class="opt-btn" data-text="Featured">Featured</button>
@@ -137,34 +141,27 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
 <button type="button" class="swatch" data-color="#b06c22" style="background:linear-gradient(135deg,#d99a52,#b06c22)" aria-label="Bronze"></button>
 <button type="button" class="swatch" data-color="#5d6a7e" style="background:linear-gradient(135deg,#8f9cb0,#5d6a7e)" aria-label="Steel"></button>
 </div>
-<div class="badge-preview-box" style="margin:14px 0 0">
+<div class="badge-preview-box" style="margin:14px 0 20px">
 <span class="preview-label">Live Preview</span>
 <div class="preview-stage">
 <span class="co-logo" id="preview-logo" style="background:var(--dark)"></span>
 <span class="preview-name" id="preview-name"></span>
 <span class="lb" id="badge-preview" style="background:#c9a227">Authorized</span>
 </div>
+<p class="preview-hint">This Is How Your Trust Badge Would Look Live!</p>
 </div>
+<label class="promo promo-pick">
+<input type="checkbox" id="badge-check">
+<div class="promo-body">
+<div class="promo-title">Yes, Add A Circuits.com Trust Badge To My Listings</div>
+<p class="promo-sub" style="margin:4px 0 0">A paid add-on. The badge you picked above goes on every keyword you claim.</p>
 </div>
+</label>
 </section>
 
 <section class="step">
 <div class="step-head">
 <span class="step-num">04</span>
-<div><h2>Pricing Estimate</h2>
-<p>Updates as you choose keywords and extras. Nothing is charged now. We confirm pricing when we approve your listing.</p></div>
-</div>
-<div class="quote">
-<div class="quote-lines" id="quote-lines"></div>
-<div class="quote-total"><span>Estimated monthly total</span><b id="quote-total">$0</b></div>
-<div class="quote-total quote-total-alt"><span>Or paid yearly</span><b id="quote-total-year">$0</b></div>
-<p class="field-hint beta-note"><b>Beta pricing.</b> Original owners lock in these beta fees for as long as they keep an active subscription.</p>
-</div>
-</section>
-
-<section class="step">
-<div class="step-head">
-<span class="step-num">05</span>
 <div><h2>Have Any Ideas? Tell Us What You're Thinking</h2></div>
 </div>
 <div class="field">
@@ -217,10 +214,14 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
   el('join-load').style.display = 'none';
   el('join-form').style.display = '';
   el('j-company').textContent = co.name;
-  el('j-banner-fee').textContent = '$' + BANNER_FEE + '/mo or $' + BANNER_FEE_YEAR + '/yr';
-  el('j-badge-fee').textContent = '$' + BADGE_FEE + '/mo or $' + BADGE_FEE_YEAR + '/yr';
+  /* both previews draw from the account, so what you see is what goes live */
+  const logo = isLogoUrl(co.logo) ? `<img src="${escapeHtml(co.logo)}" alt="">` : avatarSvg();
   el('preview-name').textContent = co.name;
-  el('preview-logo').innerHTML = isLogoUrl(co.logo) ? `<img src="${escapeHtml(co.logo)}" alt="">` : avatarSvg();
+  el('preview-logo').innerHTML = logo;
+  el('bp-logo').innerHTML = logo;
+  el('bp-company').textContent = co.name;
+  el('bp-message').textContent = co.tagline || co.description || 'Prominent profile description shown to every viewer.';
+  el('bp-contact').innerHTML = [co.contact, co.phone, co.email || user.email].filter(Boolean).map(escapeHtml).join('<br>');
 
   /* keywords */
   let kws = [];
@@ -229,7 +230,6 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
   const draw = () => {
     tags.innerHTML = kws.map((k, i) => `<span class="kw-tag"><a class="kw-check-link" href="/results?q=${encodeURIComponent(k)}" target="_blank" rel="noopener">${escapeHtml(k)}</a><button type="button" data-i="${i}" aria-label="Remove">&times;</button></span>`).join('');
     el('kw-count').innerHTML = `<b>${kws.length}</b> of 10 keywords`;
-    quote();
   };
   const add = () => {
     const k = cleanKw(input.value);
@@ -247,8 +247,6 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
   /* badge builder */
   let badgeText = 'Authorized', badgeColor = '#c9a227';
   const preview = () => { const p = el('badge-preview'); p.textContent = badgeText || 'Your badge'; p.style.background = badgeColor; };
-  el('badge-check').addEventListener('change', e => { el('badge-builder').style.display = e.target.checked ? '' : 'none'; quote(); });
-  el('promo-check').addEventListener('change', quote);
   el('badge-opts').addEventListener('click', e => {
     const b = e.target.closest('.opt-btn'); if(!b) return;
     document.querySelectorAll('#badge-opts .opt-btn').forEach(x => x.classList.toggle('selected', x === b));
@@ -265,17 +263,6 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
     badgeColor = s.dataset.color; preview();
   });
 
-  /* estimate: listings are free, each extra is per keyword */
-  function quote(){
-    const n = kws.length, banner = el('promo-check').checked, badge = el('badge-check').checked;
-    const line = (label, each, eachY) => `<div class="quote-line"><span>${label}</span><span class="quote-each">${n} × $${each}/mo</span><b>$${n * each}</b></div>`;
-    let m = 0, y = 0, html = `<div class="quote-line"><span>Keyword listing${n === 1 ? '' : 's'}</span><span class="quote-each">${n} × free</span><b>$0</b></div>`;
-    if(banner){ html += line('Exclusive Sponsor Banner', BANNER_FEE); m += n * BANNER_FEE; y += n * BANNER_FEE_YEAR; }
-    if(badge){ html += line('Trust Badge', BADGE_FEE); m += n * BADGE_FEE; y += n * BADGE_FEE_YEAR; }
-    el('quote-lines').innerHTML = html;
-    el('quote-total').textContent = '$' + m;
-    el('quote-total-year').textContent = '$' + y;
-  }
   draw();
 
   /* submit: one Pending application per keyword, banner and badge riding on
