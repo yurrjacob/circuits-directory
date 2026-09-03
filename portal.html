@@ -15,9 +15,10 @@
   <div class="inner">
     <div class="brand"><a href="/"><img class="logo-nav" src="/assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-slogan">Connecting The Circuits Industry</span></div>
     <!-- The dashboard carries the same header as the rest of the site (Jacob,
-         2026-09-03): the same places to go, and Get Listed still top right, so
-         nothing moves when you arrive here from another page. Sign out sits
-         after it, the one thing only this page offers. -->
+         2026-09-03): the same links in the same order, Get Listed still top
+         right, so nothing moves when you arrive here from another page. Sign
+         out used to sit here and was the one item no other page had, which
+         pushed this nav left by its width; it lives in the console head now. -->
     <nav class="nav">
       <a href="/">Home</a>
       <a href="/about">About</a>
@@ -26,7 +27,6 @@
       <a class="nav-auth nav-dash active" href="/portal">Dashboard</a>
       <a class="cta" href="/join">Get Listed</a>
     </nav>
-    <a class="signout" href="#" id="pt-signout">Sign out</a>
   </div>
 </header>
 
@@ -70,6 +70,7 @@
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select id="pt-company" style="height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px"></select>
       <a class="mini-btn" id="pt-view" href="#" target="_blank" rel="noopener">View public profile ↗</a>
+      <a class="mini-btn" href="#" id="pt-signout">Sign out</a>
     </div>
   </div>
 
@@ -82,6 +83,7 @@
   <div class="pt-tabs">
     <button class="pt-tab active" data-tab="profile">Profile Details</button>
     <button class="pt-tab" data-tab="listings">Your Listings</button>
+    <button class="pt-tab pt-tab-upgrades" data-tab="upgrades">Upgrades</button>
     <button class="pt-tab" data-tab="hiring">Hiring</button>
     <button class="pt-tab" data-tab="seeking">Seeking Employment</button>
     <button class="pt-tab" data-tab="promote">Promote</button>
@@ -213,12 +215,42 @@
   <!-- Your Listings: every keyword listing with its stats, badges, banners and
        upgrades, then the way to get more (the Get Listed page, Jacob 2026-09-03). -->
   <section class="pt-panel" id="tab-listings">
+    <!-- One numbered row per keyword: the free listing itself, then which paid
+         extras it carries. Buying them happens on the Upgrades tab (Jacob,
+         2026-09-03), so this table only says where each keyword stands. -->
+    <div class="pt-upsell">
+      <div>
+        <b>Trust Badge, Sponsor Banner, Locked Position</b>
+        <p>Switch the extras you want on any keyword and send one request.</p>
+      </div>
+      <button type="button" class="btn btn-upgrade" id="pt-go-upgrades">Upgrade &rarr;</button>
+    </div>
     <div class="pt-list" id="pt-listings"></div>
     <div class="pt-empty pt-getlisted">
       <b>Get listed under more Circuits-Keywords&trade;</b>
       <p>Up to 10 keywords per request, free. Add the Exclusive Sponsor Banner or a Trust Badge at the same time.</p>
       <a class="btn btn-primary" href="/join">Get Listed</a>
     </div>
+  </section>
+
+  <!-- Upgrades: the same keywords, with the paid extras switched on or off and
+       priced monthly or yearly. Nothing is charged here; a request goes to
+       Circuits.com, who confirm by email and take payment. -->
+  <section class="pt-panel" id="tab-upgrades">
+    <div class="pt-upsell pt-upsell-lead">
+      <div>
+        <b>Upgrade your keywords</b>
+        <p>Switch on what you want, per keyword, then send the request. We confirm by email before anything is billed.</p>
+      </div>
+      <a class="btn btn-upgrade" href="/join">Get Listed &amp; Upgrade &rarr;</a>
+    </div>
+    <div class="pt-upgrade-head">
+      <div class="search-mode pt-billing" role="tablist" aria-label="Billing">
+        <button type="button" class="on" data-billing="month" role="tab" aria-selected="true">Monthly</button>
+        <button type="button" data-billing="year" role="tab" aria-selected="false">Yearly</button>
+      </div>
+    </div>
+    <div id="pt-upgrades"></div>
   </section>
 
   <!-- promote -->

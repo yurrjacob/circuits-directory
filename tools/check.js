@@ -728,8 +728,11 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   const portalHtml2 = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
   const tabStrip = portalHtml2.match(/<div class="pt-tabs">[\s\S]*?<\/div>/)[0];
   const tabs = [...tabStrip.matchAll(/data-tab="([a-z]+)"/g)].map(m => m[1]);
-  assert.deepStrictEqual(tabs, ['profile', 'listings', 'hiring', 'seeking', 'promote', 'account', 'admin'],
-    'the dashboard tabs are not Profile Details / Listings / Hiring / Seeking Employment / Promote / Account Settings / Admin');
+  /* Upgrades sits immediately right of Your Listings (Jacob, 2026-09-03): the
+     listings table says what each keyword has, the tab beside it is where the
+     paid extras are switched on. */
+  assert.deepStrictEqual(tabs, ['profile', 'listings', 'upgrades', 'hiring', 'seeking', 'promote', 'account', 'admin'],
+    'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Hiring / Seeking Employment / Promote / Account Settings / Admin');
   assert.ok(!/tab-co|tab-ind|acct-company|acct-individual/.test(portalHtml2 + portalSrc2 + fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
     'the two-dashboard split is back (tab-co / tab-ind / acct-*)');
   assert.ok(!/account_type|cx_account_type/.test(portalSrc2 + fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8') + fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')),
@@ -1476,12 +1479,36 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   assert.ok(/#pt-tab-admin\{margin-left:auto/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the Admin tab no longer sits apart from the account tabs');
   const pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
   assert.ok(/class="up-word"/.test(pj) && /class="up-text"/.test(pj) && /class="up-color"/.test(pj), 'the Trust Badge request lost its wording dropdown, custom label or colour field');
-  assert.ok(/requestUpgrade\(req\.dataset\.request, PT\.slug, req\.dataset\.kind, BILLING === 'year' \? 'yearly' : 'monthly', badge\)/.test(pj), 'the badge label, colour and billing choice are not sent with the request');
-  /* Your Listings (Jacob, 2026-09-03): rows closed by default, chevron or Edit opens editor + upgrades,
-     Active / Inactive switch, monthly / yearly prices with the yearly saving and a total */
-  assert.ok(/class="pt-chevron" data-open=/.test(pj) && /\$\{open \? listingEditor\(l\) : ''\}/.test(pj) && /open && l\.status === 'Approved' \? upgradePanel\(l\)/.test(pj), 'listings are not closed by default with a chevron to open them');
+  assert.ok(/requestUpgrade\(id, PT\.slug, k, note, badge\)/.test(pj), 'the badge label, colour and billing choice are not sent with the request');
+  assert.ok(/position #' \+ p\.lockPos/.test(pj), 'a locked position request does not say which position was asked for');
+
+  /* --- Your Listings and Upgrades are two tables (Jacob, 2026-09-03) ---
+         Your Listings: keywords numbered, the free listing ticked, then what
+         each one carries, badge, banner and the locked position number. A row
+         still opens into the editor. Nothing is bought here.
+         Upgrades: the same keywords, a switch per extra, a price per row and a
+         Request button on the end. Its tab sits right of Listings and is blue,
+         because it is the one tab that costs money. */
+  const ptCss = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
+  for (const th of ['Free listing', 'Trust Badge', 'Sponsor Banner', 'Locked Position']) {
+    assert.ok(pj.includes(`<th>${th}`), `the Your Listings table lost its ${th} column`);
+  }
+  assert.ok(/class="listings-table pt-ktable"/.test(pj) && /<td class="rank" data-label="#">\$\{i \+ 1\}<\/td>/.test(pj),
+    'Your Listings is not a numbered table');
+  assert.ok(/class="pt-chevron" data-open=/.test(pj) && /class="pt-editor-row"><td colspan="7">\$\{listingEditor\(l\)\}/.test(pj),
+    'a listings row no longer opens into the editor');
+  assert.ok(!/upgradePanel/.test(pj), 'the upgrades panel is back inside Your Listings; it has its own tab now');
   assert.ok(/class="switch pt-list-sw"><input type="checkbox" data-live=/.test(pj) && !/data-pause=/.test(pj), 'the Active / Inactive switch is missing (or Pause / Resume is back)');
-  assert.ok(/data-billing="month"/.test(pj) && /data-billing="year"/.test(pj) && /saving\(u\)/.test(pj) && /pt-upgrade-total/.test(pj), 'the upgrades panel lost the monthly / yearly choice, the saving or the total');
+
+  assert.ok(/class="listings-table pt-uptable"/.test(pj) && /function renderUpgrades/.test(pj), 'the Upgrades tab has no table');
+  assert.ok(/data-up="\$\{l\.id\}" data-kind="\$\{k\}"/.test(pj), 'the Upgrades table lost its per-keyword switches');
+  assert.ok(/data-req-row="\$\{l\.id\}"/.test(pj), 'the Upgrades table lost its Request button');
+  assert.ok(/data-billing="month"/.test(ph) && /data-billing="year"/.test(ph) && /saving\(UPGRADES\.banner\)/.test(pj),
+    'the Upgrades tab lost the monthly / yearly choice or the yearly saving');
+  assert.ok(/id="pt-go-upgrades"/.test(ph) && /activateTab\('upgrades'\)/.test(pj),
+    'Your Listings has no call to action leading to the Upgrades tab');
+  assert.ok(/\.pt-tab-upgrades\{color:#1f5fbf\}/.test(ptCss) && /\.btn-upgrade\{background:#1f5fbf/.test(ptCss),
+    'the Upgrades tab and its buttons are no longer blue, which is what sets them apart');
   assert.ok(/month: BADGE_FEE,\s*year: BADGE_FEE_YEAR/.test(pj) && /month: LOCK_FEE,\s*year: LOCK_FEE_YEAR/.test(pj), 'the upgrade prices do not come from store.js');
   assert.ok(/\[hidden\]\{display:none !important\}/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the hidden attribute can be overridden by display rules (duplicate Request button)');
   const st = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');

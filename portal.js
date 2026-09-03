@@ -392,6 +392,8 @@ function wireTabs(){
        owner who never sees this tab never fetches a row of anyone else's data. */
     if(b.dataset.tab === 'admin' && typeof initAdmin === 'function') initAdmin();
   }));
+  const go = el('pt-go-upgrades');
+  if(go) go.addEventListener('click', () => activateTab('upgrades'));
   el('pt-signout').addEventListener('click', async e => {
     e.preventDefault();
     if(PT_DIRTY && !confirm('You have unsaved profile changes. Sign out and lose them?')) return;
@@ -420,6 +422,7 @@ async function loadCompany(slug){
   wireDirtyTracking();
   markClean();
   renderListings();
+  renderUpgrades();
   renderPromote();
   renderJobs();
 }
@@ -1344,30 +1347,46 @@ async function saveProfile(){
 }
 
 /* ---------- listings ---------- */
-/* The list is just the keywords (Jacob, 2026-09-03): one row each, closed by
-   default. The chevron or Edit opens the whole thing: the listing editor and
-   its upgrades. Approved listings carry an Active / Inactive switch. */
+/* One numbered row per keyword (Jacob, 2026-09-03): the free listing itself,
+   then which paid extras it carries and, for a locked position, which number.
+   A row opens into the listing editor underneath it; buying the extras is the
+   Upgrades tab's job, this table only reports. */
+const TICK = '<span class="tick" aria-label="Yes">&#10003;</span>';
+const DASH = '<span class="dash" aria-label="No">&ndash;</span>';
+
+function listingStatusChip(l){
+  if(l.status !== 'Approved') return `<span class="badge ${l.status === 'Pending' ? 'pending' : ''}">${escapeHtml(l.status)}</span>`;
+  return `<span class="badge ${l.paused ? '' : 'live'}">${l.paused ? 'Inactive' : 'Active'}</span>`;
+}
+
 function renderListings(){
-  const rows = PT.listings.map(l => { const open = PT.editing === l.id; return `
-    <div class="pt-item ${open ? 'is-open' : ''}">
-      <div class="pt-item-head">
-        <div><button type="button" class="pt-chevron" data-open="${l.id}" aria-expanded="${open}" aria-label="${open ? 'Close' : 'Open'} ${escapeHtml(l.keyword || '')}">${open ? '&#9662;' : '&#9656;'}</button>
-          <b>${escapeHtml(l.keyword || '(no keyword)')}</b>
-          <span class="badge ${l.status === 'Approved' ? (l.paused ? '' : 'live') : l.status === 'Pending' ? 'pending' : ''}">${l.status === 'Approved' ? (l.paused ? 'Inactive' : 'Active') : escapeHtml(l.status)}</span>
-          ${l.badge ? `<span class="lb" style="background:${escapeHtml(l.badge.color)}">${escapeHtml(l.badge.text)}</span>` : ''}
-        </div>
-        <div style="display:flex;gap:10px;align-items:center">
-          ${l.status === 'Approved' ? `<label class="switch pt-list-sw"><input type="checkbox" data-live="${l.id}" ${l.paused ? '' : 'checked'}><span class="knob" aria-hidden="true"></span><span class="sw-text">${l.paused ? 'Inactive' : 'Active'}</span></label>` : ''}
-          <button class="mini-btn" data-edit="${l.id}">${open ? 'Close' : 'Edit'}</button>
-        </div>
-      </div>
-      ${open ? listingEditor(l) : ''}
-      ${open && l.status === 'Approved' ? upgradePanel(l) : ''}
-    </div>`; }).join('');
-  el('pt-listings').innerHTML = rows || `<div class="pt-empty">
+  const rows = PT.listings.map((l, i) => { const open = PT.editing === l.id; return `
+    <tr class="pt-krow ${open ? 'is-open' : ''}">
+      <td class="rank" data-label="#">${i + 1}</td>
+      <td data-label="Keyword"><button type="button" class="pt-chevron" data-open="${l.id}" aria-expanded="${open}" aria-label="${open ? 'Close' : 'Open'} ${escapeHtml(l.keyword || '')}">${open ? '&#9662;' : '&#9656;'}</button>
+        <b>${escapeHtml(l.keyword || '(no keyword)')}</b> ${listingStatusChip(l)}</td>
+      <td data-label="Free listing">${TICK}</td>
+      <td data-label="Trust Badge">${l.badge ? `<span class="lb" style="background:${escapeHtml(l.badge.color || '#c9a227')}">${escapeHtml(l.badge.text)}</span>` : DASH}</td>
+      <td data-label="Sponsor Banner">${l.banner ? TICK : DASH}</td>
+      <td data-label="Locked Position">${l.locked_position ? `<b class="pt-pos">#${escapeHtml(String(l.locked_position))}</b>` : DASH}</td>
+      <td class="row-actions" data-label="">
+        ${l.status === 'Approved' ? `<label class="switch pt-list-sw"><input type="checkbox" data-live="${l.id}" ${l.paused ? '' : 'checked'}><span class="knob" aria-hidden="true"></span><span class="sw-text">${l.paused ? 'Inactive' : 'Active'}</span></label>` : ''}
+        <button class="mini-btn" data-edit="${l.id}">${open ? 'Close' : 'Edit'}</button>
+      </td>
+    </tr>
+    ${open ? `<tr class="pt-editor-row"><td colspan="7">${listingEditor(l)}</td></tr>` : ''}`; }).join('');
+
+  el('pt-listings').innerHTML = PT.listings.length ? `<div class="table-wrap"><table class="listings-table pt-ktable">
+      <thead><tr>
+        <th class="rank">#</th><th>Keyword</th><th>Free listing</th>
+        <th>Trust Badge</th><th>Sponsor Banner</th><th>Locked Position</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>` : `<div class="pt-empty">
     <b>No Directory listings yet</b>
-    <p>Ask for one with Get Listed below. Once Circuits.com approves a Circuits-Keyword™ for you, it appears here.</p>
+    <p>Ask for one with Get Listed below. Once Circuits.com approves a Circuits-Keyword\u2122 for you, it appears here.</p>
   </div>`;
+
   const open = PT.listings.find(l => l.id === PT.editing);
   if(open){
     renderRepeater('certs-' + open.id, open.certifications, ['name', 'issuer', 'year'], ['Certification', 'Issuer', 'Year']);
@@ -1377,15 +1396,18 @@ function renderListings(){
   wireListings();
 }
 
-/* Paid extras. Payment is recorded by Circuits.com staff for now, so a click
-   raises a request they see in the console; the price is what they charge.
-   ponytail: no checkout, add Stripe when the volume justifies it. */
+/* ---------- upgrades ---------- */
+/* Paid extras, their own tab (Jacob, 2026-09-03). One row per approved keyword,
+   a switch per extra, priced monthly or yearly, and a Request button that sends
+   everything switched on for that keyword in one go. Payment is recorded by
+   Circuits.com staff, so a request is a message to them, not a checkout.
+   ponytail: no Stripe until the volume justifies it. */
 const UPGRADES = {
   badge:  { name: 'Trust Badge',              why: 'A short label in your colour beside this keyword.', month: BADGE_FEE,  year: BADGE_FEE_YEAR },
   banner: { name: 'Exclusive Sponsor Banner', why: 'Your banner above every result for this keyword.', month: BANNER_FEE, year: BANNER_FEE_YEAR },
   lock:   { name: 'Locked Position',          why: 'Pinned to #1, #2 or #3 instead of rotating.',      month: LOCK_FEE,   year: LOCK_FEE_YEAR }
 };
-/* Monthly or yearly, one choice for the whole dashboard; yearly shows what it saves. */
+/* Monthly or yearly, one choice for the whole tab; yearly shows what it saves. */
 let BILLING = 'month';
 const price = (u, b) => b === 'year' ? `$${u.year}/yr` : `$${u.month}/mo`;
 const saving = u => `save $${u.month * 12 - u.year} a year`;
@@ -1393,47 +1415,126 @@ const BADGE_WORDS = ['Authorized', 'Featured', 'Preferred', 'Specialist'];
 /* The Trust Badge is the one upgrade with attributes: the label and the colour
    are chosen here, travel with the request, and staff approve exactly that. */
 const BADGE_COLORS = [['#c9a227', 'Gold'], ['#b06c22', 'Bronze'], ['#5d6a7e', 'Steel']];
-function badgeRequestForm(l){
-  return `<button class="mini-btn green" data-badge-open="${l.id}">Request</button>
-  <div class="pt-badge-req" id="badge-req-${l.id}" hidden>
-    <select class="up-word" aria-label="Badge wording">${BADGE_WORDS.map(w => `<option>${w}</option>`).join('')}<option value="">Custom</option></select>
-    <input class="up-text" type="text" maxlength="18" placeholder="Your own label" aria-label="Custom badge label" hidden>
-    <select class="up-color" aria-label="Badge colour">${BADGE_COLORS.map(([hex, name]) => `<option value="${hex}">${name}</option>`).join('')}</select>
-    <span class="lb up-preview" style="background:${BADGE_COLORS[0][0]}">${BADGE_WORDS[0]}</span>
-    <button class="mini-btn green" data-request="${l.id}" data-kind="badge">Send request</button>
-  </div>`;
+const LOCK_POSITIONS = ['1', '2', '3'];
+
+/* What each row currently has switched on, kept across re-renders so flipping
+   one switch does not wipe the rest of the row. */
+function pick(id){
+  PT.picks = PT.picks || {};
+  return (PT.picks[id] = PT.picks[id] || { badge: false, banner: false, lock: false, custom: false,
+    badgeText: BADGE_WORDS[0], badgeColor: BADGE_COLORS[0][0], lockPos: LOCK_POSITIONS[0] });
 }
-/* the label the badge form currently spells out */
-function badgeFormValue(box){
-  const word = box.querySelector('.up-word').value;
-  return { text: word || box.querySelector('.up-text').value.trim(), color: box.querySelector('.up-color').value };
-}
-function upgradePanel(l){
-  const mine = (PT.upgrades || []).filter(u => u.application_id === l.id);
-  const pend = new Map(mine.map(u => [u.kind, u]));
+
+function upgradeCell(l, k){
   const has = { badge: !!l.badge, banner: !!l.banner, lock: !!l.locked_position };
-  const requested = k => k === 'badge' && pend.get(k).badge_text
-    ? `<span class="badge pending">Requested</span> <span class="lb" style="background:${escapeHtml(pend.get(k).badge_color || '#c9a227')}">${escapeHtml(pend.get(k).badge_text)}</span>`
-    : '<span class="badge pending">Requested</span>';
-  const on = Object.keys(UPGRADES).filter(k => has[k] || pend.has(k));
-  const total = b => on.reduce((t, k) => t + UPGRADES[k][b], 0);
-  return `<div class="pt-upgrade">
-    <div class="pt-upgrade-head"><b class="pt-upgrade-title">Upgrades on this keyword</b>
-      <div class="search-mode pt-billing" role="tablist" aria-label="Billing">
-        <button type="button" class="${BILLING === 'month' ? 'on' : ''}" data-billing="month" role="tab">Monthly</button>
-        <button type="button" class="${BILLING === 'year' ? 'on' : ''}" data-billing="year" role="tab">Yearly</button>
-      </div></div>
-    ${Object.entries(UPGRADES).map(([k, u]) => `<div class="pt-upgrade-row">
-      <div><b>${u.name}</b> <span class="pt-price">${price(u, BILLING)}</span>${BILLING === 'year' ? ` <span class="pt-save">${saving(u)}</span>` : ''}<p class="pf-note">${u.why}</p></div>
-      ${has[k] ? '<span class="badge live">Active</span>'
-        : pend.has(k) ? requested(k)
-        : k === 'badge' ? badgeRequestForm(l)
-        : `<button class="mini-btn green" data-request="${l.id}" data-kind="${k}">Request</button>`}
-    </div>`).join('')}
-    <div class="pt-upgrade-total"><span>Total for the upgrades that are on or requested</span><b>${BILLING === 'year' ? '$' + total('year') + '/yr' : '$' + total('month') + '/mo'}</b></div>
-    <p class="pf-note" style="margin:8px 0 0">Active is on now. Requested is with us: we email you to confirm before switching it on.${BILLING === 'year' ? ' Yearly is billed once a year.' : ''}</p>
-  </div>`;
+  const pending = (PT.upgrades || []).some(u => u.application_id === l.id && u.kind === k);
+  if(has[k]) return `<span class="badge live">Active</span>${k === 'lock' ? ` <b class="pt-pos">#${escapeHtml(String(l.locked_position))}</b>` : ''}`;
+  if(pending) return '<span class="badge pending">Requested</span>';
+  const p = pick(l.id);
+  const sw = `<label class="switch pt-up-sw"><input type="checkbox" data-up="${l.id}" data-kind="${k}" ${p[k] ? 'checked' : ''}><span class="knob" aria-hidden="true"></span></label>`;
+  if(k === 'badge' && p.badge) return sw + `<span class="pt-up-opts">
+    <select class="up-word" data-up-word="${l.id}" aria-label="Badge wording">${BADGE_WORDS.map(w => `<option ${!p.custom && w === p.badgeText ? 'selected' : ''}>${w}</option>`).join('')}<option value="" ${p.custom ? 'selected' : ''}>Custom</option></select>
+    <input class="up-text" type="text" maxlength="18" placeholder="Your own label" aria-label="Custom badge label" data-up-text="${l.id}" value="${escapeHtml(p.custom ? p.badgeText : '')}" ${p.custom ? '' : 'hidden'}>
+    <select class="up-color" data-up-color="${l.id}" aria-label="Badge colour">${BADGE_COLORS.map(([hex, name]) => `<option value="${hex}" ${hex === p.badgeColor ? 'selected' : ''}>${name}</option>`).join('')}</select>
+    <span class="lb" style="background:${escapeHtml(p.badgeColor)}">${escapeHtml(p.badgeText || 'Your label')}</span></span>`;
+  if(k === 'lock' && p.lock) return sw + `<span class="pt-up-opts">
+    <select class="up-pos" data-up-pos="${l.id}" aria-label="Locked position">${LOCK_POSITIONS.map(n => `<option ${n === p.lockPos ? 'selected' : ''}>#${n}</option>`).join('')}</select></span>`;
+  return sw;
 }
+
+function renderUpgrades(){
+  const live = (PT.listings || []).filter(l => l.status === 'Approved');
+  const waiting = (PT.listings || []).length - live.length;
+  const rowTotal = l => { const p = pick(l.id);
+    return Object.keys(UPGRADES).filter(k => p[k]).reduce((t, k) => t + UPGRADES[k][BILLING], 0); };
+
+  const rows = live.map((l, i) => { const p = pick(l.id), t = rowTotal(l), any = t > 0; return `
+    <tr>
+      <td class="rank" data-label="#">${i + 1}</td>
+      <td data-label="Keyword"><b>${escapeHtml(l.keyword || '(no keyword)')}</b></td>
+      <td data-label="Trust Badge">${upgradeCell(l, 'badge')}</td>
+      <td data-label="Sponsor Banner">${upgradeCell(l, 'banner')}</td>
+      <td data-label="Locked Position">${upgradeCell(l, 'lock')}</td>
+      <td data-label="Price">${any ? `<b>${BILLING === 'year' ? '$' + t + '/yr' : '$' + t + '/mo'}</b>` : DASH}</td>
+      <td class="row-actions" data-label=""><button class="mini-btn btn-upgrade-sm" data-req-row="${l.id}" ${any ? '' : 'disabled'}>Request</button></td>
+    </tr>`; }).join('');
+
+  el('pt-upgrades').innerHTML = (live.length ? `<div class="table-wrap"><table class="listings-table pt-uptable">
+      <thead><tr>
+        <th class="rank">#</th><th>Keyword</th>
+        <th>Trust Badge<span class="th-price">${price(UPGRADES.badge, BILLING)}</span></th>
+        <th>Sponsor Banner<span class="th-price">${price(UPGRADES.banner, BILLING)}</span></th>
+        <th>Locked Position<span class="th-price">${price(UPGRADES.lock, BILLING)}</span></th>
+        <th>Price</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <p class="pf-note pt-up-foot">Nothing is charged here. A request goes to Circuits.com, who confirm by email and take payment before switching it on.${BILLING === 'year' ? ' Yearly is billed once a year, ' + saving(UPGRADES.banner) + ' on the banner alone.' : ''}</p>`
+   : `<div class="pt-empty"><b>No approved keywords to upgrade yet</b>
+      <p>Upgrades attach to a keyword listing. Once Circuits.com approves one, it appears here with its extras.</p></div>`)
+   + (waiting ? `<p class="pf-note">${waiting} keyword${waiting === 1 ? '' : 's'} still waiting on approval; upgrades open up once ${waiting === 1 ? 'it is' : 'they are'} live.</p>` : '');
+
+  wireUpgrades();
+}
+
+function wireUpgrades(){
+  const root = el('pt-upgrades');
+  if(!root) return;
+
+  root.onchange = e => {
+    const sw = e.target.closest('[data-up]');
+    if(sw){ pick(sw.dataset.up)[sw.dataset.kind] = sw.checked; renderUpgrades(); return; }
+    const w = e.target.closest('[data-up-word]');
+    if(w){ const p = pick(w.dataset.upWord); p.custom = w.value === ''; p.badgeText = p.custom ? '' : w.value; renderUpgrades(); return; }
+    const c = e.target.closest('[data-up-color]');
+    if(c){ pick(c.dataset.upColor).badgeColor = c.value; renderUpgrades(); return; }
+    const pos = e.target.closest('[data-up-pos]');
+    if(pos){ pick(pos.dataset.upPos).lockPos = pos.value.replace('#', ''); renderUpgrades(); return; }
+  };
+
+  /* the custom label types straight into the pick, without a re-render that
+     would take the caret with it */
+  root.oninput = e => {
+    const t = e.target.closest('[data-up-text]');
+    if(!t) return;
+    const p = pick(t.dataset.upText);
+    p.badgeText = t.value.trim();
+    const pv = t.parentElement.querySelector('.lb');
+    if(pv) pv.textContent = p.badgeText || 'Your label';
+  };
+
+  root.onclick = async e => {
+    const req = e.target.closest('[data-req-row]');
+    if(!req) return;
+    const id = req.dataset.reqRow, p = pick(id);
+    const kinds = Object.keys(UPGRADES).filter(k => p[k]);
+    if(!kinds.length) return;
+    if(p.badge && !p.badgeText){ toast('Type the label you want on your badge first.', false); return; }
+    req.disabled = true; req.textContent = 'Sending…';
+    const bill = BILLING === 'year' ? 'yearly' : 'monthly';
+    for(const k of kinds){
+      /* upgrade_requests has one free field, so the position rides in the note
+         where staff read it; the badge has columns of its own */
+      const note = k === 'lock' ? bill + ' · position #' + p.lockPos : bill;
+      const badge = k === 'badge' ? { text: p.badgeText, color: p.badgeColor } : null;
+      const err = await requestUpgrade(id, PT.slug, k, note, badge);
+      if(err){ req.disabled = false; req.textContent = 'Request'; toast('Could not send that request: ' + err, false); return; }
+    }
+    PT.picks[id] = null;
+    PT.upgrades = await myUpgradeRequests(PT.slug);
+    renderUpgrades();
+    toast('Requested. We will email you to confirm and take payment.', true);
+  };
+
+  document.querySelectorAll('#tab-upgrades [data-billing]').forEach(b => { b.onclick = () => {
+    BILLING = b.dataset.billing;
+    document.querySelectorAll('#tab-upgrades [data-billing]').forEach(x => {
+      x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b ? 'true' : 'false');
+    });
+    renderUpgrades();
+  }; });
+}
+
 
 /* What the listing looks like to a buyer, shown closed. Suppliers could not see
    their own description or documents from here at all, only the keyword and
@@ -1489,31 +1590,8 @@ function wireListings(){
   const root = el('pt-listings');
 
   root.onclick = async e => {
-    const bill = e.target.closest('[data-billing]');
-    if(bill){ BILLING = bill.dataset.billing; renderListings(); return; }
-
     const edit = e.target.closest('[data-edit], [data-open]');
     if(edit){ const id = edit.dataset.edit || edit.dataset.open; PT.editing = (PT.editing === id) ? null : id; renderListings(); return; }
-
-    const open = e.target.closest('[data-badge-open]');
-    if(open){ const f = el('badge-req-' + open.dataset.badgeOpen); f.hidden = false; open.hidden = true; f.querySelector('.up-text').focus(); return; }
-
-    const req = e.target.closest('[data-request]');
-    if(req){
-      let badge = null;
-      if(req.dataset.kind === 'badge'){
-        const box = req.closest('.pt-badge-req');
-        badge = badgeFormValue(box);
-        if(!badge.text){ toast('Type the label you want on your badge first.', false); box.querySelector('.up-text').focus(); return; }
-      }
-      req.disabled = true;
-      const err = await requestUpgrade(req.dataset.request, PT.slug, req.dataset.kind, BILLING === 'year' ? 'yearly' : 'monthly', badge);
-      if(err){ req.disabled = false; toast('Could not send that request: ' + err, false); return; }
-      PT.upgrades = await myUpgradeRequests(PT.slug);
-      renderListings();
-      toast('Requested. We will email you to confirm and take payment.', true);
-      return;
-    }
 
     if(e.target.closest('[data-cancel]')){ PT.editing = null; renderListings(); return; }
 
@@ -1555,17 +1633,6 @@ function wireListings(){
     if(t.tagName === 'TEXTAREA' && t.id.startsWith('ed-desc-')){
       const c = el('ed-count-' + t.id.slice(8));
       if(c) c.textContent = t.value.length + '/300';
-    }
-    /* live preview of the badge being requested */
-    const box = t.closest('.pt-badge-req');
-    if(box){
-      const custom = box.querySelector('.up-text');
-      custom.hidden = box.querySelector('.up-word').value !== '';
-      const v = badgeFormValue(box);
-      const pv = box.querySelector('.up-preview');
-      pv.textContent = v.text || 'Your label';
-      pv.style.background = v.color;
-      if(!custom.hidden && t.classList.contains('up-word')) custom.focus();
     }
   };
 
