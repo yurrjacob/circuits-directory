@@ -808,6 +808,25 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     'app.js builds and inserts the bell again; that reflows the header after first paint');
   assert.ok(/const btn = bar && bar\.querySelector\('\.inbox-btn'\)/.test(appSrc2),
     'initInbox no longer wires the bell that is already in the header');
+
+  /* --- the Admin badge on the staff queue (Jacob, 2026-09-03) ---
+         Notices the database raises about somebody else's account go only to
+         staff, and carry the same dark pill the Admin tab uses. Two things
+         must hold. The badge is keyed on what the notice IS, not on the grey
+         icon: grey is only the fallback kind, it catches a staff member's own
+         test sends and misses "Recruit waiting for approval", which is amber.
+         And it needs a staff reader, so a company can never be shown one on
+         its own notice. The company's copy of an upgrade request reads
+         "Upgrade request received:", which is why the pattern anchors on the
+         colon and must not be loosened to a bare "Upgrade request". */
+  assert.ok(/const STAFF_QUEUE = \/\^\(New listing request:\|Upgrade request:\|New job post:\|Recruit waiting for approval:\)\//.test(appSrc2),
+    'the staff-queue subjects changed; check them against the notify_ triggers before editing');
+  assert.ok(/isStaff && STAFF_QUEUE\.test\(n\.subject \|\| ''\)/.test(appSrc2),
+    'the Admin badge no longer needs a staff reader, so a company could be told its own notice is admin work');
+  assert.ok(!/STAFF_QUEUE[\s\S]{0,200}kindOf\(n\) === 'note'/.test(appSrc2),
+    'the Admin badge is keyed on the grey icon again; grey is a fallback, not a marker of staff work');
+  assert.ok(/\.inbox-admin\{background:var\(--ink\)/.test(cssSrc2),
+    'the Admin badge no longer uses the dark pill the dashboard Admin tab uses');
   assert.ok(!/nav-join\{display:none\}|\/portal#listings/.test(navSrc2), 'nav.js still hides or reroutes Get Listed when signed in');
   /* the public page: the company row (the page) plus the person's experience */
   assert.ok(/\[co, person\] = await Promise\.all\(\[fetchCompanyByHandle\(handle\), fetchProfileByHandle\(handle\)\]\)/.test(profSrc)

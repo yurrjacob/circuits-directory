@@ -311,7 +311,7 @@ async function initInbox(){
   panel.className = 'inbox-panel'; panel.hidden = true; panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Notifications');
   document.body.appendChild(panel);
 
-  let items = null, open = null;
+  let items = null, open = null, isStaff = false;
   const when = iso => { const d = new Date(iso), days = (Date.now() - d) / 864e5;
     return days < 1 ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : days < 7 ? d.toLocaleDateString([], { weekday: 'short' }) : d.toLocaleDateString(); };
   /* Each kind of notice looks different (Jacob, 2026-09-03): the icon and its
@@ -336,6 +336,23 @@ async function initInbox(){
     return 'note';
   };
   const avatar = n => { const k = KINDS[kindOf(n)]; return `<span class="inbox-avatar k-${kindOf(n)}" title="${k.label}">${k.emoji ? `<span class="inbox-emoji" aria-hidden="true">${k.emoji}</span>` : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${k.path}</svg>`}</span>`; };
+
+  /* The staff queue (Jacob, 2026-09-03): notices raised by the database about
+     somebody else's account, which only Circuits.com staff are sent. They are
+     the ones that arrive with a grey icon, because their wording matches none
+     of the kinds above and grey is the fallback, but grey is not what makes
+     them staff work: a company's own notice falls to grey too if it happens to
+     match nothing. So mark them by what they are, not by their colour.
+
+     Keyed on the subjects the triggers write. "Upgrade request:" is the staff
+     copy; the company's own copy reads "Upgrade request received:" and must
+     not be marked, which is why this anchors on the colon.
+     ponytail: a staff_queue column on notifications would end the word test. */
+  const STAFF_QUEUE = /^(New listing request:|Upgrade request:|New job post:|Recruit waiting for approval:)/i;
+  /* Belt and braces: even if a subject collided, a company is never told one of
+     its own notices is admin work, because the badge needs a staff reader. */
+  const adminBadge = n => (isStaff && STAFF_QUEUE.test(n.subject || ''))
+    ? '<span class="inbox-admin" title="Staff queue: this is for the Circuits.com team, not for your own account.">Admin</span>' : '';
   const badge = () => {
     const n = (items || []).filter(x => !x.read_at).length, b = btn.querySelector('.inbox-n');
     b.textContent = n > 9 ? '9+' : String(n); b.hidden = !n;
@@ -347,7 +364,7 @@ async function initInbox(){
       const n = open;
       panel.innerHTML = `<div class="inbox-head"><button type="button" class="inbox-back" aria-label="Back to notifications">&larr;</button><b>${escapeHtml(n.subject)}</b><button type="button" class="inbox-del" data-del="${escapeHtml(n.id)}">Delete</button></div>
         <div class="inbox-msg">
-          <div class="inbox-from">${avatar(n)}<div><b>${escapeHtml(n.sender_name)}</b><span>${escapeHtml(KINDS[kindOf(n)].label)} · ${escapeHtml(when(n.created_at))}</span></div></div>
+          <div class="inbox-from">${avatar(n)}<div><b>${escapeHtml(n.sender_name)}</b>${adminBadge(n)}<span>${escapeHtml(KINDS[kindOf(n)].label)} · ${escapeHtml(when(n.created_at))}</span></div></div>
           <div class="inbox-body"><p>${escapeHtml(n.body).replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>')}</p></div>
           ${n.link ? `<a class="btn btn-primary inbox-open" href="${escapeHtml(n.link)}">Open</a>` : ''}
         </div>`;
@@ -356,12 +373,19 @@ async function initInbox(){
     panel.innerHTML = `<div class="inbox-head"><b>Notifications</b>${items.some(x => !x.read_at) ? '<button type="button" class="inbox-readall">Mark all read</button>' : ''}</div>` +
       (items.length ? items.map(n => `<div class="inbox-row k-${kindOf(n)}"><button type="button" class="inbox-item${n.read_at ? '' : ' unread'}" data-id="${escapeHtml(n.id)}">
           ${avatar(n)}
-          <span class="inbox-text"><span class="inbox-who"><b>${escapeHtml(n.sender_name)}</b><span>${escapeHtml(when(n.created_at))}</span></span>
+          <span class="inbox-text"><span class="inbox-who"><b>${escapeHtml(n.sender_name)}</b>${adminBadge(n)}<span>${escapeHtml(when(n.created_at))}</span></span>
             <span class="inbox-subject">${escapeHtml(n.subject)}</span>
             <span class="inbox-snip">${escapeHtml(n.body.replace(/\s+/g, ' ').slice(0, 90))}${n.body.length > 90 ? '…' : ''}</span></span>
         </button><button type="button" class="inbox-x" data-del="${escapeHtml(n.id)}" aria-label="Delete notification">&times;</button></div>`).join('') : '<p class="inbox-empty">Nothing here yet.</p>');
   };
-  const load = async () => { items = await fetchNotifications(); badge(); draw(); };
+  /* Both on first open, not on page load: is_staff() is one more round trip and
+     the badge it decides is only ever visible inside the panel. */
+  const load = async () => {
+    const staffAsk = typeof checkStaff === 'function' ? checkStaff().catch(() => false) : Promise.resolve(false);
+    const loaded = await Promise.all([fetchNotifications(), staffAsk]);
+    items = loaded[0]; isStaff = !!loaded[1];
+    badge(); draw();
+  };
   const show = on => { panel.hidden = !on; btn.setAttribute('aria-expanded', on ? 'true' : 'false'); if(!on) open = null; };
 
   btn.addEventListener('click', async () => { if(panel.hidden){ open = null; show(true); draw(); if(items === null) await load(); else draw(); } else show(false); });

@@ -421,8 +421,15 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 .inbox-avatar.k-bad{background:#b3261e}.inbox-avatar.k-good{background:#3f6300}.inbox-avatar.k-wait{background:#b8860b}.inbox-avatar.k-people{background:#1f5fbf}.inbox-avatar.k-note{background:#5d6a7e}
 .inbox-row.k-bad{box-shadow:inset 4px 0 0 #b3261e}.inbox-row.k-good{box-shadow:inset 4px 0 0 #3f6300}.inbox-row.k-wait{box-shadow:inset 4px 0 0 #b8860b}.inbox-row.k-people{box-shadow:inset 4px 0 0 #1f5fbf}.inbox-row.k-note{box-shadow:inset 4px 0 0 #5d6a7e}
 .inbox-text{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
-.inbox-who{display:flex;justify-content:space-between;gap:10px;font-size:.82rem}
+.inbox-who{display:flex;justify-content:space-between;gap:10px;font-size:.82rem;align-items:center}
 .inbox-who span{color:var(--muted);white-space:nowrap}
+/* The staff queue, marked with the dark pill the Admin tab already uses on the
+   dashboard, so the two read as the same thing (Jacob, 2026-09-03). It sits
+   next to the sender and pushes the timestamp to the right on its own. */
+.inbox-admin{background:var(--ink);color:#fff;border-radius:999px;padding:2px 9px;font-size:.66rem;
+  font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;margin-right:auto}
+.inbox-who .inbox-admin{flex:none}
+.inbox-from .inbox-admin{margin:0 0 0 8px;vertical-align:middle}
 .inbox-subject{font-size:.92rem}
 .inbox-snip{font-size:.82rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .inbox-empty{margin:0;padding:22px 14px;color:var(--muted);font-size:.9rem;text-align:center}
