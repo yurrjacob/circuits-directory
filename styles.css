@@ -428,8 +428,11 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
    next to the sender and pushes the timestamp to the right on its own. */
 .inbox-admin{background:var(--ink);color:#fff;border-radius:999px;padding:2px 9px;font-size:.66rem;
   font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;margin-right:auto}
-.inbox-who .inbox-admin{flex:none}
-.inbox-from .inbox-admin{margin:0 0 0 8px;vertical-align:middle}
+/* The badge is a <span>, and both ".inbox-who span" and ".inbox-from span"
+   paint spans muted at a higher specificity than ".inbox-admin" can, so the
+   word came out grey on black. Say white where it outranks them. */
+.inbox-who .inbox-admin{flex:none;color:#fff}
+.inbox-from .inbox-admin{margin:0 0 0 8px;vertical-align:middle;color:#fff}
 .inbox-subject{font-size:.92rem}
 .inbox-snip{font-size:.82rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .inbox-empty{margin:0;padding:22px 14px;color:var(--muted);font-size:.9rem;text-align:center}
