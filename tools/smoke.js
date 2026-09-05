@@ -25,7 +25,11 @@ async function get(pathname) {
 /* Pages that must exist, and something on each that proves it rendered rather
    than merely returning 200 with an error page. */
 const MUST_LOAD = [
-  ['/',                  ['id="home-search"', 'Claim Your Free Directory Listing', 'data-mode="recruiting"']],
+  /* data-mode="recruiting" was the old Directory / Recruiting toggle. It went
+     when the homepage moved to data-target, and the toggle itself went when
+     Recruiting was held back, so this looked for a string that had not been on
+     the page for two rewrites. The form's own target is the stable thing. */
+  ['/',                  ['id="home-search"', 'Claim Your Free Directory Listing', 'data-target="directory"']],
   ['/about',             ['<nav class="nav">']],
   ['/contact',           ['id="contact-form"', 'id="c-email"']],
   ['/join',              ['<nav class="nav">', 'id="join-form"', 'id="promo-check"', 'id="badge-check"']],

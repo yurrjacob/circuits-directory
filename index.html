@@ -81,15 +81,11 @@
     <h1 class="sr-only">Circuits.com: The Circuits Industry Directory for Suppliers, Parts and Engineers</h1>
     <a href="/" class="hero-link"><img class="logo-hero" src="assets/logo-home.png" alt="Circuits.com"><span class="beta-tag">BETA</span></a>
 
-    <!-- One search box, two indexes (Jacob, 2026-09-03: "split the search into
-         Directory and Recruiting"). Directory is parts, services and companies;
-         Recruiting has two sides, Hiring (open roles) and Seeking Employment
-         (people looking). The toggles only change where the query goes. -->
-    <div class="search-mode" role="tablist" aria-label="What to search">
-      <button type="button" class="on" data-target="directory" role="tab" aria-selected="true">Directory</button>
-      <!-- Recruiting is not open yet (Jacob, 2026-09-03): the choice is shown but cannot be picked -->
-      <button type="button" disabled aria-disabled="true" title="Coming soon">Coming Soon</button>
-    </div>
+    <!-- One search box, one index for now (Jacob, 2026-09-03). The Directory /
+         Recruiting toggle is gone: Recruiting is not open, and a strip holding
+         one choice that is already made says nothing. The form keeps
+         data-target="directory", so initHome() routes a search the same way,
+         and the toggle comes back here when Recruiting does. -->
     <form id="home-form" class="searchbox" autocomplete="off" data-target="directory">
       <div class="search-pill">
         <input id="home-search" type="text" placeholder="Search products, services, professionals, education, or keywords..." aria-label="Search">

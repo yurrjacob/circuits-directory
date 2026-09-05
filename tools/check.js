@@ -834,15 +834,17 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     'circuits.com/<name> no longer folds the person\'s experience into the page');
 }
 
-/* --- the search is split: Directory, or Recruiting with two sides (Jacob, 2026-09-03) --- */
+/* --- the homepage searches one index for now (Jacob, 2026-09-03) --- */
 {
   const home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  /* one row (Jacob, 2026-09-03, "how can we make this look better"): Directory, then the
-     Recruiting pair, Hiring and Seeking Employment, in a bracket with a caption */
-  assert.ok(/data-target="directory"[^>]*role="tab"/.test(home), 'the homepage lost the Directory choice');
-  /* Recruiting is not open yet (Jacob, 2026-09-03): a disabled "Coming Soon" stands where Hiring /
-     Seeking Employment go; the routing in app.js stays for launch */
-  assert.ok(/<button type="button" disabled aria-disabled="true"[^>]*>Coming Soon<\/button>/.test(home), 'the homepage lost the disabled Coming Soon choice');
+  /* The Directory / Recruiting toggle is off the homepage: Recruiting is not
+     open, and a strip holding one choice that is already made says nothing.
+     "Coming Soon" went with it rather than advertising a thing that is not
+     there. The form still carries the target, so initHome() routes a search
+     the same way and the toggle can come back when Recruiting does. */
+  assert.ok(/id="home-form"[^>]*data-target="directory"/.test(home), 'the homepage form no longer says which index it searches');
+  assert.ok(!/Coming Soon/i.test(home), 'Coming Soon is back on the homepage');
+  assert.ok(!/class="search-mode"/.test(home), 'the homepage has a search toggle again; it holds one choice until Recruiting opens');
   assert.ok(!/data-target="hiring"|data-target="seeking"/.test(home), 'Hiring / Seeking Employment are reachable from the homepage before launch');
   assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'recruiting-2026-09-03', 'about-recruiting-section.html')), 'the archived About recruiting section is missing');
   assert.ok(!/<h2 class="section-title">Recruiting on Circuits\.com/.test(fs.readFileSync(path.join(ROOT, 'about.html'), 'utf8')), 'the Recruiting section is back on About before launch');
