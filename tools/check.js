@@ -1570,6 +1570,15 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   assert.ok(/class="pt-chevron" data-open=/.test(pj) && /class="pt-editor-row"><td colspan="7">\$\{listingEditor\(l\)\}/.test(pj),
     'a listings row no longer opens into the editor');
   assert.ok(!/upgradePanel/.test(pj), 'the upgrades panel is back inside Your Listings; it has its own tab now');
+  /* both sides of Recruiting sit under the keyword table (Jacob, 2026-09-03):
+     the jobs posted and the person's own listing, each read-only here with a
+     button to the tab that edits it */
+  assert.ok(/id="pt-list-hiring"/.test(ph) && /id="pt-list-seeking"/.test(ph), 'Your Listings lost its Hiring or Seeking Employment section');
+  assert.ok(/async function renderRecruitingListings/.test(pj) && /wireListings\(\);\s*renderRecruitingListings\(\);/.test(pj),
+    'renderListings no longer draws the Hiring and Seeking Employment sections');
+  assert.ok(/go\('hiring', 'Manage'\)/.test(pj) && /go\('hiring', 'Post a Job'\)/.test(pj) && /go\('seeking', 'Edit'\)/.test(pj) && /go\('seeking', 'Post a Resume'\)/.test(pj)
+    && /data-go-tab="\$\{tab\}"/.test(pj) && /activateTab\(b\.dataset\.goTab\)/.test(pj),
+    'the Recruiting sections on Your Listings do not lead to the tabs that edit them');
   assert.ok(/class="switch pt-list-sw"><input type="checkbox" data-live=/.test(pj) && !/data-pause=/.test(pj), 'the Active / Inactive switch is missing (or Pause / Resume is back)');
 
   assert.ok(/class="listings-table pt-uptable"/.test(pj) && /function renderUpgrades/.test(pj), 'the Upgrades tab has no table');

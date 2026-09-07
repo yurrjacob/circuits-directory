@@ -557,6 +557,15 @@ tr.row-warn td{background:#fff3cd}
 .pt-getlisted{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
   margin-top:16px;padding:14px 18px;border-style:solid;background:var(--card)}
 .pt-getlisted,.pt-getlisted div{text-align:left}
+/* the Hiring and Seeking Employment sections under the keyword table */
+.pt-list-rec{margin-top:22px}
+.pt-sub-h{margin:0 0 10px;font-size:1rem;font-weight:800}
+.pt-rtable th:nth-child(2){width:26%}
+.pt-rtable th:nth-child(3){width:16%}
+.pt-rtable th:nth-child(4){width:27%}
+.pt-rtable th:nth-child(5){width:14%}
+.pt-rtable th:nth-child(6){width:12%}
+.btn-sm{padding:7px 14px;font-size:.84rem;border-radius:8px}
 .pt-getlisted p{margin:2px 0 0;font-size:.85rem;color:var(--muted)}
 .pt-getlisted .btn{display:inline-block;margin-top:0;flex:none}
 .pt-recruit-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;align-items:start}

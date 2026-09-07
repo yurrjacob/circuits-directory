@@ -1394,6 +1394,60 @@ function renderListings(){
     renderRepeater('gallery-' + open.id, open.gallery, ['url', 'caption'], ['Image', 'Caption'], ['img', 'text']);
   }
   wireListings();
+  renderRecruitingListings();
+}
+
+/* Both sides of Recruiting on Your Listings (Jacob, 2026-09-03): the jobs
+   this company has posted, and the person's own Seeking Employment listing,
+   in the same numbered-table shape as the keywords above, each with a button
+   to the tab that edits it. Reads, never writes: editing stays on those tabs. */
+async function renderRecruitingListings(){
+  const hire = el('pt-list-hiring'), seek = el('pt-list-seeking');
+  if(!hire || !seek) return;
+  const go = (tab, label) => `<button type="button" class="btn btn-primary btn-sm" data-go-tab="${tab}">${label}</button>`;
+
+  /* ---- Hiring: every job posted, live or not ---- */
+  const jobs = PT.slug ? await myJobs(PT.slug) : [];
+  const jobChip = j => {
+    if(j.closed_at) return '<span class="badge">Paused</span>';
+    const st = jobStateLabel(j);
+    return st ? `<span class="badge ${st.cls}">${escapeHtml(st.text.split('.')[0])}</span>` : '';
+  };
+  hire.innerHTML = `<h3 class="pt-sub-h">Hiring <span class="cell-muted">(${jobs.length})</span></h3>` + (jobs.length
+    ? `<div class="table-wrap"><table class="listings-table pt-ktable pt-rtable">
+        <thead><tr><th class="rank">#</th><th>Job title</th><th>Location</th><th>Keywords</th><th>Status</th><th></th></tr></thead>
+        <tbody>${jobs.map((j, i) => `<tr>
+          <td class="rank" data-label="#">${i + 1}</td>
+          <td data-label="Job title"><b>${escapeHtml(j.title || '(untitled)')}</b></td>
+          <td data-label="Location">${j.location ? escapeHtml(j.location) : DASH}</td>
+          <td data-label="Keywords">${(j.keywords || []).length ? escapeHtml(j.keywords.join(', ')) : DASH}</td>
+          <td data-label="Status">${jobChip(j)}</td>
+          <td class="row-actions" data-label="">${go('hiring', 'Manage')}</td>
+        </tr>`).join('')}</tbody></table></div>`
+    : `<div class="pt-empty pt-getlisted"><div><b>No jobs posted yet</b><p>Post an open role under the Circuits-Keywords&trade; you hire for.</p></div>${go('hiring', 'Post a Job')}</div>`);
+
+  /* ---- Seeking Employment: the one listing the person has ---- */
+  const me = ME || {};
+  const rows = Array.isArray(me.keyword_rows) ? me.keyword_rows.filter(r => r.enabled !== false).map(r => r.keyword) : (me.keywords || []);
+  const has = !!(me.title || me.years != null || rows.length);
+  const state = !me.talent_listed ? { text: 'Off', cls: '' }
+    : me.talent_status === 'Approved' ? { text: 'Listed', cls: 'live' }
+    : me.talent_status === 'Denied' ? { text: 'Not approved', cls: '' }
+    : { text: 'Pending', cls: 'pending' };
+  seek.innerHTML = `<h3 class="pt-sub-h">Seeking Employment</h3>` + (has
+    ? `<div class="table-wrap"><table class="listings-table pt-ktable pt-rtable">
+        <thead><tr><th class="rank">#</th><th>Position desired</th><th>Experience</th><th>Keywords</th><th>Status</th><th></th></tr></thead>
+        <tbody><tr>
+          <td class="rank" data-label="#">1</td>
+          <td data-label="Position desired"><b>${escapeHtml(me.title || 'Circuits industry professional')}</b></td>
+          <td data-label="Experience">${me.years != null ? me.years + ' yr' + (Number(me.years) === 1 ? '' : 's') : DASH}</td>
+          <td data-label="Keywords">${rows.length ? escapeHtml(rows.join(', ')) : DASH}</td>
+          <td data-label="Status"><span class="badge ${state.cls}">${state.text}</span></td>
+          <td class="row-actions" data-label="">${go('seeking', 'Edit')}</td>
+        </tr></tbody></table></div>`
+    : `<div class="pt-empty pt-getlisted"><div><b>Not listed as seeking employment</b><p>Fill in the position you want and the keywords a recruiter would search, and switch the listing on.</p></div>${go('seeking', 'Post a Resume')}</div>`);
+
+  [hire, seek].forEach(box => { box.onclick = e => { const b = e.target.closest('[data-go-tab]'); if(b) activateTab(b.dataset.goTab); }; });
 }
 
 /* ---------- upgrades ---------- */
