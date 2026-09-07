@@ -118,9 +118,17 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
 <input type="checkbox" id="promo-check">
 <div class="promo-body">
 <div class="promo-title">Yes, Showcase My Listing As An Exclusive Sponsor</div>
-<p class="promo-sub" style="margin:4px 0 0">A paid add-on, separate from the free listing. One sponsor per keyword; we confirm availability when we approve.</p>
+<p class="promo-sub" style="margin:4px 0 0">A paid add-on, <b id="p-banner"></b> per keyword, separate from the free listing. One sponsor per keyword; we confirm availability when we approve.</p>
 </div>
 </label>
+<!-- Ticking an extra opens the list of keywords from step 01 right under it
+     (Jacob, 2026-09-03): every keyword is on until switched off, so the extra
+     goes on all of them by default and on exactly the ones you leave on. -->
+<div class="up-kws" id="pick-banner" hidden>
+<span class="field-label">Which keywords get the banner?</span>
+<div class="kw-tags kw-pick" data-pick="banner"></div>
+<p class="field-hint">All of them, unless you switch some off. Add keywords in step 01.</p>
+</div>
 </section>
 
 <section class="step">
@@ -151,27 +159,90 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
 <button type="button" class="swatch" data-color="#b06c22" style="background:linear-gradient(135deg,#d99a52,#b06c22)" aria-label="Bronze"></button>
 <button type="button" class="swatch" data-color="#5d6a7e" style="background:linear-gradient(135deg,#8f9cb0,#5d6a7e)" aria-label="Steel"></button>
 </div>
+<!-- The preview is your row on the results page, built from the same table
+     classes the results page uses, with your own name, logo and contact
+     details, so what you see is what a buyer sees (Jacob, 2026-09-03). -->
 <div class="badge-preview-box" style="margin:14px 0 20px">
 <span class="preview-label">Live Preview</span>
-<div class="preview-stage">
-<span class="co-logo" id="preview-logo" style="background:var(--dark)"></span>
-<span class="preview-name" id="preview-name"></span>
-<span class="lb" id="badge-preview" style="background:#c9a227">Authorized</span>
-</div>
-<p class="preview-hint">This Is How Your Trust Badge Would Look Live!</p>
+<div class="table-wrap preview-row"><table class="listings-table"><tbody><tr>
+<td class="rank" data-label="#">3</td>
+<td><div class="co"><span class="co-logo" id="preview-logo" style="background:var(--dark)"></span><span class="preview-name" id="preview-name"></span><span class="lb" id="badge-preview" style="background:#c9a227">Authorized</span></div></td>
+<td class="cell-muted" data-label="Contact" id="preview-contact"></td>
+<td class="cell-muted" data-label="Phone" id="preview-phone"></td>
+</tr></tbody></table></div>
+<p class="preview-hint">Your row on the results page, as a buyer sees it.</p>
 </div>
 <label class="promo promo-pick">
 <input type="checkbox" id="badge-check">
 <div class="promo-body">
 <div class="promo-title">Yes, Add A Circuits.com Trust Badge To My Listings</div>
-<p class="promo-sub" style="margin:4px 0 0">A paid add-on. The badge you picked above goes on every keyword you claim.</p>
+<p class="promo-sub" style="margin:4px 0 0">A paid add-on, <b id="p-badge"></b> per keyword. The badge you picked above goes on the keywords you choose.</p>
 </div>
 </label>
+<div class="up-kws" id="pick-badge" hidden>
+<span class="field-label">Which keywords get the badge?</span>
+<div class="kw-tags kw-pick" data-pick="badge"></div>
+<p class="field-hint">All of them, unless you switch some off.</p>
+</div>
 </section>
 
 <section class="step">
 <div class="step-head">
 <span class="step-num">04</span>
+<div>
+<h2>Lock Your Position</h2>
+<p>Optional. Results shuffle on every search. A locked position pins you to the spot you choose, every time.</p>
+</div>
+</div>
+<p class="benefits-h">Benefits</p>
+<ul class="promo-benefits" style="margin:0 0 20px">
+<li>Always The Same Spot, However Many Are Listed</li>
+<li>Pick Any Position From #1 To #10</li>
+<li>Held For As Long As Your Subscription Is Active</li>
+</ul>
+<div class="field" style="max-width:240px">
+<label for="lock-pos">Position</label>
+<select id="lock-pos">
+<option value="1">#1</option><option value="2">#2</option><option value="3">#3</option><option value="4">#4</option><option value="5">#5</option>
+<option value="6">#6</option><option value="7">#7</option><option value="8">#8</option><option value="9">#9</option><option value="10">#10</option>
+</select>
+</div>
+<label class="promo promo-pick">
+<input type="checkbox" id="lock-check">
+<div class="promo-body">
+<div class="promo-title">Yes, Lock My Position</div>
+<p class="promo-sub" style="margin:4px 0 0">A paid add-on, <b id="p-lock"></b> per keyword. One company per spot per keyword; we confirm the spot is free when we approve.</p>
+</div>
+</label>
+<div class="up-kws" id="pick-lock" hidden>
+<span class="field-label">Which keywords get the locked position?</span>
+<div class="kw-tags kw-pick" data-pick="lock"></div>
+<p class="field-hint">All of them, unless you switch some off.</p>
+</div>
+</section>
+
+<section class="step">
+<div class="step-head">
+<span class="step-num">05</span>
+<div><h2>Pricing Estimate</h2>
+<p>Listings are free. Each extra is priced per keyword. Nothing is charged now; we confirm by email before anything is billed.</p></div>
+</div>
+<div class="pt-upgrade-head" style="margin:0 0 12px">
+<div class="search-mode pt-billing" role="tablist" aria-label="Billing">
+<button type="button" class="on" data-billing="month" role="tab" aria-selected="true">Monthly</button>
+<button type="button" data-billing="year" role="tab" aria-selected="false">Yearly</button>
+</div>
+<span class="pt-billing-note" id="j-save"></span>
+</div>
+<div class="quote">
+<div class="quote-lines" id="quote-lines"></div>
+<div class="quote-total"><span id="quote-total-label">Estimated monthly total</span><b id="quote-total">$0</b></div>
+</div>
+</section>
+
+<section class="step">
+<div class="step-head">
+<span class="step-num">06</span>
 <div><h2>Have Any Ideas? Tell Us What You're Thinking</h2></div>
 </div>
 <div class="field">
@@ -228,18 +299,42 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
   const logo = isLogoUrl(co.logo) ? `<img src="${escapeHtml(co.logo)}" alt="">` : avatarSvg();
   el('preview-name').textContent = co.name;
   el('preview-logo').innerHTML = logo;
+  el('preview-contact').textContent = co.contact || '';
+  el('preview-phone').textContent = co.phone || '';
+  /* prices come from store.js, the same constants the dashboard bills by */
+  const FEES = { banner: [BANNER_FEE, BANNER_FEE_YEAR], badge: [BADGE_FEE, BADGE_FEE_YEAR], lock: [LOCK_FEE, LOCK_FEE_YEAR] };
+  const NAMES = { banner: 'Exclusive Sponsor Banner', badge: 'Trust Badge', lock: 'Locked Position' };
+  const each = (k, b) => b === 'year' ? '$' + FEES[k][1] + '/yr' : '$' + FEES[k][0] + '/mo';
+  el('p-banner').textContent = each('banner', 'month') + ' or ' + each('banner', 'year');
+  el('p-badge').textContent  = each('badge', 'month')  + ' or ' + each('badge', 'year');
+  el('p-lock').textContent   = each('lock', 'month')   + ' or ' + each('lock', 'year');
   el('bp-logo').innerHTML = logo;
   el('bp-company').textContent = co.name;
   el('bp-message').textContent = co.tagline || co.description || 'Prominent profile description shown to every viewer.';
   el('bp-contact').innerHTML = [co.contact, co.phone, co.email || user.email].filter(Boolean).map(escapeHtml).join('<br>');
 
-  /* keywords */
-  let kws = [];
+  /* keywords, and which of them each extra goes on. A keyword joins every
+     set when it is added, so an extra covers everything by default; the
+     picker under a ticked box is where some are switched off. */
+  let kws = [], BILL = 'month';
+  const picks = { banner: new Set(), badge: new Set(), lock: new Set() };
+  const boxes = { banner: 'promo-check', badge: 'badge-check', lock: 'lock-check' };
   const input = el('kw-input'), tags = el('kw-tags'), err = el('kw-err');
   const say = t => { err.textContent = t; err.style.display = t ? 'block' : 'none'; };
+  const on = k => el(boxes[k]).checked;
+  const drawPicks = () => {
+    for(const k of Object.keys(picks)){
+      const box = el('pick-' + k);
+      box.hidden = !on(k);
+      box.querySelector('.kw-pick').innerHTML = kws.length
+        ? kws.map(w => `<button type="button" class="kw-tag ${picks[k].has(w) ? 'on' : ''}" data-kw="${escapeHtml(w)}" aria-pressed="${picks[k].has(w)}">${escapeHtml(w)}</button>`).join('')
+        : '<span class="pf-note">No keywords yet. Add them in step 01.</span>';
+    }
+  };
   const draw = () => {
     tags.innerHTML = kws.map((k, i) => `<span class="kw-tag"><a class="kw-check-link" href="/results?q=${encodeURIComponent(k)}" target="_blank" rel="noopener">${escapeHtml(k)}</a><button type="button" data-i="${i}" aria-label="Remove">&times;</button></span>`).join('');
     el('kw-count').innerHTML = `<b>${kws.length}</b> of 10 keywords`;
+    drawPicks(); quote();
   };
   const add = () => {
     const k = cleanKw(input.value);
@@ -247,12 +342,50 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
     if(kws.includes(k)){ input.value = ''; return; }
     if(mine.some(l => l.keyword_norm === normKw(k))){ say('You already have a listing for "' + k + '". See it under Your Listings.'); return; }
     if(kws.length >= 10){ say('Ten keywords at a time. Remove one to add another.'); return; }
-    kws.push(k); input.value = ''; say(''); draw(); input.focus();
+    kws.push(k); Object.values(picks).forEach(set => set.add(k));
+    input.value = ''; say(''); draw(); input.focus();
   };
   el('kw-add').addEventListener('click', add);
   input.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); add(); } });
   el('kw-check').addEventListener('click', () => { const k = cleanKw(input.value); if(!k){ input.focus(); return; } window.open('/results?q=' + encodeURIComponent(k), '_blank', 'noopener'); });
-  tags.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; kws.splice(+b.dataset.i, 1); draw(); });
+  tags.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return;
+    const gone = kws.splice(+b.dataset.i, 1)[0]; Object.values(picks).forEach(set => set.delete(gone)); draw(); });
+  /* a tick opens the picker with every keyword on; a keyword chip toggles */
+  for(const k of Object.keys(boxes)) el(boxes[k]).addEventListener('change', () => { if(on(k)) kws.forEach(w => picks[k].add(w)); drawPicks(); quote(); });
+  document.querySelectorAll('.kw-pick').forEach(box => box.addEventListener('click', e => {
+    const b = e.target.closest('[data-kw]'); if(!b) return;
+    const set = picks[box.dataset.pick], w = b.dataset.kw;
+    if(set.has(w)) set.delete(w); else set.add(w);
+    drawPicks(); quote();
+  }));
+  el('lock-pos').addEventListener('change', quote);
+
+  /* the estimate: listings free, each extra per keyword it is on, monthly or
+     yearly, and what yearly saves on the whole */
+  function quote(){
+    const n = kws.length, lines = [];
+    let m = 0, y = 0;
+    lines.push(`<div class="quote-line"><span>Keyword listing${n === 1 ? '' : 's'}</span><span class="quote-each">${n} &times; free</span><b>$0</b></div>`);
+    for(const k of Object.keys(picks)){
+      if(!on(k)) continue;
+      const c = [...picks[k]].filter(w => kws.includes(w)).length;
+      const label = NAMES[k] + (k === 'lock' ? ' #' + el('lock-pos').value : '');
+      m += c * FEES[k][0]; y += c * FEES[k][1];
+      lines.push(`<div class="quote-line"><span>${label}</span><span class="quote-each">${c} &times; ${each(k, BILL)}</span><b>$${c * FEES[k][BILL === 'year' ? 1 : 0]}</b></div>`);
+    }
+    el('quote-lines').innerHTML = lines.join('');
+    el('quote-total-label').textContent = BILL === 'year' ? 'Estimated yearly total' : 'Estimated monthly total';
+    el('quote-total').textContent = '$' + (BILL === 'year' ? y : m) + (BILL === 'year' ? '/yr' : '/mo');
+    const save = m * 12 - y;
+    el('j-save').textContent = save > 0
+      ? (BILL === 'year' ? 'Yearly is saving you $' + save + ' a year' : 'Yearly would save you $' + save + ' a year')
+      : 'Yearly works out to about two months free on every extra';
+  }
+  document.querySelectorAll('[data-billing]').forEach(b => b.addEventListener('click', () => {
+    BILL = b.dataset.billing;
+    document.querySelectorAll('[data-billing]').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b ? 'true' : 'false'); });
+    quote();
+  }));
 
   /* badge builder */
   let badgeText = 'Authorized', badgeColor = '#c9a227';
@@ -275,8 +408,13 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
 
   draw();
 
-  /* submit: one Pending application per keyword, banner and badge riding on
-     each row exactly as the old form did; staff approve and take payment */
+  /* submit: one Pending application per keyword, the banner and badge riding
+     on exactly the rows they were picked for; staff approve and take payment.
+     The locked position cannot ride on the row: applications has a unique
+     index on (keyword, position) with no status filter, so a Pending row at
+     #3 would collide with whoever holds #3 and the whole request would fail.
+     It goes at the top of the message, where staff read it when approving,
+     the same way the dashboard sends it in the request note. */
   el('join-form').addEventListener('submit', async e => {
     e.preventDefault();
     if(input.value.trim()) add();
@@ -284,16 +422,23 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
     if(el('badge-check').checked && !badgeText){ el('badge-custom').focus(); say('Type your custom badge, or pick one of the ready-made ones.'); return; }
     el('terms-err').style.display = el('f-terms').checked ? 'none' : 'block';
     if(!el('f-terms').checked) return;
+    const lockKws = on('lock') ? kws.filter(w => picks.lock.has(w)) : [];
+    const lockNote = lockKws.length ? '[Locked position #' + el('lock-pos').value + ' requested for: ' + lockKws.join(', ') + ']' : '';
     const base = {
       company: co.name, contact: co.contact || '', email: co.email || user.email || '',
       phone: co.phone || '', website: co.website || '', logo: co.logo || '',
       company_slug: co.slug, company_handle: co.handle || null,
-      banner: el('promo-check').checked,
-      badge: el('badge-check').checked ? { text: badgeText, color: badgeColor } : null,
-      message: el('msg').value.trim(), terms: true, status: 'Pending'
+      message: [lockNote, el('msg').value.trim()].filter(Boolean).join('\n\n'), terms: true, status: 'Pending'
     };
+    const rowFor = k => Object.assign({}, base, {
+      banner: el('promo-check').checked && picks.banner.has(k),
+      badge: el('badge-check').checked && picks.badge.has(k) ? { text: badgeText, color: badgeColor } : null
+    });
+    /* keywords that share the same extras go in one insert */
+    const groups = new Map();
+    for(const k of kws){ const key = JSON.stringify([rowFor(k).banner, rowFor(k).badge]); (groups.get(key) || groups.set(key, []).get(key)).push(k); }
     const btn = el('j-submit'); btn.disabled = true; btn.textContent = 'Sending…';
-    try{ await addApplicationKeywords(base, kws); }
+    try{ for(const group of groups.values()) await addApplicationKeywords(rowFor(group[0]), group); }
     catch(ex){ btn.disabled = false; btn.textContent = 'Submit Request'; say((ex && ex.message) || 'Could not send that just now. Try again in a moment.'); return; }
     notifyListingRequest(base.email, base.company);
     el('join-form').style.display = 'none';

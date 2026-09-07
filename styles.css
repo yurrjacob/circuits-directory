@@ -305,6 +305,17 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 .promo-pick{border:1px solid #c9ced6;background:#f6f8fa}
 .promo-pick input{accent-color:var(--green)}
 .promo-pick:has(input:checked){border-color:var(--green);background:#f1fae0}
+/* the keyword picker that opens under a ticked extra (Jacob, 2026-09-03):
+   chips are buttons, on by default, dimmed when switched off */
+.up-kws{margin:12px 0 0;padding:14px 16px;border:1px dashed #c9ced6;border-radius:10px;background:var(--card)}
+.up-kws .field-label{display:block;margin-bottom:8px}
+.kw-pick .kw-tag{cursor:pointer;font:inherit;font-size:.88rem;font-weight:600;opacity:.5;background:#f1f3f5;border-color:var(--line);color:var(--muted);transition:.12s}
+.kw-pick .kw-tag.on{opacity:1;background:#f1fae0;border-color:var(--green);color:#2f4a00}
+.kw-pick .kw-tag:hover{opacity:1}
+/* the badge preview is a real results row */
+.preview-row{margin-top:12px}
+.preview-row .listings-table td{padding:13px 16px}
+.preview-row .preview-name{font-size:1.02rem;font-weight:700;color:var(--ink)}
 .promo-gold:hover{box-shadow:0 0 0 3px rgba(154,164,174,.28)}
 .promo-gold input{accent-color:#7d8894}
 /* uploaded logo inside preview boxes */

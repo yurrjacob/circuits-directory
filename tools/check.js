@@ -1073,26 +1073,45 @@ const joinHtml = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
 
 /* --- Get Listed needs an account, and is THE way to get listings (Jacob, 2026-09-03) ---
        Signed out, /join goes to /register. Signed in, it is the Get Listed page:
-       up to 10 free keywords, the Exclusive Sponsor Banner and the Trust Badge
-       (label + colour) per keyword with a price estimate, filed as Pending
-       applications with the company details from the account. Confirming
-       your email lands here. The anonymous MVP1 form is in backups/join-2026-09-03/. */
+       up to 10 free keywords, then three extras, the Exclusive Sponsor Banner,
+       the Trust Badge (label + colour) and a Locked Position (#1 to #10), each
+       priced per keyword. Ticking an extra opens a picker of the keywords it
+       goes on, all on by default. A monthly / yearly estimate with the saving
+       sits above the message. Filed as Pending applications with the company
+       details from the account. Confirming your email lands here. The
+       anonymous MVP1 form is in backups/join-2026-09-03/. */
 assert.ok(!/id="f-company"|id="f-email"/.test(joinHtml), 'the Get Listed page asks for company details again, they come from the account');
 assert.ok(/if\(!user\)\{ location\.replace\('\/register'\); return; \}/.test(joinHtml), '/join no longer asks a signed-out visitor to register');
-for (const id of ['kw-input', 'kw-check', 'kw-add', 'kw-tags', 'promo-check', 'badge-check', 'badge-opts', 'badge-custom', 'swatches', 'bp-logo', 'bp-company', 'bp-contact', 'badge-preview', 'msg', 'f-terms']) {
+for (const id of ['kw-input', 'kw-check', 'kw-add', 'kw-tags', 'promo-check', 'badge-check', 'lock-check', 'lock-pos', 'badge-opts', 'badge-custom', 'swatches',
+                  'bp-logo', 'bp-company', 'bp-contact', 'badge-preview', 'preview-contact', 'preview-phone',
+                  'pick-banner', 'pick-badge', 'pick-lock', 'quote-lines', 'quote-total', 'j-save', 'p-banner', 'p-badge', 'p-lock', 'msg', 'f-terms']) {
   assert.ok(joinHtml.includes(`id="${id}"`), `the Get Listed page lost ${id}`);
 }
-/* no prices on Get Listed (Jacob, 2026-09-03); both previews and the badge
-   builder show before the box is ticked; a ticked box turns green */
-assert.ok(!/\$\d|_FEE|quote-/.test(joinHtml), 'Get Listed shows prices again');
+/* prices on every extra and a total, monthly or yearly with the saving, from
+   the same constants the dashboard bills by (Jacob, 2026-09-03) */
+assert.ok(/BANNER_FEE_YEAR/.test(joinHtml) && /BADGE_FEE_YEAR/.test(joinHtml) && /LOCK_FEE_YEAR/.test(joinHtml), 'the Get Listed prices do not come from store.js');
+assert.ok(/data-billing="month"/.test(joinHtml) && /data-billing="year"/.test(joinHtml) && /Yearly would save you \$/.test(joinHtml), 'Get Listed lost the monthly / yearly choice or the saving');
 assert.ok(!/assessed you/.test(joinHtml), 'the badge disclaimer is back on Get Listed');
 assert.ok(!/id="badge-builder"/.test(joinHtml) && joinHtml.indexOf('id="badge-preview"') < joinHtml.indexOf('id="badge-check"') && joinHtml.indexOf('id="bp-company"') < joinHtml.indexOf('id="promo-check"'),
   'the previews must show before the boxes, not behind them');
-assert.ok(/\.promo-pick:has\(input:checked\)\{border-color:var\(--green\)/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')) && (joinHtml.match(/class="promo promo-pick"/g) || []).length === 2,
-  'a ticked add-on box does not turn green');
-assert.ok(/banner: el\('promo-check'\)\.checked/.test(joinHtml) && /badge: el\('badge-check'\)\.checked \? \{ text: badgeText, color: badgeColor \} : null/.test(joinHtml),
-  'the banner and badge no longer ride on the application rows');
-assert.ok(/addApplicationKeywords\(base, kws\)/.test(joinHtml) && /notifyListingRequest\(base\.email, base\.company\)/.test(joinHtml), 'Get Listed does not file the request or email a copy');
+/* the badge preview is the real results row, not a mock-up */
+assert.ok(/class="table-wrap preview-row"><table class="listings-table">/.test(joinHtml), 'the badge preview is no longer drawn as a results row');
+assert.ok(/\.promo-pick:has\(input:checked\)\{border-color:var\(--green\)/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')) && (joinHtml.match(/class="promo promo-pick"/g) || []).length === 3,
+  'a ticked add-on box does not turn green, or there are not three of them (banner, badge, locked position)');
+/* a locked position is any of #1 to #10 */
+assert.strictEqual((joinHtml.match(/<option value="\d+">#\d+<\/option>/g) || []).length, 10, 'the locked position select does not offer #1 to #10');
+/* ticking an extra opens the keyword picker under it, everything on by default */
+assert.ok(/kws\.forEach\(w => picks\[k\]\.add\(w\)\)/.test(joinHtml) && /Object\.values\(picks\)\.forEach\(set => set\.add\(k\)\)/.test(joinHtml),
+  'a keyword is not switched on for every extra by default');
+/* the banner and badge ride on exactly the rows they were picked for */
+assert.ok(/banner: el\('promo-check'\)\.checked && picks\.banner\.has\(k\)/.test(joinHtml) && /badge: el\('badge-check'\)\.checked && picks\.badge\.has\(k\) \? \{ text: badgeText, color: badgeColor \} : null/.test(joinHtml),
+  'the banner and badge no longer ride on the application rows they were picked for');
+/* the locked position must NOT ride on the row: applications_locked_position_uniq
+   is unique on (keyword_norm, locked_position) with no status filter, so a
+   Pending row at #3 would collide with the holder of #3 and fail the insert */
+assert.ok(!/locked_position:/.test(joinHtml) && /Locked position #' \+ el\('lock-pos'\)\.value \+ ' requested for: /.test(joinHtml),
+  'the locked position is written onto the application row; it must travel in the message for staff');
+assert.ok(/addApplicationKeywords\(rowFor\(group\[0\]\), group\)/.test(joinHtml) && /notifyListingRequest\(base\.email, base\.company\)/.test(joinHtml), 'Get Listed does not file the request or email a copy');
 assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'join-2026-09-03', 'join.html')), 'the old Get Listed form backup is missing');
 assert.ok(/emailRedirectTo: location\.origin \+ '\/join'/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8').slice(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8').indexOf('async function registerProfile'))),
   'confirming a new account no longer lands on Get Listed');
