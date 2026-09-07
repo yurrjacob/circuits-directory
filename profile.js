@@ -143,8 +143,8 @@ async function initProfile(){
   }
 
   const slug = co.slug;   // internal key: everything else still hangs off this
-  const [kws, staffRun] = await Promise.all([
-    fetchCompanyKeywords(slug), companyRunByStaff(slug)
+  const [kws, staffRun, jobs] = await Promise.all([
+    fetchCompanyKeywords(slug), companyRunByStaff(slug), fetchCompanyJobs(slug)
   ]);
   /* Buyer reviews are off the site (Jacob, 2026-09-03). The rows, reviewForm()
      and submitReview stay dormant in case they come back. */
@@ -267,6 +267,15 @@ async function initProfile(){
       <h2 class="pf-sec-h"><a href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}" class="tc">${escapeHtml(k.keyword)}</a>${k.banner ? ' ★' : ''}${badgeHtml(k.badge, 'kw-lb')}</h2>
       ${inner}</section>`;
   }
+
+  /* ---- Hiring: the live roles this company has posted (Jacob, 2026-09-03:
+     "add any jobs posted to the profile"). Each links to the Hiring board. ---- */
+  if(jobs.length) html += section('Hiring', `<div class="pf-jobs">${jobs.map(j => `
+      <div class="pf-job">
+        <div><b>${escapeHtml(j.title)}</b>${j.location ? ` <span class="pf-note">${escapeHtml(j.location)}</span>` : ''}
+          ${(j.keywords || []).length ? `<div class="kw-tags">${j.keywords.map(k => `<a class="kw-tag" href="/jobs?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join('')}</div>` : ''}</div>
+        <a class="mini-btn" href="/jobs?q=${encodeURIComponent((j.keywords || [])[0] || j.title)}">View on the Hiring board</a>
+      </div>`).join('')}</div>`);
 
   /* ---- the person behind the account: experience from the Seeking
      Employment tab, public bits only (name and picture are the page's own) ---- */

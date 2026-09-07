@@ -664,6 +664,18 @@ async function myJobs(slug){
   if(error){ console.error('myJobs', error); return []; }
   return (data || []).map(j => ({ ...j, keywords: (j.job_keywords || []).map(k => k.keyword).sort() }));
 }
+/* the live jobs one company has posted, for its public page (Jacob,
+   2026-09-03). Live means paid and open; the read policy already limits an
+   anonymous reader to exactly that, the filter here keeps the owner's own
+   view of the page honest too. */
+async function fetchCompanyJobs(slug){
+  if(!sb || !slug) return [];
+  const { data, error } = await sb.from('jobs').select('id, title, location, created_at, job_keywords(keyword)')
+    .eq('company_slug', slug).is('closed_at', null).gt('paid_until', new Date().toISOString())
+    .order('created_at', { ascending: false });
+  if(error){ console.error('fetchCompanyJobs', error); return []; }
+  return (data || []).map(j => ({ ...j, keywords: (j.job_keywords || []).map(k => k.keyword).sort() }));
+}
 /* the public board: live jobs under a keyword, or every live job when blank */
 async function jobSearch(keyword){
   if(!sb) throw new Error('no connection');

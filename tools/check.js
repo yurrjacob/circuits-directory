@@ -178,9 +178,12 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
     const links = strip.match(/href="([^"]+)"/g) || [];
     assert.ok(links.length >= 10, 'the Popular line lost most of its suggestions');
     for (const l of links) {
-      assert.ok(/href="\/results\?q=/.test(l),
+      /* a Directory search, or a Recruiting one on /jobs or /talent (Jacob,
+         2026-09-03: three recruiting terms in the line); never a page */
+      assert.ok(/href="\/(results|jobs|talent)\?q=/.test(l),
         `the Popular line links to ${l}, every item must run a search, not open a page`);
     }
+    assert.strictEqual((strip.match(/class="pop-rec"/g) || []).length, 3, 'the Popular line should carry exactly three recruiting terms');
     assert.ok(!/All Categories/.test(strip),
       'the Popular line still offers All Categories, and there is no category page');
   }
@@ -689,7 +692,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
                     'f-founded', 'f-employees', 'f-desc', 'f-socials', 'pt-logo']) {
     assert.ok(portalHtml.includes(`id="${id}"`), `the profile form lost ${id} in the tab merge`);
   }
-  assert.strictEqual((portalHtml.match(/class="btn btn-primary pt-save"/g) || []).length, 1,
+  assert.strictEqual((portalHtml.match(/class="btn btn-primary pt-save(?: pt-save-big)?"/g) || []).length, 1,
     'the merged profile tab should have exactly one Save profile button');
   const portalJs = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
   for (const need of ["'certs-' + open.id", 'showcaseProblem(certifications, team)', 'class="pt-edit-grid"', 'class="pt-folds"']) {
@@ -842,10 +845,19 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
      "Coming Soon" went with it rather than advertising a thing that is not
      there. The form still carries the target, so initHome() routes a search
      the same way and the toggle can come back when Recruiting does. */
+  /* Recruiting is open from the homepage again (Jacob, 2026-09-03, "so that
+     users can choose between searching for jobs and for workers"): Directory,
+     Hiring and Seeking Employment, three plain choices in one pill. */
   assert.ok(/id="home-form"[^>]*data-target="directory"/.test(home), 'the homepage form no longer says which index it searches');
   assert.ok(!/Coming Soon/i.test(home), 'Coming Soon is back on the homepage');
-  assert.ok(!/class="search-mode"/.test(home), 'the homepage has a search toggle again; it holds one choice until Recruiting opens');
-  assert.ok(!/data-target="hiring"|data-target="seeking"/.test(home), 'Hiring / Seeking Employment are reachable from the homepage before launch');
+  for (const t of ['directory', 'hiring', 'seeking']) {
+    assert.ok(new RegExp(`class="search-mode"[\\s\\S]*?data-target="${t}"[^>]*role="tab"`).test(home), `the homepage search toggle lost ${t}`);
+  }
+  assert.ok(!/search-group|search-side|data-mode=/.test(home), 'an old homepage toggle layout is back');
+  /* and the three doors under it: Post a Job, the free listing, Post a Resume,
+     the sides opening the dashboard on the tab that does that */
+  assert.ok(/href="\/portal#hiring"[^>]*>Post a Job</.test(home) && /href="\/portal#seeking"[^>]*>Post a Resume</.test(home)
+    && /class="claim-cta claim-cta-row"/.test(home), 'the homepage lost Post a Job / Post a Resume beside the free listing button');
   assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'recruiting-2026-09-03', 'about-recruiting-section.html')), 'the archived About recruiting section is missing');
   assert.ok(!/<h2 class="section-title">Recruiting on Circuits\.com/.test(fs.readFileSync(path.join(ROOT, 'about.html'), 'utf8')), 'the Recruiting section is back on About before launch');
   const appHome = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');

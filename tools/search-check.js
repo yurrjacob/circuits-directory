@@ -200,10 +200,11 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   /* --- and every listing is numbered --- */
   assert.ok(/class="rank"[^>]*>1</.test(captured), 'listings are not numbered');
 
-  /* --- the sponsor is the banner, and is NOT also a row ---
-     Paying for the banner buys prominence, not a second appearance. Showing
-     both is the kind of duplicate that makes a directory look padded, and it
-     is what the sponsor is explicitly no longer supposed to get. */
+  /* --- the sponsor is the banner AND a row (Jacob, 2026-09-03) ---
+     "Users should still be listed on the main list if they have a banner."
+     The banner is the paid placement above the results; the row is the free
+     listing every company keeps, so buying the banner must not cost the
+     sponsor its place in the list it paid to stand above. */
   listingsToReturn = [
     { company: 'Sponsor Co', company_handle: 'sponsorco', keyword: 'oscillators',
       contact: 'Lee', phone: '(555) 9', email: 's@b.co', docs: [], banner: true, description: 'x' },
@@ -216,15 +217,14 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
 
   assert.ok(/Exclusive Sponsor/.test(captured), 'the sponsor banner stopped rendering');
   const tbody = captured.slice(captured.indexOf('<tbody>'));
-  assert.ok(!/Sponsor Co/.test(tbody),
-    'the Exclusive Sponsor is still listed in the table as well as in the banner, it is shown twice');
+  assert.ok(/Sponsor Co/.test(tbody),
+    'the Exclusive Sponsor was dropped from the list; buying the banner must not cost a company its free row');
   assert.ok(/Acme/.test(tbody) && /Bell/.test(tbody), 'the ordinary listings stopped rendering');
 
-  /* numbering runs over what is actually in the list, so pulling the sponsor
-     out must not leave a gap at the top */
+  /* numbering runs over what is actually in the list, all three of them */
   const ranks = [...tbody.matchAll(/class="rank"[^>]*>(\d+)</g)].map(m => m[1]);
-  assert.deepStrictEqual(ranks, ['1', '2'],
-    `the list is numbered ${ranks.join(',')}, removing the sponsor left a hole in the sequence`);
+  assert.deepStrictEqual(ranks, ['1', '2', '3'],
+    `the list is numbered ${ranks.join(',')}, expected the sponsor and both ordinary rows`);
 
   /* the sponsor banner shows the supplier's own contact details (no quote button) */
   assert.ok(/premium-contact[\s\S]*?mailto:s@b\.co/.test(captured),
@@ -235,5 +235,5 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
   assert.ok(!/Own the Exclusive Sponsor Banner|Get Listed For|John Doe|View Docs/.test(captured),
     'the example banner or Get Listed button is showing on a keyword that already has a sponsor');
 
-  console.log('search results OK, banner pitch on empty and unsponsored lists, numbered rows, sponsor not listed twice');
+  console.log('search results OK, banner pitch on empty and unsponsored lists, numbered rows, sponsor in the list as well as the banner');
 })();

@@ -69,6 +69,7 @@ function checkProfile(){
   baseGlobals(captured);
   global.fetchCompanyByHandle = DEAD;
   global.fetchProfileByHandle = DEAD;
+  global.fetchCompanyJobs = async () => [];
   global.fetchCompanyKeywords = async () => [];
   global.fetchReviews = async () => [];
   global.companyClaimed = async () => true;

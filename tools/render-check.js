@@ -55,6 +55,7 @@ global.fetchTalentKeywords = async () => ['rf design'];
 global.fetchCompanyKeywords = async () => KWS;
 global.fetchReviews = async () => ([{ application_id:'l1', rating:5, author_name:'Bob', body:'Great', reply:'Thanks', created_at:'2026-08-01T00:00:00Z' }]);
 global.companyClaimed = async () => true;
+global.fetchCompanyJobs = async () => [];
 global.companyRunByStaff = async () => false;
 
 let captured = '';

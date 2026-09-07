@@ -56,7 +56,7 @@
 
   <header class="topbar">
     <div class="inner">
-      <div class="brand"><a href="/"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-slogan">Connecting The Circuits Industry</span></div>
+      <div class="brand"><a href="/"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-slogan">Free Circuits Directory Marketplace</span></div>
     <nav class="nav">
       <a class="active" href="/">Home</a>
       <a href="/about">About</a>
@@ -81,14 +81,19 @@
     <h1 class="sr-only">Circuits.com: The Circuits Industry Directory for Suppliers, Parts and Engineers</h1>
     <a href="/" class="hero-link"><img class="logo-hero" src="assets/logo-home.png" alt="Circuits.com"><span class="beta-tag">BETA</span></a>
 
-    <!-- One search box, one index for now (Jacob, 2026-09-03). The Directory /
-         Recruiting toggle is gone: Recruiting is not open, and a strip holding
-         one choice that is already made says nothing. The form keeps
-         data-target="directory", so initHome() routes a search the same way,
-         and the toggle comes back here when Recruiting does. -->
+    <!-- One search box, three indexes (Jacob, 2026-09-03, "so that users can
+         choose between searching for jobs and for workers"). Directory is
+         parts, services and companies; Hiring is the open roles on /jobs;
+         Seeking Employment is the people on /talent. The buttons only change
+         where the query goes. -->
+    <div class="search-mode" role="tablist" aria-label="What to search">
+      <button type="button" class="on" data-target="directory" role="tab" aria-selected="true">Directory</button>
+      <button type="button" data-target="hiring" role="tab" aria-selected="false">Hiring</button>
+      <button type="button" data-target="seeking" role="tab" aria-selected="false">Seeking Employment</button>
+    </div>
     <form id="home-form" class="searchbox" autocomplete="off" data-target="directory">
       <div class="search-pill">
-        <input id="home-search" type="text" placeholder="Search products, services, professionals, education, or keywords..." aria-label="Search">
+        <input id="home-search" type="text" placeholder="Search products, services, professionals, recruiting, or keywords..." aria-label="Search">
         <button type="submit" class="search-go" aria-label="Search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
       </div>
       <p class="search-hint" id="search-hint" hidden></p>
@@ -104,13 +109,18 @@
       <a href="/results?q=oscillators">Oscillators</a>&middot;
       <a href="/results?q=voltage+regulators">Voltage Regulators</a>&middot;
       <a href="/results?q=rf+transceivers">RF Transceivers</a>&middot;
-      <a href="/results?q=test+equipment">Test Equipment</a>&middot;
-      <a href="/results?q=ic+packaging">IC Packaging</a>&middot;
-      <a href="/results?q=clock+generators">Clock Generators</a>&middot;
-      <a href="/results?q=motion+control+ics">Motion Control ICs</a>
+      <a href="/results?q=motion+control+ics">Motion Control ICs</a>&middot;
+      <a class="pop-rec" href="/jobs?q=engineer">Engineer Jobs</a>&middot;
+      <a class="pop-rec" href="/jobs?q=developer">Developer Jobs</a>&middot;
+      <a class="pop-rec" href="/talent?q=consultant">Consultants</a>
     </div>
-    <div class="claim-cta">
+    <!-- Three doors, one row (Jacob, 2026-09-03): the free listing in the
+         middle, and the two sides of Recruiting either side of it, each
+         opening the dashboard on the tab that does that. -->
+    <div class="claim-cta claim-cta-row">
+      <a class="btn btn-outline btn-side" href="/portal#hiring">Post a Job</a>
       <a class="btn btn-primary" href="/join">Claim Your Free Directory Listing</a>
+      <a class="btn btn-outline btn-side" href="/portal#seeking">Post a Resume</a>
     </div>
   </main>
 

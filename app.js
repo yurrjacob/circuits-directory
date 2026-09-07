@@ -11,7 +11,7 @@ function gotoSearch(term){
    searches the supplier directory; the Recruiting pair, Hiring (open roles on
    /jobs) and Seeking Employment (people on /talent), sits under one caption. */
 const HOME_PLACEHOLDER = {
-  directory: 'Search products, services, professionals, education, or keywords...',
+  directory: 'Search products, services, professionals, recruiting, or keywords...',
   hiring:    'Search open roles by title or keyword...',
   seeking:   'Search people by position or keyword...'
 };
@@ -653,11 +653,13 @@ async function initResults(forcedTerm){
      empty page are not Google's business. */
   setResultsMeta(q, listings.some(l => !/^sample-/.test(l.company_slug || '')));
 
-  /* The Exclusive Sponsor is lifted OUT of the list, not shown twice. While the
-     banner is being paid for, that company IS the banner; when it lapses the
-     row goes back into the list like any other. */
+  /* The Exclusive Sponsor is the banner AND a row in the list (Jacob,
+     2026-09-03: "users should still be listed on the main list if they have a
+     banner"). The banner is the paid placement above the results; the row is
+     the free listing every company keeps, so a sponsor is not dropped from
+     the list they paid to stand above. */
   const featured = listings.find(l => l.banner);
-  const listed = listings.filter(l => !l.banner);
+  const listed = listings.slice();
   /* Every load deals the list in a fresh random order (Jacob, 2026-09-01), the "#" is just the row's place today, not a rank. Fisher-Yates, because
      sort(() => Math.random() - .5) is biased. */
   for(let i = listed.length - 1; i > 0; i--){

@@ -1403,9 +1403,12 @@ function renderListings(){
    Circuits.com staff, so a request is a message to them, not a checkout.
    ponytail: no Stripe until the volume justifies it. */
 const UPGRADES = {
-  badge:  { name: 'Trust Badge',              why: 'A short label in your colour beside this keyword.', month: BADGE_FEE,  year: BADGE_FEE_YEAR },
-  banner: { name: 'Exclusive Sponsor Banner', why: 'Your banner above every result for this keyword.', month: BANNER_FEE, year: BANNER_FEE_YEAR },
-  lock:   { name: 'Locked Position',          why: 'Pinned to #1, #2 or #3 instead of rotating.',      month: LOCK_FEE,   year: LOCK_FEE_YEAR }
+  badge:  { name: 'Trust Badge',              why: 'A short label in your colour beside this keyword.', month: BADGE_FEE,  year: BADGE_FEE_YEAR,
+            use: 'For a keyword where buyers compare several suppliers at once: a word like Authorized or Specialist beside your name says why to pick you before they read further.' },
+  banner: { name: 'Exclusive Sponsor Banner', why: 'Your banner above every result for this keyword.', month: BANNER_FEE, year: BANNER_FEE_YEAR,
+            use: 'For the keyword that brings you the most enquiries: your logo, pitch and contact details sit above every result, and there is only one sponsor per keyword.' },
+  lock:   { name: 'Locked Position',          why: 'Pinned to a spot from #1 to #10 instead of rotating.', month: LOCK_FEE, year: LOCK_FEE_YEAR,
+            use: 'For a crowded keyword: results shuffle on every search, so a locked spot means you are always at the number you chose, however many others are listed.' }
 };
 /* Monthly or yearly, one choice for the whole tab; yearly shows what it saves. */
 let BILLING = 'month';
@@ -1416,12 +1419,13 @@ const saving = u => `save $${u.month * 12 - u.year} a year`;
 const savingShort = u => `save $${u.month * 12 - u.year}`;
 /* a heading is the extra's name, its price on the billing currently chosen,
    and, on yearly, what choosing yearly saves on that one extra */
-const upHead = (label, u) => `<th>${label}<span class="th-price">${price(u, BILLING)}${BILLING === 'year' ? ` <span class="th-save">${savingShort(u)}</span>` : ''}</span></th>`;
+const helpHtml = u => `<span class="th-help" tabindex="0" role="note" aria-label="${escapeHtml(u.use)}">?<span class="th-tip">${escapeHtml(u.use)}</span></span>`;
+const upHead = (label, u) => `<th>${label}${helpHtml(u)}<span class="th-price">${price(u, BILLING)}${BILLING === 'year' ? ` <span class="th-save">${savingShort(u)}</span>` : ''}</span></th>`;
 const BADGE_WORDS = ['Authorized', 'Featured', 'Preferred', 'Specialist'];
 /* The Trust Badge is the one upgrade with attributes: the label and the colour
    are chosen here, travel with the request, and staff approve exactly that. */
 const BADGE_COLORS = [['#c9a227', 'Gold'], ['#b06c22', 'Bronze'], ['#5d6a7e', 'Steel']];
-const LOCK_POSITIONS = ['1', '2', '3'];
+const LOCK_POSITIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 
 /* What each row currently has switched on, kept across re-renders so flipping
    one switch does not wipe the rest of the row. */
@@ -1497,7 +1501,8 @@ function renderUpgrades(){
     </table></div>
     <p class="pf-note pt-up-foot">Nothing is charged here. A request goes to Circuits.com, who confirm by email and take payment before switching it on.${BILLING === 'year' ? ' Yearly is billed once a year.' : ''}</p>`
    : `<div class="pt-empty"><b>No approved keywords to upgrade yet</b>
-      <p>Upgrades attach to a keyword listing. Once Circuits.com approves one, it appears here with its extras.</p></div>`)
+      <p>Upgrades attach to a keyword listing. Once Circuits.com approves one, it appears here with its extras.</p>
+      <a class="btn btn-primary" href="/join" style="display:inline-block;margin-top:12px">Get Listed</a></div>`)
    + (waiting ? `<p class="pf-note">${waiting} keyword${waiting === 1 ? '' : 's'} still waiting on approval; upgrades open up once ${waiting === 1 ? 'it is' : 'they are'} live.</p>` : '');
 
   wireUpgrades();

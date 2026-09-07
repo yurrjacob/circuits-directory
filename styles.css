@@ -136,6 +136,17 @@ img{max-width:100%}
 .claim-line a{color:var(--green-dark);text-decoration:none;font-weight:700}
 .claim-line a:hover{text-decoration:underline}
 .claim-cta{margin-top:30px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+/* the three-button row: slid down a little, the sides matched in size to each
+   other and to the middle button's height (Jacob, 2026-09-03) */
+.claim-cta-row{flex-direction:row;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:44px}
+.claim-cta-row .btn{display:inline-flex;align-items:center;justify-content:center;padding:13px 30px;font-size:1rem;font-weight:700;border-radius:10px;min-height:50px}
+.claim-cta-row .btn-side{min-width:200px}
+.btn-outline{background:var(--card);border:2px solid var(--green);color:#0f0f0f}
+.btn-outline:hover{background:var(--green);border-color:var(--green);color:#0f0f0f}
+.popular a.pop-rec{color:#1f5fbf}
+.pf-jobs{display:flex;flex-direction:column;gap:10px}
+.pf-job{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.pf-job .kw-tags{margin-top:6px}
 .claim-cta .btn-primary{display:inline-block;padding:13px 30px;font-size:1rem;font-weight:700;color:#000;border-radius:10px}
 .claim-sub{display:inline-flex;align-items:center;gap:7px;font-size:.72rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
 .claim-sub svg{color:var(--green-dark);flex:none}
@@ -1083,6 +1094,13 @@ tr.row-warn td{background:#fff3cd}
 .pt-editor-row td{background:var(--bg-soft);padding:0 16px 16px}
 .pt-chevron{border:0;background:none;font:inherit;color:var(--muted);cursor:pointer;padding:0 6px 0 0}
 .th-price{display:block;font-size:.72rem;font-weight:700;color:#1f5fbf;letter-spacing:0;text-transform:none;margin-top:2px}
+/* a ? beside each upgrade heading, the use case on hover or focus */
+.th-help{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-left:6px;border-radius:50%;
+  border:1px solid #9aa4ae;color:#5d6a7e;font-size:.7rem;font-weight:800;cursor:help;position:relative;vertical-align:middle;letter-spacing:0;text-transform:none}
+.th-help:hover,.th-help:focus{border-color:#1f5fbf;color:#1f5fbf;outline:0}
+.th-tip{display:none;position:absolute;left:50%;top:22px;transform:translateX(-50%);z-index:20;width:260px;padding:10px 12px;border-radius:8px;
+  background:var(--ink);color:#fff;font-size:.78rem;font-weight:500;line-height:1.45;text-transform:none;letter-spacing:0;text-align:left;white-space:normal;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.th-help:hover .th-tip,.th-help:focus .th-tip{display:block}
 .th-save{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:20px;background:#e9f7d0;color:#3f6300;font-weight:800}
 .pt-up-sw .knob{width:38px;height:22px}
 .pt-up-sw .knob::after{width:16px;height:16px}
@@ -1094,7 +1112,11 @@ tr.row-warn td{background:#fff3cd}
 .pt-up-sw{vertical-align:middle}
 .pt-up-foot{margin:10px 0 0}
 .pt-upgrade-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 12px}
-.pt-save{font-size:.84rem;font-weight:700;color:#1f5fbf;margin-left:auto}
+.pt-billing-note{font-size:.84rem;font-weight:700;color:#1f5fbf;margin-left:auto}
+/* Save profile: big and green (Jacob, 2026-09-03). The billing note used to
+   share this button's .pt-save class and painted it small and blue. */
+.pt-save-big{padding:14px 34px;font-size:1.05rem;border-radius:10px;background:var(--green);border-color:var(--green);color:#0f0f0f}
+.pt-save-big:hover{background:var(--green-dark);border-color:var(--green-dark);color:#fff}
 .pt-tabs,.adm-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 6px;border-bottom:1px solid var(--line)}
 .pt-tab,.adm-tab{border:0;background:none;font:inherit;font-weight:600;padding:9px 14px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent}
 .pt-tab.active,.adm-tab.active{color:var(--ink);border-bottom-color:var(--green)}
