@@ -417,7 +417,7 @@ function handleFormatOk(h){
 const HANDLE_WHY = {
   format:   '3–32 characters: letters, numbers, and single hyphens or underscores between them.',
   reserved: 'That name is reserved by Circuits.com.',
-  company:  'Taken by a company listing.',
+  company:  'This username is already in use.',
   profile:  'Taken by another profile.'
 };
 async function handleAvailable(handle, ownSlug, ownUser){
