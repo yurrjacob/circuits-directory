@@ -78,6 +78,14 @@ function iconHtml(key){
   const d = ICON_PATHS[key];
   return d ? `<svg class="pf-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>` : '';
 }
+/* The banner strip. With a picture it is that picture; without, the default,
+   which styles.css draws (a green sweep with a faint circuit trace), so the
+   logo always has something to stand on. */
+function coverHtml(url, name){
+  return url
+    ? `<div class="pf-cover" style="background-image:url('${escapeHtml(url)}')" role="img" aria-label="${escapeHtml(name)} banner"></div>`
+    : '<div class="pf-cover pf-cover-default" aria-hidden="true"></div>';
+}
 function row(label, value, opts){
   if(!value) return '';
   const o = opts || {};
@@ -110,7 +118,8 @@ function personProfile(p, staffRun){
   document.title = name + ' | Profile | Circuits.com';
   setMeta('description', name + ' on Circuits.com.');
   return `
-  <div class="pf-head">
+  ${coverHtml('', name)}
+  <div class="pf-head pf-head-covered">
     <div class="pf-logo pf-photo">${p.photo_url ? `<img src="${escapeHtml(p.photo_url)}" alt="${escapeHtml(name)}">` : avatarSvg()}</div>
     <div class="pf-id">
       <h1>${escapeHtml(name)}${staffRun ? ' ' + teamMarkHtml() : ''}</h1>
@@ -186,12 +195,13 @@ async function initProfile(){
     ? `<img src="${escapeHtml(co.logo)}" alt="${escapeHtml(co.name)} logo">`
     : avatarSvg();
 
-  /* the banner sits behind the logo (Jacob, 2026-09-03): a wide image across
-     the top, with the head overlapping its bottom edge so the logo stands on it */
+  /* a banner sits behind every logo (Jacob, 2026-09-03): the company's own
+     picture if it uploaded one, otherwise the site's default drawn in CSS,
+     with the head overlapping its bottom edge so the logo stands on it */
   const cover = isLogoUrl(co.cover_url) ? co.cover_url : '';
   let html = `
-  ${cover ? `<div class="pf-cover" style="background-image:url('${escapeHtml(cover)}')" role="img" aria-label="${escapeHtml(co.name)} banner"></div>` : ''}
-  <div class="pf-head${cover ? ' pf-head-covered' : ''}">
+  ${coverHtml(cover, co.name)}
+  <div class="pf-head pf-head-covered">
     <div class="pf-logo">${logo}</div>
     <div class="pf-id">
       <h1>${escapeHtml(co.name)}${staffRun ? ' ' + teamMarkHtml() : ''}</h1>

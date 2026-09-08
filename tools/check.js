@@ -992,8 +992,15 @@ for (const f of ['index.html', 'join.html']) {
        logos bucket under covers/. */
 {
   const pf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
-  assert.ok(/const cover = isLogoUrl\(co\.cover_url\) \? co\.cover_url : ''/.test(pf) && /class="pf-cover" style="background-image:url\('\$\{escapeHtml\(cover\)\}'\)"/.test(pf),
-    'the profile no longer draws the banner behind the logo');
+  assert.ok(/const cover = isLogoUrl\(co\.cover_url\) \? co\.cover_url : ''/.test(pf) && /function coverHtml\(url, name\)/.test(pf)
+    && /class="pf-cover" style="background-image:url\('\$\{escapeHtml\(url\)\}'\)"/.test(pf) && /class="pf-cover pf-cover-default"/.test(pf),
+    'the profile no longer draws the banner behind the logo, or has no default when none was uploaded');
+  /* every logo stands on a banner: both page kinds call it, always covered */
+  assert.strictEqual((pf.match(/\$\{coverHtml\(/g) || []).length, 2, 'not every profile page draws a banner behind its logo');
+  assert.ok(!/<div class="pf-head">/.test(pf), 'a profile head is drawn without its banner');
+  /* basic and minimal (Jacob): a flat grey, no picture, no gradient */
+  const dflt = (fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8').match(/\.pf-cover-default\{[^}]*\}/) || [''])[0];
+  assert.ok(/background:#eef1f4/.test(dflt) && !/url\(|gradient/.test(dflt), 'the default banner is not a plain flat grey');
   assert.ok(/async function uploadCover/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')), 'store.js lost uploadCover');
   const pjCover = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
   assert.ok(/id="pt-cover"/.test(fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8')) && /const url = await uploadCover\(PT\.coverFile\)/.test(pjCover) && /else if\(PT\.clearCover\)\{ fields\.cover_url = null; \}/.test(pjCover),
