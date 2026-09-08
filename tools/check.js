@@ -8,6 +8,29 @@ const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
 
+/* --- cache busting: every asset link carries the hash of the file it names ---
+       GitHub Pages caches everything for ten minutes, so a changed stylesheet
+       or script was invisible for up to ten minutes after a push. Each link is
+       styles.css?v=<hash of styles.css>, and so on: a changed file is a new
+       URL the moment it is live. A stale stamp means someone changed an asset
+       and did not run `node tools/stamp.js`. (Jacob, 2026-09-08) */
+{
+  const { ASSETS, hash } = require('./stamp.js');
+  const want = Object.fromEntries(ASSETS.map(a => [a, hash(a)]));
+  for (const f of fs.readdirSync(ROOT).filter(x => x.endsWith('.html'))) {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    for (const a of ASSETS) {
+      const re = new RegExp(`(?:href|src)="/?${a.replace('.', '\\.')}(?:\\?v=([0-9a-f]+))?"`, 'g');
+      for (const m of src.matchAll(re)) {
+        assert.strictEqual(m[1], want[a], `${f} links ${a} with stamp ${m[1] || '(none)'}, but the file's hash is ${want[a]}: run node tools/stamp.js`);
+      }
+    }
+  }
+  const appSrc = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+  const m = /add\('\/store\.js(?:\?v=([0-9a-f]+))?'\)/.exec(appSrc);
+  assert.ok(m && m[1] === want['store.js'], `app.js loads store.js with stamp ${m && m[1] || '(none)'}, but the file's hash is ${want['store.js']}: run node tools/stamp.js`);
+}
+
 /* No em dashes anywhere on the site (Jacob, 2026-09-02: "now or ever").
    Every page, script, stylesheet and doc, comments included, so nothing can
    leak back into copy. backups/ is frozen history and stays as it was. */
@@ -72,7 +95,8 @@ const NEEDS = {
 for (const [file, scripts] of Object.entries(NEEDS)) {
   const html = fs.readFileSync(path.join(ROOT, file), 'utf8');
   for (const s of scripts) {
-    assert.ok(html.includes('src="' + s + '"'), `${file} does not load ${s}`);
+    /* the link may carry its cache-busting stamp, src="app.js?v=<hash>" */
+    assert.ok(new RegExp('src="' + s.replace(/[.\\/]/g, '\\$&') + '(?:\\?v=[0-9a-f]+)?"').test(html), `${file} does not load ${s}`);
   }
 }
 
@@ -156,7 +180,7 @@ for (const f of NAV_PAGES) {
      load app.js at all so they never grew one (Jacob, 2026-09-03) */
   assert.ok(/<button type="button" class="inbox-btn"/.test(src),
     `${f} has no notifications bell in its markup, so its header will shift after load`);
-  assert.ok(/["\/]app\.js"/.test(src), `${f} does not load app.js, so its bell can never be filled in`);
+  assert.ok(/["\/]app\.js(?:\?v=[0-9a-f]+)?"/.test(src), `${f} does not load app.js, so its bell can never be filled in`);
   assert.ok((nav.match(/class="[^"]*\bactive\b/g) || []).length <= 1,
     `${f} nav marks more than one item active`);
 }
@@ -791,7 +815,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
      to your dashboard"), and loads nav.js so the swap happens there too */
   assert.ok(/<nav class="nav">/.test(portalHtml2) && /class="cta" href="\/join"/.test(portalHtml2),
     'the dashboard lost the shared header or its Get Listed button');
-  assert.ok(/<script src="\/nav\.js"><\/script>/.test(portalHtml2), 'the dashboard does not load nav.js, so its header cannot show Dashboard');
+  assert.ok(/<script src="\/nav\.js(?:\?v=[0-9a-f]+)?"><\/script>/.test(portalHtml2), 'the dashboard does not load nav.js, so its header cannot show Dashboard');
   /* header, signed in (Jacob, 2026-09-03): Contact | Dashboard [Get Listed]. Dashboard takes the
      Sign In slot (same separator line), Get Listed stays and goes to the real Get Listed page.
 
