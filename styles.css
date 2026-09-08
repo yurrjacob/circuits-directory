@@ -1171,7 +1171,7 @@ tr.row-warn td{background:#fff3cd}
   .pf-logo{width:56px;height:56px;border-radius:13px}
   .pf-id h1{font-size:1.3rem}
   .pf-page{padding:16px 15px 55px}
-  .pf-row-l{width:62px}
+  .pf-row-l{width:98px}   /* the icon needs the room on a phone too */
 }
 .handle-row{display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--card);overflow:hidden}
 .handle-prefix{padding:9px 2px 9px 11px;color:var(--muted);font-size:.92rem;white-space:nowrap}
