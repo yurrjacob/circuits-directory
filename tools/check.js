@@ -657,8 +657,9 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   /* the contact person and public email are required (Jacob, 2026-09-03):
      they populate every listing's Contact and Email columns and the public
      page, and register_company never seeds a contact */
+  const portalHtmlReq = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
   for (const id of ['f-contact', 'f-email']) {
-    assert.ok(new RegExp(`<label for="${id}">[^<]*<span class="req">\\*</span></label><input id="${id}"[^>]*\\brequired\\b`).test(portalHtml),
+    assert.ok(new RegExp(`<label for="${id}">[^<]*<span class="req">\\*</span></label><input id="${id}"[^>]*\\brequired\\b`).test(portalHtmlReq),
       `Profile Details no longer marks ${id} as required`);
   }
   assert.ok(/if\(!val\('f-contact'\)\)\{ btn\.disabled = false; toast\('Not saved: a contact person is needed/.test(portalSrc)
