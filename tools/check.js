@@ -1005,7 +1005,10 @@ for (const f of ['index.html', 'join.html']) {
   const pjCover = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
   assert.ok(/id="pt-cover"/.test(fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8')) && /const url = await uploadCover\(PT\.coverFile\)/.test(pjCover) && /else if\(PT\.clearCover\)\{ fields\.cover_url = null; \}/.test(pjCover),
     'Profile Details no longer lets a company set or remove its banner');
-  assert.ok(/\.pf-head-covered \.pf-logo\{position:relative;z-index:1/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the logo no longer stands on the banner');
+  /* the logo sits below the banner, not on it (Jacob): no negative margin
+     pulling the head up into the picture */
+  const coverCss = (fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8').match(/\.pf-cover\{[^}]*\}/) || [''])[0];
+  assert.ok(/margin:0 0 18px/.test(coverCss) && !/-\d+px/.test(coverCss), 'the banner pulls the logo up onto itself again');
 }
 
 /* --- an icon beside each part of the contact card (Jacob, 2026-09-03) --- */
