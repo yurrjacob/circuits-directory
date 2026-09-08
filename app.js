@@ -18,8 +18,9 @@ const HOME_PLACEHOLDER = {
   jobs:      'Search open jobs posted by companies by their chosen keywords...'
 };
 const HOME_HINT = {
-  recruits: 'Find Recruits: people seeking employment, listed by their Circuits-Keywords\u2122.',
-  jobs:     'Job Search: open roles posted by companies on Circuits.com.'
+  directory: 'Directory: companies, products and services, listed by their Circuits-Keywords\u2122.',
+  recruits:  'Find Recruits: people seeking employment, listed by their Circuits-Keywords\u2122.',
+  jobs:      'Job Search: open roles posted by companies on Circuits.com.'
 };
 function homeTarget(form){ return form.dataset.target || 'directory'; }
 function initHome(){
@@ -30,7 +31,7 @@ function initHome(){
   function refresh(){
     const t = homeTarget(form);
     input.placeholder = HOME_PLACEHOLDER[t];
-    if(hint){ hint.hidden = t === 'directory'; hint.textContent = HOME_HINT[t] || ''; }
+    if(hint){ hint.textContent = HOME_HINT[t] || ''; hint.hidden = !HOME_HINT[t]; }
     /* the Popular line for this index, and the door that belongs to it */
     document.querySelectorAll('.popular[data-for]').forEach(p => { p.hidden = p.dataset.for !== t; });
     document.querySelectorAll('.claim-cta-row .btn[data-for]').forEach(b => {
