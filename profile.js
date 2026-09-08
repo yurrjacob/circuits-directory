@@ -58,6 +58,26 @@ function section(title, inner, extra){
 }
 
 /* One contact row in the sidebar card. */
+/* An icon beside each part of the contact card (Jacob, 2026-09-03), so the
+   eye finds the phone or the address without reading the labels. Plain
+   stroke shapes on one 24-unit grid, drawn inline so nothing is fetched. */
+const ICON_PATHS = {
+  Contact:  '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  Phone:    '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6.2 6.2l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/>',
+  Email:    '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+  Website:  '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+  Address:  '<path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',
+  linkedin: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7"/>',
+  x:        '<path d="M4 4l16 16M20 4L4 20"/>',
+  facebook: '<path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v7h4v-7h3l1-4h-4V8z"/>',
+  youtube:  '<rect x="2" y="6" width="20" height="12" rx="4"/><path d="m10 9 5 3-5 3z"/>',
+  instagram:'<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5v.01"/>',
+  github:   '<path d="M9 19c-4 1.5-4-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1-.3-3.4 1.3a11.7 11.7 0 0 0-6 0C6.6 2.5 5.6 2.8 5.6 2.8a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4.2 9.2c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/>'
+};
+function iconHtml(key){
+  const d = ICON_PATHS[key];
+  return d ? `<svg class="pf-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>` : '';
+}
 function row(label, value, opts){
   if(!value) return '';
   const o = opts || {};
@@ -65,7 +85,7 @@ function row(label, value, opts){
     ? `<a href="${escapeHtml(o.href)}"${o.id ? ` id="${o.id}"` : ''}${o.ext ? ' target="_blank" rel="noopener nofollow"' : ''}>${escapeHtml(value)}</a>`
     : escapeHtml(value);
   // title carries the full value, since long emails and URLs are truncated
-  return `<div class="pf-row"><span class="pf-row-l">${escapeHtml(label)}</span>`
+  return `<div class="pf-row"><span class="pf-row-l">${iconHtml(label)}${escapeHtml(label)}</span>`
        + `<span class="pf-row-v" title="${escapeHtml(value)}">${inner}</span></div>`;
 }
 
@@ -344,7 +364,7 @@ function openLightbox(src, caption){
 function socialLinks(socials){
   const s = socials && typeof socials === 'object' ? socials : {};
   const links = SOCIALS.filter(([k]) => safeUrl(s[k]))
-    .map(([k, label]) => `<a href="${escapeHtml(safeUrl(s[k]))}" target="_blank" rel="noopener nofollow">${label}</a>`);
+    .map(([k, label]) => `<a href="${escapeHtml(safeUrl(s[k]))}" target="_blank" rel="noopener nofollow">${iconHtml(k)}${label}</a>`);
   return links.length ? `<div class="pf-socials">${links.join('')}</div>` : '';
 }
 

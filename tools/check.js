@@ -975,6 +975,16 @@ for (const f of ['index.html', 'join.html']) {
     `${f} still promises a permanent position without qualification`);
 }
 
+/* --- an icon beside each part of the contact card (Jacob, 2026-09-03) --- */
+{
+  const pf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
+  for (const k of ['Contact', 'Phone', 'Email', 'Website', 'Address', 'linkedin']) {
+    assert.ok(new RegExp(`^  ${k}:\\s+'<`, 'm').test(pf), `the contact card lost its ${k} icon`);
+  }
+  assert.ok(/<span class="pf-row-l">\$\{iconHtml\(label\)\}\$\{escapeHtml\(label\)\}<\/span>/.test(pf), 'row() no longer draws an icon before the label');
+  assert.ok(/rel="noopener nofollow">\$\{iconHtml\(k\)\}\$\{label\}<\/a>/.test(pf), 'the social links lost their icons');
+}
+
 /* --- no profile says "Unclaimed" (Jacob, 2026-09-03) ---
        The chip labelled every company we listed before its owner arrived, which
        is most of them, and it read as a verdict on the company rather than on

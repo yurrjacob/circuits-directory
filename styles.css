@@ -776,7 +776,9 @@ tr.row-warn td{background:#fff3cd}
 .pf-rows{display:flex;flex-direction:column}
 .pf-row{display:flex;gap:10px;padding:7px 0;font-size:.88rem;border-top:1px solid var(--line)}
 .pf-row:first-child{border-top:0;padding-top:0}
-.pf-row-l{flex:none;width:62px;color:var(--muted)}
+.pf-row-l{flex:none;width:84px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.pf-ico{flex:none;color:#9aa4ae}
+.pf-socials a .pf-ico{margin-right:5px;vertical-align:-3px;color:inherit}
 .pf-row-v{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pf-row-v a{display:block;overflow:hidden;text-overflow:ellipsis}
 .pf-row-v a{color:var(--green-dark);font-weight:600;text-decoration:none}
