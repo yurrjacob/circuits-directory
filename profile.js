@@ -186,8 +186,12 @@ async function initProfile(){
     ? `<img src="${escapeHtml(co.logo)}" alt="${escapeHtml(co.name)} logo">`
     : avatarSvg();
 
+  /* the banner sits behind the logo (Jacob, 2026-09-03): a wide image across
+     the top, with the head overlapping its bottom edge so the logo stands on it */
+  const cover = isLogoUrl(co.cover_url) ? co.cover_url : '';
   let html = `
-  <div class="pf-head">
+  ${cover ? `<div class="pf-cover" style="background-image:url('${escapeHtml(cover)}')" role="img" aria-label="${escapeHtml(co.name)} banner"></div>` : ''}
+  <div class="pf-head${cover ? ' pf-head-covered' : ''}">
     <div class="pf-logo">${logo}</div>
     <div class="pf-id">
       <h1>${escapeHtml(co.name)}${staffRun ? ' ' + teamMarkHtml() : ''}</h1>

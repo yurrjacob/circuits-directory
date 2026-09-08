@@ -1149,6 +1149,28 @@ function renderProfileForm(){
       toast('Logo will be removed when you save.', true);
     };
   }
+  /* the banner behind the logo: pick a file, see it, or remove it; saved
+     with the rest of the form (Jacob, 2026-09-03) */
+  PT.clearCover = false;
+  PT.coverFile = null;
+  const coverPrev = el('pt-cover-prev'), coverIn = el('pt-cover'), rmCover = el('pt-cover-rm');
+  if(coverPrev && coverIn && rmCover){
+    const show = url => { coverPrev.style.backgroundImage = url ? `url('${url}')` : ''; rmCover.style.display = url ? '' : 'none'; };
+    show(isLogoUrl(c.cover_url) ? c.cover_url : '');
+    coverIn.value = '';
+    coverIn.onchange = () => {
+      const f = coverIn.files && coverIn.files[0]; if(!f) return;
+      if(!/^image\/(png|jpeg|webp)$/.test(f.type)){ coverIn.value = ''; toast('The banner must be a PNG, JPEG or WebP image.', false); return; }
+      if(f.size > 4 * 1024 * 1024){ coverIn.value = ''; toast('The banner must be 4 MB or smaller.', false); return; }
+      PT.coverFile = f; PT.clearCover = false;
+      show(URL.createObjectURL(f)); markDirty();
+    };
+    rmCover.onclick = () => {
+      PT.clearCover = true; PT.coverFile = null; coverIn.value = '';
+      show(''); markDirty();
+      toast('Banner will be removed when you save.', true);
+    };
+  }
   wireLogoCrop();
 
   const soc = c.socials && typeof c.socials === 'object' ? c.socials : {};
@@ -1313,6 +1335,12 @@ async function saveProfile(){
     else { btn.disabled = false; toast('That logo could not be uploaded. Try a smaller PNG or JPEG.', false); return; }
   }
   else if(PT.clearLogo){ fields.logo = null; }
+  if(PT.coverFile){
+    const url = await uploadCover(PT.coverFile);
+    if(url) fields.cover_url = url;
+    else { btn.disabled = false; toast('That banner could not be uploaded. Try a smaller PNG or JPEG.', false); return; }
+  }
+  else if(PT.clearCover){ fields.cover_url = null; }
 
   if(fresh){
     /* first save: the profiles row (the address), then the company row that
@@ -1420,7 +1448,7 @@ async function renderRecruitingListings(){
     const st = jobStateLabel(j);
     return st ? `<span class="badge ${st.cls}">${escapeHtml(st.text.split('.')[0])}</span>` : '';
   };
-  hire.innerHTML = `<h3 class="pt-sub-h">Hiring <span class="cell-muted">(${jobs.length})</span></h3>` + (jobs.length
+  hire.innerHTML = `<h3 class="pt-sub-h">Job Search <span class="cell-muted">(${jobs.length})</span></h3>` + (jobs.length
     ? `<div class="table-wrap"><table class="listings-table pt-ktable pt-rtable">
         <thead><tr><th class="rank">#</th><th>Job title</th><th>Location</th><th>Keywords</th><th>Status</th><th></th></tr></thead>
         <tbody>${jobs.map((j, i) => `<tr>
@@ -1441,7 +1469,7 @@ async function renderRecruitingListings(){
     : me.talent_status === 'Approved' ? { text: 'Listed', cls: 'live' }
     : me.talent_status === 'Denied' ? { text: 'Not approved', cls: '' }
     : { text: 'Pending', cls: 'pending' };
-  seek.innerHTML = `<h3 class="pt-sub-h">Seeking Employment</h3>` + (has
+  seek.innerHTML = `<h3 class="pt-sub-h">Find Recruits</h3>` + (has
     ? `<div class="table-wrap"><table class="listings-table pt-ktable pt-rtable">
         <thead><tr><th class="rank">#</th><th>Position desired</th><th>Experience</th><th>Keywords</th><th>Status</th><th></th></tr></thead>
         <tbody><tr>

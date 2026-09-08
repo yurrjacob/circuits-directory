@@ -748,6 +748,14 @@ tr.row-warn td{background:#fff3cd}
 
 /* header */
 .pf-head{display:grid;grid-template-columns:78px 1fr;gap:18px;align-items:center;padding:4px 0 22px}
+/* the banner behind the logo: the head overlaps its bottom edge, the logo gets
+   a white rim so it reads on any picture */
+.pf-cover{height:210px;border-radius:var(--radius);background:#e9ecef center/cover no-repeat;margin:0 0 -38px}
+.pf-head-covered{padding:0 18px 22px;align-items:end}
+.pf-head-covered .pf-logo{position:relative;z-index:1;border:3px solid #fff;box-shadow:0 3px 14px rgba(0,0,0,.2)}
+.pf-head-covered .pf-id{padding-top:44px}
+@media(max-width:560px){.pf-cover{height:130px;margin-bottom:-28px}.pf-head-covered .pf-id{padding-top:34px}}
+.cover-thumb{display:inline-block;width:96px;height:32px;border-radius:6px;background:#e9ecef center/cover no-repeat;border:1px solid var(--line)}
 .pf-logo{width:78px;height:78px;border-radius:16px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;color:#c2c6cb;box-shadow:var(--shadow)}
 .pf-logo img{width:100%;height:100%;object-fit:cover;display:block}
 .pf-photo,.me-photo-prev{border-radius:50%}

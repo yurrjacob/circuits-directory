@@ -165,6 +165,16 @@ async function uploadLogo(file){
   if(error){ console.error('uploadLogo', error); return ''; }
   return sb.storage.from('logos').getPublicUrl(path).data.publicUrl;
 }
+/* the banner behind the logo on a profile (Jacob, 2026-09-03): same public
+   bucket, its own prefix, no crop, the image is shown wide as it was given */
+async function uploadCover(file){
+  if(!sb || !file) return '';
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const path = 'covers/' + Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+  const { error } = await sb.storage.from('logos').upload(path, file, { contentType: file.type, cacheControl: '31536000' });
+  if(error){ console.error('uploadCover', error); return ''; }
+  return sb.storage.from('logos').getPublicUrl(path).data.publicUrl;
+}
 function isLogoUrl(s){ return /^https?:\/\//i.test(s||''); }
 
 /* Field-format validators. app.js declares the same three (contact and index

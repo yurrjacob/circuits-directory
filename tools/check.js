@@ -750,7 +750,11 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
      listings table says what each keyword has, the tab beside it is where the
      paid extras are switched on. */
   assert.deepStrictEqual(tabs, ['profile', 'listings', 'upgrades', 'hiring', 'seeking', 'promote', 'account', 'admin'],
-    'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Hiring / Seeking Employment / Promote / Account Settings / Admin');
+    'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Job Search / Find Recruits / Promote / Account Settings / Admin');
+  /* the two Recruiting tabs are named for what they hold (Jacob, 2026-09-03,
+     "respectively"): the jobs tab is Job Search, the recruit listing is Find
+     Recruits; the ids stay hiring / seeking so nothing else moves */
+  assert.ok(/data-tab="hiring">Job Search</.test(portalHtml2) && /data-tab="seeking">Find Recruits</.test(portalHtml2), 'the Recruiting tabs are not named Job Search and Find Recruits');
   assert.ok(!/tab-co|tab-ind|acct-company|acct-individual/.test(portalHtml2 + portalSrc2 + fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
     'the two-dashboard split is back (tab-co / tab-ind / acct-*)');
   assert.ok(!/account_type|cx_account_type/.test(portalSrc2 + fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8') + fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')),
@@ -980,6 +984,21 @@ for (const f of ['index.html', 'join.html']) {
   const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
   assert.ok(!/permanent(ly)? (ranked|owned)|permanent ranked ownership/i.test(src),
     `${f} still promises a permanent position without qualification`);
+}
+
+/* --- the banner behind the logo (Jacob, 2026-09-03) ---
+       companies.cover_url, set from Profile Details, drawn across the top of
+       the profile with the head overlapping it. Uploads go to the public
+       logos bucket under covers/. */
+{
+  const pf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
+  assert.ok(/const cover = isLogoUrl\(co\.cover_url\) \? co\.cover_url : ''/.test(pf) && /class="pf-cover" style="background-image:url\('\$\{escapeHtml\(cover\)\}'\)"/.test(pf),
+    'the profile no longer draws the banner behind the logo');
+  assert.ok(/async function uploadCover/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')), 'store.js lost uploadCover');
+  const pjCover = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
+  assert.ok(/id="pt-cover"/.test(fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8')) && /const url = await uploadCover\(PT\.coverFile\)/.test(pjCover) && /else if\(PT\.clearCover\)\{ fields\.cover_url = null; \}/.test(pjCover),
+    'Profile Details no longer lets a company set or remove its banner');
+  assert.ok(/\.pf-head-covered \.pf-logo\{position:relative;z-index:1/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the logo no longer stands on the banner');
 }
 
 /* --- an icon beside each part of the contact card (Jacob, 2026-09-03) --- */

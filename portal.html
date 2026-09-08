@@ -93,8 +93,8 @@
     <button class="pt-tab active" data-tab="profile">Profile Details</button>
     <button class="pt-tab" data-tab="listings">Your Listings</button>
     <button class="pt-tab pt-tab-upgrades" data-tab="upgrades">Upgrades</button>
-    <button class="pt-tab" data-tab="hiring">Hiring</button>
-    <button class="pt-tab" data-tab="seeking">Seeking Employment</button>
+    <button class="pt-tab" data-tab="hiring">Job Search</button>
+    <button class="pt-tab" data-tab="seeking">Find Recruits</button>
     <button class="pt-tab" data-tab="promote">Promote</button>
     <button class="pt-tab" data-tab="account" id="pt-tab-account">Account Settings</button>
     <!-- shown by portal.js only when the signed-in account is a Circuits.com admin -->
@@ -179,6 +179,16 @@
             </div>
           </div>
         </div>
+      </div>
+      <!-- The banner behind the logo on the profile (Jacob, 2026-09-03). No
+           cropper: a wide picture is shown wide, as given. -->
+      <div class="auth-field"><label for="pt-cover">Banner behind your logo <span class="cell-muted">(optional)</span></label>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <span class="cover-thumb" id="pt-cover-prev" aria-hidden="true"></span>
+          <input id="pt-cover" type="file" accept="image/png,image/jpeg,image/webp">
+          <button type="button" class="mini-btn" id="pt-cover-rm" style="display:none">Remove</button>
+        </div>
+        <p class="pf-note">Shown across the top of your profile with the logo standing on it. A wide picture, around 1200 by 300, looks best; up to 4 MB.</p>
       </div>
       <div class="auth-field"><label for="f-desc">About</label>
         <textarea id="f-desc" rows="6" maxlength="2000" placeholder="What you do, what you supply, who you serve."></textarea>
