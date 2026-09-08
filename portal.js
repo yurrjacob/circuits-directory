@@ -1263,6 +1263,13 @@ async function saveProfile(){
   const fresh = !PT.slug;   // no rows yet: this save creates the profile and its company row
   if(fresh && !wantHandle){ btn.disabled = false; toast('Pick your Circuits.com address first.', false); el('f-handle').focus(); return; }
   if(!val('f-name')){ btn.disabled = false; toast('Not saved: a name is needed. Yours, or your company\'s.', false); el('f-name').focus(); return; }
+  /* The contact person and the public email are what every listing shows in
+     its Contact and Email columns, and what the public page shows under
+     Contact (Jacob, 2026-09-03: "required ... to populate both the listing and
+     profile"). register_company seeds the email from the account but never a
+     contact, which is how companies ended up listed with no one to call. */
+  if(!val('f-contact')){ btn.disabled = false; toast('Not saved: a contact person is needed. It is who buyers see on your listings.', false); el('f-contact').focus(); return; }
+  if(!val('f-email')){ btn.disabled = false; toast('Not saved: a public email is needed. It is how buyers reach you from your listings.', false); el('f-email').focus(); return; }
   if(handleChanged && wantHandle){
     const why = await handleAvailable(wantHandle, PT.slug, PT.user && PT.user.id);
     if(why){ btn.disabled = false; toast('Address not saved: ' + why + ' Your other changes were not saved either. Fix the address or put the old one back.', false); return; }

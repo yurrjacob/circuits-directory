@@ -7,17 +7,19 @@ function gotoSearch(term){
   window.location.href = '/results?q=' + encodeURIComponent(q);
 }
 
-/* Home page search wiring. One row of three (Jacob, 2026-09-03): Directory
-   searches the supplier directory; the Recruiting pair, Hiring (open roles on
-   /jobs) and Seeking Employment (people on /talent), sits under one caption. */
+/* Home page search wiring (Jacob, 2026-09-03). Three indexes: Directory
+   searches the supplier directory; Find Recruits is the people seeking
+   employment on /talent, for employers; Job Search is the open roles on
+   /jobs, for people. Choosing one also picks the Popular line and the door
+   below that go with it. */
 const HOME_PLACEHOLDER = {
-  directory: 'Search products, services, professionals, recruiting, or keywords...',
-  hiring:    'Search open roles by title or keyword...',
-  seeking:   'Search people by position or keyword...'
+  directory: 'Search products, services, companies, part numbers, or keywords...',
+  recruits:  'Search new recruits by job title, or keywords...',
+  jobs:      'Search open jobs posted by companies by their chosen keywords...'
 };
 const HOME_HINT = {
-  hiring:  'Hiring: open roles posted by companies on Circuits.com.',
-  seeking: 'Seeking Employment: people looking for work, listed by their Circuits-Keywords\u2122.'
+  recruits: 'Find Recruits: people seeking employment, listed by their Circuits-Keywords\u2122.',
+  jobs:     'Job Search: open roles posted by companies on Circuits.com.'
 };
 function homeTarget(form){ return form.dataset.target || 'directory'; }
 function initHome(){
@@ -29,12 +31,18 @@ function initHome(){
     const t = homeTarget(form);
     input.placeholder = HOME_PLACEHOLDER[t];
     if(hint){ hint.hidden = t === 'directory'; hint.textContent = HOME_HINT[t] || ''; }
+    /* the Popular line for this index, and the door that belongs to it */
+    document.querySelectorAll('.popular[data-for]').forEach(p => { p.hidden = p.dataset.for !== t; });
+    document.querySelectorAll('.claim-cta-row .btn[data-for]').forEach(b => {
+      const mine = b.dataset.for === t;
+      b.classList.toggle('btn-primary', mine); b.classList.toggle('btn-outline', !mine);
+    });
   }
   form.addEventListener('submit', e => {
     e.preventDefault();
     const t = homeTarget(form), q = (input.value || '').trim();
     if(t === 'directory'){ gotoSearch(q); return; }
-    location.href = (t === 'seeking' ? '/talent' : '/jobs') + (q ? '?q=' + encodeURIComponent(q) : '');
+    location.href = (t === 'recruits' ? '/talent' : '/jobs') + (q ? '?q=' + encodeURIComponent(q) : '');
   });
   document.querySelectorAll('.search-mode [data-target]').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('.search-mode [data-target]').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b ? 'true' : 'false'); });

@@ -81,25 +81,28 @@
     <h1 class="sr-only">Circuits.com: The Circuits Industry Directory for Suppliers, Parts and Engineers</h1>
     <a href="/" class="hero-link"><img class="logo-hero" src="assets/logo-home.png" alt="Circuits.com"><span class="beta-tag">BETA</span></a>
 
-    <!-- One search box, three indexes (Jacob, 2026-09-03, "so that users can
-         choose between searching for jobs and for workers"). Directory is
-         parts, services and companies; Hiring is the open roles on /jobs;
-         Seeking Employment is the people on /talent. The buttons only change
-         where the query goes. -->
+    <!-- One search box, three indexes (Jacob, 2026-09-03). Directory is parts,
+         services and companies; Find Recruits is the people seeking employment
+         on /talent, for employers; Job Search is the open roles on /jobs, for
+         people. The buttons only change where the query goes, and each one
+         lights up the door below that belongs to it. -->
     <div class="search-mode" role="tablist" aria-label="What to search">
       <button type="button" class="on" data-target="directory" role="tab" aria-selected="true">Directory</button>
-      <button type="button" data-target="hiring" role="tab" aria-selected="false">Hiring</button>
-      <button type="button" data-target="seeking" role="tab" aria-selected="false">Seeking Employment</button>
+      <button type="button" data-target="recruits" role="tab" aria-selected="false">Find Recruits</button>
+      <button type="button" data-target="jobs" role="tab" aria-selected="false">Job Search</button>
     </div>
     <form id="home-form" class="searchbox" autocomplete="off" data-target="directory">
       <div class="search-pill">
-        <input id="home-search" type="text" placeholder="Search products, services, professionals, recruiting, or keywords..." aria-label="Search">
+        <input id="home-search" type="text" placeholder="Search products, services, companies, part numbers, or keywords..." aria-label="Search">
         <button type="submit" class="search-go" aria-label="Search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
       </div>
       <p class="search-hint" id="search-hint" hidden></p>
     </form>
 
-    <div class="popular">
+    <!-- One Popular line per index; the one that matches the search shows.
+         Directory is the default, so it is the one a reader with no
+         JavaScript gets. -->
+    <div class="popular" data-for="directory">
       Popular:
       <a href="/results?q=engineers">Engineers</a>&middot;
       <a href="/results?q=manufacturers">Manufacturers</a>&middot;
@@ -109,18 +112,41 @@
       <a href="/results?q=oscillators">Oscillators</a>&middot;
       <a href="/results?q=voltage+regulators">Voltage Regulators</a>&middot;
       <a href="/results?q=rf+transceivers">RF Transceivers</a>&middot;
-      <a href="/results?q=motion+control+ics">Motion Control ICs</a>&middot;
-      <a class="pop-rec" href="/jobs?q=engineer">Engineer Jobs</a>&middot;
-      <a class="pop-rec" href="/jobs?q=developer">Developer Jobs</a>&middot;
-      <a class="pop-rec" href="/talent?q=consultant">Consultants</a>
+      <a href="/results?q=test+equipment">Test Equipment</a>&middot;
+      <a href="/results?q=ic+packaging">IC Packaging</a>&middot;
+      <a href="/results?q=clock+generators">Clock Generators</a>&middot;
+      <a href="/results?q=motion+control+ics">Motion Control ICs</a>
     </div>
-    <!-- Three doors, one row (Jacob, 2026-09-03): the free listing in the
-         middle, and the two sides of Recruiting either side of it, each
-         opening the dashboard on the tab that does that. -->
+    <div class="popular" data-for="recruits" hidden>
+      Popular:
+      <a href="/talent?q=pcb+layout">PCB Layout</a>&middot;
+      <a href="/talent?q=microcontroller">Microcontroller</a>&middot;
+      <a href="/talent?q=rf+engineer">RF Engineer</a>&middot;
+      <a href="/talent?q=digital+design">Digital Design</a>&middot;
+      <a href="/talent?q=electronics+engineer">Electronics Engineer</a>&middot;
+      <a href="/talent?q=verification">Verification</a>&middot;
+      <a href="/talent?q=firmware+engineer">Firmware Engineer</a>&middot;
+      <a href="/talent?q=verilog">Verilog</a>&middot;
+      <a href="/talent?q=electrical+engineer">Electrical Engineer</a>
+    </div>
+    <div class="popular" data-for="jobs" hidden>
+      Popular:
+      <a href="/jobs?q=hardware+design+engineer">Hardware Design Engineer</a>&middot;
+      <a href="/jobs?q=pcb+design+engineer">PCB Design Engineer</a>&middot;
+      <a href="/jobs?q=embedded+systems+engineer">Embedded Systems Engineer</a>&middot;
+      <a href="/jobs?q=asic+design+engineer">ASIC Design Engineer</a>&middot;
+      <a href="/jobs?q=analog+engineer">Analog Engineer</a>&middot;
+      <a href="/jobs?q=hardware+test+engineer">Hardware Test Engineer</a>
+    </div>
+
+    <!-- Three doors, one row. The one that belongs to the chosen search is
+         solid green, the other two are outlined, so Directory pairs with the
+         free listing, Find Recruits with Post a Job (employers), and Job
+         Search with Post Your Resume (people). -->
     <div class="claim-cta claim-cta-row">
-      <a class="btn btn-outline btn-side" href="/portal#hiring">Post a Job</a>
-      <a class="btn btn-primary" href="/join">Claim Your Free Directory Listing</a>
-      <a class="btn btn-outline btn-side" href="/portal#seeking">Post a Resume</a>
+      <a class="btn btn-outline btn-side" data-for="recruits" href="/portal#hiring">Post a Job</a>
+      <a class="btn btn-primary" data-for="directory" href="/join">Get Listed for Free</a>
+      <a class="btn btn-outline btn-side" data-for="jobs" href="/portal#seeking">Post Your Resume for Free</a>
     </div>
   </main>
 

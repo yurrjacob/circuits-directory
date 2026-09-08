@@ -171,21 +171,19 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   'the directory category pages are back');
 {
   const home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  assert.ok(/class="popular"/.test(home),
-    'the Popular line is gone from the homepage, it seeds the search box');
-  {
-    const strip = (home.match(/<div class="popular">[\s\S]*?<\/div>/) || [''])[0];
+  /* one Popular line per index (Jacob, 2026-09-03): Directory shows by
+     default, Find Recruits and Job Search are hidden until chosen. Every item
+     runs a search on the matching page, never opens a page. */
+  const pops = [...home.matchAll(/<div class="popular" data-for="([a-z]+)"( hidden)?>([\s\S]*?)<\/div>/g)];
+  assert.deepStrictEqual(pops.map(m => m[1]), ['directory', 'recruits', 'jobs'], 'the homepage should carry Popular lines for directory, recruits and jobs, in that order');
+  assert.ok(!pops[0][2] && pops[1][2] && pops[2][2], 'only the Directory Popular line may show before a choice is made');
+  const pagesFor = { directory: 'results', recruits: 'talent', jobs: 'jobs' };
+  const minFor = { directory: 12, recruits: 9, jobs: 6 };
+  for (const [, index, , strip] of pops) {
     const links = strip.match(/href="([^"]+)"/g) || [];
-    assert.ok(links.length >= 10, 'the Popular line lost most of its suggestions');
-    for (const l of links) {
-      /* a Directory search, or a Recruiting one on /jobs or /talent (Jacob,
-         2026-09-03: three recruiting terms in the line); never a page */
-      assert.ok(/href="\/(results|jobs|talent)\?q=/.test(l),
-        `the Popular line links to ${l}, every item must run a search, not open a page`);
-    }
-    assert.strictEqual((strip.match(/class="pop-rec"/g) || []).length, 3, 'the Popular line should carry exactly three recruiting terms');
-    assert.ok(!/All Categories/.test(strip),
-      'the Popular line still offers All Categories, and there is no category page');
+    assert.ok(links.length >= minFor[index], `the ${index} Popular line lost some of its suggestions (${links.length})`);
+    for (const l of links) assert.ok(new RegExp(`href="/${pagesFor[index]}\\?q=`).test(l), `the ${index} Popular line links to ${l}, every item must search /${pagesFor[index]}`);
+    assert.ok(!/All Categories/.test(strip), 'a Popular line still offers All Categories, and there is no category page');
   }
   for (const f of fs.readdirSync(ROOT).filter(x => x.endsWith('.html'))) {
     assert.ok(!/href="\/directory/.test(fs.readFileSync(path.join(ROOT, f), 'utf8')),
@@ -656,6 +654,16 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     'registration no longer validates the email address format');
   assert.ok(/keywords\.length > 0/.test(appSrc),
     'Get Listed no longer requires at least one keyword');
+  /* the contact person and public email are required (Jacob, 2026-09-03):
+     they populate every listing's Contact and Email columns and the public
+     page, and register_company never seeds a contact */
+  for (const id of ['f-contact', 'f-email']) {
+    assert.ok(new RegExp(`<label for="${id}">[^<]*<span class="req">\\*</span></label><input id="${id}"[^>]*\\brequired\\b`).test(portalHtml),
+      `Profile Details no longer marks ${id} as required`);
+  }
+  assert.ok(/if\(!val\('f-contact'\)\)\{ btn\.disabled = false; toast\('Not saved: a contact person is needed/.test(portalSrc)
+    && /if\(!val\('f-email'\)\)\{ btn\.disabled = false; toast\('Not saved: a public email is needed/.test(portalSrc),
+    'saveProfile saves without a contact person or a public email');
   assert.ok(/isValidEmail\(val\('f-email'\)\)/.test(portalSrc) && /isValidYear\(val\('f-founded'\)\)/.test(portalSrc),
     'portal profile save no longer validates its fields');
   assert.ok(read('applications.html').includes('FIELD_RULES'),
@@ -850,19 +858,24 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
      Hiring and Seeking Employment, three plain choices in one pill. */
   assert.ok(/id="home-form"[^>]*data-target="directory"/.test(home), 'the homepage form no longer says which index it searches');
   assert.ok(!/Coming Soon/i.test(home), 'Coming Soon is back on the homepage');
-  for (const t of ['directory', 'hiring', 'seeking']) {
+  /* Directory, Find Recruits (people on /talent, for employers), Job Search
+     (roles on /jobs, for people): three plain choices in one pill */
+  for (const t of ['directory', 'recruits', 'jobs']) {
     assert.ok(new RegExp(`class="search-mode"[\\s\\S]*?data-target="${t}"[^>]*role="tab"`).test(home), `the homepage search toggle lost ${t}`);
   }
-  assert.ok(!/search-group|search-side|data-mode=/.test(home), 'an old homepage toggle layout is back');
-  /* and the three doors under it: Post a Job, the free listing, Post a Resume,
-     the sides opening the dashboard on the tab that does that */
-  assert.ok(/href="\/portal#hiring"[^>]*>Post a Job</.test(home) && /href="\/portal#seeking"[^>]*>Post a Resume</.test(home)
-    && /class="claim-cta claim-cta-row"/.test(home), 'the homepage lost Post a Job / Post a Resume beside the free listing button');
+  assert.ok(!/search-group|search-side|data-mode=|data-target="hiring"|data-target="seeking"/.test(home), 'an old homepage toggle layout is back');
+  /* the three doors under it, each tied to its index so the chosen search
+     lights the door that goes with it: Find Recruits with Post a Job, Job
+     Search with Post Your Resume, Directory with the free listing */
+  assert.ok(/data-for="recruits" href="\/portal#hiring">Post a Job</.test(home) && /data-for="jobs" href="\/portal#seeking">Post Your Resume for Free</.test(home)
+    && /class="btn btn-primary" data-for="directory" href="\/join">Get Listed for Free</.test(home), 'the homepage lost its three doors, or they are no longer tied to their index');
+  assert.ok(/b\.classList\.toggle\('btn-primary', mine\); b\.classList\.toggle\('btn-outline', !mine\)/.test(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')),
+    'choosing a search no longer lights the door that goes with it');
   assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'recruiting-2026-09-03', 'about-recruiting-section.html')), 'the archived About recruiting section is missing');
   assert.ok(!/<h2 class="section-title">Recruiting on Circuits\.com/.test(fs.readFileSync(path.join(ROOT, 'about.html'), 'utf8')), 'the Recruiting section is back on About before launch');
   const appHome = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
-  assert.ok(/t === 'seeking' \? '\/talent' : '\/jobs'/.test(appHome) && /if\(t === 'directory'\)\{ gotoSearch\(q\); return; \}/.test(appHome),
-    'the homepage search does not route Directory to /results, Hiring to /jobs and Seeking Employment to /talent');
+  assert.ok(/t === 'recruits' \? '\/talent' : '\/jobs'/.test(appHome) && /if\(t === 'directory'\)\{ gotoSearch\(q\); return; \}/.test(appHome),
+    'the homepage search does not route Directory to /results, Find Recruits to /talent and Job Search to /jobs');
   assert.ok(/<title>Recruiting: Hiring \| Circuits\.com<\/title>/.test(fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8')), '/jobs is not titled Recruiting: Hiring');
   assert.ok(/<title>Recruiting: Seeking Employment \| Circuits\.com<\/title>/.test(fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8')), '/talent is not titled Recruiting: Seeking Employment');
   for (const f of ['jobs.html', 'talent.html']) {

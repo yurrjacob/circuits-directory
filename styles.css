@@ -143,7 +143,6 @@ img{max-width:100%}
 .claim-cta-row .btn-side{min-width:200px}
 .btn-outline{background:var(--card);border:2px solid var(--green);color:#0f0f0f}
 .btn-outline:hover{background:var(--green);border-color:var(--green);color:#0f0f0f}
-.popular a.pop-rec{color:#1f5fbf}
 .pf-jobs{display:flex;flex-direction:column;gap:10px}
 .pf-job{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
 .pf-job .kw-tags{margin-top:6px}
