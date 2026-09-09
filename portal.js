@@ -26,7 +26,7 @@ let ME = null, ME_FRESH = false;
 function renderSeeking(me){
   ME_FRESH = !me;
   ME = me || { handle: '', display_name: '', keywords: [], credentials: [] };
-  renderExperience(); renderRecruit();
+  renderExperience(); renderRecruit(); renderRecruitingListings();
 }
 
 const saveBtn = (id) => `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px">
@@ -109,7 +109,7 @@ function renderRecruit(){
   KW_ROWS = kwRowsFromMe();
   if(!KW_ROWS.length) KW_ROWS.push({ keyword: '', enabled: true });
   box.innerHTML = `
-    <h3 style="margin-top:0">Your listing</h3>
+    <h3 style="margin-top:0">Your Circuits-Keywords&trade;</h3>
     <div class="auth-field"><label>Your Circuits-Keywords&trade; <span class="cell-muted">(up to 10)</span></label>
       <div class="table-scroll"><table class="dash-table kw-table">
         <thead><tr><th>Keyword</th><th>On / Off</th><th></th></tr></thead>
@@ -1429,39 +1429,14 @@ function renderListings(){
     renderRepeater('gallery-' + open.id, open.gallery, ['url', 'caption'], ['Image', 'Caption'], ['img', 'text']);
   }
   wireListings();
-  renderRecruitingListings();
 }
 
-/* Both sides of Recruiting on Your Listings (Jacob, 2026-09-03): the jobs
-   this company has posted, and the person's own Seeking Employment listing,
-   in the same numbered-table shape as the keywords above, each with a button
-   to the tab that edits it. Reads, never writes: editing stays on those tabs. */
-async function renderRecruitingListings(){
-  const hire = el('pt-list-hiring'), seek = el('pt-list-seeking');
-  if(!hire || !seek) return;
-  const go = (tab, label) => `<button type="button" class="btn btn-primary btn-sm" data-go-tab="${tab}">${label}</button>`;
-
-  /* ---- Hiring: every job posted, live or not ---- */
-  const jobs = PT.slug ? await myJobs(PT.slug) : [];
-  const jobChip = j => {
-    if(j.closed_at) return '<span class="badge">Paused</span>';
-    const st = jobStateLabel(j);
-    return st ? `<span class="badge ${st.cls}">${escapeHtml(st.text.split('.')[0])}</span>` : '';
-  };
-  hire.innerHTML = `<h3 class="pt-sub-h">Job Search <span class="cell-muted">(${jobs.length})</span></h3>` + (jobs.length
-    ? `<div class="table-wrap"><table class="listings-table pt-ktable pt-rtable">
-        <thead><tr><th class="rank">#</th><th>Job title</th><th>Location</th><th>Keywords</th><th>Status</th><th></th></tr></thead>
-        <tbody>${jobs.map((j, i) => `<tr>
-          <td class="rank" data-label="#">${i + 1}</td>
-          <td data-label="Job title"><b>${escapeHtml(j.title || '(untitled)')}</b></td>
-          <td data-label="Location">${j.location ? escapeHtml(j.location) : DASH}</td>
-          <td data-label="Keywords">${(j.keywords || []).length ? escapeHtml(j.keywords.join(', ')) : DASH}</td>
-          <td data-label="Status">${jobChip(j)}</td>
-          <td class="row-actions" data-label="">${go('hiring', 'Manage')}</td>
-        </tr>`).join('')}</tbody></table></div>`
-    : `<div class="pt-empty pt-getlisted"><div><b>No jobs posted yet</b><p>Post an open role under the Circuits-Keywords&trade; you hire for.</p></div>${go('hiring', 'Post a Job')}</div>`);
-
-  /* ---- Seeking Employment: the one listing the person has ---- */
+/* Your listing at a glance (Jacob, 2026-09-09): its own box under the Job
+   Search forms, the same numbered-table shape as the keywords. It reads; Edit
+   takes you to the forms above it. */
+function renderRecruitingListings(){
+  const seek = el('pt-list-seeking');
+  if(!seek) return;
   const me = ME || {};
   const rows = Array.isArray(me.keyword_rows) ? me.keyword_rows.filter(r => r.enabled !== false).map(r => r.keyword) : (me.keywords || []);
   const has = !!(me.title || me.years != null || rows.length);
@@ -1469,7 +1444,7 @@ async function renderRecruitingListings(){
     : me.talent_status === 'Approved' ? { text: 'Listed', cls: 'live' }
     : me.talent_status === 'Denied' ? { text: 'Not approved', cls: '' }
     : { text: 'Pending', cls: 'pending' };
-  seek.innerHTML = `<h3 class="pt-sub-h">Find Recruits</h3>` + (has
+  seek.innerHTML = `<h3 class="pt-sub-h">Your Listing</h3>` + (has
     ? `<div class="table-wrap"><table class="listings-table pt-ktable pt-rtable">
         <thead><tr><th class="rank">#</th><th>Position desired</th><th>Experience</th><th>Keywords</th><th>Status</th><th></th></tr></thead>
         <tbody><tr>
@@ -1478,11 +1453,10 @@ async function renderRecruitingListings(){
           <td data-label="Experience">${me.years != null ? me.years + ' yr' + (Number(me.years) === 1 ? '' : 's') : DASH}</td>
           <td data-label="Keywords">${rows.length ? escapeHtml(rows.join(', ')) : DASH}</td>
           <td data-label="Status"><span class="badge ${state.cls}">${state.text}</span></td>
-          <td class="row-actions" data-label="">${go('seeking', 'Edit')}</td>
+          <td class="row-actions" data-label=""><button type="button" class="btn btn-primary btn-sm" data-go-form="pt-experience">Edit</button></td>
         </tr></tbody></table></div>`
-    : `<div class="pt-empty pt-getlisted"><div><b>Not listed as seeking employment</b><p>Fill in the position you want and the keywords a recruiter would search, and switch the listing on.</p></div>${go('seeking', 'Post a Resume')}</div>`);
-
-  [hire, seek].forEach(box => { box.onclick = e => { const b = e.target.closest('[data-go-tab]'); if(b) activateTab(b.dataset.goTab); }; });
+    : `<div class="pt-empty pt-getlisted"><div><b>Not listed as seeking employment yet</b><p>Fill in the position you want and the keywords a recruiter would search, above, and switch the listing on.</p></div><button type="button" class="btn btn-primary btn-sm" data-go-form="pt-experience">Fill it in</button></div>`);
+  seek.onclick = e => { const b = e.target.closest('[data-go-form]'); if(!b) return; const f = el(b.dataset.goForm); if(f){ f.scrollIntoView({ behavior: 'smooth', block: 'start' }); const first = f.querySelector('input, textarea'); if(first) first.focus({ preventScroll: true }); } };
 }
 
 /* ---------- upgrades ---------- */
@@ -1994,13 +1968,17 @@ function jobStateLabel(j){
 async function renderJobs(){
   const box = el('pt-jobs'); if(!box) return;
   const jobs = await myJobs(PT.slug);
+  PT.jobs = jobs;
   box.innerHTML = jobs.length ? jobs.map(j => {
     const st = jobStateLabel(j);
+    const docs = Array.isArray(j.docs) ? j.docs.filter(d => d && d.url) : [];
     return `<div class="pt-job" data-job="${escapeHtml(j.id)}">
       <div class="pt-job-head">
         <div><b>${escapeHtml(j.title)}</b>${j.location ? ' <span class="cell-muted">' + escapeHtml(j.location) + '</span>' : ''}
-          <div class="pf-note" style="margin:4px 0 0">${escapeHtml((j.keywords || []).join(', ') || 'No keywords yet')}</div></div>
+          <div class="pf-note" style="margin:4px 0 0">${escapeHtml((j.keywords || []).join(', ') || 'No keywords yet')}</div>
+          ${docs.length ? `<div class="pf-note" style="margin:4px 0 0">${docs.map(d => `<a class="doc-link" href="${escapeHtml(d.url)}" target="_blank" rel="noopener">${escapeHtml(d.name || 'Document')}</a>`).join(' ')}</div>` : ''}</div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${st ? `<span class="badge ${st.cls}">${escapeHtml(st.text)}</span>` : ''}
+          <button type="button" class="mini-btn" data-edit-job="${escapeHtml(j.id)}">Edit</button>
           <button type="button" class="mini-btn" data-applicants="${escapeHtml(j.id)}">New Applicants</button>
           <label class="switch pt-job-sw"><input type="checkbox" data-open="${escapeHtml(j.id)}" ${j.closed_at ? '' : 'checked'}>
             <span class="knob" aria-hidden="true"></span><span class="sw-text">${j.closed_at ? 'Paused' : 'Live'}</span></label></div>
@@ -2012,7 +1990,49 @@ async function renderJobs(){
 function wireJobs(){
   const box = el('pt-jobs'), post = el('job-post');
   if(!box || !post) return;
+
+  /* documents on the post: uploaded as they are picked, listed as chips,
+     sent with the job when it is posted or saved (Jacob, 2026-09-09) */
+  let jobDocs = [];
+  const drawDocs = () => { const l = el('job-docs-list'); if(l) l.innerHTML = jobDocs.map((d, i) => `<span class="kw-tag">${escapeHtml(d.name || 'Document')}<button type="button" data-rmjobdoc="${i}" aria-label="Remove">&times;</button></span>`).join(''); };
+  const docsIn = el('job-docs');
+  if(docsIn) docsIn.addEventListener('change', async () => {
+    const files = [...(docsIn.files || [])]; docsIn.value = '';
+    for(const f of files){
+      if(f.size > 10 * 1024 * 1024){ toast(f.name + ' is over 10 MB.', false); continue; }
+      const d = await uploadDoc(f);
+      if(d && d.url) jobDocs.push(d); else toast('Could not upload ' + f.name + '. Try a smaller PDF or image.', false);
+    }
+    drawDocs();
+  });
+  const docList = el('job-docs-list');
+  if(docList) docList.addEventListener('click', e => { const b = e.target.closest('[data-rmjobdoc]'); if(!b) return; jobDocs.splice(+b.dataset.rmjobdoc, 1); drawDocs(); });
+
+  /* the form posts a new job, or, after Edit on a posted one, saves changes
+     to it (Jacob, 2026-09-09: "an edit button to allow for changes") */
+  const setMode = j => {
+    el('job-id').value = j ? j.id : '';
+    el('job-form-h').textContent = j ? 'Edit job' : 'Post a job';
+    post.textContent = j ? 'Save changes' : 'Post job';
+    el('job-cancel').style.display = j ? '' : 'none';
+    el('job-title').value = j ? (j.title || '') : '';
+    el('job-location').value = j ? (j.location || '') : '';
+    el('job-keywords').value = j ? (j.keywords || []).join(', ') : '';
+    el('job-desc').value = j ? (j.description || '') : '';
+    el('job-email').value = j ? (j.apply_email || '') : '';
+    jobDocs = j && Array.isArray(j.docs) ? j.docs.slice() : [];
+    drawDocs();
+    el('job-msg').textContent = '';
+  };
+  el('job-cancel').addEventListener('click', () => setMode(null));
+
   box.addEventListener('click', async e => {
+    const ed = e.target.closest('[data-edit-job]');
+    if(ed){
+      const j = (PT.jobs || []).find(x => x.id === ed.dataset.editJob);
+      if(j){ setMode(j); el('pt-job-form').scrollIntoView({ behavior: 'smooth', block: 'start' }); el('job-title').focus({ preventScroll: true }); }
+      return;
+    }
     const a = e.target.closest('[data-applicants]');
     if(a){
       const panel = el('apps-' + a.dataset.applicants);
@@ -2057,14 +2077,23 @@ function wireJobs(){
     const keywords = val('job-keywords').split(',').map(s => s.trim()).filter(Boolean);
     if(!keywords.length){ msg.textContent = 'Add at least one keyword so people can find it.'; msg.style.color = '#b3261e'; return; }
     if(keywords.length > 10){ msg.textContent = 'Ten keywords is the limit.'; msg.style.color = '#b3261e'; return; }
-    msg.textContent = 'Posting…'; msg.style.color = ''; post.disabled = true;
-    const r = await postJob(PT.slug, { title, location: val('job-location'), description: val('job-desc'), apply_email: val('job-email') });
+    const editingId = el('job-id').value;
+    msg.textContent = editingId ? 'Saving…' : 'Posting…'; msg.style.color = ''; post.disabled = true;
+    const fields = { title, location: val('job-location') || null, description: val('job-desc') || null, apply_email: val('job-email') || null, docs: jobDocs };
+    let id = editingId;
+    if(editingId){
+      const err = await updateJob(editingId, fields);
+      if(err){ post.disabled = false; msg.textContent = err; msg.style.color = '#b3261e'; return; }
+    } else {
+      const r = await postJob(PT.slug, fields);
+      if(r.error){ post.disabled = false; msg.textContent = r.error; msg.style.color = '#b3261e'; return; }
+      id = r.id;
+    }
     post.disabled = false;
-    if(r.error){ msg.textContent = r.error; msg.style.color = '#b3261e'; return; }
-    const kw = await setJobKeywords(r.id, keywords);
-    if(kw.error){ msg.textContent = 'Posted, but the keywords were refused: ' + kw.error; msg.style.color = '#b3261e'; renderJobs(); return; }
-    ['job-title','job-location','job-keywords','job-desc','job-email'].forEach(id => { el(id).value = ''; });
-    msg.textContent = 'Posted. It goes live once we confirm payment.'; msg.style.color = '#3f6300';
+    const kw = await setJobKeywords(id, keywords);
+    if(kw.error){ msg.textContent = (editingId ? 'Saved' : 'Posted') + ', but the keywords were refused: ' + kw.error; msg.style.color = '#b3261e'; renderJobs(); return; }
+    setMode(null);
+    msg.textContent = editingId ? 'Saved.' : 'Posted. It goes live once we confirm payment.'; msg.style.color = '#3f6300';
     renderJobs();
   });
 }

@@ -648,7 +648,8 @@ async function postJob(slug, fields){
   if(!sb) return { error: 'No connection' };
   const { data, error } = await sb.from('jobs')
     .insert({ company_slug: slug, title: fields.title, location: fields.location || null,
-              description: fields.description || null, apply_email: fields.apply_email || null })
+              description: fields.description || null, apply_email: fields.apply_email || null,
+              docs: Array.isArray(fields.docs) ? fields.docs : [] })
     .select('id').single();
   if(error) return { error: error.message };
   return { id: data.id };

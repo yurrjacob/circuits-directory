@@ -15,7 +15,7 @@ function gotoSearch(term){
 const HOME_PLACEHOLDER = {
   directory: 'Search products, services, companies, part numbers, or keywords...',
   recruits:  'Search new recruits by job title, or keywords...',
-  jobs:      'Search open jobs posted by companies by their chosen keywords...'
+  jobs:      'Search open jobs by title or keyword...'
 };
 const HOME_HINT = {
   directory: 'Directory: companies, products and services, listed by their Circuits-Keywords\u2122.',
@@ -306,7 +306,7 @@ async function initInbox(){
   if(typeof sb === 'undefined'){
     if(!storedSession()) return;
     const add = src => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
-    try{ await add('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'); await add('/store.js?v=c4138555e2'); }catch(e){ return; }
+    try{ await add('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'); await add('/store.js?v=d6a5e6fa95'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;

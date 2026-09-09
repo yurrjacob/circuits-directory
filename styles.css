@@ -565,6 +565,18 @@ tr.row-warn td{background:#fff3cd}
 .pt-rtable th:nth-child(5){width:14%}
 .pt-rtable th:nth-child(6){width:12%}
 .btn-sm{padding:7px 14px;font-size:.84rem;border-radius:8px}
+/* a tab's head: title and intro on the left, the board button on the right */
+.pt-tab-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;margin-bottom:6px}
+.pt-tab-head h2{margin:0 0 6px}
+.pt-tab-head .kit-intro{margin:0}
+.pt-tab-head > .btn{flex:none;margin-top:4px}
+/* recruiting upgrades: two cards under the jobs, blue like every upgrade */
+.pt-upsell-rec{margin-top:26px;margin-bottom:10px}
+.pt-rec-upgrades{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.pt-rec-up{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:14px 16px;border:1px solid #cfe0f7;border-radius:var(--radius);background:var(--card)}
+.pt-rec-up .pt-price{color:#1f5fbf;font-weight:800;margin-left:6px}
+.pt-rec-up p{margin:4px 0 0}
+.pt-rec-up .btn{flex:none}
 .pt-getlisted p{margin:2px 0 0;font-size:.85rem;color:var(--muted)}
 .pt-getlisted .btn{display:inline-block;margin-top:0;flex:none}
 .pt-recruit-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;align-items:start}

@@ -6,7 +6,7 @@
 <title>Dashboard | Circuits.com</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
-<link rel="stylesheet" href="/styles.css?v=f106001d20">
+<link rel="stylesheet" href="/styles.css?v=9c0dec7c33">
 <script src="/nav.js?v=ded2c647b5"></script>
 </head>
 <body>
@@ -93,8 +93,8 @@
     <button class="pt-tab active" data-tab="profile">Profile Details</button>
     <button class="pt-tab" data-tab="listings">Your Listings</button>
     <button class="pt-tab pt-tab-upgrades" data-tab="upgrades">Upgrades</button>
-    <button class="pt-tab" data-tab="hiring">Job Search</button>
-    <button class="pt-tab" data-tab="seeking">Find Recruits</button>
+    <button class="pt-tab" data-tab="hiring">Find Recruits</button>
+    <button class="pt-tab" data-tab="seeking">Job Search</button>
     <button class="pt-tab" data-tab="promote">Promote</button>
     <button class="pt-tab" data-tab="account" id="pt-tab-account">Account Settings</button>
     <!-- shown by portal.js only when the signed-in account is a Circuits.com admin -->
@@ -103,10 +103,16 @@
 
   <!-- ===== seeking employment: your experience, your keywords, your listing (one saved profile) ===== -->
   <section class="pt-panel" id="tab-seeking">
-    <p class="kit-intro">The Seeking Employment side of Recruiting. Companies that are hiring search it by
-      Circuits-Keyword&trade;. Fill in your experience, pick the keywords a recruiter would type to find someone
-      like you, and switch the listing on. They see the preview; your name, contact details and resume stay
-      blurred until a company pays to unlock them.</p>
+    <div class="pt-tab-head">
+      <div>
+        <h2>Search Jobs</h2>
+        <p class="kit-intro">The Job Search side of Recruiting. Companies that are hiring search it by
+          Circuits-Keyword&trade;. Fill in your experience, pick the keywords a recruiter would type to find someone
+          like you, and switch the listing on. They see the preview; your name, contact details and resume stay
+          blurred until a company pays to unlock them.</p>
+      </div>
+      <a class="btn btn-outline" href="/jobs" target="_blank" rel="noopener">View the Job Board &#8599;</a>
+    </div>
     <div class="pt-recruit-grid">
       <div>
         <div class="pf-form" id="pt-experience"></div>
@@ -114,6 +120,8 @@
       </div>
       <div><h3 style="margin:0 0 10px">Preview How Companies See You</h3><div id="pt-recruit-preview"></div></div>
     </div>
+    <!-- your listing, at a glance, as its own box (moved here from Your Listings, Jacob 2026-09-09) -->
+    <div class="pt-list-rec" id="pt-list-seeking"></div>
   </section>
 
   <!-- ===== account settings ===== -->
@@ -205,13 +213,18 @@
   <!-- hiring: the Hiring side of Recruiting. Post a job; searching people happens on /talent. -->
   <section class="pt-panel" id="tab-hiring">
     <div class="pt-section" style="margin-top:0;padding-top:0;border-top:0">
-      <h2>Hiring Listing</h2>
-      <p class="kit-intro">The Hiring side of Recruiting. Post an open role under the Circuits-Keywords&trade; you hire for. Once Circuits.com approves it,
-        the post is live for 30 days on the Hiring board, and each person who applies appears under New Applicants
-        on that post.</p>
-      <div class="pt-list" id="pt-jobs"></div>
+      <div class="pt-tab-head">
+        <div>
+          <h2>Find Recruits</h2>
+          <p class="kit-intro">The Find Recruits side of Recruiting. Post an open role under the Circuits-Keywords&trade; you hire for. Once Circuits.com approves it,
+            the post is live for 30 days on the Job Board, and each person who applies appears under New Applicants
+            on that post.</p>
+        </div>
+        <a class="btn btn-outline" href="/talent" target="_blank" rel="noopener">View the Recruit Board &#8599;</a>
+      </div>
     <div class="pf-form" id="pt-job-form">
-      <h3>Post a job</h3>
+      <h3 id="job-form-h">Post a job</h3>
+      <input type="hidden" id="job-id" value="">
       <div class="grid2">
         <div class="auth-field"><label for="job-title">Job title</label><input id="job-title" type="text" maxlength="120" placeholder="RF Design Engineer"></div>
         <div class="auth-field"><label for="job-location">Location</label><input id="job-location" type="text" maxlength="120" placeholder="Austin, TX or Remote"></div>
@@ -222,13 +235,39 @@
         <textarea id="job-desc" rows="6" maxlength="4000" placeholder="The role, the team, what you need."></textarea></div>
       <div class="auth-field"><label for="job-email">Send applications to <span class="cell-muted">(optional, defaults to your public email)</span></label>
         <input id="job-email" type="email" maxlength="120" placeholder="hiring@company.com"></div>
+      <!-- documents on the post (Jacob, 2026-09-09): the docs bucket, same as a listing's -->
+      <div class="auth-field"><label for="job-docs">Add Docs <span class="cell-muted">(optional)</span></label>
+        <input id="job-docs" type="file" multiple accept="application/pdf,image/png,image/jpeg,image/webp">
+        <p class="field-hint">For example a Job Posting Flyer. PDF, PNG or JPEG, up to 10 MB each.</p>
+        <div class="kw-tags" id="job-docs-list"></div></div>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="btn btn-primary" type="button" id="job-post">Post job</button>
+        <button class="mini-btn" type="button" id="job-cancel" style="display:none">Cancel</button>
         <span class="pf-note" id="job-msg"></span>
       </div>
     </div>
+      <h3 class="pt-sub-h" style="margin-top:22px">Jobs Posted</h3>
+      <div class="pt-list" id="pt-jobs"></div>
     </div>
 
+    <!-- recruiting upgrades (Jacob, 2026-09-09), two subscriptions; a request
+         goes through the contact form with the message filled in -->
+    <div class="pt-upsell pt-upsell-rec">
+      <div>
+        <b>Recruiting upgrades</b>
+        <p>Two subscriptions, $99 a month each. Request one and we confirm by email before anything is billed.</p>
+      </div>
+    </div>
+    <div class="pt-rec-upgrades">
+      <div class="pt-rec-up">
+        <div><b>Reveal Recruit Details</b> <span class="pt-price">$99/mo</span><p class="pf-note">Unlimited recruit reveals: names, contact details and resumes of everyone on the Recruit Board.</p></div>
+        <a class="btn btn-upgrade" href="/contact?topic=I%20would%20like%20to%20add%20Reveal%20Recruit%20Details%20(%2499%20a%20month%2C%20unlimited%20recruit%20reveals)%20to%20my%20account.">Request</a>
+      </div>
+      <div class="pt-rec-up">
+        <div><b>Post a Job</b> <span class="pt-price">$99/mo</span><p class="pf-note">Unlimited job posts, live on the Job Board.</p></div>
+        <a class="btn btn-upgrade" href="/contact?topic=I%20would%20like%20to%20add%20Post%20a%20Job%20(%2499%20a%20month%2C%20unlimited%20job%20posts)%20to%20my%20account.">Request</a>
+      </div>
+    </div>
   </section>
 
   <!-- Your Listings: every keyword listing with its stats, badges, banners and
@@ -245,12 +284,6 @@
       <button type="button" class="btn btn-upgrade" id="pt-go-upgrades">Upgrade &rarr;</button>
     </div>
     <div class="pt-list" id="pt-listings"></div>
-    <!-- Both sides of Recruiting, right here too (Jacob, 2026-09-03: "add a
-         section in your listings for both hiring and looking for job"): the
-         jobs you have posted, and your own Seeking Employment listing, each
-         with a button to the tab that edits it. -->
-    <div class="pt-list-rec" id="pt-list-hiring"></div>
-    <div class="pt-list-rec" id="pt-list-seeking"></div>
     <div class="pt-empty pt-getlisted">
       <div>
         <b>Get listed under more Circuits-Keywords&trade;</b>
@@ -599,9 +632,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-<script src="/store.js?v=c4138555e2"></script>
-<script src="/app.js?v=5a0d23d88b"></script>
-<script src="/portal.js?v=9ae57778cc"></script>
+<script src="/store.js?v=d6a5e6fa95"></script>
+<script src="/app.js?v=9ccb0fd901"></script>
+<script src="/portal.js?v=655a2d0ef0"></script>
 <script src="/admin.js?v=3d77b72cdd"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));
