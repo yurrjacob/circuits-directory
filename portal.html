@@ -6,7 +6,7 @@
 <title>Dashboard | Circuits.com</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
-<link rel="stylesheet" href="/styles.css?v=9c0dec7c33">
+<link rel="stylesheet" href="/styles.css?v=8919508ecb">
 <script src="/nav.js?v=ded2c647b5"></script>
 </head>
 <body>
@@ -527,15 +527,15 @@
 
   <!-- Recruits (MVP2): people who opted into the directory; Hide pulls one out -->
   <div class="panel" data-adm="employment">
-    <div class="panel-head"><h2>Recruits</h2><span class="hint">People Asking To Be Listed Under Seeking Employment. Approve To List Them, Deny To Keep Them Out</span></div>
+    <div class="panel-head"><h2>Recruits</h2><span class="hint">People Asking To Be Listed Under Job Search, With Their Circuits-Keywords&trade;. Approve To List Them, Deny To Keep Them Out. Listed Off Means They Have Filled Some Of It In But Not Switched The Listing On Yet</span></div>
     <div class="panel-body">
       <div class="table-scroll">
         <table class="dash-table">
-          <thead><tr><th>Person</th><th>Title</th><th>Years</th><th>Updated</th><th>State</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Person</th><th>Title</th><th>Years</th><th>Circuits-Keywords&trade;</th><th>Listed</th><th>Updated</th><th>State</th><th>Actions</th></tr></thead>
           <tbody id="recruits-body"></tbody>
         </table>
       </div>
-      <div id="recruits-empty" class="empty-line" style="display:none">Nobody Has Listed Themselves Yet.</div>
+      <div id="recruits-empty" class="empty-line" style="display:none">Nobody Has Started A Job Search Listing Yet.</div>
     </div>
   </div>
 
@@ -632,10 +632,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-<script src="/store.js?v=d6a5e6fa95"></script>
-<script src="/app.js?v=9ccb0fd901"></script>
+<script src="/store.js?v=1f7054ee3b"></script>
+<script src="/app.js?v=6cd1d63f64"></script>
 <script src="/portal.js?v=655a2d0ef0"></script>
-<script src="/admin.js?v=3d77b72cdd"></script>
+<script src="/admin.js?v=57d866a443"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));
 initPortal();

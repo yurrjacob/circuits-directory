@@ -725,13 +725,23 @@ async function jobApplicants(jobId){
 }
 
 /* ---- staff: recruits, talent access, job payments ---- */
+/* Everyone who has switched their listing on, plus anyone who has started
+   (a position or keywords saved) but not switched it on yet, so staff can see
+   what is coming and approve ahead of time (Jacob, 2026-09-09: "I don't see
+   them populating the recruiting applications"). Keywords ride along. */
 async function fetchRecruits(){
   if(!sb) return [];
   const { data, error } = await sb.from('profiles')
     .select('user_id, handle, display_name, title, years, talent_listed, talent_hidden, talent_status, updated_at')
-    .eq('talent_listed', true).order('updated_at', { ascending: false }).limit(500);
+    .or('talent_listed.eq.true,title.not.is.null').order('updated_at', { ascending: false }).limit(500);
   if(error){ console.error('fetchRecruits', error); return []; }
-  return data || [];
+  const rows = data || [];
+  const ids = rows.map(r => r.user_id);
+  const kw = ids.length ? await sb.from('talent_keywords').select('user_id, keyword, enabled').in('user_id', ids).order('keyword') : { data: [] };
+  const byUser = {};
+  (kw.data || []).forEach(k => { (byUser[k.user_id] = byUser[k.user_id] || []).push(k); });
+  rows.forEach(r => { r.keywords = byUser[r.user_id] || []; });
+  return rows;
 }
 /* Staff decide who appears in the Recruits Directory: Pending, Approved or
    Denied. The guard trigger silently reverts anyone else's change. */

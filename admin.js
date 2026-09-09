@@ -448,15 +448,18 @@ let allRecruits = [];
 async function reloadRecruits(){
   const body = $('recruits-body'); if(!body) return;
   allRecruits = await fetchRecruits();
+  /* switched-on and waiting first, then the rest by state */
   const order = { Pending: 0, Approved: 1, Denied: 2 };
-  allRecruits.sort((a, b) => (order[a.talent_status] ?? 9) - (order[b.talent_status] ?? 9));
+  allRecruits.sort((a, b) => (b.talent_listed - a.talent_listed) || ((order[a.talent_status] ?? 9) - (order[b.talent_status] ?? 9)));
   body.innerHTML = allRecruits.map(r => `
-    <tr class="${r.talent_status === 'Pending' ? 'row-waiting' : ''}">
+    <tr class="${r.talent_listed && r.talent_status === 'Pending' ? 'row-waiting' : ''}">
       <td><a href="/${esc(r.handle)}" target="_blank" rel="noopener">${esc(r.display_name || r.handle)}</a></td>
       <td>${esc(r.title || 'none')}</td>
       <td>${r.years == null ? 'none' : r.years}</td>
+      <td>${(r.keywords || []).length ? (r.keywords || []).map(k => `<span class="kw-tag${k.enabled === false ? ' kw-off' : ''}">${esc(k.keyword)}</span>`).join(' ') : '<span class="cell-muted">none yet</span>'}</td>
+      <td>${r.talent_listed ? 'On' : '<span class="cell-muted">Off, not switched on yet</span>'}</td>
       <td class="cell-muted">${new Date(r.updated_at).toLocaleDateString()}</td>
-      <td>${r.talent_status === 'Pending' ? '<b>Pending</b>' : esc(r.talent_status)}</td>
+      <td>${r.talent_status === 'Pending' ? (r.talent_listed ? '<b>Pending</b>' : 'Pending') : esc(r.talent_status)}</td>
       <td class="row-actions">
         ${r.talent_status !== 'Approved' ? `<button class="mini-btn green" onclick="setRecruitStatus('${esc(r.user_id)}', 'Approved')">Approve</button>` : ''}
         ${r.talent_status !== 'Denied' ? `<button class="mini-btn" onclick="setRecruitStatus('${esc(r.user_id)}', 'Denied')">Deny</button>` : ''}

@@ -1636,6 +1636,14 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     assert.ok(i > 0 && /data-adm="listings"/.test(ph.slice(i, i + 120)), h + ' must live under the Listings tab');
   }
   assert.ok(/#pt-tab-admin\{margin-left:auto/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the Admin tab no longer sits apart from the account tabs');
+  /* Recruiting Applications shows the Circuits-Keywords and who has not switched
+     the listing on yet (Jacob, 2026-09-09: "I don't see them populating") */
+  assert.ok(/<th>Circuits-Keywords&trade;<\/th><th>Listed<\/th>/.test(ph), 'the admin Recruits table lost its Circuits-Keywords or Listed column');
+  const sj = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+  assert.ok(/\.or\('talent_listed\.eq\.true,title\.not\.is\.null'\)/.test(sj), 'fetchRecruits only shows people who already switched the listing on');
+  assert.ok(/from\('talent_keywords'\)\.select\('user_id, keyword, enabled'\)\.in\('user_id', ids\)/.test(sj), 'fetchRecruits does not carry the keywords along');
+  const ajr = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
+  assert.ok(/r\.keywords \|\| \[\]\)\.map\(k => `<span class="kw-tag/.test(ajr) && /Off, not switched on yet/.test(ajr), 'the admin Recruits rows do not show keywords and the Listed state');
   const pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
   assert.ok(/class="up-word"/.test(pj) && /class="up-text"/.test(pj) && /class="up-color"/.test(pj), 'the Trust Badge request lost its wording dropdown, custom label or colour field');
   assert.ok(/requestUpgrade\(id, PT\.slug, k, note, badge\)/.test(pj), 'the badge label, colour and billing choice are not sent with the request');
