@@ -277,8 +277,8 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="store.js?v=c6c1922823"></script>
-<script src="app.js?v=57d6f8c34f"></script>
+<script src="store.js?v=e17c1002e2"></script>
+<script src="app.js?v=f9d16ed63f"></script>
 <script>
 (async function initGetListed(){
   const el = id => document.getElementById(id);
@@ -434,11 +434,12 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
       banner: el('promo-check').checked && picks.banner.has(k),
       badge: el('badge-check').checked && picks.badge.has(k) ? { text: badgeText, color: badgeColor } : null
     });
-    /* keywords that share the same extras go in one insert */
-    const groups = new Map();
-    for(const k of kws){ const key = JSON.stringify([rowFor(k).banner, rowFor(k).badge]); (groups.get(key) || groups.set(key, []).get(key)).push(k); }
+    /* the whole request in ONE insert: staff get one message per insert
+       statement, so the keywords asked for together arrive as one
+       notification, and a keyword added later is its own */
+    const rows = kws.map(k => Object.assign(rowFor(k), { keyword: k }));
     const btn = el('j-submit'); btn.disabled = true; btn.textContent = 'Sending…';
-    try{ for(const group of groups.values()) await addApplicationKeywords(rowFor(group[0]), group); }
+    try{ await addApplicationRows(rows); }
     catch(ex){ btn.disabled = false; btn.textContent = 'Submit Request'; say((ex && ex.message) || 'Could not send that just now. Try again in a moment.'); return; }
     notifyListingRequest(base.email, base.company);
     el('join-form').style.display = 'none';

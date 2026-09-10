@@ -1211,7 +1211,14 @@ assert.ok(!/locked_position:/.test(joinHtml) && /Locked position #' \+ el\('lock
   assert.ok(/\$\{coCell\(a\.company, a\.company_handle\)\}/.test(adm.slice(adm.indexOf('function renderIdeas'))),
     'the Ideas panel no longer shows the username under the company');
 }
-assert.ok(/addApplicationKeywords\(rowFor\(group\[0\]\), group\)/.test(joinHtml) && /notifyListingRequest\(base\.email, base\.company\)/.test(joinHtml), 'Get Listed does not file the request or email a copy');
+/* one insert per submit: the database sends staff one message per INSERT
+   statement, so a request split over several inserts is several messages */
+assert.ok(/const rows = kws\.map\(k => Object\.assign\(rowFor\(k\), \{ keyword: k \}\)\)/.test(joinHtml) && /await addApplicationRows\(rows\)/.test(joinHtml) && !/addApplicationKeywords/.test(joinHtml),
+  'Get Listed must file the whole request in one insert, or staff get one notification per keyword');
+assert.ok(/notifyListingRequest\(base\.email, base\.company\)/.test(joinHtml), 'Get Listed does not email a copy');
+assert.ok(/async function addApplicationRows\(rows\)/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')), 'store.js lost addApplicationRows');
+assert.ok(/referencing new table as inserted/.test(fs.readFileSync(path.join(ROOT, 'tools', 'grouped-listing-notifications.sql'), 'utf8')),
+  'the grouped staff notification SQL is gone from tools/');
 assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'join-2026-09-03', 'join.html')), 'the old Get Listed form backup is missing');
 assert.ok(/emailRedirectTo: location\.origin \+ '\/join'/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8').slice(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8').indexOf('async function registerProfile'))),
   'confirming a new account no longer lands on Get Listed');

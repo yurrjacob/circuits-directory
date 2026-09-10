@@ -207,6 +207,20 @@ async function addApplicationKeywords(base, keywords){
   if(error){ console.error('addApplicationKeywords', error); throw error; }
   return rows;
 }
+/* One insert for a whole request, each row already carrying its keyword and
+   its own extras. The database tells staff once per INSERT statement
+   (notify_applications_batch), so everything asked for at once is one message
+   in the admin inbox, and a keyword added later is its own. */
+async function addApplicationRows(rows){
+  if(!sb) throw new Error('No connection');
+  const out = rows.map(r => {
+    const kw = cleanKw(r.keyword);
+    return Object.assign({}, r, { keyword: kw, keywords: kw ? [kw] : [], status: r.status || 'Pending' });
+  });
+  const { error } = await sb.from('applications').insert(out);
+  if(error){ console.error('addApplicationRows', error); throw error; }
+  return out;
+}
 async function updateAppStatus(id, status){
   if(!sb) return null;
   const { error } = await sb.from('applications').update({ status }).eq('id', id);
