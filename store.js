@@ -533,10 +533,11 @@ async function myUpgradeRequests(slug){
 async function fetchUpgradeRequests(){
   if(!sb) return [];
   const { data, error } = await sb.from('upgrade_requests')
-    .select('id, application_id, company_slug, kind, note, badge_text, badge_color, created_at, handled_at, applications(keyword, company)')
+    .select('id, application_id, company_slug, kind, note, badge_text, badge_color, created_at, handled_at, applications(keyword, company, company_handle)')
     .is('handled_at', null).order('created_at', { ascending: true });
   if(error){ console.error('fetchUpgradeRequests', error); return []; }
-  return (data || []).map(r => ({ ...r, keyword: r.applications ? r.applications.keyword : '', company: r.applications ? r.applications.company : r.company_slug }));
+  return (data || []).map(r => ({ ...r, keyword: r.applications ? r.applications.keyword : '', company: r.applications ? r.applications.company : r.company_slug,
+    company_handle: r.applications ? r.applications.company_handle : null }));
 }
 async function handleUpgradeRequest(id, decision){
   if(!sb) return 'No connection';

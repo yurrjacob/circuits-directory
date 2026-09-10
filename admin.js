@@ -26,6 +26,13 @@ const pending  = () => allApps.filter(a=>a.status==='Pending');
 const badgeTag = b => !b ? 'none'
   : `<span class="lb" style="background:${esc(b.color)}">${esc(b.text)}</span>`;
 
+/* A company name with its username underneath, everywhere the admin lists
+   one: the name alone is ambiguous the day a second "Acme" signs up, the
+   address (circuits.com/acme) never is. Rows filed without an account, the
+   free Get Listed form does that, say so rather than showing nothing. */
+const coCell = (name, handle) =>
+  `<td>${esc(name)||'none'}<br><span class="cell-muted">${handle ? 'circuits.com/' + esc(handle) : 'no username yet'}</span></td>`;
+
 /* A keyword can only carry ONE live Exclusive Sponsor banner. An app conflicts
    when it wants a banner on a keyword that another APPROVED listing already
    runs a banner on (matched with the same normalization search uses). */
@@ -123,7 +130,7 @@ function renderListings(){
   const rows = view(approved(), 'listings');
   $('listings-body').innerHTML = rows.map(l=>`
     <tr class="${l.paused?'row-paused':''}">
-      <td>${esc(l.company)}</td>
+      ${coCell(l.company, l.company_handle)}
       <td class="kw">${esc(l.keyword)||'none'}</td>
       <td>${esc(appPriceLabel(l))}</td>
       <td>${l.banner ? '<span class="badge sponsored">Yes</span>' : 'No'}</td>
@@ -138,7 +145,7 @@ function renderBanners(){
   const rows = view(approved().filter(a=>a.banner), 'banners');
   $('banners-body').innerHTML = rows.map(l=>`
     <tr class="${l.paused?'row-paused':''}">
-      <td>${esc(l.company)}</td><td class="kw">${esc(l.keyword)||'none'}</td>
+      ${coCell(l.company, l.company_handle)}<td class="kw">${esc(l.keyword)||'none'}</td>
       <td>${esc(appPriceLabel(l))}</td>${actionsCell(l)}
     </tr>`).join('');
   $('banners-empty').style.display = approved().filter(a=>a.banner).length ? 'none' : 'block';
@@ -148,7 +155,7 @@ function renderBadges(){
   const rows = view(approved().filter(a=>a.badge), 'badges');
   $('badges-body').innerHTML = rows.map(l=>`
     <tr class="${l.paused?'row-paused':''}">
-      <td>${esc(l.company)}</td><td class="kw">${esc(l.keyword)||'none'}</td>
+      ${coCell(l.company, l.company_handle)}<td class="kw">${esc(l.keyword)||'none'}</td>
       <td>${esc(appPriceLabel(l))}</td><td>${badgeTag(l.badge)}</td>${actionsCell(l)}
     </tr>`).join('');
   $('badges-empty').style.display = approved().filter(a=>a.badge).length ? 'none' : 'block';
@@ -160,7 +167,7 @@ function renderPending(){
     const conflict = bannerConflict(p);
     return `
     <tr class="${conflict?'row-warn':''}">
-      <td>${esc(p.company)||'none'}</td>
+      ${coCell(p.company, p.company_handle)}
       <td class="kw">${esc(p.keyword)||'none'}</td>
       <td>${esc(p.email)||'none'}</td>
       <td>${p.banner ? '<span class="badge sponsored">Yes</span>' : 'No'}${conflict?' <span class="warn-flag" title="This keyword already has a live Exclusive Sponsor banner">⚠</span>':''}</td>
@@ -174,17 +181,32 @@ function renderPending(){
 }
 
 /* Ideas: the free-text "Have Any Ideas?" box on the Get Listed form, one row
-   per application that filled it in, newest first. Lived on the Website
-   Applications sheet until 2026-09-01; it is read here, edited nowhere. */
+   per submission that filled it in, newest first. Lived on the Website
+   Applications sheet until 2026-09-01; it is read here, edited nowhere.
+
+   Two things in that column are not ideas. The Get Listed form writes its own
+   note, "[Locked position #3 requested for: ...]", at the top of the same
+   field for staff to read when approving; that is a request, not something
+   the applicant said, so it comes off. And one submit files one application
+   row per keyword, every row carrying the same text, so a five-keyword
+   applicant showed up five times: one row per idea per company here. */
+const ideaText = m => String(m || '').replace(/^\s*(\[[^\]]*\]\s*)+/, '').trim();
 function renderIdeas(){
-  const rows = allApps.filter(a => a.message && String(a.message).trim())
-    .slice().sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''));
+  const seen = new Set();
+  const rows = allApps.map(a => Object.assign({}, a, { idea: ideaText(a.message) }))
+    .filter(a => a.idea)
+    .sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''))
+    .filter(a => {
+      const key = (a.company_slug || a.email || a.company || '') + '\n' + a.idea;
+      if(seen.has(key)) return false;
+      seen.add(key); return true;
+    });
   $('ideas-body').innerHTML = rows.map(a=>`
     <tr>
       <td class="cell-muted nowrap">${esc((a.created_at||'').slice(0,10))}</td>
-      <td>${esc(a.company)||'none'}</td>
+      ${coCell(a.company, a.company_handle)}
       <td class="cell-muted">${esc(a.contact)||''}${a.email?'<br><span class="cell-muted">'+esc(a.email)+'</span>':''}</td>
-      <td class="idea-text">${esc(a.message)}</td>
+      <td class="idea-text">${esc(a.idea)}</td>
     </tr>`).join('');
   $('ideas-empty').style.display = rows.length ? 'none' : 'block';
 }
@@ -303,8 +325,7 @@ async function reloadCompanies(){
     : 'Every Account On The Site. Suspend Hides Without Deleting. Talent Access Unlocks Seeking Employment Details';
   $('companies-body').innerHTML = allCompanies.map(c => `
     <tr class="${c.suspended_at ? 'row-waiting' : ''}">
-      <td><a href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener">${esc(c.name)}</a></td>
-      <td class="cell-muted">${c.handle ? 'circuits.com/' + esc(c.handle) : 'no address yet'}</td>
+      <td><a href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener">${esc(c.name)}</a><br><span class="cell-muted">${c.handle ? 'circuits.com/' + esc(c.handle) : 'no username yet'}</span></td>
       <td class="cell-muted">${esc(c.email || 'none')}</td>
       <td>${c.suspended_at
             ? '<b>Suspended</b><br><span class="cell-muted">' + new Date(c.suspended_at).toLocaleDateString() + '</span>'
@@ -355,7 +376,7 @@ async function reloadUpgrades(){
   openUpgrades = await fetchUpgradeRequests();
   body.innerHTML = openUpgrades.map(r => `
     <tr class="row-waiting">
-      <td>${esc(r.company || r.company_slug)}</td>
+      ${coCell(r.company || r.company_slug, r.company_handle)}
       <td>${esc(r.keyword || 'none')}</td>
       <td><b>${esc(UPGRADE_NAMES[r.kind] || r.kind)}</b></td>
       <td>${r.kind === 'badge' ? `<span class="lb" style="background:${esc(r.badge_color || '#c9a227')}">${esc(r.badge_text || '')}</span>` : r.kind === 'lock' ? 'Spot chosen on Approve' : 'Exclusive banner'}</td>
@@ -488,7 +509,7 @@ async function reloadJobs(){
   allJobs = await fetchAllJobs();
   body.innerHTML = allJobs.map(j => `
     <tr class="${jobState(j) === 'Awaiting payment' ? 'row-waiting' : ''}">
-      <td><a href="/${esc(j.company_handle || j.company_slug)}" target="_blank" rel="noopener">${esc(j.company_name)}</a></td>
+      <td><a href="/${esc(j.company_handle || j.company_slug)}" target="_blank" rel="noopener">${esc(j.company_name)}</a><br><span class="cell-muted">${j.company_handle ? 'circuits.com/' + esc(j.company_handle) : 'no username yet'}</span></td>
       <td><b>${esc(j.title)}</b>${j.location ? '<br><span class="cell-muted">' + esc(j.location) + '</span>' : ''}</td>
       <td class="cell-muted">${esc((j.keywords || []).join(', ') || 'none')}</td>
       <td class="cell-muted">${new Date(j.created_at).toLocaleDateString()}</td>

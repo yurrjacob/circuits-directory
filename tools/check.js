@@ -1198,6 +1198,19 @@ assert.ok(/banner: el\('promo-check'\)\.checked && picks\.banner\.has\(k\)/.test
    Pending row at #3 would collide with the holder of #3 and fail the insert */
 assert.ok(!/locked_position:/.test(joinHtml) && /Locked position #' \+ el\('lock-pos'\)\.value \+ ' requested for: /.test(joinHtml),
   'the locked position is written onto the application row; it must travel in the message for staff');
+/* ...and because it travels in the message, the admin Ideas panel must take
+   it back out, or a staff note is shown as something the applicant said */
+{
+  const adm = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
+  const m = adm.match(/const ideaText = ([^\n]+);/);
+  assert.ok(m, 'admin.js lost ideaText(), the Ideas panel shows the lock note as an idea');
+  const ideaText = new Function('return ' + m[1])();
+  assert.strictEqual(ideaText('[Locked position #3 requested for: semi, security]\n\nMake it easy'), 'Make it easy');
+  assert.strictEqual(ideaText('[Locked position #1 requested for: circuit]'), '');
+  assert.strictEqual(ideaText('  a real idea [with brackets] inside '), 'a real idea [with brackets] inside');
+  assert.ok(/\$\{coCell\(a\.company, a\.company_handle\)\}/.test(adm.slice(adm.indexOf('function renderIdeas'))),
+    'the Ideas panel no longer shows the username under the company');
+}
 assert.ok(/addApplicationKeywords\(rowFor\(group\[0\]\), group\)/.test(joinHtml) && /notifyListingRequest\(base\.email, base\.company\)/.test(joinHtml), 'Get Listed does not file the request or email a copy');
 assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'join-2026-09-03', 'join.html')), 'the old Get Listed form backup is missing');
 assert.ok(/emailRedirectTo: location\.origin \+ '\/join'/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8').slice(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8').indexOf('async function registerProfile'))),
