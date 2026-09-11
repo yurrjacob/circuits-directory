@@ -10,7 +10,7 @@ const fs = require('fs'), path = require('path'), assert = require('assert');
 
 const src = fs.readFileSync(path.join(__dirname, '..', 'portal.js'), 'utf8');
 const from = src.indexOf('function inquirySummary');
-const to = src.indexOf('/* ---------- promote: printable artwork ----------');
+const to = src.indexOf('/* ---------- branding (the Promote tab until 2026-09-11): printable artwork ----------');
 assert.ok(from >= 0 && to > from, 'could not find the inbox code in portal.js');
 // markInquirySeen lives further up, with the unread badge it belongs to
 const seenFrom = src.indexOf('function markInquirySeen');
