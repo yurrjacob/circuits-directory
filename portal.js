@@ -1941,7 +1941,7 @@ async function drawThread(id, q){
 }
 
 
-/* ---------- promote: printable artwork ----------
+/* ---------- branding (the Promote tab until 2026-09-11): printable artwork ----------
    Drawn in real inches so it prints at true size; the previews are the same
    markup scaled down. Light or dark is a class on the wrapper, so one toggle
    restyles every piece. */

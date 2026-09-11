@@ -1337,7 +1337,7 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
   .btn-quote{display:block;width:100%;text-align:center;padding:10px 12px;font-size:.9rem}
 }
 
-/* ---- promote: printable artwork ---- */
+/* ---- branding tab: printable artwork ---- */
 .kit-intro{margin:0 0 18px;font-size:.95rem;color:var(--muted);max-width:62ch}
 .kit{display:flex;flex-direction:column;gap:22px}
 .kit-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}

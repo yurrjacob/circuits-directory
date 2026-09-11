@@ -716,9 +716,13 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
      Showcase tab is gone, certifications, team, gallery and buyer reviews
      belong to each keyword listing, edited under Listings, so no tab may carry
      them at company level. */
-  for (const gone of ['data-tab="branding"', 'data-tab="showcase"', 'data-tab="jobs"', 'id="f-certs"', 'id="f-reviews-on"']) {
+  for (const gone of ['data-tab="showcase"', 'data-tab="jobs"', 'id="f-certs"', 'id="f-reviews-on"']) {
     assert.ok(!portalHtml.includes(gone), `${gone} is back on the dashboard, showcase and jobs live under Listings now`);
   }
+  /* 2026-09-11 (Jacob): the Promote tab is called Branding. Same panel, the
+     printable artwork; logo, about and social still live under Profile Details. */
+  assert.ok(!portalHtml.includes('data-tab="promote"') && !portalHtml.includes('id="tab-promote"'), 'the Promote tab is back, it was renamed Branding');
+  assert.ok(/<button class="pt-tab" data-tab="branding">Branding<\/button>/.test(portalHtml) && portalHtml.includes('id="tab-branding"'), 'the dashboard lost its Branding tab');
   assert.ok(portalHtml.includes('data-tab="profile"'), 'the dashboard lost its Profile Details tab');
   // every company-level field still present in the one tab
   for (const id of ['f-handle', 'f-name', 'f-contact', 'f-email', 'f-phone', 'f-website',
@@ -764,7 +768,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     'a staff-run person profile no longer shows the Circuits.com mark');
   /* 2026-09-03 (Jacob): ONE account type, called a profile. One dashboard
      with every tab for everyone: Profile Details / Listings / Hiring /
-     Seeking Employment / Promote / Account Settings (+ Admin for staff).
+     Seeking Employment / Branding / Account Settings (+ Admin for staff).
      No account kind anywhere: not on /register, not in signup metadata, not
      as a body class, not in the header label. */
   const portalHtml2 = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
@@ -773,8 +777,8 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   /* Upgrades sits immediately right of Your Listings (Jacob, 2026-09-03): the
      listings table says what each keyword has, the tab beside it is where the
      paid extras are switched on. */
-  assert.deepStrictEqual(tabs, ['profile', 'listings', 'upgrades', 'hiring', 'seeking', 'promote', 'account', 'admin'],
-    'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Job Search / Find Recruits / Promote / Account Settings / Admin');
+  assert.deepStrictEqual(tabs, ['profile', 'listings', 'upgrades', 'hiring', 'seeking', 'branding', 'account', 'admin'],
+    'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Find Recruits / Job Search / Branding / Account Settings / Admin');
   /* the two Recruiting tabs are named for what they hold (Jacob, 2026-09-03,
      "respectively"): the jobs tab is Job Search, the recruit listing is Find
      Recruits; the ids stay hiring / seeking so nothing else moves */
