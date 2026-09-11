@@ -114,7 +114,8 @@ img{max-width:100%}
 /* three equal choices in one pill (Jacob, 2026-09-03) */
 .search-mode{gap:2px}
 @media(max-width:600px){.search-mode{flex-wrap:wrap;justify-content:center;border-radius:16px}}
-.search-hint{font-size:.82rem;color:var(--muted);margin:10px 0 0;text-align:center}
+/* the one-line "what this searches" note sits ABOVE the pill (Jacob, 2026-09-11) */
+.search-hint{font-size:.82rem;color:var(--muted);margin:0 0 10px;text-align:center}
 .search-pill{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:28px;padding:12px 20px;box-shadow:var(--shadow);transition:.15s}
 .search-pill:focus-within{box-shadow:0 1px 10px rgba(32,33,36,.28);border-color:#d7d9dc}
 .search-pill svg{flex:0 0 auto;color:var(--muted)}

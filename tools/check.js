@@ -909,7 +909,10 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   const hintBlock = (fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8').match(/const HOME_HINT = \{[\s\S]*?\};/) || [''])[0];
   for (const k of ['directory', 'recruits', 'jobs']) assert.ok(new RegExp(`^  ${k}:\\s+'`, 'm').test(hintBlock), `HOME_HINT lost its ${k} line`);
   assert.ok(/<p class="search-hint" id="search-hint">Directory: companies, products and services, listed by their Circuits-Keywords&trade;\.<\/p>/.test(home),
-    'the homepage no longer carries the Directory line under the search box');
+    'the homepage no longer carries the Directory line by the search box');
+  /* the line sits ABOVE the search pill (Jacob, 2026-09-11) */
+  assert.ok(home.indexOf('id="search-hint"') < home.indexOf('class="search-pill"') && home.indexOf('id="search-hint"') > home.indexOf('id="home-form"'),
+    'the Directory line is no longer above the search pill');
   assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'recruiting-2026-09-03', 'about-recruiting-section.html')), 'the archived About recruiting section is missing');
   assert.ok(!/<h2 class="section-title">Recruiting on Circuits\.com/.test(fs.readFileSync(path.join(ROOT, 'about.html'), 'utf8')), 'the Recruiting section is back on About before launch');
   const appHome = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
