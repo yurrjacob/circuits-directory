@@ -803,7 +803,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   assert.ok(/const mine = \{ display_name: fields\.name \};[\s\S]*mine\.photo_url = fields\.logo;[\s\S]*mine\.handle = fields\.handle;/.test(portalSrc2),
     'Profile Details no longer mirrors name, picture and address onto the person');
   /* the Seeking Employment tab holds experience, keywords, the private phone and the listing switch */
-  for (const id of ['id="me-title"', 'id="me-years"', 'id="me-bio"', 'id="f-creds"', 'id="me-resume"', 'id="me-kw-rows"', 'id="me-phone"', 'id="me-listed"']) {
+  for (const id of ['id="me-title"', 'id="me-location"', 'id="me-years"', 'id="me-bio"', 'id="f-creds"', 'id="me-resume"', 'id="me-kw-rows"', 'id="me-phone"', 'id="me-listed"']) {
     assert.ok(portalSrc2.includes(id), `the Seeking Employment tab lost ${id}`);
   }
   assert.ok(!/id="me-handle"|id="me-name"|id="me-photo"/.test(portalSrc2), 'Seeking Employment still asks for address, name or picture, those live on Profile Details now');
@@ -898,13 +898,13 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   }
   assert.ok(!/search-group|search-side|data-mode=|data-target="hiring"|data-target="seeking"/.test(home), 'an old homepage toggle layout is back');
   /* the three doors under it, each tied to its index so the chosen search
-     lights the door that goes with it: Find Recruits with Post a Job, Job
-     Search with Post Your Resume, Directory with the free listing */
-  assert.ok(/data-for="recruits" href="\/portal#hiring">Post a Job</.test(home) && /data-for="jobs" href="\/portal#seeking">Post Your Resume for Free</.test(home)
+     lights the door that goes with it: Find Recruits with Post Free Job, Job
+     Search with Post Free Resume (Jacob, 2026-09-13), Directory with the free listing */
+  assert.ok(/data-for="recruits" href="\/portal#hiring">Post Free Job</.test(home) && /data-for="jobs" href="\/portal#seeking">Post Free Resume</.test(home)
     && /class="btn btn-primary" data-for="directory" href="\/join">Get Listed for Free</.test(home), 'the homepage lost its three doors, or they are no longer tied to their index');
   /* left to right in the order of the searches above them (Jacob, 2026-09-09) */
   const doorOrder = [...home.matchAll(/class="claim-cta claim-cta-row">[\s\S]*?<\/div>/g)][0][0].match(/data-for="([a-z]+)"/g).map(m => m.slice(10, -1));
-  assert.deepStrictEqual(doorOrder, ['directory', 'recruits', 'jobs'], 'the three doors are not in the order Get Listed, Post a Job, Post Your Resume');
+  assert.deepStrictEqual(doorOrder, ['directory', 'recruits', 'jobs'], 'the three doors are not in the order Get Listed, Post Free Job, Post Free Resume');
   assert.ok(/b\.classList\.toggle\('btn-primary', mine\); b\.classList\.toggle\('btn-outline', !mine\)/.test(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')),
     'choosing a search no longer lights the door that goes with it');
   /* every mode says in one line what it searches, Directory included (Jacob,
@@ -1695,19 +1695,35 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   /* both sides of Recruiting sit under the keyword table (Jacob, 2026-09-03):
      the jobs posted and the person's own listing, each read-only here with a
      button to the tab that edits it */
-  /* the recruiting boxes left Your Listings for their own tabs (Jacob, 2026-09-09):
-     Jobs Posted under the Find Recruits form, Your Listing under the Job Search forms */
-  assert.ok(!/id="pt-list-hiring"/.test(ph), 'the jobs box is back on Your Listings; it lives under Jobs Posted on Find Recruits');
+  /* both recruiting lists are back on Your Listings (Jacob, 2026-09-13): Jobs
+     Posted and Positions Desired under the keyword table; each tab keeps only
+     its forms and a Search Job Market box. Recruiting is free: no upgrades,
+     no fees, no paid preview. */
   const seekTab = (ph.match(/<section class="pt-panel" id="tab-seeking">[\s\S]*?<\/section>/) || [''])[0];
   const hireTab = (ph.match(/<section class="pt-panel" id="tab-hiring">[\s\S]*?<\/section>/) || [''])[0];
-  assert.ok(/id="pt-list-seeking"/.test(seekTab), 'Your Listing is not on the Job Search tab');
+  const listTab = (ph.match(/<section class="pt-panel" id="tab-listings">[\s\S]*?<\/section>/) || [''])[0];
+  assert.ok(/<h3 class="pt-sub-h"[^>]*>Jobs Posted<\/h3>\s*<div class="pt-list" id="pt-jobs">/.test(listTab) && /id="pt-list-hiring"/.test(listTab), 'Jobs Posted is not on Your Listings');
+  assert.ok(/id="pt-list-seeking"/.test(listTab) && /Positions Desired<\/h3>/.test(pj), 'Positions Desired is not on Your Listings');
+  assert.ok(!/pt-list-seeking|pt-jobs"/.test(seekTab + hireTab), 'a recruiting list is back on its old tab');
   assert.ok(/<h2>Search Jobs<\/h2>/.test(seekTab) && /href="\/jobs"[^>]*>View the Job Board/.test(seekTab), 'the Job Search tab lost its title or its board button');
   assert.ok(/<h2>Find Recruits<\/h2>/.test(hireTab) && /href="\/talent"[^>]*>View the Recruit Board/.test(hireTab), 'the Find Recruits tab lost its title or its board button');
   assert.ok(/id="job-docs"/.test(hireTab) && /Job Posting Flyer/.test(hireTab), 'Post a Job lost Add Docs');
-  assert.ok(/<h3 class="pt-sub-h"[^>]*>Jobs Posted<\/h3>\s*<div class="pt-list" id="pt-jobs">/.test(hireTab), 'Jobs Posted is not the heading over the posted jobs');
-  assert.ok(/Reveal Recruit Details<\/b> <span class="pt-price">\$99\/mo/.test(hireTab) && /Post a Job<\/b> <span class="pt-price">\$99\/mo/.test(hireTab) && (hireTab.match(/class="btn btn-upgrade" href="\/contact\?topic=/g) || []).length === 2,
-    'the Find Recruits tab lost its two $99/mo upgrades or their Request buttons');
-  assert.ok(/renderExperience\(\); renderRecruit\(\); renderRecruitingListings\(\);/.test(pj) && /data-go-form="pt-experience"/.test(pj), 'Your Listing is not drawn with the Job Search forms, or Edit does not lead to them');
+  assert.ok(/id="job-years"/.test(hireTab) && /years_experience: years/.test(pj), 'Post a Job lost Years of experience');
+  assert.ok(!/\$99|btn-upgrade|pt-rec-upgrades|Talent Access/.test(hireTab + seekTab), 'Recruiting is free: an upgrade or a fee is back on a Recruiting tab');
+  assert.ok(!/Preview How Companies See You|pt-recruit-preview/.test(ph) && !/renderRecruitPreview|data-preview=/.test(pj), 'the paid preview is back on Job Search');
+  assert.ok(/id="pt-market-jobs"/.test(seekTab) && /id="pt-market-recruits"/.test(hireTab) && (ph.match(/>Search Job Market<\/button>/g) || []).length === 2 && /function wireMarketSearch/.test(pj),
+    'each Recruiting tab needs its own Search Job Market box');
+  assert.ok(/renderExperience\(\); renderRecruit\(\); renderRecruitingListings\(\);/.test(pj) && /data-go-form="pt-experience"/.test(pj) && /activateTab\('seeking'\); const f = el\(b\.dataset\.goForm\)/.test(pj), 'Positions Desired is not drawn, or Edit does not open the Job Search tab');
+  assert.ok(/setMode\(j\); activateTab\('hiring'\)/.test(pj), 'Edit on a posted job does not open the Find Recruits form');
+  /* the boards are tables with one blue action button top right (Jacob, 2026-09-13) */
+  const talentHtml = fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8'), jobsHtml = fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8');
+  assert.ok(/<th>Seeking Job As<\/th><th>Location<\/th><th>Years Experience<\/th><th>Circuits-Keywords&trade;<\/th>/.test(talentHtml) && /class="btn btn-blue" id="board-open" disabled>View Resume &amp; Contact</.test(talentHtml),
+    'the Recruit Board is not the table with View Resume & Contact');
+  assert.ok(/<th>Job Title<\/th><th>Location<\/th><th>Company<\/th><th>Years Experience<\/th><th>Circuits-Keywords&trade;<\/th>/.test(jobsHtml) && /class="btn btn-blue" id="board-open" disabled>View Job Details &amp; Apply</.test(jobsHtml),
+    'the Job Board is not the table with View Job Details & Apply');
+  assert.ok(/slice\(0, 3\)/.test(talentHtml) && /slice\(0, 3\)/.test(jobsHtml), 'a board cell shows more than three keywords');
+  assert.ok(!/Talent Access/.test(talentHtml) && !/Get Talent Access/.test(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')), 'the paid Talent Access is back');
+  assert.ok(/^\.btn-blue\{background:#1f5fbf/m.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the blue action button style is missing');
   assert.ok(/data-edit-job="\$\{escapeHtml\(j\.id\)\}">Edit</.test(pj) && /const err = await updateJob\(editingId, fields\)/.test(pj) && /docs: jobDocs/.test(pj),
     'a posted job cannot be edited, or its documents are not saved');
   assert.ok(/<h3 style="margin-top:0">Your Circuits-Keywords&trade;<\/h3>/.test(pj), 'the keywords box on Job Search is not titled Your Circuits-Keywords');

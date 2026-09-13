@@ -322,7 +322,7 @@ async function reloadCompanies(){
   const susp = allCompanies.filter(c => c.suspended_at).length;
   $('companies-hint').textContent = susp
     ? susp + (susp === 1 ? ' profile suspended' : ' profiles suspended')
-    : 'Every Account On The Site. Suspend Hides Without Deleting. Talent Access Unlocks Seeking Employment Details';
+    : 'Every Account On The Site. Suspend Hides Without Deleting. Delete Removes The Profile And Everything It Has';
   $('companies-body').innerHTML = allCompanies.map(c => `
     <tr class="${c.suspended_at ? 'row-waiting' : ''}">
       <td><a href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener">${esc(c.name)}</a><br><span class="cell-muted">${c.handle ? 'circuits.com/' + esc(c.handle) : 'no username yet'}</span></td>
@@ -330,40 +330,16 @@ async function reloadCompanies(){
       <td>${c.suspended_at
             ? '<b>Suspended</b><br><span class="cell-muted">' + new Date(c.suspended_at).toLocaleDateString() + '</span>'
             : 'Active'}</td>
-      <td>${accessUntil(c) > Date.now()
-            ? '<b>Until ' + new Date(c.talent_access_until).toLocaleDateString() + '</b>'
-            : '<span class="cell-muted">None</span>'}</td>
       <td class="row-actions">
         ${c.suspended_at
           ? `<button class="mini-btn green" onclick="setSuspended('${esc(c.slug)}', false)">Reinstate</button>`
           : `<button class="mini-btn" onclick="setSuspended('${esc(c.slug)}', true)">Suspend</button>`}
-        <button class="mini-btn" onclick="setTalentAccessUI('${esc(c.slug)}')">Talent Access</button>
         <button class="mini-btn danger" onclick="deleteCompanyUI('${esc(c.slug)}')">Delete</button>
       </td></tr>`).join('');
   $('companies-empty').style.display = allCompanies.length ? 'none' : 'block';
 }
-function accessUntil(c){ return c && c.talent_access_until ? new Date(c.talent_access_until).getTime() : 0; }
-
-/* Talent Access (MVP2): a monthly subscription recorded by staff after payment.
-   Months are added to whatever is left, so renewing early loses nothing. */
-async function setTalentAccessUI(slug){
-  const co = allCompanies.find(c => c.slug === slug);
-  const name = co ? co.name : slug;
-  const left = accessUntil(co) > Date.now() ? 'Active until ' + new Date(co.talent_access_until).toLocaleDateString() + '.' : 'No access at the moment.';
-  const raw = prompt(name + ': Talent Access.\n' + left + '\n\nMonths to add (1-12). Leave blank to revoke access now.', '1');
-  if(raw === null) return;
-  let until = null;
-  if(raw.trim()){
-    const months = parseInt(raw, 10);
-    if(!(months >= 1 && months <= 12)){ alert('Months should be 1 to 12.'); return; }
-    const d = new Date(Math.max(Date.now(), accessUntil(co)));
-    d.setMonth(d.getMonth() + months);
-    until = d.toISOString();
-  }
-  const err = await setTalentAccess(slug, until);
-  if(err){ alert('Could not do that: ' + err); return; }
-  await reloadCompanies();
-}
+/* Talent Access retired 2026-09-13: Recruiting is free, any signed-in account
+   views a recruit's details. companies.talent_access_until stays, unused. */
 
 /* ---- Upgrade Applications: badge / banner / locked position, asked from Listings ----
    A Trust Badge request carries the label and colour the company chose;
@@ -496,7 +472,7 @@ async function setRecruitStatus(userId, status){
   await reloadRecruits();
 }
 
-/* ---- jobs (MVP2): live for 30 days per payment, recorded by staff ---- */
+/* ---- jobs (MVP2): free; live for 30 days per approval, recorded by staff ---- */
 let allJobs = [];
 function jobState(j){
   if(j.closed_at) return 'Paused';
@@ -654,6 +630,6 @@ window.initAdmin = async function(){
    tools/check.js fails if a new onclick appears without being listed here. */
 Object.assign(window, {
   editListing, editBadge, removeListing, togglePause, lockListing,
-  approveApp, rejectApp, setSuspended, setTalentAccessUI, markJobPaid, closeJob, approveUpgrade, denyUpgrade, sendNotificationUI, notifyAudienceUI, setRecruitStatus, deleteCompanyUI
+  approveApp, rejectApp, setSuspended, markJobPaid, closeJob, approveUpgrade, denyUpgrade, sendNotificationUI, notifyAudienceUI, setRecruitStatus, deleteCompanyUI
 });
 })();

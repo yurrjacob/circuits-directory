@@ -55,7 +55,7 @@ function initHome(){
 
 /* ---- Seeking Employment card (shared by /talent, the Hiring tab and the
    person's own preview). Public bits open; the private block is a
-   blur until a company with Talent Access unlocks it. ---- */
+   blur until a signed-in company opens it (free since 2026-09-13). ---- */
 function talentCardHtml(r, o){
   o = o || {};
   const creds = (Array.isArray(r.credentials) ? r.credentials : []).filter(c => c && (c.name || '').trim());
@@ -64,8 +64,7 @@ function talentCardHtml(r, o){
   const action = o.preview ? `<span class="btn btn-primary tal-unlock" aria-hidden="true" style="pointer-events:none">Unlock</span>`
     : o.access
     ? `<button type="button" class="btn btn-primary tal-unlock" data-uid="${escapeHtml(r.user_id)}">Unlock</button>`
-    : o.signedIn ? `<a class="btn tal-unlock" href="/contact">Get Talent Access</a>`
-                 : `<a class="btn tal-unlock" href="/portal">Sign in to unlock</a>`;
+    : `<a class="btn tal-unlock" href="/portal">Sign in to view</a>`;
   return `
     <article class="tal-card" data-uid="${escapeHtml(r.user_id)}">
       <div class="tal-main">
@@ -306,7 +305,7 @@ async function initInbox(){
   if(typeof sb === 'undefined'){
     if(!storedSession()) return;
     const add = src => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
-    try{ await add('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'); await add('/store.js?v=e17c1002e2'); }catch(e){ return; }
+    try{ await add('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'); await add('/store.js?v=5707a7cd63'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;

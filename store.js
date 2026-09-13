@@ -477,7 +477,7 @@ async function profileRunByStaff(handle){
 /* Only these columns are readable by visitors: email, phone and resume_path are
    private (talent marketplace, 2026-09-02) and leave the table solely through
    my_profile() for the owner and talent_contact() for subscribed companies. */
-const PROFILE_PUBLIC_COLS = 'user_id, handle, display_name, created_at, updated_at, suspended_at, title, years, bio, talent_listed, talent_hidden, talent_status, account_type, credentials, photo_url';
+const PROFILE_PUBLIC_COLS = 'user_id, handle, display_name, created_at, updated_at, suspended_at, title, years, bio, talent_listed, talent_hidden, talent_status, account_type, credentials, photo_url, location';
 async function fetchProfileByHandle(handle){
   if(!sb || !handle) return null;
   const { data, error } = await sb.from('profiles').select(PROFILE_PUBLIC_COLS)
@@ -610,8 +610,8 @@ async function talentSearch(keyword){
   if(error) throw error;
   return data || [];
 }
-/* the unblur: only answers for the owner, staff, or a company whose talent
-   subscription (companies.talent_access_until) is active */
+/* the resume and contact details: any signed-in account, the owner, or staff
+   (free since 2026-09-13; the Talent Access subscription is retired) */
 async function talentContact(userId){
   if(!sb) return null;
   const { data, error } = await sb.rpc('talent_contact', { p_user: userId });
@@ -658,12 +658,13 @@ async function sendNotification(to, subject, body, link){
   return { sent: (data && data.sent) || 0, unknown: (data && data.unknown) || [] };
 }
 
-/* ---- jobs (MVP2): posted by a company owner, live once staff mark it paid ---- */
+/* ---- jobs (MVP2): posted by a company owner, free, live once staff approve it ---- */
 async function postJob(slug, fields){
   if(!sb) return { error: 'No connection' };
   const { data, error } = await sb.from('jobs')
     .insert({ company_slug: slug, title: fields.title, location: fields.location || null,
               description: fields.description || null, apply_email: fields.apply_email || null,
+              years_experience: fields.years_experience == null ? null : fields.years_experience,
               docs: Array.isArray(fields.docs) ? fields.docs : [] })
     .select('id').single();
   if(error) return { error: error.message };
@@ -739,7 +740,7 @@ async function jobApplicants(jobId){
   return data || [];
 }
 
-/* ---- staff: recruits, talent access, job payments ---- */
+/* ---- staff: recruits and job approvals ---- */
 /* Everyone who has switched their listing on, plus anyone who has started
    (a position or keywords saved) but not switched it on yet, so staff can see
    what is coming and approve ahead of time (Jacob, 2026-09-09: "I don't see

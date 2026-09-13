@@ -6,7 +6,7 @@
 <title>Dashboard | Circuits.com</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
-<link rel="stylesheet" href="/styles.css?v=6b40ae1789">
+<link rel="stylesheet" href="/styles.css?v=84631c5087">
 <script src="/nav.js?v=ded2c647b5"></script>
 </head>
 <body>
@@ -107,20 +107,23 @@
       <div>
         <h2>Search Jobs</h2>
         <p class="kit-intro">Companies that are hiring search here by Circuits-Keyword&trade;. Add your
-          experience, pick the keywords a recruiter would type to find you, and switch your listing on. They see
-          a preview. Your name, contact details and resume stay blurred until a company pays to unlock them.</p>
+          experience, pick the keywords a recruiter would type to find you, and switch your listing on. It is
+          free. Companies see your position, experience and keywords, and any signed-in company can view
+          your resume and contact details.</p>
       </div>
       <a class="btn btn-outline" href="/jobs" target="_blank" rel="noopener">View the Job Board &#8599;</a>
     </div>
-    <div class="pt-recruit-grid">
-      <div>
-        <div class="pf-form" id="pt-experience"></div>
-        <div class="pf-form" id="pt-recruit" style="margin-top:18px"></div>
+    <!-- Search Job Market: its own box (Jacob, 2026-09-13), a keyword search of the Job Board -->
+    <form class="pf-form pt-market" id="pt-market-jobs" autocomplete="off">
+      <h3 style="margin-top:0">Search Job Market</h3>
+      <div class="pt-market-row">
+        <input type="text" id="pt-market-jobs-q" maxlength="80" placeholder="Search open jobs by Circuits-Keyword&trade;..." aria-label="Search open jobs by keyword">
+        <button type="submit" class="btn btn-primary">Search Job Market</button>
       </div>
-      <div><h3 style="margin:0 0 10px">Preview How Companies See You</h3><div id="pt-recruit-preview"></div></div>
-    </div>
-    <!-- your listing, at a glance, as its own box (moved here from Your Listings, Jacob 2026-09-09) -->
-    <div class="pt-list-rec" id="pt-list-seeking"></div>
+      <p class="pf-note">Open roles posted by companies on Circuits.com, listed by the Circuits-Keywords&trade; they hire for.</p>
+    </form>
+    <div class="pf-form" id="pt-experience" style="margin-top:18px"></div>
+    <div class="pf-form" id="pt-recruit" style="margin-top:18px"></div>
   </section>
 
   <!-- ===== account settings ===== -->
@@ -209,19 +212,28 @@
     </div>
   </section>
 
-  <!-- hiring: the Hiring side of Recruiting. Post a job; searching people happens on /talent. -->
+  <!-- hiring: the Find Recruits side of Recruiting. Post a job, free; searching people happens on /talent. -->
   <section class="pt-panel" id="tab-hiring">
     <div class="pt-section" style="margin-top:0;padding-top:0;border-top:0">
       <div class="pt-tab-head">
         <div>
           <h2>Find Recruits</h2>
-          <p class="kit-intro">Post an open role under the Circuits-Keywords&trade; you hire for. Once Circuits.com
+          <p class="kit-intro">Post an open role under the Circuits-Keywords&trade; you hire for, free. Once Circuits.com
             approves it, the post runs for 30 days on the Job Board. Everyone who applies appears under
-            New Applicants on that post.</p>
+            New Applicants on that post, under Your Listings.</p>
         </div>
         <a class="btn btn-outline" href="/talent" target="_blank" rel="noopener">View the Recruit Board &#8599;</a>
       </div>
-    <div class="pf-form" id="pt-job-form">
+      <!-- Search Job Market: its own box (Jacob, 2026-09-13), a keyword search of the Recruit Board -->
+      <form class="pf-form pt-market" id="pt-market-recruits" autocomplete="off">
+        <h3 style="margin-top:0">Search Job Market</h3>
+        <div class="pt-market-row">
+          <input type="text" id="pt-market-recruits-q" maxlength="80" placeholder="Search recruits by Circuits-Keyword&trade;..." aria-label="Search recruits by keyword">
+          <button type="submit" class="btn btn-primary">Search Job Market</button>
+        </div>
+        <p class="pf-note">People seeking employment, listed by their Circuits-Keywords&trade;. Free to view, resumes and contact details included.</p>
+      </form>
+    <div class="pf-form" id="pt-job-form" style="margin-top:18px">
       <h3 id="job-form-h">Post a job</h3>
       <input type="hidden" id="job-id" value="">
       <div class="grid2">
@@ -232,8 +244,12 @@
         <input id="job-keywords" type="text" placeholder="rf design, pcb layout"></div>
       <div class="auth-field"><label for="job-desc">Description</label>
         <textarea id="job-desc" rows="6" maxlength="4000" placeholder="The role, the team, what you need."></textarea></div>
-      <div class="auth-field"><label for="job-email">Send applications to <span class="cell-muted">(optional, defaults to your public email)</span></label>
-        <input id="job-email" type="email" maxlength="120" placeholder="hiring@company.com"></div>
+      <div class="grid2">
+        <div class="auth-field"><label for="job-years">Years of experience <span class="cell-muted">(optional)</span></label>
+          <input id="job-years" type="number" min="0" max="60" placeholder="5"></div>
+        <div class="auth-field"><label for="job-email">Send applications to <span class="cell-muted">(optional, defaults to your public email)</span></label>
+          <input id="job-email" type="email" maxlength="120" placeholder="hiring@company.com"></div>
+      </div>
       <!-- documents on the post (Jacob, 2026-09-09): the docs bucket, same as a listing's -->
       <div class="auth-field"><label for="job-docs">Add Docs <span class="cell-muted">(optional)</span></label>
         <input id="job-docs" type="file" multiple accept="application/pdf,image/png,image/jpeg,image/webp">
@@ -245,27 +261,6 @@
         <span class="pf-note" id="job-msg"></span>
       </div>
     </div>
-      <h3 class="pt-sub-h" style="margin-top:22px">Jobs Posted</h3>
-      <div class="pt-list" id="pt-jobs"></div>
-    </div>
-
-    <!-- recruiting upgrades (Jacob, 2026-09-09), two subscriptions; a request
-         goes through the contact form with the message filled in -->
-    <div class="pt-upsell pt-upsell-rec">
-      <div>
-        <b>Recruiting upgrades</b>
-        <p>Two subscriptions, $99 a month each. Request one and we confirm by email before anything is billed.</p>
-      </div>
-    </div>
-    <div class="pt-rec-upgrades">
-      <div class="pt-rec-up">
-        <div><b>Reveal Recruit Details</b> <span class="pt-price">$99/mo</span><p class="pf-note">Unlimited recruit reveals: names, contact details and resumes of everyone on the Recruit Board.</p></div>
-        <a class="btn btn-upgrade" href="/contact?topic=I%20would%20like%20to%20add%20Reveal%20Recruit%20Details%20(%2499%20a%20month%2C%20unlimited%20recruit%20reveals)%20to%20my%20account.">Request</a>
-      </div>
-      <div class="pt-rec-up">
-        <div><b>Post a Job</b> <span class="pt-price">$99/mo</span><p class="pf-note">Unlimited job posts, live on the Job Board.</p></div>
-        <a class="btn btn-upgrade" href="/contact?topic=I%20would%20like%20to%20add%20Post%20a%20Job%20(%2499%20a%20month%2C%20unlimited%20job%20posts)%20to%20my%20account.">Request</a>
-      </div>
     </div>
   </section>
 
@@ -290,6 +285,14 @@
       </div>
       <a class="btn btn-primary" href="/join">Get Listed</a>
     </div>
+    <!-- Both sides of Recruiting, back here (Jacob, 2026-09-13): the jobs a
+         company posted and the position a person wants, each at a glance.
+         Edit leads to the tab that changes it. -->
+    <div class="pt-list-rec" id="pt-list-hiring">
+      <h3 class="pt-sub-h">Jobs Posted</h3>
+      <div class="pt-list" id="pt-jobs"></div>
+    </div>
+    <div class="pt-list-rec" id="pt-list-seeking"></div>
   </section>
 
   <!-- Upgrades: the same keywords, with the paid extras switched on or off and
@@ -526,7 +529,7 @@
 
   <!-- Recruits (MVP2): people who opted into the directory; Hide pulls one out -->
   <div class="panel" data-adm="employment">
-    <div class="panel-head"><h2>Recruits</h2><span class="hint">People Asking To Be Listed Under Job Search, With Their Circuits-Keywords&trade;. Approve To List Them, Deny To Keep Them Out. Listed Off Means They Have Filled Some Of It In But Not Switched The Listing On Yet</span></div>
+    <div class="panel-head"><h2>Recruits</h2><span class="hint">People Asking To Be Listed On The Recruit Board, With Their Circuits-Keywords&trade;. Approve To List Them, Deny To Keep Them Out. Listed Off Means They Have Filled Some Of It In But Not Switched The Listing On Yet</span></div>
     <div class="panel-body">
       <div class="table-scroll">
         <table class="dash-table">
@@ -540,7 +543,7 @@
 
   <!-- Jobs (MVP2): a post is invisible until Mark Paid; 30 days per payment -->
   <div class="panel" data-adm="employment">
-    <div class="panel-head"><h2>Jobs</h2><span class="hint">Approve Once Paid: 30 Live Days, Extended Each Time. Deny Takes It Off The Board</span></div>
+    <div class="panel-head"><h2>Jobs</h2><span class="hint">Free. Approve: 30 Live Days, Extended Each Time. Deny Takes It Off The Board</span></div>
     <div class="panel-body">
       <div class="table-scroll">
         <table class="dash-table">
@@ -561,11 +564,11 @@
 
   <!-- Companies: the only place suspension can be applied or lifted -->
   <div class="panel" data-adm="companies">
-    <div class="panel-head"><h2>All Profiles</h2><span class="hint" id="companies-hint">Every Account On The Site. Suspend Hides Without Deleting. Talent Access Unlocks Seeking Employment Details. Delete Removes The Profile And Everything It Has</span></div>
+    <div class="panel-head"><h2>All Profiles</h2><span class="hint" id="companies-hint">Every Account On The Site. Suspend Hides Without Deleting. Delete Removes The Profile And Everything It Has</span></div>
     <div class="panel-body">
       <div class="table-scroll">
         <table class="dash-table">
-          <thead><tr><th>Company</th><th>Email</th><th>State</th><th>Talent Access</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Company</th><th>Email</th><th>State</th><th>Actions</th></tr></thead>
           <tbody id="companies-body"></tbody>
         </table>
       </div>
@@ -631,10 +634,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-<script src="/store.js?v=e17c1002e2"></script>
-<script src="/app.js?v=f9d16ed63f"></script>
-<script src="/portal.js?v=94bd71bab8"></script>
-<script src="/admin.js?v=70d74c5c77"></script>
+<script src="/store.js?v=5707a7cd63"></script>
+<script src="/app.js?v=4d239eb102"></script>
+<script src="/portal.js?v=e2ebf6ae01"></script>
+<script src="/admin.js?v=bb09b6a849"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));
 initPortal();

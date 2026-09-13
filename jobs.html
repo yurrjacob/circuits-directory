@@ -6,7 +6,7 @@
 <title>Recruiting: Hiring | Circuits.com</title>
 <meta name="description" content="Open roles in the circuits industry, posted by companies on Circuits.com and searchable by Circuits-Keyword™.">
 <link rel="icon" href="assets/favicon.png">
-<link rel="stylesheet" href="styles.css?v=6b40ae1789">
+<link rel="stylesheet" href="styles.css?v=84631c5087">
 <script src="/nav.js?v=ded2c647b5"></script>
 <script async src="/analytics.js?v=17b1c5b9b5"></script>
 </head>
@@ -49,7 +49,7 @@
 </div>
 
 <div class="page prose tal-intro">
-  <p class="lede">The Hiring side of Recruiting: open roles posted by companies on Circuits.com, listed under the Circuits-Keywords&trade; they hire for. Applying is free and takes one click from your profile. Looking for people instead? See who is <a href="/talent">seeking employment</a>.</p>
+  <p class="lede">The Job Board: open roles posted by companies on Circuits.com, listed under the Circuits-Keywords&trade; they hire for. Pick a job and View Job Details &amp; Apply. Applying is free and takes one click from your profile. Looking for people instead? See the <a href="/talent">Recruit Board</a>.</p>
   <div id="job-note" class="tal-note"></div>
 </div>
 
@@ -69,13 +69,16 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="store.js?v=e17c1002e2"></script>
-<script src="app.js?v=f9d16ed63f"></script>
+<script src="store.js?v=5707a7cd63"></script>
+<script src="app.js?v=4d239eb102"></script>
 <script>
-/* The job board. Live = staff marked it paid and the 30 days have not run out;
-   the job_search() function decides that, not this page. Apply inserts one
-   row per person per job (the database refuses a second) and the notify
-   function emails the employer a link to the applicant's profile. */
+/* The Job Board, a table (Jacob, 2026-09-13): Job Title, Location, Company,
+   Years Experience, Circuits-Keywords. Pick a row, then View Job Details &
+   Apply opens the full post with its documents and the Apply button. Live =
+   staff approved it and the 30 days have not run out; job_search() decides
+   that, not this page. Apply inserts one row per person per job (the database
+   refuses a second) and the notify function emails the employer a link to the
+   applicant's profile. */
 (async function initJobs(){
   const params = new URLSearchParams(location.search);
   const q = params.get('q') || '';
@@ -91,39 +94,78 @@
   const note = document.getElementById('job-note');
   note.innerHTML = user
     ? 'Applications go out with a link to <a href="/portal">your profile</a>, so keep it current.'
-    : '<a href="/portal">Sign in</a> to apply, or <a href="/register">create a free profile</a> first. Hiring? Post a job from the Hiring tab of your profile.';
+    : '<a href="/portal">Sign in</a> to apply, or <a href="/register">create a free profile</a> first. Hiring? Post a job, free, from the Find Recruits tab of your dashboard.';
 
   body.innerHTML = loadingHtml('Searching…');
   let rows = [], applied = new Set();
   try { rows = await jobSearch(q); if(user) applied = new Set((await myApplications()).map(a => a.job_id)); }
-  catch(e){ body.innerHTML = loadErrorHtml('the Hiring board', 'Try again'); return; }
+  catch(e){ body.innerHTML = loadErrorHtml('the Job Board', 'Try again'); return; }
   document.getElementById('result-count').textContent = rows.length;
 
   if(!rows.length){
     body.innerHTML = `<div class="empty"><div class="big">No open jobs${q ? ' for &ldquo;' + escapeHtml(q) + '&rdquo;' : ''} right now</div>
-      <p>Check back soon, or <a href="/portal#seeking">list yourself under Seeking Employment</a> so employers can find you.</p></div>`;
+      <p>Check back soon, or <a href="/portal#seeking">list yourself on the Recruit Board</a> so employers can find you.</p></div>`;
     return;
   }
 
-  const excerpt = s => { s = (s || '').trim(); return s.length > 280 ? s.slice(0, 280).replace(/\s+\S*$/, '') + '…' : s; };
-  const card = j => `
-    <article class="job-card" data-id="${escapeHtml(j.id)}">
-      <div class="job-co">
-        <span class="co-logo" style="background:var(--dark)">${isLogoUrl(j.company_logo) ? `<img src="${escapeHtml(j.company_logo)}" alt="">` : avatarSvg()}</span>
-        <div><a href="${escapeHtml(profileUrl(j.company_handle) || '#')}">${escapeHtml(j.company_name)}</a>${j.location ? `<span class="tal-meta">${escapeHtml(j.location)}</span>` : ''}</div>
-      </div>
-      <h3>${escapeHtml(j.title)}</h3>
-      ${j.description ? `<p class="tal-bio">${escapeHtml(excerpt(j.description))}</p>` : ''}
-      <div class="kw-tags">${(j.keywords || []).map(k => `<a class="kw-tag" href="/jobs?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join('')}</div>
-      <div class="job-apply" id="apply-${escapeHtml(j.id)}">
-        ${applied.has(j.id) ? '<span class="badge live">Applied</span>'
-          : user ? `<button type="button" class="btn btn-primary job-apply-btn" data-id="${escapeHtml(j.id)}">Apply</button>`
-                 : `<a class="btn" href="/portal">Sign in to apply</a>`}
-      </div>
-    </article>`;
-  body.innerHTML = `<div class="listings"><div class="tal-grid">${rows.map(card).join('')}</div></div>`;
+  const years = j => j.years_experience != null ? `${j.years_experience} yr${Number(j.years_experience) === 1 ? '' : 's'}` : '<span class="cell-muted">not given</span>';
+  /* two or three keywords fit a cell; the rest are counted, all show in the details */
+  const kwCell = ks => (ks || []).slice(0, 3).map(k => `<a class="kw-tag kw-mini" href="/jobs?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join('')
+    + ((ks || []).length > 3 ? `<span class="cell-muted board-more">+${ks.length - 3} more</span>` : '');
+  const applyHtml = j => applied.has(j.id) ? '<span class="badge live">Applied</span>'
+    : user ? `<button type="button" class="btn btn-primary job-apply-btn" data-id="${escapeHtml(j.id)}">Apply</button>`
+           : `<a class="btn" href="/portal">Sign in to apply</a>`;
+  body.innerHTML = `<div class="listings board">
+    <div class="board-head">
+      <p class="pf-note" id="board-hint">Pick a job in the table, then View Job Details &amp; Apply.</p>
+      <button type="button" class="btn btn-blue" id="board-open" disabled>View Job Details &amp; Apply</button>
+    </div>
+    <div class="board-detail" id="board-detail" hidden></div>
+    <div class="table-wrap"><table class="listings-table board-table" id="board-table">
+      <thead><tr><th>Job Title</th><th>Location</th><th>Company</th><th>Years Experience</th><th>Circuits-Keywords&trade;</th></tr></thead>
+      <tbody>${rows.map((j, i) => `<tr data-i="${i}" tabindex="0" aria-selected="false">
+        <td><b>${escapeHtml(j.title)}</b>${applied.has(j.id) ? ' <span class="badge live">Applied</span>' : ''}</td>
+        <td>${j.location ? escapeHtml(j.location) : '<span class="cell-muted">not given</span>'}</td>
+        <td><a href="${escapeHtml(profileUrl(j.company_handle) || '#')}">${escapeHtml(j.company_name)}</a></td>
+        <td>${years(j)}</td>
+        <td>${kwCell(j.keywords)}</td></tr>`).join('')}</tbody>
+    </table></div></div>`;
 
-  body.addEventListener('click', async e => {
+  const table = document.getElementById('board-table'), openBtn = document.getElementById('board-open'),
+        hint = document.getElementById('board-hint'), detail = document.getElementById('board-detail');
+  let selected = -1;
+  function select(i){
+    selected = i;
+    table.querySelectorAll('tbody tr').forEach(tr => { const on = +tr.dataset.i === i; tr.classList.toggle('is-selected', on); tr.setAttribute('aria-selected', on); });
+    openBtn.disabled = i < 0;
+    hint.innerHTML = i < 0 ? 'Pick a job in the table, then View Job Details &amp; Apply.' : `Selected: <b>${escapeHtml(rows[i].title)}</b>`;
+  }
+  function open(i){
+    const j = rows[i]; if(!j) return;
+    const docs = (Array.isArray(j.docs) ? j.docs : []).filter(d => d && d.url);
+    detail.hidden = false;
+    detail.innerHTML = `<div class="bd-main">
+        <div class="job-co">
+          <span class="co-logo" style="background:var(--dark)">${isLogoUrl(j.company_logo) ? `<img src="${escapeHtml(j.company_logo)}" alt="">` : avatarSvg()}</span>
+          <div><a href="${escapeHtml(profileUrl(j.company_handle) || '#')}">${escapeHtml(j.company_name)}</a>${j.location ? `<span class="tal-meta">${escapeHtml(j.location)}</span>` : ''}</div>
+        </div>
+        <h3>${escapeHtml(j.title)}</h3>
+        <p class="tal-meta">${j.years_experience != null ? j.years_experience + ' year' + (Number(j.years_experience) === 1 ? '' : 's') + ' of experience' : 'Experience not specified'}</p>
+        ${j.description ? `<p class="tal-bio" style="white-space:pre-line">${escapeHtml(j.description)}</p>` : ''}
+        ${docs.length ? `<p class="tal-meta">${docs.map(d => `<a class="doc-link" href="${escapeHtml(d.url)}" target="_blank" rel="noopener">${escapeHtml(d.name || 'Document')}</a>`).join(' · ')}</p>` : ''}
+        <div class="kw-tags">${(j.keywords || []).map(k => `<a class="kw-tag" href="/jobs?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join('')}</div>
+      </div>
+      <div class="bd-side"><div class="job-apply" id="apply-${escapeHtml(j.id)}" style="margin:0;padding:0;border:0">${applyHtml(j)}</div></div>
+      <button type="button" class="mini-btn bd-close" id="bd-close">Close</button>`;
+    detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('bd-close').addEventListener('click', () => { detail.hidden = true; detail.innerHTML = ''; });
+  }
+  table.addEventListener('click', e => { if(e.target.closest('a')) return; const tr = e.target.closest('tr[data-i]'); if(tr) select(+tr.dataset.i); });
+  table.addEventListener('dblclick', e => { const tr = e.target.closest('tr[data-i]'); if(tr){ select(+tr.dataset.i); open(+tr.dataset.i); } });
+  table.addEventListener('keydown', e => { const tr = e.target.closest('tr[data-i]'); if(!tr) return; if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); select(+tr.dataset.i); open(+tr.dataset.i); } });
+  openBtn.addEventListener('click', () => { if(selected >= 0) open(selected); });
+
+  detail.addEventListener('click', async e => {
     const open = e.target.closest('button.job-apply-btn');
     if(open){
       const box = document.getElementById('apply-' + open.dataset.id);
@@ -141,7 +183,9 @@
       send.disabled = true; msg.textContent = 'Sending…';
       const err = await applyToJob(send.dataset.id, box.querySelector('.job-note').value);
       if(err){ send.disabled = false; msg.textContent = err; msg.style.color = '#b3261e'; return; }
+      applied.add(send.dataset.id);
       box.innerHTML = '<span class="badge live">Applied</span> <span class="pf-note">The employer has your profile link.</span>';
+      const tr = table.querySelector(`tr[data-i="${selected}"] td`); if(tr && !tr.querySelector('.badge')) tr.insertAdjacentHTML('beforeend', ' <span class="badge live">Applied</span>');
     }
   });
 })();

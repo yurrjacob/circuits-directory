@@ -6,7 +6,7 @@
 <title>Recruiting: Seeking Employment | Circuits.com</title>
 <meta name="description" content="Find engineers, technicians, recruiters, researchers and educators in the circuits industry by Circuits-Keyword™.">
 <link rel="icon" href="assets/favicon.png">
-<link rel="stylesheet" href="styles.css?v=6b40ae1789">
+<link rel="stylesheet" href="styles.css?v=84631c5087">
 <script src="/nav.js?v=ded2c647b5"></script>
 <script async src="/analytics.js?v=17b1c5b9b5"></script>
 </head>
@@ -49,7 +49,7 @@
 </div>
 
 <div class="page prose tal-intro">
-  <p class="lede">The Seeking Employment side of Recruiting: people in the circuits industry, listed under the Circuits-Keywords&trade; they work in. Titles, experience and keywords are open to everyone. Names, contact details and resumes unlock for companies with Talent Access. Looking for a job instead? See who is <a href="/jobs">hiring</a>.</p>
+  <p class="lede">The Recruit Board: people in the circuits industry, listed under the Circuits-Keywords&trade; they work in. Free. Pick a person and View Resume &amp; Contact. Looking for a job instead? See the <a href="/jobs">Job Board</a>.</p>
   <div id="tal-access-note" class="tal-note"></div>
 </div>
 
@@ -69,13 +69,14 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="store.js?v=e17c1002e2"></script>
-<script src="app.js?v=f9d16ed63f"></script>
+<script src="store.js?v=5707a7cd63"></script>
+<script src="app.js?v=4d239eb102"></script>
 <script>
-/* Seeking Employment. Every card shows public metadata; the private block
-   is a blur until a company with Talent Access (companies.talent_access_until,
-   set by staff after payment) clicks Unlock, which asks talent_contact(). The
-   database is the gate; this page only decides what to draw. */
+/* The Recruit Board, a table (Jacob, 2026-09-13): Seeking Job As, Location,
+   Years Experience, Circuits-Keywords. Pick a row, then View Resume & Contact
+   opens that person's details: everything public, plus the name, contact
+   details and resume for anyone signed in. Recruiting is free; talent_contact()
+   in the database is the gate, this page only decides what to draw. */
 (async function initTalent(){
   const params = new URLSearchParams(location.search);
   const q = params.get('q') || '';
@@ -88,38 +89,78 @@
   document.querySelectorAll('[data-term]').forEach(el => el.textContent = q || 'everything');
 
   const user = await currentUser();
-  const access = user ? await hasTalentAccess() : false;
   const note = document.getElementById('tal-access-note');
-  note.innerHTML = access
-    ? '<b>Talent Access is active.</b> Unlock anyone to see their name, contact details and resume.'
-    : (user
-        ? 'Your account has no Talent Access. It is a monthly subscription for companies. <a href="/contact">Contact us</a> to add it.'
-        : '<a href="/portal">Sign in</a> to search and unlock people from the Hiring tab of your profile. Not on Circuits.com yet? <a href="/register">Create a free profile</a>.');
+  note.innerHTML = user
+    ? 'Resumes and contact details are free to view. Hiring? Post a job from the Find Recruits tab of <a href="/portal">your dashboard</a>.'
+    : '<a href="/portal">Sign in</a> to view resumes and contact details, free. Not on Circuits.com yet? <a href="/register">Create a free profile</a>.';
 
   body.innerHTML = loadingHtml('Searching…');
   let rows = [];
   try { rows = await talentSearch(q); }
-  catch(e){ body.innerHTML = loadErrorHtml('Seeking Employment', 'Try again'); return; }
+  catch(e){ body.innerHTML = loadErrorHtml('the Recruit Board', 'Try again'); return; }
   document.getElementById('result-count').textContent = rows.length;
 
   if(!rows.length){
     body.innerHTML = `<div class="empty"><div class="big">Nobody seeking employment${q ? ' for &ldquo;' + escapeHtml(q) + '&rdquo;' : ''} yet</div>
-      <p>Are you one? <a href="/register">Create a free profile</a>, add your keywords under Seeking Employment and switch on <b>List me under Seeking Employment</b>.</p></div>`;
+      <p>Are you one? <a href="/register">Create a free profile</a>, add your keywords under Job Search and switch on <b>List me under Seeking Employment</b>.</p></div>`;
     return;
   }
 
-  const card = r => talentCardHtml(r, { access, signedIn: !!user });
-  body.innerHTML = `<div class="listings"><div class="tal-grid">${rows.map(card).join('')}</div></div>`;
+  const years = r => r.years != null && r.years !== '' && !isNaN(r.years) ? `${r.years} yr${Number(r.years) === 1 ? '' : 's'}` : '<span class="cell-muted">not given</span>';
+  /* two or three keywords fit a cell; the rest are counted, all show in the details */
+  const kwCell = ks => (ks || []).slice(0, 3).map(k => `<a class="kw-tag kw-mini" href="/talent?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join('')
+    + ((ks || []).length > 3 ? `<span class="cell-muted board-more">+${ks.length - 3} more</span>` : '');
+  body.innerHTML = `<div class="listings board">
+    <div class="board-head">
+      <p class="pf-note" id="board-hint">Pick a person in the table, then View Resume &amp; Contact.</p>
+      <button type="button" class="btn btn-blue" id="board-open" disabled>View Resume &amp; Contact</button>
+    </div>
+    <div class="board-detail" id="board-detail" hidden></div>
+    <div class="table-wrap"><table class="listings-table board-table" id="board-table">
+      <thead><tr><th>Seeking Job As</th><th>Location</th><th>Years Experience</th><th>Circuits-Keywords&trade;</th></tr></thead>
+      <tbody>${rows.map((r, i) => `<tr data-i="${i}" tabindex="0" aria-selected="false">
+        <td><b>${escapeHtml(r.title || 'Circuits industry professional')}</b></td>
+        <td>${r.location ? escapeHtml(r.location) : '<span class="cell-muted">not given</span>'}</td>
+        <td>${years(r)}</td>
+        <td>${kwCell(r.keywords)}</td></tr>`).join('')}</tbody>
+    </table></div></div>`;
 
-  body.addEventListener('click', async e => {
-    const b = e.target.closest('button.tal-unlock'); if(!b) return;
-    b.disabled = true; b.textContent = 'Unlocking…';
-    const c = await talentContact(b.dataset.uid);
-    const box = document.getElementById('priv-' + b.dataset.uid);
-    if(!c){ b.disabled = false; b.textContent = 'Unlock'; box.insertAdjacentHTML('beforeend', '<p class="pf-note" style="color:#b3261e">Could not unlock. Is your Talent Access still active?</p>'); return; }
+  const table = document.getElementById('board-table'), openBtn = document.getElementById('board-open'),
+        hint = document.getElementById('board-hint'), detail = document.getElementById('board-detail');
+  let selected = -1;
+  function select(i){
+    selected = i;
+    table.querySelectorAll('tbody tr').forEach(tr => { const on = +tr.dataset.i === i; tr.classList.toggle('is-selected', on); tr.setAttribute('aria-selected', on); });
+    openBtn.disabled = i < 0;
+    hint.innerHTML = i < 0 ? 'Pick a person in the table, then View Resume &amp; Contact.' : `Selected: <b>${escapeHtml(rows[i].title || 'Circuits industry professional')}</b>`;
+  }
+  async function open(i){
+    const r = rows[i]; if(!r) return;
+    const creds = (Array.isArray(r.credentials) ? r.credentials : []).filter(c => c && (c.name || '').trim());
+    detail.hidden = false;
+    detail.innerHTML = `<div class="bd-main">
+        <h3>${escapeHtml(r.title || 'Circuits industry professional')}</h3>
+        <p class="tal-meta">${r.location ? escapeHtml(r.location) + ' · ' : ''}${r.years != null && !isNaN(r.years) ? r.years + ' year' + (Number(r.years) === 1 ? '' : 's') + ' of experience' : 'Experience not given'}</p>
+        ${r.bio ? `<p class="tal-bio">${escapeHtml(r.bio)}</p>` : ''}
+        ${creds.length ? `<p class="tal-meta">${creds.map(c => escapeHtml(c.name.trim()) + (c.issuer ? ', ' + escapeHtml(c.issuer) : '') + (c.year ? ' (' + escapeHtml(String(c.year)) + ')' : '')).join(' · ')}</p>` : ''}
+        <div class="kw-tags">${(r.keywords || []).map(k => `<a class="kw-tag" href="/talent?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join('')}</div>
+      </div>
+      <div class="bd-side" id="bd-side">${user ? '<span class="pf-note">Loading resume &amp; contact…</span>'
+        : '<p class="pf-note" style="margin:0 0 10px">Sign in to view this person\'s resume and contact details. It is free.</p><a class="btn btn-blue" href="/portal">Sign in</a> <a class="btn" href="/register">Create a free profile</a>'}</div>
+      <button type="button" class="mini-btn bd-close" id="bd-close">Close</button>`;
+    detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('bd-close').addEventListener('click', () => { detail.hidden = true; detail.innerHTML = ''; });
+    if(!user) return;
+    const c = await talentContact(r.user_id);
+    const side = document.getElementById('bd-side'); if(!side) return;
+    if(!c){ side.innerHTML = '<p class="pf-note" style="color:#b3261e">Could not load this person\'s details just now. Try again in a moment.</p>'; return; }
     const resume = c.resume_path ? await resumeLink(c.resume_path) : '';
-    box.innerHTML = talentContactHtml(c, resume);
-  });
+    side.innerHTML = talentContactHtml(c, resume);
+  }
+  table.addEventListener('click', e => { if(e.target.closest('a')) return; const tr = e.target.closest('tr[data-i]'); if(tr) select(+tr.dataset.i); });
+  table.addEventListener('dblclick', e => { const tr = e.target.closest('tr[data-i]'); if(tr){ select(+tr.dataset.i); open(+tr.dataset.i); } });
+  table.addEventListener('keydown', e => { const tr = e.target.closest('tr[data-i]'); if(!tr) return; if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); select(+tr.dataset.i); open(+tr.dataset.i); } });
+  openBtn.addEventListener('click', () => { if(selected >= 0) open(selected); });
 })();
 </script>
 </body>
