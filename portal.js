@@ -304,13 +304,16 @@ async function wireAdminTab(){
 /* Sign in. Registration is open to anyone at /register (a listing still needs
    approval), so this card links there rather than dead-ending. */
 function wireAuth(){
+  mountTurnstile(el('pt-auth-form'));
   el('pt-auth-form').addEventListener('submit', async e => {
     e.preventDefault();
     const msg = el('pt-auth-msg');
+    if(turnstileOn() && !turnstileToken(el('pt-auth-form'))){ msg.textContent = TURNSTILE_WAIT; return; }
     el('pt-auth-submit').disabled = true;
     try{
-      const { error } = await signIn(val('pt-email'), val('pt-password'));
+      const { error } = await signIn(val('pt-email'), val('pt-password'), turnstileToken(el('pt-auth-form')));
       if(error){
+        resetTurnstile(el('pt-auth-form'));
         /* An unconfirmed email is fixable on the spot, offer the fix rather
            than parroting the raw error and leaving them stuck. */
         if(/not confirmed/i.test(error.message || '')){

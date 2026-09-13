@@ -1158,6 +1158,23 @@ assert.ok(/00<\/span>/.test(regHtml) || regHtml.includes('>00<'), 'register.html
 const storeReg = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
 assert.ok(storeReg.includes('handle_taken'),
   'handle availability no longer asks the database, so a profile and a listing could share an address');
+/* the register form carries the same two traps as every other form, and the
+   Turnstile plumbing is wired end to end but switched off until the site key
+   is set (2026-09-14, after 136 scripted sign-ups on harvested addresses) */
+{
+  const appSrc = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8'), storeSrc = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8'), portalSrc = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
+  const reg = appSrc.slice(appSrc.indexOf('function initRegister'), appSrc.indexOf('async function initBrowse'));
+  assert.ok(/armSpamTrap\(form\);\s*mountTurnstile\(form\);/.test(reg) && /if\(looksLikeSpam\(form\)\)\{ showCreated\(\); return; \}/.test(reg), 'the register form lost its honeypot and timing trap');
+  assert.ok(/registerProfile\(email, passEl\.value, handle, v\('r-name'\), turnstileToken\(form\)\)/.test(reg), 'the register form does not send the CAPTCHA token');
+  assert.ok(/^const TURNSTILE_SITE_KEY = '[^']*';$/m.test(storeSrc), 'store.js lost TURNSTILE_SITE_KEY');
+  assert.ok(/captchaToken: captchaToken \|\| undefined/.test(storeSrc.slice(storeSrc.indexOf('async function registerProfile'))), 'registerProfile() drops the CAPTCHA token');
+  assert.ok(/signInWithPassword\(\{ email: id, password, options: \{ captchaToken: captchaToken \|\| undefined \} \}\)/.test(storeSrc) && (storeSrc.match(/captchaToken: captchaToken \|\| undefined/g) || []).length >= 4,
+    'sign-in or reset drops the CAPTCHA token');
+  assert.ok(/mountTurnstile\(el\('pt-auth-form'\)\)/.test(portalSrc) && /signIn\(val\('pt-email'\), val\('pt-password'\), turnstileToken\(el\('pt-auth-form'\)\)\)/.test(portalSrc), 'the portal sign-in form is not wired for Turnstile');
+  assert.ok(/mountTurnstile\(el\('rq-form'\)\)/.test(appSrc) && /requestPasswordReset\(id, turnstileToken\(el\('rq-form'\)\)\)/.test(appSrc), 'the reset form is not wired for Turnstile');
+  assert.ok(/gotrue_meta_security: \{ captcha_token: t \}/.test(fs.readFileSync(path.join(ROOT, 'tools', 'edge-auth.ts'), 'utf8')), 'the auth edge function copy does not forward the CAPTCHA token');
+  assert.ok(/before insert on auth\.users/.test(fs.readFileSync(path.join(ROOT, 'tools', 'bot-signup-guard.sql'), 'utf8')), 'the bot sign-up guard SQL is gone');
+}
 for (const fn of ['fetchProfileByHandle', 'myProfile', 'registerProfile']) {
   assert.ok(storeReg.includes('function ' + fn), `store.js is missing ${fn}()`);
 }

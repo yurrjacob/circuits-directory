@@ -582,6 +582,7 @@ tr.row-warn td{background:#fff3cd}
 .pt-getlisted p{margin:2px 0 0;font-size:.85rem;color:var(--muted)}
 .pt-getlisted .btn{display:inline-block;margin-top:0;flex:none}
 /* Search Job Market: one box on each Recruiting tab (Jacob, 2026-09-13) */
+.cf-turnstile-box{margin:12px 0}
 .pt-market-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .pt-market-row input{flex:1 1 260px;width:auto}
 .pt-market-row .btn{flex:none}

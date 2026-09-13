@@ -6,6 +6,14 @@
 
 const SUPABASE_URL = 'https://ghpruernzhjwsgsezdyn.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_zmOQinynNkuWdHUeHrFdDA_y6UnLyL4';
+/* Cloudflare Turnstile site key (public by design). Empty = off: no widget,
+   every auth form behaves as before. Set it, deploy, THEN switch CAPTCHA on
+   under Supabase Authentication > Attack Protection (Turnstile, the secret
+   key). In that order, or sign-in breaks for everyone in between. The
+   widget's token rides along on sign-up, sign-in and password reset; the
+   `auth` edge function forwards it for username sign-in. (2026-09-14, after
+   a bot filled the register form 136 times with harvested addresses.) */
+const TURNSTILE_SITE_KEY = '';
 
 const sb = (window.supabase && window.supabase.createClient)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
@@ -295,7 +303,7 @@ async function checkStaff(){ if(!sb) return false; const { data, error } = await
    session, the address never comes back to the page. A wrong username and a
    wrong password are answered identically, so the endpoint still cannot be
    used to discover who is registered. */
-async function signIn(identifier, password){
+async function signIn(identifier, password, captchaToken){
   const id = (identifier || '').trim();
   if(!sb) return { error: { message: 'We could not reach the sign-in service. Check your connection and try again.' } };
   if(id && !id.includes('@')){
@@ -303,7 +311,7 @@ async function signIn(identifier, password){
       const res = await fetch(SUPABASE_URL + '/functions/v1/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY },
-        body: JSON.stringify({ action: 'signin', identifier: id, password })
+        body: JSON.stringify({ action: 'signin', identifier: id, password, captchaToken: captchaToken || undefined })
       });
       const out = await res.json().catch(() => ({}));
       if(out && out.session && out.session.access_token){
@@ -319,7 +327,7 @@ async function signIn(identifier, password){
       return { error: { message: 'We could not reach the sign-in service. Check your connection and try again.' } };
     }
   }
-  return sb.auth.signInWithPassword({ email: id, password });
+  return sb.auth.signInWithPassword({ email: id, password, options: { captchaToken: captchaToken || undefined } });
 }
 /* The confirmation link lands on /portal, the signed-in session in the URL is
    picked up there and the new account sees its own portal. Without this it fell
@@ -335,7 +343,7 @@ async function signUp(email, password){
    Accepts an email OR a username, the same as signing in. Always reports
    success: telling someone "no account with that email" turns this form into
    a way to discover who is registered. */
-async function requestPasswordReset(identifier){
+async function requestPasswordReset(identifier, captchaToken){
   if(!sb) return 'No connection';
   let email = (identifier || '').trim();
   if(email && !email.includes('@')){
@@ -346,14 +354,15 @@ async function requestPasswordReset(identifier){
       await fetch(SUPABASE_URL + '/functions/v1/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY },
-        body: JSON.stringify({ action: 'reset', identifier: email })
+        body: JSON.stringify({ action: 'reset', identifier: email, captchaToken: captchaToken || undefined })
       });
     }catch(e){ console.warn('username reset lookup failed', e); }
     return '';
   }
   if(email.includes('@')){
     const { error } = await sb.auth.resetPasswordForEmail(email, {
-      redirectTo: location.origin + '/reset'
+      redirectTo: location.origin + '/reset',
+      captchaToken: captchaToken || undefined
     });
     if(error){
       console.warn('resetPasswordForEmail', error.message);
@@ -800,13 +809,14 @@ async function hasTalentAccess(){
    The handle rides along as signup metadata because email confirmation means
    there is no session yet, a trigger turns it into the profile row, so the
    address is held from the moment the account exists. */
-async function registerProfile(email, password, handle, displayName){
+async function registerProfile(email, password, handle, displayName, captchaToken){
   if(!sb) return 'No connection';
   const { error } = await sb.auth.signUp({
     email, password,
     options: {
       data: { handle: (handle||'').toLowerCase().trim(), display_name: displayName || '' },
-      emailRedirectTo: location.origin + '/join'   // confirming your email lands on Get Listed (Jacob, 2026-09-03)
+      emailRedirectTo: location.origin + '/join',   // confirming your email lands on Get Listed (Jacob, 2026-09-03)
+      captchaToken: captchaToken || undefined
     }
   });
   return error ? error.message : '';

@@ -124,6 +124,49 @@ function looksLikeSpam(form){
   return armed > 0 && (Date.now() - armed) < SPAM_MIN_SECONDS * 1000;
 }
 
+/* ---- Cloudflare Turnstile (2026-09-14) ----
+   Switched on by TURNSTILE_SITE_KEY in store.js. With the key empty nothing
+   loads and every auth form behaves as before; with it set, a widget renders
+   in the form and its token rides along to Supabase, which verifies it once
+   CAPTCHA is enabled in the Auth dashboard. The register form got a bot that
+   filled it 136 times with harvested addresses; the honeypot and the timing
+   trap above catch the dumb ones, this catches the rest. */
+function turnstileOn(){ return typeof TURNSTILE_SITE_KEY === 'string' && TURNSTILE_SITE_KEY.length > 0; }
+function mountTurnstile(form){
+  if(!turnstileOn() || !form || form.__ts) return;
+  form.__ts = { token: '', id: null };
+  const box = document.createElement('div');
+  box.className = 'cf-turnstile-box';
+  const submit = form.querySelector('[type="submit"]');
+  const foot = submit && submit.closest('.form-foot');
+  const ref = submit && submit.parentNode === form ? submit : (foot && foot.parentNode === form ? foot : null);
+  form.insertBefore(box, ref);
+  const render = () => {
+    form.__ts.id = window.turnstile.render(box, { sitekey: TURNSTILE_SITE_KEY,
+      callback: t => { form.__ts.token = t; },
+      'expired-callback': () => { form.__ts.token = ''; },
+      'error-callback': () => { form.__ts.token = ''; } });
+  };
+  if(window.turnstile){ render(); return; }
+  window.__onTurnstile = window.__onTurnstile || [];
+  window.__onTurnstile.push(render);
+  if(!document.getElementById('cf-turnstile-js')){
+    window.__turnstileReady = () => { (window.__onTurnstile || []).forEach(f => f()); window.__onTurnstile = []; };
+    const s = document.createElement('script');
+    s.id = 'cf-turnstile-js'; s.async = true; s.defer = true;
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=__turnstileReady&render=explicit';
+    document.head.appendChild(s);
+  }
+}
+function turnstileToken(form){ return form && form.__ts ? form.__ts.token : ''; }
+/* a token is single-use: after a refused attempt the widget has to run again */
+function resetTurnstile(form){
+  if(!form || !form.__ts) return;
+  form.__ts.token = '';
+  if(window.turnstile && form.__ts.id != null){ try{ window.turnstile.reset(form.__ts.id); }catch(e){} }
+}
+const TURNSTILE_WAIT = 'Please complete the "I am human" check first.';
+
 /* Silently accept a suspected bot. Telling it why it failed just teaches the
    author what to change. */
 function fakeSuccess(form, message){
@@ -305,7 +348,7 @@ async function initInbox(){
   if(typeof sb === 'undefined'){
     if(!storedSession()) return;
     const add = src => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
-    try{ await add('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'); await add('/store.js?v=5707a7cd63'); }catch(e){ return; }
+    try{ await add('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'); await add('/store.js?v=c5a81f0a17'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;
@@ -1274,14 +1317,17 @@ async function initReset(){
   }
 
   show('rq-card', true);
+  mountTurnstile(el('rq-form'));
   el('rq-form').addEventListener('submit', async e => {
     e.preventDefault();
     const btn = el('rq-submit'), msg = el('rq-msg');
     const id = el('rq-id').value.trim();
     if(!id){ msg.textContent = 'Enter your email or username.'; msg.style.color = '#b3261e'; return; }
     if(id.includes('@') && !isValidEmail(id)){ msg.textContent = 'That email address looks incomplete. Check it and try again.'; msg.style.color = '#b3261e'; return; }
+    if(turnstileOn() && !turnstileToken(el('rq-form'))){ msg.textContent = TURNSTILE_WAIT; msg.style.color = '#b3261e'; return; }
     btn.disabled = true; msg.style.color = ''; msg.textContent = 'Sending…';
-    const err = await requestPasswordReset(id);
+    const err = await requestPasswordReset(id, turnstileToken(el('rq-form')));
+    if(err) resetTurnstile(el('rq-form'));
     /* An unknown account and a real one look identical, deliberately, but a
        send that actually failed says so, rather than sending them to wait by
        an inbox for a message that was never sent. */
@@ -1422,6 +1468,19 @@ function initRegister(){
   const passEl = el('r-pass'), pass2El = el('r-pass2'), passMsg = el('r-pass-msg');
   const errBox = el('r-err'), submitBtn = el('r-submit');
   let handleState = '', handleTimer = null;
+  /* the same two traps every other form has had: an invisible field only a
+     script fills, and a submit faster than a person can type (2026-09-14) */
+  armSpamTrap(form);
+  mountTurnstile(form);
+
+  /* just the confirmation (Jacob, 2026-09-03): "Account Created", check your inbox, nothing else */
+  function showCreated(){
+    form.style.display = 'none';
+    const steps = el('reg-steps'); if(steps) steps.style.display = 'none';
+    const ok = el('reg-success');
+    if(ok) ok.style.display = 'block';
+    window.scrollTo({ top:0, behavior:'smooth' });
+  }
 
   function fail(msg){
     errBox.textContent = msg || '';
@@ -1468,6 +1527,10 @@ function initRegister(){
     if(passEl.value.length < 8) return fail('Your password must be at least 8 characters.');
     if(passEl.value !== pass2El.value) return fail('The two passwords do not match.');
     if(!el('r-terms').checked) return fail('Please accept the Terms to continue.');
+    /* a bot gets the same "check your inbox" screen and no account; telling
+       it why would only teach it what to change */
+    if(looksLikeSpam(form)){ showCreated(); return; }
+    if(turnstileOn() && !turnstileToken(form)) return fail(TURNSTILE_WAIT);
 
     submitBtn.disabled = true; submitBtn.textContent = 'Creating…';
 
@@ -1481,20 +1544,16 @@ function initRegister(){
       return fail('That address just became unavailable.');
     }
 
-    const err = await registerProfile(email, passEl.value, handle, v('r-name'));
+    const err = await registerProfile(email, passEl.value, handle, v('r-name'), turnstileToken(form));
     if(err){
       submitBtn.disabled = false; submitBtn.textContent = 'Create Profile';
+      resetTurnstile(form);
       return fail(/already registered|already exists/i.test(err)
         ? 'There is already an account with that email. Sign in instead.'
+        : /captcha/i.test(err) ? TURNSTILE_WAIT
         : err);
     }
-
-    /* just the confirmation (Jacob, 2026-09-03): "Account Created", check your inbox, nothing else */
-    form.style.display = 'none';
-    const steps = el('reg-steps'); if(steps) steps.style.display = 'none';
-    const ok = el('reg-success');
-    if(ok) ok.style.display = 'block';
-    window.scrollTo({ top:0, behavior:'smooth' });
+    showCreated();
   });
 }
 /* ===================================================================
