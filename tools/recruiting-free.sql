@@ -82,3 +82,10 @@ as $function$
     from profiles p where p.user_id = auth.uid()
 $function$;
 grant execute on function public.my_profile() to authenticated;
+
+-- 2026-09-14, applied as profiles_location_select_grant. profiles is read
+-- column by column (see the SELECT grants), and location had only the UPDATE
+-- grant above, so every person profile page, which selects
+-- PROFILE_PUBLIC_COLS, was refused and came up empty. Companies read a
+-- different table, so only person profiles vanished.
+grant select (location) on public.profiles to anon, authenticated;

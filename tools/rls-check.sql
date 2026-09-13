@@ -739,3 +739,17 @@ delete from rate_log     where bucket in ('review','inquiry');
 delete from profiles     where handle like 'zz%';
 delete from companies    where slug like 'zz-%';
 delete from auth.users   where email like 'zz-%@rlstest.invalid';
+
+-- ---------------------------------------------------------------------------
+-- profiles is read column by column. Every column in store.js
+-- PROFILE_PUBLIC_COLS must carry a SELECT grant for anon, or the person
+-- profile page is refused outright (2026-09-14: location had none).
+-- Expect: no rows.
+select c.column_name as missing_anon_select_grant
+  from information_schema.columns c
+ where c.table_schema = 'public' and c.table_name = 'profiles'
+   and c.column_name in ('user_id','handle','display_name','created_at','updated_at','suspended_at','title','years','bio',
+                         'talent_listed','talent_hidden','talent_status','account_type','credentials','photo_url','location')
+   and not exists (select 1 from information_schema.column_privileges p
+                    where p.table_schema = 'public' and p.table_name = 'profiles'
+                      and p.column_name = c.column_name and p.grantee = 'anon' and p.privilege_type = 'SELECT');
