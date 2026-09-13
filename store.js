@@ -13,7 +13,7 @@ const SUPABASE_KEY = 'sb_publishable_zmOQinynNkuWdHUeHrFdDA_y6UnLyL4';
    widget's token rides along on sign-up, sign-in and password reset; the
    `auth` edge function forwards it for username sign-in. (2026-09-14, after
    a bot filled the register form 136 times with harvested addresses.) */
-const TURNSTILE_SITE_KEY = '';
+const TURNSTILE_SITE_KEY = '0x4AAAAAAEy8h6qBXwfowa4S';
 
 const sb = (window.supabase && window.supabase.createClient)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
