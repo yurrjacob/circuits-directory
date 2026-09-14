@@ -1728,7 +1728,8 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   assert.ok(/<h3 class="pt-sub-h">Circuits-Keyword Listing<\/h3>\s*<div class="pt-list" id="pt-listings">/.test(listTab), 'the keyword table lost its Circuits-Keyword Listing title');
   assert.ok(/<b>Get Listed Under More Circuits-Keywords&trade;<\/b>/.test(listTab) && /data-go-tab="upgrades"/.test(listTab) && /pt-kw-pack/.test(pj), 'the Get Listed box or the Upgrades keyword package is missing');
   assert.ok(!/pt-list-seeking|pt-jobs"/.test(seekTab + hireTab), 'a recruiting list is back on its old tab');
-  assert.ok(/<h2>Post Free Resume<\/h2>/.test(seekTab) && /Post A Resume<\/h3>/.test(pj) && />View Job Board</.test(pj) && /List Me on the Recruit Board as Open to Work/.test(pj), 'the Job Search tab is not Post Free Resume with its two buttons');
+  assert.ok(/<h2>Post Free Resume<\/h2>/.test(seekTab) && /Post A Resume<\/h3>/.test(pj) && /href="\/talent"[^>]*>View Recruit Board</.test(pj) && /List Me on the Recruit Board as Open to Work/.test(pj), 'the Job Search tab is not Post Free Resume with its two buttons');
+  assert.ok((fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8').match(/' data-box="1"'/g) || []).length === 2, 'Jobs Posted and Resumes Posted are not their own boxes on a profile');
   assert.ok(/<h2>Post Free Job<\/h2>/.test(hireTab) && /<h3 id="job-form-h">Post Job<\/h3>/.test(hireTab) && /id="job-post">List this Job on the Job Board</.test(hireTab) && /href="\/jobs"[^>]*>View Job Board</.test(hireTab), 'the Find Recruits tab is not Post Free Job with its two buttons');
   /* A, B, C top to bottom on both tabs: the form, the buttons, the search box */
   assert.ok(hireTab.indexOf('id="pt-job-form"') < hireTab.indexOf('id="pt-job-actions"') && hireTab.indexOf('id="pt-job-actions"') < hireTab.indexOf('id="pt-market-recruits"'), 'Post Free Job is not form, buttons, search');

@@ -118,7 +118,7 @@ function renderRecruit(){
     : '<span class="badge pending">Awaiting approval by Circuits.com</span>';
   box.innerHTML = `<div class="pf-form pt-actions">
       <button type="button" class="btn btn-primary me-save">${listed ? 'Save Resume' : 'List Me on the Recruit Board as Open to Work'}</button>
-      <a class="btn btn-outline" href="/jobs" target="_blank" rel="noopener">View Job Board</a>
+      <a class="btn btn-outline" href="/talent" target="_blank" rel="noopener">View Recruit Board</a>
       ${status}
       <span class="pf-note me-msg" style="margin:0"></span>
     </div>

@@ -602,6 +602,10 @@ tr.row-warn td{background:#fff3cd}
 .pf-linkact:hover{text-decoration:underline}
 .pf-linkact.is-saved{color:#3b6d11}
 .pf-job-act{margin:10px 0 0}
+/* Jobs Posted and Resumes Posted are their own boxes on a profile (Jacob, 2026-09-14) */
+.pf-sec[data-box]{border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;background:var(--card);margin-top:22px}
+.pf-sec[data-box] .pf-sec-h{margin-top:0}
+.pf-sec[data-box] .pf-job{background:var(--bg-soft)}
 .pt-market-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .pt-market-row input{flex:1 1 260px;width:auto}
 .pt-market-row .btn{flex:none}

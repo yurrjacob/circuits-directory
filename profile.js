@@ -110,7 +110,7 @@ function personExperience(p){
   if((p.keywords || []).length) inner += `<div class="kw-tags">${p.keywords.map(k => `<span class="kw-tag">${escapeHtml(k)}</span>`).join('')}</div>`;
   /* the person's own board is the Job Board (Jacob, 2026-09-14) */
   inner += `<p class="pf-job-act"><a class="mini-btn" href="/jobs?q=${encodeURIComponent((p.keywords || [])[0] || '')}">View on Job Board</a></p>`;
-  return section('Resumes Posted', inner);
+  return section('Resumes Posted', inner, ' data-box="1"');   // its own box (Jacob, 2026-09-14)
 }
 
 /* The short link with Save and Copy as links (Jacob, 2026-09-14), one small
@@ -323,7 +323,7 @@ async function initProfile(){
         <div><b>${escapeHtml(j.title)}</b>${j.location ? ` <span class="pf-note">${escapeHtml(j.location)}</span>` : ''}
           ${(j.keywords || []).length ? `<div class="kw-tags">${j.keywords.map(k => `<a class="kw-tag" href="/jobs?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join('')}</div>` : ''}</div>
         <a class="mini-btn" href="/talent?q=${encodeURIComponent((j.keywords || [])[0] || '')}">View on Recruit Board</a>
-      </div>`).join('')}</div>`);
+      </div>`).join('')}</div>`, ' data-box="1"');   // its own box (Jacob, 2026-09-14)
 
   /* ---- the person behind the account: experience from the Seeking
      Employment tab, public bits only (name and picture are the page's own) ---- */
