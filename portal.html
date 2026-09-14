@@ -280,10 +280,11 @@
     </div>
     <h3 class="pt-sub-h">Circuits-Keyword Listing</h3>
     <div class="pt-list" id="pt-listings"></div>
-    <div class="pt-empty pt-getlisted">
+    <!-- with no keyword yet this one box carries the empty state too (Jacob, 2026-09-14) -->
+    <div class="pt-empty pt-getlisted" id="pt-getlisted">
       <div>
-        <b>Get Listed Under More Circuits-Keywords&trade;</b>
-        <p>Add Up to 10 More Keywords. Include the Exclusive Sponsor Banner and Trust Badge upgrades.</p>
+        <b id="pt-getlisted-h">Get Listed Under More Circuits-Keywords&trade;</b>
+        <p id="pt-getlisted-p">Add Up to 10 More Keywords. Include the Exclusive Sponsor Banner and Trust Badge upgrades.</p>
       </div>
       <div class="pt-getlisted-btns">
         <a class="btn btn-primary" href="/join">Get Listed</a>
@@ -642,7 +643,7 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="/store.js?v=552cb9d8a6"></script>
 <script src="/app.js?v=e1213c2413"></script>
-<script src="/portal.js?v=ad59076e08"></script>
+<script src="/portal.js?v=530c1e3229"></script>
 <script src="/admin.js?v=bb09b6a849"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));

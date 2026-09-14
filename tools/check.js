@@ -1726,7 +1726,7 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   assert.ok(/<h3 class="pt-sub-h"[^>]*>Jobs Posted<\/h3>\s*<div class="pt-list" id="pt-jobs">/.test(listTab) && /id="pt-list-hiring"/.test(listTab), 'Jobs Posted is not on Your Listings');
   assert.ok(/id="pt-list-seeking"/.test(listTab) && /Resumes Posted<\/h3>/.test(pj) && /data-resume-live="1"/.test(pj) && /data-new-jobs="1"/.test(pj), 'Resumes Posted is not on Your Listings as a job-shaped card');
   assert.ok(/<h3 class="pt-sub-h">Circuits-Keyword Listing<\/h3>\s*<div class="pt-list" id="pt-listings">/.test(listTab), 'the keyword table lost its Circuits-Keyword Listing title');
-  assert.ok(/<b>Get Listed Under More Circuits-Keywords&trade;<\/b>/.test(listTab) && /data-go-tab="upgrades"/.test(listTab) && /pt-kw-pack/.test(pj), 'the Get Listed box or the Upgrades keyword package is missing');
+  assert.ok(/<b id="pt-getlisted-h">Get Listed Under More Circuits-Keywords&trade;<\/b>/.test(listTab) && /No Directory listings yet/.test(pj) && /data-go-tab="upgrades"/.test(listTab) && /pt-kw-pack/.test(pj), 'the Get Listed box or the Upgrades keyword package is missing');
   assert.ok(!/pt-list-seeking|pt-jobs"/.test(seekTab + hireTab), 'a recruiting list is back on its old tab');
   assert.ok(/<h2>Post Free Resume<\/h2>/.test(seekTab) && /Post A Resume<\/h3>/.test(pj) && /href="\/talent"[^>]*>View Recruit Board</.test(pj) && /List Me on the Recruit Board as Open to Work/.test(pj), 'the Job Search tab is not Post Free Resume with its two buttons');
   assert.ok((fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8').match(/' data-box="1"'/g) || []).length === 2, 'Jobs Posted and Resumes Posted are not their own boxes on a profile');

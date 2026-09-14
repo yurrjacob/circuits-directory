@@ -1373,10 +1373,19 @@ function renderListings(){
         <th>Trust Badge</th><th>Sponsor Banner</th><th>Locked Position</th><th></th>
       </tr></thead>
       <tbody>${rows}</tbody>
-    </table></div>` : `<div class="pt-empty">
-    <b>No Directory listings yet</b>
-    <p>Ask for one with Get Listed below. Once Circuits.com approves a Circuits-Keyword\u2122 for you, it appears here.</p>
-  </div>`;
+    </table></div>` : '';
+  /* no keyword yet: the Get Listed box says so itself, one box instead of
+     two stacked (Jacob, 2026-09-14) */
+  const gh = el('pt-getlisted-h'), gp = el('pt-getlisted-p');
+  if(gh && gp){
+    if(PT.listings.length){
+      gh.textContent = 'Get Listed Under More Circuits-Keywords\u2122';
+      gp.textContent = 'Add Up to 10 More Keywords. Include the Exclusive Sponsor Banner and Trust Badge upgrades.';
+    } else {
+      gh.textContent = 'No Directory listings yet';
+      gp.textContent = 'Ask for one with Get Listed. Once Circuits.com approves a Circuits-Keyword\u2122 for you, it appears here. Up to 10 keywords per request, free. Include the Exclusive Sponsor Banner and Trust Badge upgrades.';
+    }
+  }
 
   wireListings();
 }
@@ -1969,7 +1978,7 @@ async function renderJobs(){
       </div>
       <div class="pt-applicants" id="apps-${escapeHtml(j.id)}" style="display:none"></div>
     </div>`;
-  }).join('') : '<p class="pf-note">No jobs posted yet.</p>';
+  }).join('') : `<div class="pt-empty pt-getlisted"><div><b>No jobs posted yet</b><p>Post an open role under the Circuits-Keywords\u2122 you hire for on the Post Free Job tab. Free, live for 30 days once approved.</p></div><button type="button" class="btn btn-primary btn-sm" data-go-tab="hiring">Post Free Job</button></div>`;
 }
 function wireJobs(){
   const box = el('pt-jobs'), post = el('job-post');
