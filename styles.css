@@ -583,6 +583,25 @@ tr.row-warn td{background:#fff3cd}
 .pt-getlisted .btn{display:inline-block;margin-top:0;flex:none}
 /* Search Job Market: one box on each Recruiting tab (Jacob, 2026-09-13) */
 .cf-turnstile-box{margin:12px 0}
+/* dashboard, 2026-09-14: the years dropdown, the button boxes, the two Get Listed buttons */
+.pt-years{width:120px;max-width:100%}
+.pt-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px}
+.pt-market{margin-top:18px}
+.pt-getlisted-btns{display:flex;gap:8px;flex-wrap:wrap;flex:none}
+.pt-kw-pack{margin-bottom:14px}
+.pt-kw-pack .btn{flex:none}
+/* the boards: a subtitle under the board name, the lede's action link */
+.board-sub{font-size:.85rem;font-weight:700;color:var(--green-dark)}
+.lede-act{display:inline-block;background:#1f5fbf;color:#fff;font-weight:700;text-decoration:none;border-radius:8px;padding:6px 14px;font-size:.9rem;margin-left:4px}
+.lede-act:hover{background:#174a96;color:#fff}
+/* the profile sidebar: the short link with Save and Copy as links */
+.pf-linkbox{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin:0 0 14px;background:var(--bg-soft)}
+.pf-url{display:block;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-linkacts{display:flex;gap:16px;flex-wrap:wrap;margin-top:6px;font-size:.85rem}
+.pf-linkact{color:var(--green-dark);font-weight:700;text-decoration:none}
+.pf-linkact:hover{text-decoration:underline}
+.pf-linkact.is-saved{color:#3b6d11}
+.pf-job-act{margin:10px 0 0}
 .pt-market-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .pt-market-row input{flex:1 1 260px;width:auto}
 .pt-market-row .btn{flex:none}

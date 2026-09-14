@@ -29,38 +29,56 @@ function renderSeeking(me){
   renderExperience(); renderRecruit(); renderRecruitingListings();
 }
 
-const saveBtn = (id) => `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px">
-    <button class="btn btn-primary me-save" type="button">Save</button>
-    <span id="${id}" class="pf-note me-msg"></span></div>`;
-
 const freshNote = () => `<div class="pt-empty"><b>Save your Profile Details first</b>
     <p>Pick your Circuits.com address and name on the Profile Details tab and save. This tab opens up right after.</p></div>`;
 
+/* the keywords on the resume, in the order they were saved */
+function kwList(){
+  const rows = Array.isArray(ME.keyword_rows) ? ME.keyword_rows : (ME.keywords || []).map(k => ({ keyword: k }));
+  return rows.map(r => (r.keyword || '').trim()).filter(Boolean);
+}
+/* years of experience as a short dropdown (Jacob, 2026-09-14: "make the box smaller") */
+function yearsOptions(sel){
+  return '<option value="">–</option>' + Array.from({ length: 61 }, (_, i) => `<option value="${i}" ${String(sel) === String(i) ? 'selected' : ''}>${i}</option>`).join('');
+}
+
+/* ---- Post A Resume, box A (Jacob, 2026-09-14): one form. Position,
+   location, the Circuits-Keywords bar (the same bar Post Job has), statement,
+   years, the email employers reach you on, a phone, certifications and the
+   resume. Box B below it holds the buttons (renderRecruit). ---- */
 function renderExperience(){
   const box = el('pt-experience'); if(!box) return;
   if(ME_FRESH){ box.innerHTML = freshNote(); return; }
   box.innerHTML = `
-    <h3 style="margin-top:0">Experience</h3>
+    <h3 style="margin-top:0">Post A Resume</h3>
     <div class="grid2">
-      <div class="auth-field"><label>Position Desired</label>
+      <div class="auth-field"><label for="me-title">Position Desired</label>
         <input id="me-title" type="text" maxlength="80" placeholder="RF Design Engineer" value="${escapeHtml(ME.title || '')}"></div>
-      <div class="auth-field"><label>Location</label>
+      <div class="auth-field"><label for="me-location">Location</label>
         <input id="me-location" type="text" maxlength="120" placeholder="Austin, TX or Remote" value="${escapeHtml(ME.location || '')}"></div>
     </div>
-    <div class="grid2">
-      <div class="auth-field"><label>Years of experience</label>
-        <input id="me-years" type="number" min="0" max="60" placeholder="8" value="${ME.years == null ? '' : ME.years}"></div>
-    </div>
-    <div class="auth-field"><label>Qualifying statement</label>
+    <div class="auth-field"><label for="me-keywords">Circuits-Keywords&trade; <span class="cell-muted">(up to 10, comma separated)</span></label>
+      <input id="me-keywords" type="text" placeholder="rf design, pcb layout" value="${escapeHtml(kwList().join(', '))}">
+      <div class="pf-note">The words a recruiter searches for. One idea per keyword: <b>pcb layout</b>, not <b>pcb layout and test</b>.</div></div>
+    <div class="auth-field"><label for="me-bio">Qualifying statement</label>
       <textarea id="me-bio" rows="5" maxlength="600" placeholder="What you do, what you are good at, what you are looking for.">${escapeHtml(ME.bio || '')}</textarea></div>
+    <div class="grid2">
+      <div class="auth-field"><label for="me-years">Years of experience</label>
+        <select id="me-years" class="pt-years">${yearsOptions(ME.years == null ? '' : ME.years)}</select></div>
+      <div class="auth-field"><label for="me-email">Email for employers to contact you</label>
+        <input id="me-email" type="email" maxlength="120" placeholder="you@example.com" value="${escapeHtml(ME.contact_email || ME.email || (PT.user && PT.user.email) || '')}"></div>
+    </div>
+    <div class="grid2">
+      <div class="auth-field"><label for="me-phone">Phone for employers <span class="req">*</span> <span class="cell-muted">(shown to signed-in companies)</span></label>
+        <input id="me-phone" type="tel" maxlength="40" placeholder="(555) 123-4567" value="${escapeHtml(ME.phone || '')}"></div>
+    </div>
     <details class="pt-fold" open><summary>Certifications &amp; degrees <span class="pf-note" id="fold-creds-n"></span></summary><div class="pt-list" id="f-creds"></div></details>
     <details class="pt-fold" open><summary>Resume <span class="pf-note">${ME.resume_path ? '· on file' : '· none yet'}</span></summary>
       <div class="pt-list"><div class="pt-item" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <span id="me-resume-state" class="pf-note" style="margin:0;flex:1">${ME.resume_path ? 'Resume on file. PDF. Signed-in companies can view it from the Recruit Board.' : 'No resume yet. PDF, up to 10 MB. Signed-in companies can view it from the Recruit Board.'}</span>
         ${ME.resume_path ? '<a class="mini-btn rp-add" href="#" id="me-resume-view">View</a><button class="mini-btn rp-add danger" type="button" id="me-resume-remove">Remove</button>' : ''}
         <label class="mini-btn green rp-add" style="cursor:pointer">${ME.resume_path ? 'Replace' : '+ Upload'}<input id="me-resume" type="file" accept="application/pdf" style="display:none"></label>
-      </div></div></details>
-    ${saveBtn('me-msg-2')}`;
+      </div></div></details>`;
   renderRepeater('creds', ME.credentials, ['name', 'issuer', 'year'], ['Certification or degree', 'Issued by', 'Year']);
 
   const up = el('me-resume');
@@ -88,67 +106,24 @@ function renderExperience(){
   });
 }
 
-/* Keywords are a table (Jacob, 2026-09-02): one row per keyword with its own
-   field and an on/off switch. (The per-keyword Preview and the card preview
-   went with the paid reveal, 2026-09-13: Recruiting is free.) */
-let KW_ROWS = [];
-function kwRowsFromMe(){
-  const rows = Array.isArray(ME.keyword_rows) ? ME.keyword_rows : (ME.keywords || []).map(k => ({ keyword: k, enabled: true }));
-  return rows.map(r => ({ keyword: r.keyword || '', enabled: r.enabled !== false }));
-}
-function drawKwTable(){
-  const t = el('me-kw-rows'); if(!t) return;
-  t.innerHTML = KW_ROWS.map((r, i) => `<tr class="${r.enabled ? '' : 'kw-off'}">
-      <td><input type="text" class="kw-field" data-i="${i}" maxlength="40" placeholder="e.g. pcb layout" value="${escapeHtml(r.keyword)}" aria-label="Keyword ${i + 1}"></td>
-      <td><label class="switch kw-switch"><input type="checkbox" data-on="${i}" ${r.enabled ? 'checked' : ''}><span class="knob" aria-hidden="true"></span><span class="sw-text">${r.enabled ? 'On' : 'Off'}</span></label></td>
-      <td class="row-actions"><button type="button" class="pt-doc-x" data-rmkw="${i}" aria-label="Remove keyword">&times;</button></td>
-    </tr>`).join('');
-  const add = el('me-kw-add'); if(add) add.disabled = KW_ROWS.length >= 10;
-  const n = el('me-kw-n'); if(n) n.innerHTML = `<b>${KW_ROWS.filter(r => r.keyword.trim()).length}</b> of 10 keywords, ${KW_ROWS.filter(r => r.keyword.trim() && r.enabled).length} on`;
-}
+/* ---- box B: the buttons. Listing yourself and saving are the same click;
+   pausing lives on the Resumes Posted card under Your Listings. ---- */
 function renderRecruit(){
   const box = el('pt-recruit'); if(!box) return;
   if(ME_FRESH){ box.innerHTML = ''; return; }
-  KW_ROWS = kwRowsFromMe();
-  if(!KW_ROWS.length) KW_ROWS.push({ keyword: '', enabled: true });
-  box.innerHTML = `
-    <h3 style="margin-top:0">Your Circuits-Keywords&trade;</h3>
-    <div class="auth-field"><label>Your Circuits-Keywords&trade; <span class="cell-muted">(up to 10)</span></label>
-      <div class="table-scroll"><table class="dash-table kw-table">
-        <thead><tr><th>Keyword</th><th>On / Off</th><th></th></tr></thead>
-        <tbody id="me-kw-rows"></tbody>
-      </table></div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px">
-        <button type="button" class="mini-btn green rp-add" id="me-kw-add">+ Add keyword</button>
-        <span class="pf-note" id="me-kw-n" style="margin:0"></span></div>
-      <div class="pf-note">The words a recruiter searches for. One idea per keyword: <b>pcb layout</b>, not <b>pcb layout and test</b>. Off keeps a keyword without being found by it.</div></div>
-    <div class="grid2">
-      <div class="auth-field"><label>Email for recruiters <span class="cell-muted">(shown to signed-in companies)</span></label>
-        <input id="me-email" type="email" readonly value="${escapeHtml(ME.email || (PT.user && PT.user.email) || '')}" title="Change it under Account Settings">
-        <div class="pf-note">Your sign-in email. Change it under Account Settings.</div></div>
-      <div class="auth-field"><label>Phone for recruiters <span class="req">*</span> <span class="cell-muted">(shown to signed-in companies)</span></label>
-        <input id="me-phone" type="tel" maxlength="40" placeholder="(555) 123-4567" value="${escapeHtml(ME.phone || '')}"></div>
+  const listed = !!ME.talent_listed;
+  const status = !listed ? ''
+    : ME.talent_status === 'Approved' ? '<span class="badge live">Live on the Recruit Board</span>'
+    : ME.talent_status === 'Denied'   ? '<span class="badge">Not approved</span>'
+    : '<span class="badge pending">Awaiting approval by Circuits.com</span>';
+  box.innerHTML = `<div class="pf-form pt-actions">
+      <button type="button" class="btn btn-primary me-save">${listed ? 'Save Resume' : 'List Me on the Recruit Board as Open to Work'}</button>
+      <a class="btn btn-outline" href="/jobs" target="_blank" rel="noopener">View Job Board</a>
+      ${status}
+      <span class="pf-note me-msg" style="margin:0"></span>
     </div>
-    <div class="pt-setting">
-      <div class="pt-setting-text"><b>List me under Seeking Employment</b>
-        <p class="pf-note">Companies searching your keywords find you on the Recruit Board. Free. Switch it off any time.</p></div>
-      <label class="switch"><input id="me-listed" type="checkbox" ${ME.talent_listed ? 'checked' : ''}>
-        <span class="knob" aria-hidden="true"></span><span class="sr-only">List me under Seeking Employment</span></label>
-    </div>
-    ${ME.talent_listed ? (
-        ME.talent_status === 'Approved' ? '<p class="pf-note" style="color:var(--green-dark)">Approved. Companies searching your keywords can find you.</p>'
-      : ME.talent_status === 'Denied'   ? '<p class="pf-note" style="color:#b3261e">Not approved. Reply through the <a href="/contact">Contact page</a> if you think this is a mistake.</p>'
-      : '<p class="pf-note">Waiting for Circuits.com to approve your listing. You get a message in your inbox when that is done.</p>') : ''}
-    ${saveBtn('me-msg-3')}`;
-  drawKwTable();
-  const table = el('me-kw-rows');
-  table.addEventListener('input', e => { const f = e.target.closest('.kw-field'); if(!f) return; KW_ROWS[+f.dataset.i].keyword = f.value; const n = el('me-kw-n'); if(n) n.innerHTML = `<b>${KW_ROWS.filter(r => r.keyword.trim()).length}</b> of 10 keywords, ${KW_ROWS.filter(r => r.keyword.trim() && r.enabled).length} on`; });
-  table.addEventListener('change', e => { const c = e.target.closest('[data-on]'); if(!c) return; KW_ROWS[+c.dataset.on].enabled = c.checked; drawKwTable(); });
-  table.addEventListener('click', e => {
-    const rm = e.target.closest('[data-rmkw]');
-    if(rm){ KW_ROWS.splice(+rm.dataset.rmkw, 1); if(!KW_ROWS.length) KW_ROWS.push({ keyword: '', enabled: true }); drawKwTable(); }
-  });
-  el('me-kw-add').addEventListener('click', () => { if(KW_ROWS.length >= 10) return; KW_ROWS.push({ keyword: '', enabled: true }); drawKwTable(); const last = table.querySelector('tr:last-child .kw-field'); if(last) last.focus(); });
+    ${listed ? '<p class="pf-note">You are listed as open to work. Pause or resume it under Your Listings, Resumes Posted.</p>'
+             : ME.talent_status === 'Denied' ? '<p class="pf-note">Not approved last time. Reply through the <a href="/contact">Contact page</a> if you think this is a mistake.</p>' : ''}`;
 }
 
 function wireSeeking(){
@@ -159,22 +134,23 @@ function wireSeeking(){
     const say = (t, bad) => document.querySelectorAll('.me-msg').forEach(m => { m.textContent = t; m.style.color = bad ? '#b3261e' : (t === 'Saving…' ? '' : '#3f6300'); });
     if(ME_FRESH){ say('Save your Profile Details first.', true); activateTab('profile'); return; }
     say('Saving…', false);
-    const listed = !!(el('me-listed') && el('me-listed').checked);
-    if(listed && !isValidPhone(val('me-phone'))){ say('A phone number (at least 10 digits) is needed to be listed. It stays private until a company unlocks you.', true); el('me-phone').focus(); return; }
-    if(val('me-phone') && !isValidPhone(val('me-phone'))){ say('That phone number needs at least 10 digits.', true); el('me-phone').focus(); return; }
+    if(!isValidPhone(val('me-phone'))){ say('A phone number (at least 10 digits) is needed to be listed. It is shown to signed-in companies only.', true); el('me-phone').focus(); return; }
+    const email = val('me-email');
+    if(email && !isValidEmail(email)){ say('That email address looks incomplete.', true); el('me-email').focus(); return; }
     const yearsRaw = val('me-years');
     const years = yearsRaw === '' ? null : parseInt(yearsRaw, 10);
     if(yearsRaw !== '' && !(years >= 0 && years <= 60)){ say('Years of experience should be 0 to 60.', true); return; }
-    const kwRows = KW_ROWS.filter(r => r.keyword.trim());
-    const keywords = kwRows.map(r => r.keyword.trim()), kwOn = kwRows.map(r => r.enabled);
+    const seen = new Set();
+    const keywords = val('me-keywords').split(',').map(s => s.trim()).filter(k => k && !seen.has(k.toLowerCase()) && seen.add(k.toLowerCase()));
+    if(!keywords.length){ say('Add at least one Circuits-Keyword™ so recruiters can find you.', true); el('me-keywords').focus(); return; }
     if(keywords.length > 10){ say('Ten keywords is the limit.', true); return; }
     const credentials = (el('f-creds') && el('f-creds').__list || []).filter(o => Object.values(o).some(v => (v || '').trim()));
     for(const c of credentials){ if((c.year || '').trim() && !isValidYear(c.year)){ say(`"${c.name || '(unnamed)'}" needs a 4-digit year.`, true); return; } }
-    const fields = { phone: val('me-phone') || null,
+    const fields = { phone: val('me-phone') || null, contact_email: email || null,
       title: val('me-title') || null, location: val('me-location') || null, years, bio: val('me-bio') || null, credentials,
-      talent_listed: listed };
+      talent_listed: true };
     const err = await updateMyProfile(fields);
-    const kw = err ? {} : await setTalentKeywords(keywords, kwOn);
+    const kw = err ? {} : await setTalentKeywords(keywords, keywords.map(() => true));
     const bad = err || kw.error;
     if(bad){ say(bad, true); return; }
     renderSeeking(await myProfile());
@@ -373,6 +349,7 @@ function wireTabs(){
   }));
   const go = el('pt-go-upgrades');
   if(go) go.addEventListener('click', () => activateTab('upgrades'));
+  document.addEventListener('click', e => { const b = e.target.closest('[data-go-tab]'); if(b) activateTab(b.dataset.goTab); });
   el('pt-signout').addEventListener('click', async e => {
     e.preventDefault();
     if(PT_DIRTY && !confirm('You have unsaved profile changes. Sign out and lose them?')) return;
@@ -1401,42 +1378,70 @@ function renderListings(){
     <p>Ask for one with Get Listed below. Once Circuits.com approves a Circuits-Keyword\u2122 for you, it appears here.</p>
   </div>`;
 
-  const open = PT.listings.find(l => l.id === PT.editing);
-  if(open){
-    renderRepeater('certs-' + open.id, open.certifications, ['name', 'issuer', 'year'], ['Certification', 'Issuer', 'Year']);
-    renderRepeater('team-' + open.id, open.team, ['name', 'role', 'email', 'photo'], ['Name', 'Role', 'Email', 'Photo'], ['text', 'text', 'text', 'img']);
-    renderRepeater('gallery-' + open.id, open.gallery, ['url', 'caption'], ['Image', 'Caption'], ['img', 'text']);
-  }
   wireListings();
 }
 
-/* Positions Desired at a glance (Jacob, 2026-09-13: back on Your Listings,
-   under the keywords and the jobs posted), the same numbered-table shape as
-   the keywords. It reads; Edit opens the Job Search tab where it is changed. */
+/* Resumes Posted (Jacob, 2026-09-14): the person's own listing on Your
+   Listings, the same card shape as a posted job: what is live, Edit (opens
+   the Post Free Resume form), New Jobs (open roles under your keywords) and
+   the Live / Paused switch. */
 function renderRecruitingListings(){
   const seek = el('pt-list-seeking');
   if(!seek) return;
   const me = ME || {};
-  const rows = Array.isArray(me.keyword_rows) ? me.keyword_rows.filter(r => r.enabled !== false).map(r => r.keyword) : (me.keywords || []);
+  const rows = kwList();
   const has = !!(me.title || me.years != null || rows.length);
-  const state = !me.talent_listed ? { text: 'Off', cls: '' }
-    : me.talent_status === 'Approved' ? { text: 'Listed', cls: 'live' }
+  const st = !me.talent_listed ? null
+    : me.talent_status === 'Approved' ? { text: 'Live until paused', cls: 'live' }
     : me.talent_status === 'Denied' ? { text: 'Not approved', cls: '' }
-    : { text: 'Pending', cls: 'pending' };
-  seek.innerHTML = `<h3 class="pt-sub-h">Positions Desired</h3>` + (has
-    ? `<div class="table-wrap"><table class="listings-table pt-ktable pt-rtable">
-        <thead><tr><th class="rank">#</th><th>Position desired</th><th>Location</th><th>Experience</th><th>Keywords</th><th>Status</th><th></th></tr></thead>
-        <tbody><tr>
-          <td class="rank" data-label="#">1</td>
-          <td data-label="Position desired"><b>${escapeHtml(me.title || 'Circuits industry professional')}</b></td>
-          <td data-label="Location">${me.location ? escapeHtml(me.location) : DASH}</td>
-          <td data-label="Experience">${me.years != null ? me.years + ' yr' + (Number(me.years) === 1 ? '' : 's') : DASH}</td>
-          <td data-label="Keywords">${rows.length ? escapeHtml(rows.join(', ')) : DASH}</td>
-          <td data-label="Status"><span class="badge ${state.cls}">${state.text}</span></td>
-          <td class="row-actions" data-label=""><button type="button" class="btn btn-primary btn-sm" data-go-form="pt-experience">Edit</button></td>
-        </tr></tbody></table></div>`
-    : `<div class="pt-empty pt-getlisted"><div><b>Not listed as seeking employment yet</b><p>Fill in the position you want and the keywords a recruiter would search on the Job Search tab, and switch the listing on. Free.</p></div><button type="button" class="btn btn-primary btn-sm" data-go-form="pt-experience">Fill it in</button></div>`);
+    : { text: 'Awaiting approval by Circuits.com', cls: 'pending' };
+  seek.innerHTML = `<h3 class="pt-sub-h">Resumes Posted</h3>` + (has
+    ? `<div class="pt-job" id="pt-resume-card">
+      <div class="pt-job-head">
+        <div><b>${escapeHtml(me.title || 'Circuits industry professional')}</b>${me.location ? ' <span class="cell-muted">' + escapeHtml(me.location) + '</span>' : ''}${me.years != null ? ' <span class="cell-muted">· ' + escapeHtml(String(me.years)) + ' yrs</span>' : ''}
+          <div class="pf-note" style="margin:4px 0 0">${escapeHtml(rows.join(', ') || 'No keywords yet')}</div></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${st ? `<span class="badge ${st.cls}">${escapeHtml(st.text)}</span>` : ''}
+          <button type="button" class="mini-btn" data-go-form="pt-experience">Edit</button>
+          <button type="button" class="mini-btn" data-new-jobs="1">New Jobs</button>
+          <label class="switch pt-job-sw"><input type="checkbox" data-resume-live="1" ${me.talent_listed ? 'checked' : ''}>
+            <span class="knob" aria-hidden="true"></span><span class="sw-text">${me.talent_listed ? 'Live' : 'Paused'}</span></label></div>
+      </div>
+      <div class="pt-applicants" id="resume-jobs" style="display:none"></div>
+    </div>`
+    : `<div class="pt-empty pt-getlisted"><div><b>No resume posted yet</b><p>Fill in the position you want and the keywords a recruiter would search on the Post Free Resume tab, and list yourself as open to work. Free.</p></div><button type="button" class="btn btn-primary btn-sm" data-go-form="pt-experience">Post Free Resume</button></div>`);
   seek.onclick = e => { const b = e.target.closest('[data-go-form]'); if(!b) return; activateTab('seeking'); const f = el(b.dataset.goForm); if(f){ f.scrollIntoView({ behavior: 'smooth', block: 'start' }); const first = f.querySelector('input, textarea'); if(first) first.focus({ preventScroll: true }); } };
+  if(!seek.__wired){
+    seek.__wired = true;
+    /* New Jobs: the open roles under your keywords, every keyword at once,
+       each job once */
+    seek.addEventListener('click', async e => {
+      const b = e.target.closest('[data-new-jobs]'); if(!b) return;
+      const panel = el('resume-jobs'); if(!panel) return;
+      if(panel.style.display !== 'none'){ panel.style.display = 'none'; return; }
+      panel.style.display = ''; panel.innerHTML = '<span class="pf-note">Looking…</span>';
+      const terms = kwList().slice(0, 10); if(!terms.length) terms.push('');
+      const seen = new Set(), jobs = [];
+      for(const k of terms){
+        try{ for(const j of await jobSearch(k)){ if(!seen.has(j.id)){ seen.add(j.id); jobs.push(j); } } }catch(err){ /* one keyword failing must not hide the rest */ }
+      }
+      panel.innerHTML = jobs.length ? jobs.map(j => `<div class="pt-app">
+          <b>${escapeHtml(j.title)}</b> <span class="cell-muted">${escapeHtml(j.company_name || '')}${j.location ? ', ' + escapeHtml(j.location) : ''}</span>
+          · <a href="/jobs?q=${encodeURIComponent((j.keywords || [])[0] || '')}" target="_blank" rel="noopener">View on Job Board</a>
+        </div>`).join('') : '<span class="pf-note">No open jobs under your keywords yet.</span>';
+    });
+    /* Live / Paused: the listing switch, the same as a job's */
+    seek.addEventListener('change', async e => {
+      const sw = e.target.closest('[data-resume-live]'); if(!sw) return;
+      const on = sw.checked;
+      if(on && !isValidPhone(ME.phone || '')){ sw.checked = false; toast('Add a phone number on the Post Free Resume tab first. It is shown to signed-in companies only.', false); return; }
+      sw.disabled = true;
+      const err = await updateMyProfile({ talent_listed: on });
+      sw.disabled = false;
+      if(err){ sw.checked = !on; toast(err, false); return; }
+      ME.talent_listed = on;
+      renderRecruit(); renderRecruitingListings();
+    });
+  }
 }
 
 /* ---------- upgrades ---------- */
@@ -1532,7 +1537,14 @@ function renderUpgrades(){
       <td class="row-actions" data-label=""><button class="mini-btn btn-upgrade-sm" data-req-row="${l.id}" ${fresh ? '' : 'disabled'}>Request</button></td>
     </tr>`; }).join('');
 
-  el('pt-upgrades').innerHTML = (live.length ? `<div class="table-wrap"><table class="listings-table pt-uptable">
+  /* more keywords is the first "upgrade" (Jacob, 2026-09-14): free, up to 10
+     per request, with the banner and badge extras chosen at the same time */
+  const kwPack = `<div class="pt-upsell pt-kw-pack">
+      <div><b>Get Listed Under More Circuits-Keywords&trade;</b>
+        <p>Add up to 10 more keywords per request, free. Include the Exclusive Sponsor Banner and Trust Badge upgrades at the same time.</p></div>
+      <a class="btn btn-blue" href="/join">Add Keywords</a>
+    </div>`;
+  el('pt-upgrades').innerHTML = kwPack + (live.length ? `<div class="table-wrap"><table class="listings-table pt-uptable">
       <thead><tr>
         <th class="rank">#</th><th>Keyword</th>
         ${upHead('Trust Badge', UPGRADES.badge)}
@@ -1630,7 +1642,8 @@ function listingSummary(l){
 function listingEditor(l){
   const docs = Array.isArray(l.docs) ? l.docs : [];
   /* Kept short on purpose (Jacob, 2026-09-03): description and documents side
-     by side, showcase as three closed folds, so the upgrades below get the room. */
+     by side. The Certifications, Team and Gallery folds came off on
+     2026-09-14 (Jacob); what a listing already carries still shows on the page. */
   return `<div class="pt-listing-edit">
     <div class="pt-edit-grid">
       <div>
@@ -1648,11 +1661,6 @@ function listingEditor(l){
         </div>
         <input type="file" id="ed-file-${l.id}" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg">
       </div>
-    </div>
-    <div class="pt-folds">
-      <details class="pt-fold"><summary>Certifications <span class="pf-note" id="fold-certs-${l.id}-n"></span></summary><div class="pt-list" id="f-certs-${l.id}"></div></details>
-      <details class="pt-fold"><summary>Team <span class="pf-note" id="fold-team-${l.id}-n"></span></summary><div class="pt-list" id="f-team-${l.id}"></div></details>
-      <details class="pt-fold"><summary>Gallery <span class="pf-note" id="fold-gallery-${l.id}-n"></span></summary><div class="pt-list" id="f-gallery-${l.id}"></div></details>
     </div>
     <div class="pt-edit-actions">
       <button class="btn btn-primary" data-save="${l.id}">Save</button>
@@ -1688,12 +1696,8 @@ function wireListings(){
     const save = e.target.closest('[data-save]');
     if(save){
       const id = save.dataset.save;
-      const clean = key => (el('f-' + key + '-' + id).__list || []).filter(o => Object.values(o).some(v => (v || '').trim()));
-      const certifications = clean('certs'), team = clean('team'), gallery = clean('gallery');
-      const bad = showcaseProblem(certifications, team);
-      if(bad){ toast('Not saved: ' + bad, false); return; }
       save.disabled = true;
-      const err = await updateMyListing(id, { description: val('ed-desc-' + id), certifications, team, gallery });
+      const err = await updateMyListing(id, { description: val('ed-desc-' + id) });
       save.disabled = false;
       if(err){ toast('Could not save: ' + err, false); return; }
       PT.editing = null;
@@ -1974,6 +1978,7 @@ function wireJobs(){
   /* documents on the post: uploaded as they are picked, listed as chips,
      sent with the job when it is posted or saved (Jacob, 2026-09-09) */
   let jobDocs = [];
+  const yrs = el('job-years'); if(yrs && !yrs.options.length) yrs.innerHTML = yearsOptions('');
   const drawDocs = () => { const l = el('job-docs-list'); if(l) l.innerHTML = jobDocs.map((d, i) => `<span class="kw-tag">${escapeHtml(d.name || 'Document')}<button type="button" data-rmjobdoc="${i}" aria-label="Remove">&times;</button></span>`).join(''); };
   const docsIn = el('job-docs');
   if(docsIn) docsIn.addEventListener('change', async () => {
@@ -1992,8 +1997,8 @@ function wireJobs(){
      to it (Jacob, 2026-09-09: "an edit button to allow for changes") */
   const setMode = j => {
     el('job-id').value = j ? j.id : '';
-    el('job-form-h').textContent = j ? 'Edit job' : 'Post a job';
-    post.textContent = j ? 'Save changes' : 'Post job';
+    el('job-form-h').textContent = j ? 'Edit Job' : 'Post Job';
+    post.textContent = j ? 'Save Changes' : 'List this Job on the Job Board';
     el('job-cancel').style.display = j ? '' : 'none';
     el('job-title').value = j ? (j.title || '') : '';
     el('job-location').value = j ? (j.location || '') : '';
@@ -2078,7 +2083,7 @@ function wireJobs(){
     const kw = await setJobKeywords(id, keywords);
     if(kw.error){ msg.textContent = (editingId ? 'Saved' : 'Posted') + ', but the keywords were refused: ' + kw.error; msg.style.color = '#b3261e'; renderJobs(); return; }
     setMode(null);
-    msg.textContent = editingId ? 'Saved.' : 'Posted. It goes live once Circuits.com approves it, free. See it under Your Listings.'; msg.style.color = '#3f6300';
+    msg.textContent = editingId ? 'Saved.' : 'Listed. It goes live on the Job Board once Circuits.com approves it, free. See it under Your Listings, Jobs Posted.'; msg.style.color = '#3f6300';
     renderJobs();
   });
 }

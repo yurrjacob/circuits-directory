@@ -6,7 +6,7 @@
 <title>Dashboard | Circuits.com</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
-<link rel="stylesheet" href="/styles.css?v=2dd893e8a6">
+<link rel="stylesheet" href="/styles.css?v=ccb3a7ea89">
 <script src="/nav.js?v=ded2c647b5"></script>
 </head>
 <body>
@@ -74,7 +74,7 @@
   <div class="console-head">
     <div>
       <h1 id="pt-title">Dashboard</h1>
-      <p id="pt-sub">Everything on Circuits.com for <b id="pt-name"></b>: your page, your listings, and both sides of Recruiting.</p>
+      <p id="pt-sub">Everything on Circuits.com: Your Profile, Your Business Listings, Your Work Listings.<b id="pt-name" hidden></b></p>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select id="pt-company" style="height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px"></select>
@@ -101,29 +101,29 @@
     <button class="pt-tab" data-tab="admin" id="pt-tab-admin" style="display:none">Admin</button>
   </div>
 
-  <!-- ===== seeking employment: your experience, your keywords, your listing (one saved profile) ===== -->
+  <!-- ===== seeking employment: Post Free Resume (Jacob, 2026-09-14). Box A the
+       form, box B the buttons, box C Search Job Market, top to bottom. ===== -->
   <section class="pt-panel" id="tab-seeking">
     <div class="pt-tab-head">
       <div>
-        <h2>Search Jobs</h2>
-        <p class="kit-intro">Companies that are hiring search here by Circuits-Keyword&trade;. Add your
-          experience, pick the keywords a recruiter would type to find you, and switch your listing on. It is
+        <h2>Post Free Resume</h2>
+        <p class="kit-intro">Companies that are hiring search the Recruit Board by Circuits-Keyword&trade;. Add your
+          experience, pick the keywords a recruiter would type to find you, and list yourself as open to work. It is
           free. Companies see your position, experience and keywords, and any signed-in company can view
           your resume and contact details.</p>
       </div>
-      <a class="btn btn-outline" href="/jobs" target="_blank" rel="noopener">View the Job Board &#8599;</a>
+      <a class="btn btn-outline" href="/talent" target="_blank" rel="noopener">View the Recruit Board &#8599;</a>
     </div>
-    <!-- Search Job Market: its own box (Jacob, 2026-09-13), a keyword search of the Job Board -->
+    <div class="pf-form" id="pt-experience"></div>
+    <div id="pt-recruit"></div>
     <form class="pf-form pt-market" id="pt-market-jobs" autocomplete="off">
       <h3 style="margin-top:0">Search Job Market</h3>
       <div class="pt-market-row">
         <input type="text" id="pt-market-jobs-q" maxlength="80" placeholder="Search open jobs by Circuits-Keyword&trade;..." aria-label="Search open jobs by keyword">
         <button type="submit" class="btn btn-primary">Search Job Market</button>
       </div>
-      <p class="pf-note">Open roles posted by companies on Circuits.com, listed by the Circuits-Keywords&trade; they hire for.</p>
+      <p class="pf-note">Open jobs posted by companies on Circuits.com, listed by the Circuits-Keywords&trade; they hire for.</p>
     </form>
-    <div class="pf-form" id="pt-experience" style="margin-top:18px"></div>
-    <div class="pf-form" id="pt-recruit" style="margin-top:18px"></div>
   </section>
 
   <!-- ===== account settings ===== -->
@@ -212,55 +212,56 @@
     </div>
   </section>
 
-  <!-- hiring: the Find Recruits side of Recruiting. Post a job, free; searching people happens on /talent. -->
+  <!-- hiring: Post Free Job (Jacob, 2026-09-14). Box A the form, box B the
+       buttons, box C Search Job Market, top to bottom. Searching people happens on /talent. -->
   <section class="pt-panel" id="tab-hiring">
     <div class="pt-section" style="margin-top:0;padding-top:0;border-top:0">
       <div class="pt-tab-head">
         <div>
-          <h2>Find Recruits</h2>
+          <h2>Post Free Job</h2>
           <p class="kit-intro">Post an open role under the Circuits-Keywords&trade; you hire for, free. Once Circuits.com
             approves it, the post runs for 30 days on the Job Board. Everyone who applies appears under
             New Applicants on that post, under Your Listings.</p>
         </div>
         <a class="btn btn-outline" href="/talent" target="_blank" rel="noopener">View the Recruit Board &#8599;</a>
       </div>
-      <!-- Search Job Market: its own box (Jacob, 2026-09-13), a keyword search of the Recruit Board -->
+    <div class="pf-form" id="pt-job-form">
+      <h3 id="job-form-h">Post Job</h3>
+      <input type="hidden" id="job-id" value="">
+      <div class="grid2">
+        <div class="auth-field"><label for="job-title">Job title</label><input id="job-title" type="text" maxlength="120" placeholder="RF Design Engineer"></div>
+        <div class="auth-field"><label for="job-location">Location</label><input id="job-location" type="text" maxlength="120" placeholder="Austin, TX or Remote"></div>
+      </div>
+      <div class="auth-field"><label for="job-keywords">Circuits-Keywords&trade; <span class="cell-muted">(up to 10, comma separated)</span></label>
+        <input id="job-keywords" type="text" placeholder="rf design, pcb layout"></div>
+      <div class="auth-field"><label for="job-desc">Description</label>
+        <textarea id="job-desc" rows="6" maxlength="4000" placeholder="The role, the team, what you need."></textarea></div>
+      <div class="grid2">
+        <div class="auth-field"><label for="job-years">Years of experience</label>
+          <select id="job-years" class="pt-years" aria-label="Years of experience"></select></div>
+        <div class="auth-field"><label for="job-email">Send applications to</label>
+          <input id="job-email" type="email" maxlength="120" placeholder="hiring@company.com"></div>
+      </div>
+      <!-- documents on the post (Jacob, 2026-09-09): the docs bucket, same as a listing's -->
+      <div class="auth-field"><label for="job-docs">Add Docs</label>
+        <input id="job-docs" type="file" multiple accept="application/pdf,image/png,image/jpeg,image/webp">
+        <p class="field-hint">For example a Job Posting Flyer. PDF, PNG or JPEG, up to 10 MB each.</p>
+        <div class="kw-tags" id="job-docs-list"></div></div>
+      <span class="pf-note" id="job-msg"></span>
+    </div>
+    <div class="pf-form pt-actions" id="pt-job-actions">
+      <button class="btn btn-primary" type="button" id="job-post">List this Job on the Job Board</button>
+      <button class="mini-btn" type="button" id="job-cancel" style="display:none">Cancel</button>
+      <a class="btn btn-outline" href="/jobs" target="_blank" rel="noopener">View Job Board</a>
+    </div>
       <form class="pf-form pt-market" id="pt-market-recruits" autocomplete="off">
         <h3 style="margin-top:0">Search Job Market</h3>
         <div class="pt-market-row">
           <input type="text" id="pt-market-recruits-q" maxlength="80" placeholder="Search recruits by Circuits-Keyword&trade;..." aria-label="Search recruits by keyword">
           <button type="submit" class="btn btn-primary">Search Job Market</button>
         </div>
-        <p class="pf-note">People seeking employment, listed by their Circuits-Keywords&trade;. Free to view, resumes and contact details included.</p>
+        <p class="pf-note">Resumes posted by people seeking employment, listed by the Circuits-Keywords&trade; that best describe their qualifications.</p>
       </form>
-    <div class="pf-form" id="pt-job-form" style="margin-top:18px">
-      <h3 id="job-form-h">Post a job</h3>
-      <input type="hidden" id="job-id" value="">
-      <div class="grid2">
-        <div class="auth-field"><label for="job-title">Job title</label><input id="job-title" type="text" maxlength="120" placeholder="RF Design Engineer"></div>
-        <div class="auth-field"><label for="job-location">Location</label><input id="job-location" type="text" maxlength="120" placeholder="Austin, TX or Remote"></div>
-      </div>
-      <div class="auth-field"><label for="job-keywords">Keywords <span class="cell-muted">(up to 10, comma separated)</span></label>
-        <input id="job-keywords" type="text" placeholder="rf design, pcb layout"></div>
-      <div class="auth-field"><label for="job-desc">Description</label>
-        <textarea id="job-desc" rows="6" maxlength="4000" placeholder="The role, the team, what you need."></textarea></div>
-      <div class="grid2">
-        <div class="auth-field"><label for="job-years">Years of experience <span class="cell-muted">(optional)</span></label>
-          <input id="job-years" type="number" min="0" max="60" placeholder="5"></div>
-        <div class="auth-field"><label for="job-email">Send applications to <span class="cell-muted">(optional, defaults to your public email)</span></label>
-          <input id="job-email" type="email" maxlength="120" placeholder="hiring@company.com"></div>
-      </div>
-      <!-- documents on the post (Jacob, 2026-09-09): the docs bucket, same as a listing's -->
-      <div class="auth-field"><label for="job-docs">Add Docs <span class="cell-muted">(optional)</span></label>
-        <input id="job-docs" type="file" multiple accept="application/pdf,image/png,image/jpeg,image/webp">
-        <p class="field-hint">For example a Job Posting Flyer. PDF, PNG or JPEG, up to 10 MB each.</p>
-        <div class="kw-tags" id="job-docs-list"></div></div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <button class="btn btn-primary" type="button" id="job-post">Post job</button>
-        <button class="mini-btn" type="button" id="job-cancel" style="display:none">Cancel</button>
-        <span class="pf-note" id="job-msg"></span>
-      </div>
-    </div>
     </div>
   </section>
 
@@ -277,13 +278,17 @@
       </div>
       <button type="button" class="btn btn-upgrade" id="pt-go-upgrades">Upgrade &rarr;</button>
     </div>
+    <h3 class="pt-sub-h">Circuits-Keyword Listing</h3>
     <div class="pt-list" id="pt-listings"></div>
     <div class="pt-empty pt-getlisted">
       <div>
-        <b>Get listed under more Circuits-Keywords&trade;</b>
-        <p>Up to 10 keywords per request, free. Add the Exclusive Sponsor Banner or a Trust Badge at the same time.</p>
+        <b>Get Listed Under More Circuits-Keywords&trade;</b>
+        <p>Add Up to 10 More Keywords. Include the Exclusive Sponsor Banner and Trust Badge upgrades.</p>
       </div>
-      <a class="btn btn-primary" href="/join">Get Listed</a>
+      <div class="pt-getlisted-btns">
+        <a class="btn btn-primary" href="/join">Get Listed</a>
+        <button type="button" class="btn btn-blue" data-go-tab="upgrades">Upgrades &rarr;</button>
+      </div>
     </div>
     <!-- Both sides of Recruiting, back here (Jacob, 2026-09-13): the jobs a
          company posted and the position a person wants, each at a glance.
@@ -292,6 +297,7 @@
       <h3 class="pt-sub-h">Jobs Posted</h3>
       <div class="pt-list" id="pt-jobs"></div>
     </div>
+    <!-- Resumes Posted: the person's own listing, the same card as a job (Jacob, 2026-09-14) -->
     <div class="pt-list-rec" id="pt-list-seeking"></div>
   </section>
 
@@ -636,7 +642,7 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="/store.js?v=552cb9d8a6"></script>
 <script src="/app.js?v=e1213c2413"></script>
-<script src="/portal.js?v=73ab36390b"></script>
+<script src="/portal.js?v=c0debbefbe"></script>
 <script src="/admin.js?v=bb09b6a849"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));

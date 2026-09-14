@@ -108,7 +108,22 @@ function personExperience(p){
   if(creds.length) inner += `<h3 class="pf-sub">Certifications &amp; degrees</h3><ul class="pf-certs" title="Listed by the person. Circuits.com has not checked these.">${creds.map(c =>
       `<li><b>${escapeHtml(c.name.trim())}</b>${c.issuer ? `, ${escapeHtml(c.issuer)}` : ''}${c.year ? ` (${escapeHtml(String(c.year))})` : ''}</li>`).join('')}</ul>`;
   if((p.keywords || []).length) inner += `<div class="kw-tags">${p.keywords.map(k => `<span class="kw-tag">${escapeHtml(k)}</span>`).join('')}</div>`;
-  return section('Experience', inner);
+  /* the person's own board is the Job Board (Jacob, 2026-09-14) */
+  inner += `<p class="pf-job-act"><a class="mini-btn" href="/jobs?q=${encodeURIComponent((p.keywords || [])[0] || '')}">View on Job Board</a></p>`;
+  return section('Resumes Posted', inner);
+}
+
+/* The short link with Save and Copy as links (Jacob, 2026-09-14), one small
+   box in the sidebar card. Save keeps the profile in this browser's list,
+   Copy puts the address on the clipboard. */
+function linkBoxHtml(handle, co){
+  return `<div class="pf-linkbox">
+      <span class="pf-url">circuits.com/${escapeHtml(handle)}</span>
+      <div class="pf-linkacts">
+        <a href="#" class="pf-linkact" id="pf-save" data-slug="${escapeHtml(co.slug || '')}" data-handle="${escapeHtml(handle || '')}" data-name="${escapeHtml(co.name || '')}">Save this Profile</a>
+        <a href="#" class="pf-linkact" id="pf-copy" data-url="https://circuits.com/${escapeHtml(handle)}">Copy this Profile</a>
+      </div>
+    </div>`;
 }
 
 /* A person's profile with no company row behind it (accounts older than the
@@ -122,7 +137,7 @@ function personProfile(p, staffRun){
   <div class="pf-head pf-head-covered">
     <div class="pf-logo pf-photo">${p.photo_url ? `<img src="${escapeHtml(p.photo_url)}" alt="${escapeHtml(name)}">` : avatarSvg()}</div>
     <div class="pf-id">
-      <h1>${escapeHtml(name)}${staffRun ? ' ' + teamMarkHtml() : ''}</h1>
+      <h1>${escapeHtml(name)}</h1>
       <p class="pf-tagline">circuits.com/${escapeHtml(p.handle)}</p>
     </div>
   </div>
@@ -131,9 +146,7 @@ function personProfile(p, staffRun){
   </div>
   <aside class="pf-side">
     <div class="pf-side-card">
-      <button type="button" class="pf-copy" id="pf-copy" data-url="https://circuits.com/${escapeHtml(p.handle)}">
-        <span>circuits.com/${escapeHtml(p.handle)}</span><b>Copy</b>
-      </button>
+      ${linkBoxHtml(p.handle, { slug: '', name: name })}
     </div>
     <p class="pf-claim">Is this you? <a href="/portal">Sign in</a> to manage your profile.</p>
   </aside></div>`;
@@ -204,7 +217,7 @@ async function initProfile(){
   <div class="pf-head pf-head-covered">
     <div class="pf-logo">${logo}</div>
     <div class="pf-id">
-      <h1>${escapeHtml(co.name)}${staffRun ? ' ' + teamMarkHtml() : ''}</h1>
+      <h1>${escapeHtml(co.name)}</h1>
       ${co.tagline ? `<p class="pf-tagline">${escapeHtml(co.tagline)}</p>` : ''}
       <div class="pf-meta">
         ${reviews.length ? `<span class="pf-rating">${stars(avg)} ${avg.toFixed(1)} <i>(${reviews.length})</i></span>` : ''}
@@ -302,13 +315,14 @@ async function initProfile(){
       ${inner}</section>`;
   }
 
-  /* ---- Hiring: the live roles this company has posted (Jacob, 2026-09-03:
-     "add any jobs posted to the profile"). Each links to the Hiring board. ---- */
-  if(jobs.length) html += section('Hiring', `<div class="pf-jobs">${jobs.map(j => `
+  /* ---- Jobs Posted: the live roles this company has posted (Jacob,
+     2026-09-03: "add any jobs posted to the profile"; renamed and pointed at
+     the Recruit Board 2026-09-14, where the people for the role are). ---- */
+  if(jobs.length) html += section('Jobs Posted', `<div class="pf-jobs">${jobs.map(j => `
       <div class="pf-job">
         <div><b>${escapeHtml(j.title)}</b>${j.location ? ` <span class="pf-note">${escapeHtml(j.location)}</span>` : ''}
           ${(j.keywords || []).length ? `<div class="kw-tags">${j.keywords.map(k => `<a class="kw-tag" href="/jobs?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join('')}</div>` : ''}</div>
-        <a class="mini-btn" href="/jobs?q=${encodeURIComponent((j.keywords || [])[0] || j.title)}">View on the Hiring board</a>
+        <a class="mini-btn" href="/talent?q=${encodeURIComponent((j.keywords || [])[0] || '')}">View on Recruit Board</a>
       </div>`).join('')}</div>`);
 
   /* ---- the person behind the account: experience from the Seeking
@@ -327,12 +341,7 @@ async function initProfile(){
         ? `<a class="btn btn-primary pf-cta" id="pf-email-cta"
              href="mailto:${escapeHtml(co.email.trim())}?subject=${encodeURIComponent('Enquiry via Circuits.com: ' + co.name)}">Email ${escapeHtml(co.name)}</a>`
         : ''}
-      <button type="button" class="btn pf-save" id="pf-save"
-              data-slug="${escapeHtml(co.slug)}" data-handle="${escapeHtml(co.handle || '')}"
-              data-name="${escapeHtml(co.name)}">Save this supplier</button>
-      <button type="button" class="pf-copy" id="pf-copy" data-url="https://circuits.com/${escapeHtml(co.handle)}">
-        <span>circuits.com/${escapeHtml(co.handle)}</span><b>Copy</b>
-      </button>
+      ${linkBoxHtml(co.handle, co)}
       <div class="pf-rows">
         ${fitsLine(co.contact, 80) ? row('Contact', co.contact) : ''}
         ${looksPhone(co.phone) ? row('Phone', co.phone, { href: 'tel:' + co.phone.replace(/[^\d+]/g, ''), id: 'pf-phone' }) : ''}
@@ -594,13 +603,13 @@ function wireSave(){
   const entry = { slug: btn.dataset.slug, handle: btn.dataset.handle, name: btn.dataset.name };
   const paint = () => {
     const on = isSaved(entry.slug);
-    btn.textContent = on ? 'Saved ✓' : 'Save this supplier';
+    btn.textContent = on ? 'Saved ✓' : 'Save this Profile';
     btn.classList.toggle('is-saved', on);
     btn.title = on
       ? 'Saved in this browser only. Click to remove.'
-      : 'Keeps this supplier in a list in this browser. No account needed.';
+      : 'Keeps this profile in a list in this browser. No account needed.';
   };
-  btn.addEventListener('click', () => { toggleSaved(entry); paint(); });
+  btn.addEventListener('click', e => { e.preventDefault(); toggleSaved(entry); paint(); });
   paint();
 }
 
@@ -608,18 +617,17 @@ function wireSave(){
    Person profiles need it too, and they never reach wireProfile(). */
 function wireCopyLink(){
   const copy = document.getElementById('pf-copy');
-  if(copy) copy.addEventListener('click', async () => {
-    const label = copy.querySelector('b');
+  if(copy) copy.addEventListener('click', async e => {
+    e.preventDefault();
     try{
       await navigator.clipboard.writeText(copy.dataset.url);
-      label.textContent = 'Copied';
-    }catch(e){
+      copy.textContent = 'Copied ✓';
+    }catch(err){
       /* clipboard blocked (http, permissions), select it so Ctrl+C still works */
-      const r = document.createRange();
-      r.selectNodeContents(copy.querySelector('span'));
-      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
-      label.textContent = 'Press Ctrl+C';
+      const url = copy.closest('.pf-linkbox') && copy.closest('.pf-linkbox').querySelector('.pf-url');
+      if(url){ const r = document.createRange(); r.selectNodeContents(url); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+      copy.textContent = 'Press Ctrl+C';
     }
-    setTimeout(() => { label.textContent = 'Copy'; }, 2200);
+    setTimeout(() => { copy.textContent = 'Copy this Profile'; }, 2200);
   });
 }

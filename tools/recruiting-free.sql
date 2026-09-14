@@ -89,3 +89,12 @@ grant execute on function public.my_profile() to authenticated;
 -- PROFILE_PUBLIC_COLS, was refused and came up empty. Companies read a
 -- different table, so only person profiles vanished.
 grant select (location) on public.profiles to anon, authenticated;
+
+-- 2026-09-14, applied as profiles_contact_email. Post A Resume gets an
+-- "email for employers" field the way Post Job has "send applications to";
+-- talent_contact() and job_applicants() hand out that address, falling back
+-- to the sign-in email. my_profile() returns it for the form.
+alter table public.profiles add column if not exists contact_email text;
+grant select (contact_email), update (contact_email) on public.profiles to authenticated;
+-- my_profile(): + contact_email (drop and create: the return type changes)
+-- talent_contact(), job_applicants(): email := coalesce(nullif(btrim(p.contact_email), ''), p.email)

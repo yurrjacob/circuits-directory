@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Recruiting: Hiring | Circuits.com</title>
+<title>Job Board | Circuits.com</title>
 <meta name="description" content="Open roles in the circuits industry, posted by companies on Circuits.com and searchable by Circuits-Keyword™.">
 <link rel="icon" href="assets/favicon.png">
-<link rel="stylesheet" href="styles.css?v=2dd893e8a6">
+<link rel="stylesheet" href="styles.css?v=ccb3a7ea89">
 <script src="/nav.js?v=ded2c647b5"></script>
 <script async src="/analytics.js?v=17b1c5b9b5"></script>
 </head>
@@ -42,14 +42,15 @@
       <button type="submit" class="search-go mini" aria-label="Search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
     </form>
     <div class="subbar-meta">
-      <span class="kw-line">Recruiting: Hiring</span>
+      <span class="kw-line">Job Board</span>
+      <span class="board-sub">Free to Post Job</span>
       <span class="count-line">Showing <b id="result-count">0</b> Jobs for <b data-term>…</b></span>
     </div>
   </div>
 </div>
 
 <div class="page prose tal-intro">
-  <p class="lede">The Job Board: open roles posted by companies on Circuits.com, listed under the Circuits-Keywords&trade; they hire for. Pick a job and View Job Details &amp; Apply. Applying is free and takes one click from your profile. Looking for people instead? See the <a href="/talent">Recruit Board</a>.</p>
+  <p class="lede">The Job Board: Open jobs posted on Circuits.com, listed under the Circuits-Keywords&trade; they hire for. Pick a job, view job details and <a href="#board-table" class="lede-act" data-board-go>Apply</a>.</p>
   <div id="job-note" class="tal-note"></div>
 </div>
 
@@ -103,6 +104,7 @@
   document.getElementById('result-count').textContent = rows.length;
 
   if(!rows.length){
+    document.querySelectorAll('[data-board-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); body.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
     body.innerHTML = `<div class="empty"><div class="big">No open jobs${q ? ' for &ldquo;' + escapeHtml(q) + '&rdquo;' : ''} right now</div>
       <p>Check back soon, or <a href="/portal#seeking">list yourself on the Recruit Board</a> so employers can find you.</p></div>`;
     return;
@@ -160,6 +162,8 @@
     detail.scrollIntoView({ behavior: 'smooth', block: 'start' });
     document.getElementById('bd-close').addEventListener('click', () => { detail.hidden = true; detail.innerHTML = ''; });
   }
+  /* the Apply link in the lede: down to the table, first row picked, button ready */
+  document.querySelectorAll('[data-board-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); if(selected < 0) select(0); table.scrollIntoView({ behavior: 'smooth', block: 'start' }); openBtn.focus({ preventScroll: true }); }));
   table.addEventListener('click', e => { if(e.target.closest('a')) return; const tr = e.target.closest('tr[data-i]'); if(tr) select(+tr.dataset.i); });
   table.addEventListener('dblclick', e => { const tr = e.target.closest('tr[data-i]'); if(tr){ select(+tr.dataset.i); open(+tr.dataset.i); } });
   table.addEventListener('keydown', e => { const tr = e.target.closest('tr[data-i]'); if(!tr) return; if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); select(+tr.dataset.i); open(+tr.dataset.i); } });

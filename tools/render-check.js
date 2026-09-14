@@ -222,12 +222,12 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   assert.ok(!/style="background:/.test(heading()),
     'a coloured Trust Badge is rendering beside the company name');
 
-  // a Circuits.com-run profile: our mark beside the name, still no badge there
+  // a Circuits.com-run profile: the mark came off the heading on 2026-09-14
+  // (Jacob: it only repeated the name beside it); still no badge there either
   global.companyRunByStaff = async () => true;
   await initProfile();
-  assert.ok(/<h1>[^<]*<span class="lb lb-cx"/.test(heading()),
-    'an admin-run profile does not show the Circuits.com mark next to its name');
-  assert.ok(/Circuits\.com team/.test(heading()), 'the mark on the name lost its hover text');
+  assert.ok(!/lb-cx/.test(heading()),
+    'the Circuits.com mark is back beside the company name');
   assert.ok(!/lb-cx/.test(listings()),
     'the Circuits.com mark is being rendered against a keyword listing, it is not a badge');
   assert.ok(!/paid label/.test(heading()),
