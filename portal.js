@@ -246,7 +246,8 @@ async function initPortal(){
 
   /* "Get Listed" while signed in sends people to /portal#listings (nav.js);
      inbox notices about recruiting land on /portal#seeking. */
-  const tab = (location.hash || '').replace('#', '');
+  let tab = (location.hash || '').replace('#', '');
+  if(!tab){ try{ tab = localStorage.getItem('cx_pt_tab') || ''; }catch(e){} }   // the tab you were on, when the address carries none
   if(tab && document.querySelector(`.pt-tab[data-tab="${tab}"]`)) activateTab(tab);
   await loadCompany(cos[0].slug);
 }
@@ -347,6 +348,10 @@ function wireTabs(){
   document.querySelectorAll('.pt-tab').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('.pt-tab').forEach(x => x.classList.toggle('active', x === b));
     document.querySelectorAll('.pt-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + b.dataset.tab));
+    /* a reload stays on this tab (Jacob, 2026-09-15): the tab rides in the
+       address, and is remembered for the reloads that arrive without one */
+    try{ history.replaceState(null, '', '#' + b.dataset.tab); }catch(e){}
+    try{ localStorage.setItem('cx_pt_tab', b.dataset.tab); }catch(e){}
     /* The console loads nothing until an admin actually opens it, a company
        owner who never sees this tab never fetches a row of anyone else's data. */
     if(b.dataset.tab === 'admin' && typeof initAdmin === 'function') initAdmin();

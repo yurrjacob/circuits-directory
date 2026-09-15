@@ -1260,7 +1260,7 @@ assert.ok(/data-tab="listings">Your Listings</.test(portalListings), 'the Listin
 assert.ok(/class="pt-empty pt-getlisted"[\s\S]*?href="\/join"/.test(portalListings), 'Your Listings lost the Get Listed call to action');
 assert.ok(!/id="al-input"|id="pt-addkw"/.test(portalListings) && !/function wireAddListing/.test(fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8')), 'the inline Get another listing form is back, Get Listed is the page for that');
 const portalJsSrc = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
-assert.ok(/const tab = \(location\.hash \|\| ''\)\.replace\('#', ''\);[\s\S]{0,120}activateTab\(tab\)/.test(portalJsSrc), 'portal.js no longer opens the tab named in the hash (/portal#listings, /portal#seeking)');
+assert.ok(/let tab = \(location\.hash \|\| ''\)\.replace\('#', ''\);[\s\S]{0,260}activateTab\(tab\)/.test(portalJsSrc), 'portal.js no longer opens the tab named in the hash (/portal#listings, /portal#seeking)');
 assert.ok(/company_slug: co\.slug/.test(joinHtml), 'a requested listing is not tied to the company that asked for it');
 assert.ok(/status: 'Pending'/.test(joinHtml), 'a requested listing is not filed as Pending');
 assert.ok(/kws\.length >= 10/.test(joinHtml), 'the ten-keyword cap is gone from Get Listed');
@@ -1750,6 +1750,8 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     'each Recruiting tab needs its own Search Job Market box');
   assert.ok(/renderExperience\(\); renderRecruit\(\); renderRecruitingListings\(\);/.test(pj) && /data-go-form="pt-experience"/.test(pj) && /activateTab\('seeking'\); const f = el\(b\.dataset\.goForm\)/.test(pj), 'Positions Desired is not drawn, or Edit does not open the Job Search tab');
   assert.ok(/setMode\(j\); activateTab\('hiring'\)/.test(pj), 'Edit on a posted job does not open the Find Recruits form');
+  /* a reload stays on the tab you were on (Jacob, 2026-09-15) */
+  assert.ok(/history\.replaceState\(null, '', '#' \+ b\.dataset\.tab\)/.test(pj) && /localStorage\.setItem\('cx_pt_tab', b\.dataset\.tab\)/.test(pj) && /localStorage\.getItem\('cx_pt_tab'\)/.test(pj), 'the dashboard forgets its tab on reload');
   /* the boards are tables with one blue action button top right (Jacob, 2026-09-13) */
   const talentHtml = fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8'), jobsHtml = fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8');
   assert.ok(/<th>Seeking Job As<\/th><th>Location<\/th><th>Years Experience<\/th><th>Circuits-Keywords&trade;<\/th>/.test(talentHtml) && /class="btn btn-blue" id="board-open" disabled>View Resume &amp; Contact</.test(talentHtml),
