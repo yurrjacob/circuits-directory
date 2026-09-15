@@ -212,9 +212,10 @@ function loadErrorHtml(what, retryLabel){
   </div>`;
 }
 
-/* A wait with a spinner reads as deliberate; bare text reads as broken. */
+/* A wait with a spinner reads as deliberate; bare text reads as broken. The
+   Circuits.com wheel (styles.css .cx-loader) above the word, on its own. */
 function loadingHtml(label){
-  return `<div class="empty"><div class="big"><span class="spin" aria-hidden="true"></span>${escapeHtml(label)}</div></div>`;
+  return `<div class="empty cx-loading" role="status" aria-live="polite"><span class="cx-loader" aria-hidden="true"></span><div class="big">${escapeHtml(label)}</div></div>`;
 }
 
 /* ---- search-page head management ----
@@ -410,7 +411,7 @@ async function initInbox(){
     btn.classList.toggle('has-unread', n > 0);
   };
   const draw = () => {
-    if(items === null){ panel.innerHTML = '<div class="inbox-head"><b>Notifications</b></div><p class="inbox-empty">Loading…</p>'; return; }
+    if(items === null){ panel.innerHTML = '<div class="inbox-head"><b>Notifications</b></div><p class="inbox-empty"><span class="spin" aria-hidden="true"></span>Loading…</p>'; return; }
     if(open){
       const n = open;
       panel.innerHTML = `<div class="inbox-head"><button type="button" class="inbox-back" aria-label="Back to notifications">&larr;</button><b>${escapeHtml(n.subject)}</b><button type="button" class="inbox-del" data-del="${escapeHtml(n.id)}">Delete</button></div>

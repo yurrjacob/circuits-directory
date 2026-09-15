@@ -1753,6 +1753,14 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   /* a reload stays on the tab you were on (Jacob, 2026-09-15) */
   assert.ok(/history\.replaceState\(null, '', '#' \+ hash\)/.test(pj) && /localStorage\.setItem\('cx_pt_tab', b\.dataset\.tab\)/.test(pj) && /localStorage\.getItem\('cx_pt_tab'\)/.test(pj), 'the dashboard forgets its tab on reload');
   assert.ok(/window\.showAdminGroup = showAdminGroup/.test(fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8')) && /'#admin:' \+ g/.test(fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8')) && /tab\.startsWith\('admin:'\)/.test(pj), 'the admin panel forgets its sub-tab on reload');
+  /* the Circuits.com loading wheel, everywhere something loads (Jacob, 2026-09-15) */
+  const cssW = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8'), appW = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+  assert.ok(/^\.spin,\.cx-loader\{[^}]*data:image\/svg\+xml/m.test(cssW) && /^\.spin::after,\.cx-loader::after\{[^}]*animation:cx-spin/m.test(cssW), 'the loading wheel is not the Circuits.com chip-and-trace drawing');
+  assert.ok(/class="cx-loader" aria-hidden="true"><\/span><div class="big">\$\{escapeHtml\(label\)\}/.test(appW), 'loadingHtml() no longer shows the Circuits.com wheel');
+  assert.ok(/id="pt-boot" class="empty cx-loading"/.test(ph) && /show\('pt-boot', false\)/.test(pj), 'the dashboard shows a blank page instead of the wheel while it loads');
+  for (const [f, need] of [['app.js', 'inbox-empty"><span class="spin"'], ['portal.js', '<span class="spin" aria-hidden="true"></span>Looking…'], ['applications.html', '<span class="spin" aria-hidden="true"></span>Loading…']]) {
+    assert.ok(fs.readFileSync(path.join(ROOT, f), 'utf8').includes(need), `${f} still shows a bare Loading… without the wheel`);
+  }
   /* the boards are tables with one blue action button top right (Jacob, 2026-09-13) */
   const talentHtml = fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8'), jobsHtml = fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8');
   assert.ok(/<th>Seeking Job As<\/th><th>Location<\/th><th>Years Experience<\/th><th>Circuits-Keywords&trade;<\/th>/.test(talentHtml) && /class="btn btn-blue" id="board-open" disabled>View Resume &amp; Contact</.test(talentHtml),

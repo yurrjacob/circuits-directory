@@ -6,7 +6,7 @@
 <title>Dashboard | Circuits.com</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
-<link rel="stylesheet" href="/styles.css?v=9eba6e770e">
+<link rel="stylesheet" href="/styles.css?v=00b2008fb9">
 <script src="/nav.js?v=ded2c647b5"></script>
 </head>
 <body>
@@ -45,6 +45,9 @@
     <p>Your Circuits.com portal loads in the browser, so it needs JavaScript switched on. Please enable it and reload this page. If it is already on and you still see this, your connection may be blocking part of the page. Try again in a moment, or <a href="/contact">contact us</a>.</p>
   </div>
 </noscript>
+
+<!-- while the session is checked: the wheel, not a blank page (2026-09-15) -->
+<div id="pt-boot" class="empty cx-loading" role="status" aria-live="polite"><span class="cx-loader" aria-hidden="true"></span><div class="big">Loading your dashboard…</div></div>
 
 <!-- signed out -->
 <div class="auth-wrap" id="pt-auth" style="display:none">
@@ -649,8 +652,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="/store.js?v=ac1093bf15"></script>
-<script src="/app.js?v=c00a5c77b9"></script>
-<script src="/portal.js?v=d299ec52f7"></script>
+<script src="/app.js?v=6fa74c8465"></script>
+<script src="/portal.js?v=1ad05d4de8"></script>
 <script src="/admin.js?v=939123951e"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));

@@ -1606,11 +1606,20 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
   font-weight:700;padding:10px 16px;border-radius:0 0 10px 0;text-decoration:none}
 .skip-link:focus{left:0}
 
-/* ---- a quiet spinner so waiting looks deliberate, not broken ---- */
-.spin{display:inline-block;width:20px;height:20px;border:3px solid var(--line);border-top-color:var(--green);
-  border-radius:50%;animation:cx-spin .8s linear infinite;vertical-align:-3px;margin-right:9px}
+/* ---- the Circuits.com loading wheel (Jacob, 2026-09-15): a chip with its
+   pins in the middle, a green trace with four pads orbiting it. One drawing
+   at two sizes: .spin inline beside a word, .cx-loader on its own above one.
+   Both are pure CSS, so any "Loading…" on the site gets it with one class. ---- */
+.spin,.cx-loader{display:inline-block;position:relative;flex:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M20 15V10M24 15V10M28 15V10M20 33v5M24 33v5M28 33v5M15 20h-5M15 24h-5M15 28h-5M33 20h5M33 24h5M33 28h5' stroke='%230f0f0f' stroke-width='2' stroke-linecap='round'/%3E%3Crect x='15' y='15' width='18' height='18' rx='3' fill='%230f0f0f'/%3E%3Crect x='20' y='20' width='8' height='8' rx='1.5' fill='%2376c000'/%3E%3C/svg%3E") center/74% no-repeat}
+.spin::after,.cx-loader::after{content:"";position:absolute;inset:0;border-radius:50%;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='20' fill='none' stroke='%23dfe3e8' stroke-width='3'/%3E%3Ccircle cx='24' cy='24' r='20' fill='none' stroke='%2376c000' stroke-width='3' stroke-linecap='round' stroke-dasharray='74 52' transform='rotate(-90 24 24)'/%3E%3Ccircle cx='24' cy='4' r='3' fill='%230f0f0f'/%3E%3Ccircle cx='44' cy='24' r='3' fill='%230f0f0f'/%3E%3Ccircle cx='24' cy='44' r='3' fill='%230f0f0f'/%3E%3Ccircle cx='4' cy='24' r='3' fill='%230f0f0f'/%3E%3C/svg%3E") center/100% no-repeat;animation:cx-spin .9s linear infinite}
+.spin{width:22px;height:22px;vertical-align:-5px;margin-right:9px}
+.cx-loader{width:64px;height:64px;display:block;margin:0 auto 14px}
+.cx-loading{padding-top:40px;padding-bottom:40px}
+.cx-loading .big{font-size:1.05rem;color:var(--muted)}
 @keyframes cx-spin{to{transform:rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){.spin{animation:none;border-top-color:var(--green)}}
+@media(prefers-reduced-motion:reduce){.spin::after,.cx-loader::after{animation:none}}
 
 /* ---- phone menu ----
    Five links plus the brand never fit a narrow screen. Below 720px the links

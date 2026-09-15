@@ -165,6 +165,7 @@ function wireSeeking(){
 /* ---------- boot ---------- */
 async function initPortal(){
   const user = await currentUser();
+  show('pt-boot', false);   // the wheel that held the page while the session was checked
   if(!user){ show('pt-auth', true); show('pt-app', false); wireAuth(); return; }
   PT.user = user;
 
@@ -1443,7 +1444,7 @@ function renderRecruitingListings(){
       const b = e.target.closest('[data-new-jobs]'); if(!b) return;
       const panel = el('resume-jobs'); if(!panel) return;
       if(panel.style.display !== 'none'){ panel.style.display = 'none'; return; }
-      panel.style.display = ''; panel.innerHTML = '<span class="pf-note">Looking…</span>';
+      panel.style.display = ''; panel.innerHTML = '<span class="pf-note"><span class="spin" aria-hidden="true"></span>Looking…</span>';
       const terms = kwList().slice(0, 10); if(!terms.length) terms.push('');
       const seen = new Set(), jobs = [];
       for(const k of terms){
@@ -2085,7 +2086,7 @@ function wireJobs(){
     if(a){
       const panel = el('apps-' + a.dataset.applicants);
       if(panel.style.display !== 'none'){ panel.style.display = 'none'; return; }
-      panel.style.display = ''; panel.innerHTML = '<span class="pf-note">Loading…</span>';
+      panel.style.display = ''; panel.innerHTML = '<span class="pf-note"><span class="spin" aria-hidden="true"></span>Loading…</span>';
       const rows = await jobApplicants(a.dataset.applicants);
       panel.innerHTML = rows.length ? rows.map(r => `<div class="pt-app">
           <b><a href="/${escapeHtml(r.handle)}" target="_blank" rel="noopener">${escapeHtml(r.display_name || r.handle)}</a></b>
