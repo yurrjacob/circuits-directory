@@ -679,6 +679,16 @@ async function postJob(slug, fields){
   if(error) return { error: error.message };
   return { id: data.id };
 }
+/* Delete a posted job for good (Jacob, 2026-09-15). The database's delete
+   policy is the guard: the owning company or staff, nobody else. Applications
+   on it go with it (on delete cascade). */
+async function deleteJob(id){
+  if(!sb) return 'No connection';
+  const { data, error } = await sb.from('jobs').delete().eq('id', id).select('id');
+  if(error) return error.message;
+  if(!data || !data.length) return 'That change was refused.';
+  return '';
+}
 async function updateJob(id, fields){
   if(!sb) return 'No connection';
   const { data, error } = await sb.from('jobs').update(fields).eq('id', id).select('id');

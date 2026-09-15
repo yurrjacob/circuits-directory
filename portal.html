@@ -6,7 +6,7 @@
 <title>Dashboard | Circuits.com</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
-<link rel="stylesheet" href="/styles.css?v=555df69f85">
+<link rel="stylesheet" href="/styles.css?v=9eba6e770e">
 <script src="/nav.js?v=ded2c647b5"></script>
 </head>
 <body>
@@ -112,7 +112,10 @@
           free. Companies see your position, experience and keywords, and any signed-in company can view
           your resume and contact details.</p>
       </div>
-      <a class="btn btn-outline" href="/talent" target="_blank" rel="noopener">View the Recruit Board &#8599;</a>
+      <div class="pt-head-btns">
+        <a class="btn btn-outline" href="/jobs" target="_blank" rel="noopener">View Job Board &#8599;</a>
+        <a class="btn btn-outline" href="/talent" target="_blank" rel="noopener">View Recruit Board &#8599;</a>
+      </div>
     </div>
     <div class="pf-form" id="pt-experience"></div>
     <div id="pt-recruit"></div>
@@ -223,7 +226,10 @@
             approves it, the post runs for 30 days on the Job Board. Everyone who applies appears under
             New Applicants on that post, under Your Listings.</p>
         </div>
-        <a class="btn btn-outline" href="/talent" target="_blank" rel="noopener">View the Recruit Board &#8599;</a>
+        <div class="pt-head-btns">
+          <a class="btn btn-outline" href="/talent" target="_blank" rel="noopener">View Recruit Board &#8599;</a>
+          <a class="btn btn-outline" href="/jobs" target="_blank" rel="noopener">View Job Board &#8599;</a>
+        </div>
       </div>
     <div class="pf-form" id="pt-job-form">
       <h3 id="job-form-h">Post Job</h3>
@@ -253,6 +259,7 @@
       <button class="btn btn-primary" type="button" id="job-post">List this Job on the Job Board</button>
       <button class="mini-btn" type="button" id="job-cancel" style="display:none">Cancel</button>
       <a class="btn btn-outline" href="/jobs" target="_blank" rel="noopener">View Job Board</a>
+      <span id="job-live-note"></span>
     </div>
       <form class="pf-form pt-market" id="pt-market-recruits" autocomplete="off">
         <h3 style="margin-top:0">Search Job Market</h3>
@@ -641,9 +648,9 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-<script src="/store.js?v=552cb9d8a6"></script>
-<script src="/app.js?v=e1213c2413"></script>
-<script src="/portal.js?v=530c1e3229"></script>
+<script src="/store.js?v=ac1093bf15"></script>
+<script src="/app.js?v=c00a5c77b9"></script>
+<script src="/portal.js?v=a79d8db42f"></script>
 <script src="/admin.js?v=bb09b6a849"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));

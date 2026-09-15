@@ -78,7 +78,10 @@ function renderExperience(){
         <span id="me-resume-state" class="pf-note" style="margin:0;flex:1">${ME.resume_path ? 'Resume on file. PDF. Signed-in companies can view it from the Recruit Board.' : 'No resume yet. PDF, up to 10 MB. Signed-in companies can view it from the Recruit Board.'}</span>
         ${ME.resume_path ? '<a class="mini-btn rp-add" href="#" id="me-resume-view">View</a><button class="mini-btn rp-add danger" type="button" id="me-resume-remove">Remove</button>' : ''}
         <label class="mini-btn green rp-add" style="cursor:pointer">${ME.resume_path ? 'Replace' : '+ Upload'}<input id="me-resume" type="file" accept="application/pdf" style="display:none"></label>
-      </div></div></details>`;
+      </div></div></details>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
+      <button type="button" class="btn btn-primary me-save" data-list="keep">Save Resume</button>
+      <span class="pf-note me-msg" style="margin:0"></span></div>`;
   renderRepeater('creds', ME.credentials, ['name', 'issuer', 'year'], ['Certification or degree', 'Issued by', 'Year']);
 
   const up = el('me-resume');
@@ -117,7 +120,7 @@ function renderRecruit(){
     : ME.talent_status === 'Denied'   ? '<span class="badge">Not approved</span>'
     : '<span class="badge pending">Awaiting approval by Circuits.com</span>';
   box.innerHTML = `<div class="pf-form pt-actions">
-      <button type="button" class="btn btn-primary me-save">${listed ? 'Save Resume' : 'List Me on the Recruit Board as Open to Work'}</button>
+      <button type="button" class="btn btn-primary me-save" data-list="on" ${listed ? 'disabled title="Already listed. Pause it under Your Listings, Resumes Posted."' : ''}>List Me on the Recruit Board</button>
       <a class="btn btn-outline" href="/talent" target="_blank" rel="noopener">View Recruit Board</a>
       ${status}
       <span class="pf-note me-msg" style="margin:0"></span>
@@ -146,9 +149,10 @@ function wireSeeking(){
     if(keywords.length > 10){ say('Ten keywords is the limit.', true); return; }
     const credentials = (el('f-creds') && el('f-creds').__list || []).filter(o => Object.values(o).some(v => (v || '').trim()));
     for(const c of credentials){ if((c.year || '').trim() && !isValidYear(c.year)){ say(`"${c.name || '(unnamed)'}" needs a 4-digit year.`, true); return; } }
+    /* Save Resume (in the form) keeps the listing as it is; List Me (box B) switches it on */
     const fields = { phone: val('me-phone') || null, contact_email: email || null,
       title: val('me-title') || null, location: val('me-location') || null, years, bio: val('me-bio') || null, credentials,
-      talent_listed: true };
+      talent_listed: b.dataset.list === 'on' ? true : !!ME.talent_listed };
     const err = await updateMyProfile(fields);
     const kw = err ? {} : await setTalentKeywords(keywords, keywords.map(() => true));
     const bad = err || kw.error;
@@ -1412,6 +1416,7 @@ function renderRecruitingListings(){
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${st ? `<span class="badge ${st.cls}">${escapeHtml(st.text)}</span>` : ''}
           <button type="button" class="mini-btn" data-go-form="pt-experience">Edit</button>
           <button type="button" class="mini-btn" data-new-jobs="1">New Jobs</button>
+          <button type="button" class="mini-btn danger" data-del-resume="1">Delete</button>
           <label class="switch pt-job-sw"><input type="checkbox" data-resume-live="1" ${me.talent_listed ? 'checked' : ''}>
             <span class="knob" aria-hidden="true"></span><span class="sw-text">${me.talent_listed ? 'Live' : 'Paused'}</span></label></div>
       </div>
@@ -1437,6 +1442,20 @@ function renderRecruitingListings(){
           <b>${escapeHtml(j.title)}</b> <span class="cell-muted">${escapeHtml(j.company_name || '')}${j.location ? ', ' + escapeHtml(j.location) : ''}</span>
           · <a href="/jobs?q=${encodeURIComponent((j.keywords || [])[0] || '')}" target="_blank" rel="noopener">View on Job Board</a>
         </div>`).join('') : '<span class="pf-note">No open jobs under your keywords yet.</span>';
+    });
+    /* Delete: the resume posting comes off the board and the form is cleared;
+       the account itself stays */
+    seek.addEventListener('click', async e => {
+      const b = e.target.closest('[data-del-resume]'); if(!b) return;
+      if(!confirm('Delete your resume posting? It comes off the Recruit Board and the Post A Resume form is cleared. Your account stays.')) return;
+      b.disabled = true;
+      const err = await updateMyProfile({ talent_listed: false, title: null, location: null, years: null, bio: null, credentials: [], contact_email: null });
+      if(!err) await setTalentKeywords([], []);
+      if(!err && ME.resume_path) await removeResume();
+      b.disabled = false;
+      if(err){ toast('Could not delete: ' + err, false); return; }
+      renderSeeking(await myProfile());
+      toast('Resume posting deleted.', true);
     });
     /* Live / Paused: the listing switch, the same as a job's */
     seek.addEventListener('change', async e => {
@@ -1973,12 +1992,22 @@ async function renderJobs(){
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${st ? `<span class="badge ${st.cls}">${escapeHtml(st.text)}</span>` : ''}
           <button type="button" class="mini-btn" data-edit-job="${escapeHtml(j.id)}">Edit</button>
           <button type="button" class="mini-btn" data-applicants="${escapeHtml(j.id)}">New Applicants</button>
+          <button type="button" class="mini-btn danger" data-del-job="${escapeHtml(j.id)}">Delete</button>
           <label class="switch pt-job-sw"><input type="checkbox" data-open="${escapeHtml(j.id)}" ${j.closed_at ? '' : 'checked'}>
             <span class="knob" aria-hidden="true"></span><span class="sw-text">${j.closed_at ? 'Paused' : 'Live'}</span></label></div>
       </div>
       <div class="pt-applicants" id="apps-${escapeHtml(j.id)}" style="display:none"></div>
     </div>`;
   }).join('') : `<div class="pt-empty pt-getlisted"><div><b>No jobs posted yet</b><p>Post an open role under the Circuits-Keywords\u2122 you hire for on the Post Free Job tab. Free, live for 30 days once approved.</p></div><button type="button" class="btn btn-primary btn-sm" data-go-tab="hiring">Post Free Job</button></div>`;
+  /* the status beside the buttons on Post Free Job (Jacob, 2026-09-15: "Live on
+     the Job Board", like the resume's): the job being edited, else the latest */
+  const note = el('job-live-note');
+  if(note){
+    const editing = (jobs || []).find(j => j.id === val('job-id'));
+    const j = editing || jobs[0];
+    const st = j ? (j.closed_at ? { text: 'Paused', cls: '' } : jobStateLabel(j)) : null;
+    note.innerHTML = st ? `<span class="badge ${st.cls}">${escapeHtml(st.text.replace(/^Live until/, 'Live on the Job Board until'))}</span>` : '';
+  }
 }
 function wireJobs(){
   const box = el('pt-jobs'), post = el('job-post');
@@ -2027,6 +2056,18 @@ function wireJobs(){
       const j = (PT.jobs || []).find(x => x.id === ed.dataset.editJob);
       /* the list sits on Your Listings, the form on Find Recruits (2026-09-13) */
       if(j){ setMode(j); activateTab('hiring'); el('pt-job-form').scrollIntoView({ behavior: 'smooth', block: 'start' }); el('job-title').focus({ preventScroll: true }); }
+      return;
+    }
+    const del = e.target.closest('[data-del-job]');
+    if(del){
+      const j = (PT.jobs || []).find(x => x.id === del.dataset.delJob);
+      if(!confirm('Delete ' + (j ? '"' + j.title + '"' : 'this job') + ' for good? It comes off the Job Board and its applications go with it.')) return;
+      del.disabled = true;
+      const err = await deleteJob(del.dataset.delJob);
+      if(err){ del.disabled = false; toast('Could not delete: ' + err, false); return; }
+      if(el('job-id').value === del.dataset.delJob) setMode(null);
+      toast('Job deleted.', true);
+      renderJobs();
       return;
     }
     const a = e.target.closest('[data-applicants]');

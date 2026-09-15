@@ -108,8 +108,8 @@ function personExperience(p){
   if(creds.length) inner += `<h3 class="pf-sub">Certifications &amp; degrees</h3><ul class="pf-certs" title="Listed by the person. Circuits.com has not checked these.">${creds.map(c =>
       `<li><b>${escapeHtml(c.name.trim())}</b>${c.issuer ? `, ${escapeHtml(c.issuer)}` : ''}${c.year ? ` (${escapeHtml(String(c.year))})` : ''}</li>`).join('')}</ul>`;
   if((p.keywords || []).length) inner += `<div class="kw-tags">${p.keywords.map(k => `<span class="kw-tag">${escapeHtml(k)}</span>`).join('')}</div>`;
-  /* the person's own board is the Job Board (Jacob, 2026-09-14) */
-  inner += `<p class="pf-job-act"><a class="mini-btn" href="/jobs?q=${encodeURIComponent((p.keywords || [])[0] || '')}">View on Job Board</a></p>`;
+  /* their own posting, on the board it sits on (Jacob, 2026-09-15) */
+  inner += `<p class="pf-job-act"><a class="mini-btn" href="/talent?q=${encodeURIComponent((p.keywords || [])[0] || '')}">View on Recruit Board</a></p>`;
   return section('Resumes Posted', inner, ' data-box="1"');   // its own box (Jacob, 2026-09-14)
 }
 
@@ -316,13 +316,13 @@ async function initProfile(){
   }
 
   /* ---- Jobs Posted: the live roles this company has posted (Jacob,
-     2026-09-03: "add any jobs posted to the profile"; renamed and pointed at
-     the Recruit Board 2026-09-14, where the people for the role are). ---- */
+     2026-09-03: "add any jobs posted to the profile"), each on the Job Board
+     where it sits (2026-09-15). ---- */
   if(jobs.length) html += section('Jobs Posted', `<div class="pf-jobs">${jobs.map(j => `
       <div class="pf-job">
         <div><b>${escapeHtml(j.title)}</b>${j.location ? ` <span class="pf-note">${escapeHtml(j.location)}</span>` : ''}
           ${(j.keywords || []).length ? `<div class="kw-tags">${j.keywords.map(k => `<a class="kw-tag" href="/jobs?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join('')}</div>` : ''}</div>
-        <a class="mini-btn" href="/talent?q=${encodeURIComponent((j.keywords || [])[0] || '')}">View on Recruit Board</a>
+        <a class="mini-btn" href="/jobs?q=${encodeURIComponent((j.keywords || [])[0] || j.title)}">View on Job Board</a>
       </div>`).join('')}</div>`, ' data-box="1"');   // its own box (Jacob, 2026-09-14)
 
   /* ---- the person behind the account: experience from the Seeking

@@ -572,6 +572,9 @@ tr.row-warn td{background:#fff3cd}
 .pt-tab-head h2{margin:0 0 6px}
 .pt-tab-head .kit-intro{margin:0}
 .pt-tab-head > .btn{flex:none;margin-top:4px}
+/* two board buttons stacked top right of a Recruiting tab (Jacob, 2026-09-15) */
+.pt-head-btns{display:flex;flex-direction:column;gap:8px;flex:none;margin-top:4px}
+.pt-head-btns .btn{text-align:center}
 /* recruiting upgrades: two cards under the jobs, blue like every upgrade */
 .pt-upsell-rec{margin-top:26px;margin-bottom:10px}
 .pt-rec-upgrades{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
