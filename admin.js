@@ -596,15 +596,19 @@ function syncControls(){ document.querySelectorAll('.list-controls').forEach(bar
    who is not staff never runs any of this, and never fetches any of it. */
 /* Sub-tabs: one room at a time (Listings / Upgrades / Companies / Employment /
    Messages / Activity). Data still loads for every panel; only what is on screen changes. */
-function showAdminGroup(g){
+function showAdminGroup(g, fromClick){
   document.querySelectorAll('.adm-tab').forEach(b => b.classList.toggle('active', b.dataset.adm === g));
   document.querySelectorAll('#tab-admin .panel[data-adm]').forEach(p => p.classList.toggle('adm-on', p.dataset.adm === g));
   /* the Website Applications sheet is its own page, framed in; it loads on first open */
   const fr = $('apps-frame');
   if(g === 'applications' && fr && !fr.src) fr.src = '/applications?embed=1';
   try{ localStorage.setItem('cx_admin_group', g); }catch(e){}
+  /* a reload stays on this sub-tab (Jacob, 2026-09-15): it rides in the
+     address as #admin:<group>, the way the dashboard tabs do */
+  if(fromClick){ try{ history.replaceState(null, '', '#admin:' + g); }catch(e){} }
 }
-document.querySelectorAll('.adm-tab').forEach(b => b.addEventListener('click', () => showAdminGroup(b.dataset.adm)));
+window.showAdminGroup = showAdminGroup;
+document.querySelectorAll('.adm-tab').forEach(b => b.addEventListener('click', () => showAdminGroup(b.dataset.adm, true)));
 let remembered = 'companies';
 try{ remembered = localStorage.getItem('cx_admin_group') || remembered; }catch(e){}
 showAdminGroup(document.querySelector(`.adm-tab[data-adm="${remembered}"]`) ? remembered : 'companies');
