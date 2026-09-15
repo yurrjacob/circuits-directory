@@ -98,3 +98,16 @@ alter table public.profiles add column if not exists contact_email text;
 grant select (contact_email), update (contact_email) on public.profiles to authenticated;
 -- my_profile(): + contact_email (drop and create: the return type changes)
 -- talent_contact(), job_applicants(): email := coalesce(nullif(btrim(p.contact_email), ''), p.email)
+
+-- 2026-09-15, applied as resumes_read_free (found in the site audit). The
+-- resumes bucket's read policy still asked for the retired Talent Access
+-- subscription, so companies saw the contact details and then "No resume
+-- uploaded". Any signed-in account may now read the resume of a listed,
+-- approved person; the owner, staff and an employer the person applied to
+-- keep their access whatever the listing state.
+-- drop policy if exists resumes_read on storage.objects;
+-- create policy resumes_read on storage.objects for select to authenticated using (
+--   bucket_id = 'resumes' and ((storage.foldername(name))[1] = (auth.uid())::text or is_staff()
+--     or applied_to_my_job(((storage.foldername(name))[1])::uuid)
+--     or exists (select 1 from public.profiles p where p.user_id::text = (storage.foldername(name))[1]
+--                 and p.talent_listed and p.talent_status = 'Approved' and p.suspended_at is null)));
