@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Request Access To Your Profile | Circuits.com</title>
+<title>Request Access to Your Profile | Circuits.com</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="description" content="Request access to manage your company's Circuits.com listing.">
 <link rel="icon" href="/assets/favicon.png">
@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
 <link rel="stylesheet" href="/styles.css?v=fb3a7b65ea">
 <script src="/nav.js?v=b5adcdecca"></script>
-<script async src="/analytics.js?v=17b1c5b9b5"></script>
+<script async src="/analytics.js?v=70049a2947"></script>
 </head>
 <body>
 
@@ -41,7 +41,7 @@
 <main id="content">
 <div class="auth-wrap">
   <div class="auth-card" id="claim-card">
-    <h1>Request access to your profile</h1>
+    <h1>Request Access to Your Profile</h1>
     <p class="sub" id="claim-sub-line"><span class="spin" aria-hidden="true"></span>Loading…</p>
     <div id="claim-body"></div>
   </div>
@@ -63,8 +63,8 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/store.js?v=2779f089a3"></script>
-<script src="/app.js?v=74e100a7f2"></script>
+<script src="/store.js?v=8935201922"></script>
+<script src="/app.js?v=a16d3b456c"></script>
 <script>
 /* Accounts are only ever created through Get Listed. This page does NOT
    register anyone, it raises a request that Circuits.com staff verify, and
@@ -77,8 +77,8 @@ function noCompany(){
   sub.textContent = 'Which company is yours?';
   body.innerHTML = '<p class="auth-note">Search the keyword your company is listed under, open its '
     + 'profile from the results, and use the &ldquo;Claim this profile&rdquo; link at the bottom.<br><br>'
-    + 'Not listed yet? <a href="/join">Get listed</a>. That is where you create your account '
-    + 'and reserve your circuits.com address.</p>';
+    + 'Not listed yet? <a href="/join">Get Listed</a>. That is where you create your account '
+    + 'and reserve your Circuits.com address.</p>';
 }
 
 (async () => {
@@ -113,7 +113,7 @@ function noCompany(){
   document.getElementById('cf').addEventListener('submit', async e => {
     e.preventDefault();
     if(looksLikeSpam(e.currentTarget)){
-      document.getElementById('claim-card').innerHTML = '<h1>Request sent</h1>'
+      document.getElementById('claim-card').innerHTML = '<h1>Request Sent</h1>'
         + '<p class="sub">We will verify your request and email you back.</p>';
       return;
     }
@@ -136,7 +136,7 @@ function noCompany(){
     }, 'Thanks. We received your request for ' + co.name + ' on Circuits.com. We will verify it and '
      + 'email you back, usually within 1 business day.');
     document.getElementById('claim-card').innerHTML =
-      '<h1>Request sent</h1><p class="sub">We will verify you work at ' + escapeHtml(co.name) +
+      '<h1>Request Sent</h1><p class="sub">We will verify you work at ' + escapeHtml(co.name) +
       ' and email you your sign-in details.</p><div class="auth-foot"><a href="/">Back to Circuits.com</a></div>';
   });
 })();

@@ -159,7 +159,7 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   assert.ok(captured.includes('https://circuits.com/aaa_electronics'), 'copy-link has the wrong URL');
 
   // buyer reviews are off the site (Jacob, 2026-09-03), even with rows and the switch on
-  assert.ok(!captured.includes('Buyer reviews') && !captured.includes('review-form'),
+  assert.ok(!/Buyer reviews/i.test(captured) && !captured.includes('review-form'),
     'buyer reviews are back on the public profile');
   assert.ok(captured.includes('id="kw-l1"') && !captured.includes('id="kw-l2"'),
     'a listing with nothing to show still gets an empty section');

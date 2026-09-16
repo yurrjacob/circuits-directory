@@ -50,7 +50,7 @@ function renderExperience(){
   const box = el('pt-experience'); if(!box) return;
   if(ME_FRESH){ box.innerHTML = freshNote(); return; }
   box.innerHTML = `
-    <h3 style="margin-top:0">Post A Resume</h3>
+    <h3 style="margin-top:0">Post a Resume</h3>
     <div class="grid2">
       <div class="auth-field"><label for="me-title">Position Desired</label>
         <input id="me-title" type="text" maxlength="80" placeholder="RF Design Engineer" value="${escapeHtml(ME.title || '')}"></div>
@@ -529,7 +529,7 @@ async function renderAccount(user, hostId, canDelete){
 
   host.innerHTML = `
     <div class="pt-account">
-      <h3>Your account</h3>
+      <h3>Your Account</h3>
       <p class="pf-note">Signed in as <b>${escapeHtml(user.email || '')}</b>
         ${confirmed
           ? '<span class="ac-ok">email confirmed</span>'
@@ -1537,7 +1537,7 @@ function renderRecruitingListings(){
    Circuits.com staff, so a request is a message to them, not a checkout.
    ponytail: no Stripe until the volume justifies it. */
 const UPGRADES = {
-  badge:  { name: 'Trust Badge',              why: 'A short label in your colour beside this keyword.', month: BADGE_FEE,  year: BADGE_FEE_YEAR,
+  badge:  { name: 'Trust Badge',              why: 'A short label in your color beside this keyword.', month: BADGE_FEE,  year: BADGE_FEE_YEAR,
             use: 'For a keyword where buyers compare several suppliers at once: a word like Authorized or Specialist beside your name says why to pick you before they read further.' },
   banner: { name: 'Exclusive Sponsor Banner', why: 'Your banner above every result for this keyword.', month: BANNER_FEE, year: BANNER_FEE_YEAR,
             use: 'For the keyword that brings you the most enquiries: your logo, pitch and contact details sit above every result, and there is only one sponsor per keyword.' },
@@ -1579,7 +1579,7 @@ function upgradeCell(l, k){
   if(k === 'badge' && p.badge) return sw + `<span class="pt-up-opts">
     <select class="up-word" data-up-word="${l.id}" aria-label="Badge wording">${BADGE_WORDS.map(w => `<option ${!p.custom && w === p.badgeText ? 'selected' : ''}>${w}</option>`).join('')}<option value="" ${p.custom ? 'selected' : ''}>Custom</option></select>
     <input class="up-text" type="text" maxlength="18" placeholder="Your own label" aria-label="Custom badge label" data-up-text="${l.id}" value="${escapeHtml(p.custom ? p.badgeText : '')}" ${p.custom ? '' : 'hidden'}>
-    <select class="up-color" data-up-color="${l.id}" aria-label="Badge colour">${BADGE_COLORS.map(([hex, name]) => `<option value="${hex}" ${hex === p.badgeColor ? 'selected' : ''}>${name}</option>`).join('')}</select>
+    <select class="up-color" data-up-color="${l.id}" aria-label="Badge color">${BADGE_COLORS.map(([hex, name]) => `<option value="${hex}" ${hex === p.badgeColor ? 'selected' : ''}>${name}</option>`).join('')}</select>
     <span class="lb" style="background:${escapeHtml(p.badgeColor)}">${escapeHtml(p.badgeText || 'Your label')}</span></span>`;
   if(k === 'lock' && p.lock) return sw + `<span class="pt-up-opts">
     <select class="up-pos" data-up-pos="${l.id}" aria-label="Locked position">${LOCK_POSITIONS.map(n => `<option ${n === p.lockPos ? 'selected' : ''}>#${n}</option>`).join('')}</select></span>`;
@@ -2321,7 +2321,7 @@ function renderPromote(){
     </div>`).join('')}
 
   <div class="kit-item">
-    <div class="kit-head"><div><h3>Email signature</h3>
+    <div class="kit-head"><div><h3>Email Signature</h3>
       <p class="pf-note">Nothing to print. Paste it once and it goes out on every email you send.</p></div></div>
     <div class="kit-sig">
       <label>Plain text</label>

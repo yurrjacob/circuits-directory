@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
 <link rel="stylesheet" href="styles.css?v=fb3a7b65ea">
 <script src="/nav.js?v=b5adcdecca"></script>
-<script async src="/analytics.js?v=17b1c5b9b5"></script>
+<script async src="/analytics.js?v=70049a2947"></script>
 </head>
 <body>
 
@@ -77,8 +77,8 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="store.js?v=2779f089a3"></script>
-<script src="app.js?v=74e100a7f2"></script>
+<script src="store.js?v=8935201922"></script>
+<script src="app.js?v=a16d3b456c"></script>
 <script>
 /* The Job Board, a table (Jacob, 2026-09-13): Job Title, Location, Company,
    Years Experience, Circuits-Keywords. Pick a row, then View Job Details &
@@ -138,7 +138,7 @@
         <td data-label="Location">${j.location ? escapeHtml(j.location) : '<span class="cell-muted">not given</span>'}</td>
         <td data-label="Company"><a href="${escapeHtml(profileUrl(j.company_handle) || '#')}">${escapeHtml(j.company_name)}</a></td>
         <td data-label="Years Experience">${years(j)}</td>
-        <td data-label="Circuits-Keywords">${kwCell(j.keywords)}</td></tr>`).join('')}</tbody>
+        <td data-label="Circuits-Keywords&trade;">${kwCell(j.keywords)}</td></tr>`).join('')}</tbody>
     </table></div></div>`;
 
   /* structured data for the live posts (audit, 2026-09-15), written with

@@ -38,7 +38,7 @@
 
 <noscript>
   <div style="max-width:560px;margin:60px auto;padding:0 20px;text-align:center;font-family:system-ui,sans-serif">
-    <h1>This page needs JavaScript</h1>
+    <h1>This Page Needs JavaScript</h1>
     <p>Resetting your password happens in the browser, so it needs JavaScript switched on. Please enable it and reload. If it is already on, your connection may be blocking part of the page. Try again shortly, or <a href="/contact">contact us</a>.</p>
   </div>
 </noscript>
@@ -48,7 +48,7 @@
 
   <!-- step 1: ask for the reset email -->
   <div class="auth-card" id="rq-card" style="display:none">
-    <h1>Reset your password</h1>
+    <h1>Reset Your Password</h1>
     <p class="sub">Enter your email or username and we will send you a link to set a new one.</p>
     <form id="rq-form" autocomplete="off">
       <div class="auth-field">
@@ -65,7 +65,7 @@
 
   <!-- step 1 done -->
   <div class="auth-card" id="rq-sent" style="display:none">
-    <h1>Check your inbox</h1>
+    <h1>Check Your Inbox</h1>
     <p class="sub">If that account exists, a reset link is on its way. The link expires shortly,
     so use it soon. Check your spam folder if it does not arrive.</p>
     <div class="auth-foot"><a class="btn btn-primary auth-cta" href="/portal">Back to sign in</a></div>
@@ -73,7 +73,7 @@
 
   <!-- step 2: they followed the link, so set the new password -->
   <div class="auth-card" id="rs-card" style="display:none">
-    <h1>Choose a new password</h1>
+    <h1>Choose a New Password</h1>
     <p class="sub">Set a new password for <b id="rs-email">your account</b>.</p>
     <form id="rs-form" autocomplete="off">
       <div class="auth-field">
@@ -92,7 +92,7 @@
 
   <!-- step 2 done -->
   <div class="auth-card" id="rs-done" style="display:none">
-    <h1>Password changed</h1>
+    <h1>Password Changed</h1>
     <p class="sub">You are signed in with your new password.</p>
     <div class="auth-foot"><a class="btn btn-primary auth-cta" href="/portal">Go to your profile →</a></div>
   </div>
@@ -100,14 +100,14 @@
   <!-- an email-confirmation link landed here: they are confirmed and already
        have a password, no reset sheet, just the way onward -->
   <div class="auth-card" id="rs-confirmed" style="display:none">
-    <h1>Email confirmed</h1>
+    <h1>Email Confirmed</h1>
     <p class="sub"><b id="rs-confirmed-email">Your email</b> is confirmed and you are signed in.</p>
     <div class="auth-foot"><a class="btn btn-primary auth-cta" href="/portal">Go to your portal →</a></div>
   </div>
 
   <!-- the link was bad or had already been used -->
   <div class="auth-card" id="rs-bad" style="display:none">
-    <h1>That link has expired</h1>
+    <h1>That Link Has Expired</h1>
     <p class="sub">Reset links are single use and time limited. Request a new one and it will
     arrive within a minute.</p>
     <div class="auth-foot"><a class="btn btn-primary auth-cta" href="/reset">Request a new link</a></div>
@@ -131,8 +131,8 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/store.js?v=2779f089a3"></script>
-<script src="/app.js?v=74e100a7f2"></script>
+<script src="/store.js?v=8935201922"></script>
+<script src="/app.js?v=a16d3b456c"></script>
 <script>initReset();</script>
 </body>
 </html>

@@ -105,7 +105,7 @@ async function editBadge(id){
   const text = answer.trim();
   let badge = null;
   if(text){
-    const color = prompt('Badge colour (hex)', (l.badge && l.badge.color) || '#c9a227');
+    const color = prompt('Badge color (hex)', (l.badge && l.badge.color) || '#c9a227');
     if(color === null) return;
     badge = { text: text.slice(0, 18), color: /^#[0-9a-f]{6}$/i.test(color.trim()) ? color.trim() : '#c9a227' };
   }
@@ -454,7 +454,7 @@ async function sendNotificationUI(){
   document.querySelectorAll('#nt-users .nt-user').forEach((r, i) => { if(i) r.remove(); else r.querySelector('input').value = ''; });
 }
 
-/* ---- recruits (MVP2): people listed in the Recruits Directory ---- */
+/* ---- recruits (MVP2): people listed on the Recruit Board ---- */
 let allRecruits = [];
 async function reloadRecruits(){
   const body = $('recruits-body'); if(!body) return;
@@ -480,7 +480,7 @@ async function reloadRecruits(){
 async function setRecruitStatus(userId, status){
   const r = allRecruits.find(x => x.user_id === userId);
   const who = r ? (r.display_name || r.handle) : 'this person';
-  if(status === 'Denied' && !confirm('Deny ' + who + '? They leave the Recruits Directory and get a message saying so. Their profile stays as it is.')) return;
+  if(status === 'Denied' && !confirm('Deny ' + who + '? They leave the Recruit Board and get a message saying so. Their profile stays as it is.')) return;
   const err = await setTalentStatus(userId, status);
   if(err){ alert('Could not do that: ' + err); return; }
   await reloadRecruits();
@@ -519,7 +519,7 @@ async function markJobPaid(id){
 }
 async function closeJob(id){
   const j = allJobs.find(x => x.id === id);
-  if(!confirm('Deny ' + (j ? '"' + j.title + '"' : 'this job') + '? It is paused, comes off the Employment Board, and the company gets a message. They can switch it back to Live from their dashboard.')) return;
+  if(!confirm('Deny ' + (j ? '"' + j.title + '"' : 'this job') + '? It is paused, comes off the Job Board, and the company gets a message. They can switch it back to Live from their dashboard.')) return;
   const err = await updateJob(id, { closed_at: new Date().toISOString() });
   if(err){ alert('Could not do that: ' + err); return; }
   await reloadJobs();

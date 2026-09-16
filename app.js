@@ -367,7 +367,7 @@ async function initInbox(){
   if(typeof sb === 'undefined'){
     if(!storedSession()) return;
     const add = src => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
-    try{ await add('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'); await add('/store.js?v=2779f089a3'); }catch(e){ return; }
+    try{ await add('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'); await add('/store.js?v=8935201922'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;
@@ -1549,7 +1549,7 @@ function initRegister(){
     fail('');
     const handle = v('r-handle'), email = v('r-email');
 
-    if(!handle) return fail('Choose the username that will be your circuits.com address.');
+    if(!handle) return fail('Choose the username that will be your Circuits.com address.');
     if(!v('r-name')) return fail('Please enter your name, or your company\'s.');
     if(!isValidEmail(email)) return fail('Please enter a valid email address (e.g. you@company.com). It is how you sign in.');
     if(passEl.value.length < 8) return fail('Your password must be at least 8 characters.');

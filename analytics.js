@@ -40,12 +40,12 @@
     wrap.setAttribute('aria-label', 'Cookie choice');
     wrap.innerHTML =
       '<div class="cookie-bar-inner">' +
-        '<p>We use a cookie to keep you signed in, which the site needs to work. ' +
-        'We would also like to measure how the directory is used. That part is your choice, ' +
-        'and you can change it later on our <a href="/privacy">privacy page</a>.</p>' +
+        '<p>Circuits.com uses one necessary cookie to keep you signed in. ' +
+        'If you agree, we also use Google Analytics to see how the directory is used. ' +
+        'Change your choice any time on the <a href="/privacy">Privacy Policy</a> page.</p>' +
         '<div class="cookie-bar-actions">' +
-          '<button type="button" class="mini-btn" data-c="no">Decline</button>' +
-          '<button type="button" class="mini-btn green" data-c="yes">Accept analytics</button>' +
+          '<button type="button" class="mini-btn" data-c="no">Decline Analytics</button>' +
+          '<button type="button" class="mini-btn green" data-c="yes">Accept Analytics</button>' +
         '</div>' +
       '</div>';
     wrap.addEventListener('click', function(e){

@@ -105,7 +105,7 @@ function personExperience(p){
   let inner = '';
   if(p.title || (p.years != null)) inner += `<p class="pf-prose"><b>${escapeHtml(p.title || 'Circuits industry professional')}</b>${p.years != null ? ` &middot; ${p.years} year${p.years === 1 ? '' : 's'} of experience` : ''}</p>`;
   if(p.bio) inner += `<p class="pf-prose">${escapeHtml(p.bio)}</p>`;
-  if(creds.length) inner += `<h3 class="pf-sub">Certifications &amp; degrees</h3><ul class="pf-certs" title="Listed by the person. Circuits.com has not checked these.">${creds.map(c =>
+  if(creds.length) inner += `<h3 class="pf-sub">Certifications &amp; Degrees</h3><ul class="pf-certs" title="Listed by the person. Circuits.com has not checked these.">${creds.map(c =>
       `<li><b>${escapeHtml(c.name.trim())}</b>${c.issuer ? `, ${escapeHtml(c.issuer)}` : ''}${c.year ? ` (${escapeHtml(String(c.year))})` : ''}</li>`).join('')}</ul>`;
   if((p.keywords || []).length) inner += `<div class="kw-tags">${p.keywords.map(k => `<span class="kw-tag">${escapeHtml(k)}</span>`).join('')}</div>`;
   /* their own posting, on the board it sits on (Jacob, 2026-09-15) */
@@ -286,7 +286,7 @@ async function initProfile(){
     /* Certifications are typed in by the company. Nobody at Circuits.com checks
        them, so the tooltip says whose claim it is and the row points at the
        evidence when a matching certificate is attached to this listing. */
-    if(certs.length) inner += `<h3 class="pf-sub">Certifications &amp; approvals</h3>
+    if(certs.length) inner += `<h3 class="pf-sub">Certifications &amp; Approvals</h3>
       <ul class="pf-certs" title="Listed by the company. Circuits.com has not checked these.">${certs.map(c => {
         const doc = certDoc(ldocs, c.name);
         return `<li><b>${escapeHtml(c.name.trim())}</b>`
@@ -302,7 +302,7 @@ async function initProfile(){
           <div class="founder-role">${escapeHtml(t.role || '')}</div>
           ${t.email ? `<a class="founder-line" href="mailto:${escapeHtml(t.email)}">${escapeHtml(t.email)}</a>` : ''}</div>
         </div>`).join('')}</div>`;
-    if(rv.length) inner += `<h3 class="pf-sub">Buyer reviews</h3><div class="pf-reviews">${rv.map(r => `
+    if(rv.length) inner += `<h3 class="pf-sub">Buyer Reviews</h3><div class="pf-reviews">${rv.map(r => `
       <div class="pf-review">
         <div class="pf-review-head">${stars(r.rating)} <b>${escapeHtml(r.author_name)}</b>
           <span class="pf-note">${new Date(r.created_at).toLocaleDateString()}</span></div>
@@ -394,7 +394,7 @@ function socialLinks(socials){
 function reviewForm(appId){
   return `
   <form class="pf-form review-form" data-app="${escapeHtml(appId)}" autocomplete="off">
-    <h3>Leave a review</h3>
+    <h3>Leave a Review</h3>
     <div class="form-row">
       <div class="auth-field"><label>Your name</label><input class="rv-name" type="text" required maxlength="80"></div>
       <div class="auth-field"><label>Your email <span class="pf-note">(not published)</span></label><input class="rv-email" type="email" required></div>

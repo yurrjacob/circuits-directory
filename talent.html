@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
 <link rel="stylesheet" href="styles.css?v=fb3a7b65ea">
 <script src="/nav.js?v=b5adcdecca"></script>
-<script async src="/analytics.js?v=17b1c5b9b5"></script>
+<script async src="/analytics.js?v=70049a2947"></script>
 </head>
 <body>
 
@@ -77,8 +77,8 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="store.js?v=2779f089a3"></script>
-<script src="app.js?v=74e100a7f2"></script>
+<script src="store.js?v=8935201922"></script>
+<script src="app.js?v=a16d3b456c"></script>
 <script>
 /* The Recruit Board, a table (Jacob, 2026-09-13): Seeking Job As, Location,
    Years Experience, Circuits-Keywords. Pick a row, then View Resume & Contact
@@ -132,7 +132,7 @@
         <td data-label="Seeking Job As"><b>${escapeHtml(r.title || 'Circuits industry professional')}</b></td>
         <td data-label="Location">${r.location ? escapeHtml(r.location) : '<span class="cell-muted">not given</span>'}</td>
         <td data-label="Years Experience">${years(r)}</td>
-        <td data-label="Circuits-Keywords">${kwCell(r.keywords)}</td></tr>`).join('')}</tbody>
+        <td data-label="Circuits-Keywords&trade;">${kwCell(r.keywords)}</td></tr>`).join('')}</tbody>
     </table></div></div>`;
 
   const table = document.getElementById('board-table'), openBtn = document.getElementById('board-open'),

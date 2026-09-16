@@ -45,7 +45,7 @@
 
     root.innerHTML =
       '<div class="th-head">'
-      + '<h1>Your quote request</h1>'
+      + '<h1>Your Quote Request</h1>'
       + '<p class="th-sub">Sent to '
       + (t.company_handle
           ? '<a href="/' + esc(t.company_handle) + '">' + esc(t.company) + '</a>'

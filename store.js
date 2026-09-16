@@ -585,7 +585,7 @@ async function updateMyProfile(fields){
   return '';
 }
 
-/* ---- talent marketplace (MVP2): a profile that opts in to the Recruits Directory ---- */
+/* ---- talent marketplace (MVP2): a profile that opts in to the Recruit Board ---- */
 /* the keywords the owner wants to be found under; the database normalises,
    de-duplicates and caps them at ten */
 /* keywords with their on/off switches, same order; the RPC dedupes and caps at 10 */
@@ -784,7 +784,7 @@ async function fetchRecruits(){
   rows.forEach(r => { r.keywords = byUser[r.user_id] || []; });
   return rows;
 }
-/* Staff decide who appears in the Recruits Directory: Pending, Approved or
+/* Staff decide who appears on the Recruit Board: Pending, Approved or
    Denied. The guard trigger silently reverts anyone else's change. */
 async function setTalentStatus(userId, status){
   if(!sb) return 'No connection';
