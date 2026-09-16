@@ -111,3 +111,8 @@ grant select (contact_email), update (contact_email) on public.profiles to authe
 --     or applied_to_my_job(((storage.foldername(name))[1])::uuid)
 --     or exists (select 1 from public.profiles p where p.user_id::text = (storage.foldername(name))[1]
 --                 and p.talent_listed and p.talent_status = 'Approved' and p.suspended_at is null)));
+
+-- 2026-09-16, applied as welcome_onboarding. The welcome notice is the
+-- on-boarding page (Jacob): it names the three things a new account can do
+-- and the email (notify, kind inbox) shows a button for each, into the tab.
+-- welcome_notification(p_user, p_name): new body, link '/portal#listings'.

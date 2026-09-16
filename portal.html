@@ -57,8 +57,8 @@
     <h2 id="pt-auth-title" class="auth-title" style="margin-bottom:22px">Profile Sign In</h2>
     <form id="pt-auth-form" autocomplete="off">
       <div class="auth-field"><label for="pt-email">Email or Username</label>
-        <input id="pt-email" type="text" required placeholder="you@company.com or yourname" autocomplete="username" spellcheck="false"></div>
-      <div class="auth-field"><label for="pt-password">Password</label><input id="pt-password" type="password" required placeholder="••••••••" autocomplete="current-password"></div>
+        <input id="pt-email" type="text" required placeholder="you@company.com or yourname" autocomplete="off" spellcheck="false"></div>
+      <div class="auth-field"><label for="pt-password">Password</label><input id="pt-password" type="password" required placeholder="••••••••" autocomplete="off"></div>
       <div id="pt-auth-msg" style="font-size:.85rem;margin-bottom:12px;color:#b3261e"></div>
       <button class="submit" type="submit" id="pt-auth-submit">Sign in</button>
     </form>
@@ -127,7 +127,7 @@
     <form class="pf-form pt-market" id="pt-market-jobs" autocomplete="off">
       <h3 style="margin-top:0">Search Job Market</h3>
       <div class="pt-market-row">
-        <input type="text" id="pt-market-jobs-q" maxlength="80" placeholder="Search open jobs by Circuits-Keyword&trade;..." aria-label="Search open jobs by keyword">
+        <input type="text" id="pt-market-jobs-q" maxlength="80" placeholder="Search open jobs by Circuits-Keyword&trade;..." aria-label="Search open jobs by keyword" autocomplete="off">
         <button type="submit" class="btn btn-primary">Search Job Market</button>
       </div>
       <p class="pf-note">Open jobs posted by companies on Circuits.com, listed by the Circuits-Keywords&trade; they hire for.</p>
@@ -145,7 +145,7 @@
         <label for="f-handle">Your Circuits.com address</label>
         <div class="handle-row">
           <span class="handle-prefix">circuits.com/</span>
-          <input id="f-handle" type="text" maxlength="32" spellcheck="false" placeholder="aaa_electronics">
+          <input id="f-handle" type="text" maxlength="32" spellcheck="false" placeholder="aaa_electronics" autocomplete="off">
         </div>
         <div id="handle-msg" class="pf-note"></div>
         <p class="pf-note">Short and memorable. This is the link you put on adverts, business cards and
@@ -153,24 +153,24 @@
       </div>
 
       <div class="pt-row">
-        <div class="auth-field"><label for="f-name">Name <span class="req">*</span></label><input id="f-name" type="text" maxlength="120" required>
+        <div class="auth-field"><label for="f-name">Name <span class="req">*</span></label><input id="f-name" type="text" maxlength="120" required autocomplete="off">
           <p class="pf-note">Your name, or your company's. The heading on your profile and the name people see in search results.</p></div>
-        <div class="auth-field"><label for="f-contact">Contact person <span class="req">*</span></label><input id="f-contact" type="text" required>
+        <div class="auth-field"><label for="f-contact">Contact person <span class="req">*</span></label><input id="f-contact" type="text" required autocomplete="off">
           <p class="pf-note">For a company: the person a buyer asks for.</p></div>
-        <div class="auth-field"><label for="f-email">Public email <span class="req">*</span></label><input id="f-email" type="email" required>
+        <div class="auth-field"><label for="f-email">Public email <span class="req">*</span></label><input id="f-email" type="email" required autocomplete="off">
           <p class="pf-note">Shown on your profile. Your sign-in email is under Account Settings.</p></div>
       </div>
       <div class="pt-row">
-        <div class="auth-field"><label for="f-tagline">Tagline</label><input id="f-tagline" type="text" maxlength="160" placeholder="Authorised distributor of analog and power ICs"></div>
+        <div class="auth-field"><label for="f-tagline">Tagline</label><input id="f-tagline" type="text" maxlength="160" placeholder="Authorised distributor of analog and power ICs" autocomplete="off"></div>
       </div>
       <div class="pt-row">
-        <div class="auth-field"><label for="f-phone">Public phone</label><input id="f-phone" type="text"></div>
-        <div class="auth-field"><label for="f-website">Website</label><input id="f-website" type="text" placeholder="https://…"></div>
-        <div class="auth-field"><label for="f-address">Address</label><input id="f-address" type="text"></div>
+        <div class="auth-field"><label for="f-phone">Public phone</label><input id="f-phone" type="text" autocomplete="off"></div>
+        <div class="auth-field"><label for="f-website">Website</label><input id="f-website" type="text" placeholder="https://…" autocomplete="off"></div>
+        <div class="auth-field"><label for="f-address">Address</label><input id="f-address" type="text" autocomplete="off"></div>
       </div>
       <div class="pt-row">
-        <div class="auth-field"><label for="f-founded">Founded</label><input id="f-founded" type="text" placeholder="1998"></div>
-        <div class="auth-field"><label for="f-employees">Employees</label><input id="f-employees" type="text" placeholder="50 to 200"></div>
+        <div class="auth-field"><label for="f-founded">Founded</label><input id="f-founded" type="text" placeholder="1998" autocomplete="off"></div>
+        <div class="auth-field"><label for="f-employees">Employees</label><input id="f-employees" type="text" placeholder="50 to 200" autocomplete="off"></div>
       </div>
       <p class="pf-note">Everything here is public. Contact person, phone, email, website and picture update everywhere:
       your profile, every keyword listing and your sponsor banner.</p>
@@ -188,7 +188,7 @@
           <div class="crop" id="pt-crop" style="display:none">
             <canvas id="pt-crop-c" width="260" height="260"></canvas>
             <label class="crop-zoom">Zoom
-              <input id="pt-crop-z" type="range" min="1" max="4" step="0.01" value="1">
+              <input id="pt-crop-z" type="range" min="1" max="4" step="0.01" value="1" autocomplete="off">
             </label>
             <p class="pf-note">Drag the image to move it. It is saved as a square.</p>
             <div class="crop-btns">
@@ -209,7 +209,7 @@
         <p class="pf-note">Shown across the top of your profile with the logo standing on it. A wide picture, around 1200 by 300, looks best; up to 4 MB.</p>
       </div>
       <div class="auth-field"><label for="f-desc">About</label>
-        <textarea id="f-desc" rows="6" maxlength="2000" placeholder="What you do, what you supply, who you serve."></textarea>
+        <textarea id="f-desc" rows="6" maxlength="2000" placeholder="What you do, what you supply, who you serve." autocomplete="off"></textarea>
         <p class="pf-note">Shown on your profile page. The blurb in your Exclusive Sponsor banner on
         search results is written by Circuits.com and is not changed here.</p>
       </div>
@@ -240,18 +240,18 @@
       <h3 id="job-form-h">Post Job</h3>
       <input type="hidden" id="job-id" value="">
       <div class="grid2">
-        <div class="auth-field"><label for="job-title">Job title</label><input id="job-title" type="text" maxlength="120" placeholder="RF Design Engineer"></div>
-        <div class="auth-field"><label for="job-location">Location</label><input id="job-location" type="text" maxlength="120" placeholder="Austin, TX or Remote"></div>
+        <div class="auth-field"><label for="job-title">Job title</label><input id="job-title" type="text" maxlength="120" placeholder="RF Design Engineer" autocomplete="off"></div>
+        <div class="auth-field"><label for="job-location">Location</label><input id="job-location" type="text" maxlength="120" placeholder="Austin, TX or Remote" autocomplete="off"></div>
       </div>
       <div class="auth-field"><label for="job-keywords">Circuits-Keywords&trade; <span class="cell-muted">(up to 10, comma separated)</span></label>
-        <input id="job-keywords" type="text" placeholder="rf design, pcb layout"></div>
+        <input id="job-keywords" type="text" placeholder="rf design, pcb layout" autocomplete="off"></div>
       <div class="auth-field"><label for="job-desc">Description</label>
-        <textarea id="job-desc" rows="6" maxlength="4000" placeholder="The role, the team, what you need."></textarea></div>
+        <textarea id="job-desc" rows="6" maxlength="4000" placeholder="The role, the team, what you need." autocomplete="off"></textarea></div>
       <div class="grid2">
         <div class="auth-field"><label for="job-years">Years of experience</label>
           <select id="job-years" class="pt-years" aria-label="Years of experience"></select></div>
         <div class="auth-field"><label for="job-email">Send applications to</label>
-          <input id="job-email" type="email" maxlength="120" placeholder="hiring@company.com"></div>
+          <input id="job-email" type="email" maxlength="120" placeholder="hiring@company.com" autocomplete="off"></div>
       </div>
       <!-- documents on the post (Jacob, 2026-09-09): the docs bucket, same as a listing's -->
       <div class="auth-field"><label for="job-docs">Add Docs</label>
@@ -269,7 +269,7 @@
       <form class="pf-form pt-market" id="pt-market-recruits" autocomplete="off">
         <h3 style="margin-top:0">Search Job Market</h3>
         <div class="pt-market-row">
-          <input type="text" id="pt-market-recruits-q" maxlength="80" placeholder="Search recruits by Circuits-Keyword&trade;..." aria-label="Search recruits by keyword">
+          <input type="text" id="pt-market-recruits-q" maxlength="80" placeholder="Search recruits by Circuits-Keyword&trade;..." aria-label="Search recruits by keyword" autocomplete="off">
           <button type="submit" class="btn btn-primary">Search Job Market</button>
         </div>
         <p class="pf-note">Resumes posted by people seeking employment, listed by the Circuits-Keywords&trade; that best describe their qualifications.</p>
@@ -290,17 +290,16 @@
       </div>
       <button type="button" class="btn btn-upgrade" id="pt-go-upgrades">Upgrade &rarr;</button>
     </div>
-    <h3 class="pt-sub-h">Circuits-Keyword Listing</h3>
+    <h3 class="pt-sub-h">Directory Listings</h3>
     <div class="pt-list" id="pt-listings"></div>
     <!-- with no keyword yet this one box carries the empty state too (Jacob, 2026-09-14) -->
     <div class="pt-empty pt-getlisted" id="pt-getlisted">
       <div>
-        <b id="pt-getlisted-h">Get Listed Under More Circuits-Keywords&trade;</b>
-        <p id="pt-getlisted-p">Add Up to 10 More Keywords. Include the Exclusive Sponsor Banner and Trust Badge upgrades.</p>
+        <b id="pt-getlisted-h">Choose Your Free Directory Keywords</b>
+        <p id="pt-getlisted-p">Add Up to 10 Circuits-Keywords&trade;</p>
       </div>
       <div class="pt-getlisted-btns">
         <a class="btn btn-primary" href="/join">Get Listed For Free</a>
-        <button type="button" class="btn btn-blue" data-go-tab="upgrades">Upgrades &rarr;</button>
       </div>
     </div>
     <!-- Both sides of Recruiting, back here (Jacob, 2026-09-13): the jobs a
@@ -370,9 +369,9 @@
     <div class="panel-body">
       <div id="edit-form" class="listing-form" style="display:none">
         <div class="form-row" style="margin-bottom:12px">
-          <div class="auth-field"><label for="e-company">Company</label><input id="e-company" type="text" disabled></div>
-          <div class="auth-field"><label for="e-keyword">Keyword</label><input id="e-keyword" type="text"></div>
-          <div class="auth-field"><label for="e-fee">Fee</label><input id="e-fee" type="text" placeholder="$49/mo"></div>
+          <div class="auth-field"><label for="e-company">Company</label><input id="e-company" type="text" disabled autocomplete="off"></div>
+          <div class="auth-field"><label for="e-keyword">Keyword</label><input id="e-keyword" type="text" autocomplete="off"></div>
+          <div class="auth-field"><label for="e-fee">Fee</label><input id="e-fee" type="text" placeholder="$49/mo" autocomplete="off"></div>
           <div class="auth-field"><label for="e-status">Status</label>
             <select id="e-status"><option>Approved</option><option>Pending</option><option>Denied</option></select>
           </div>
@@ -403,7 +402,7 @@
         <button type="button" class="mini-btn sort-btn" data-sort="keyword">Keyword</button>
         <button type="button" class="mini-btn sort-btn" data-sort="fee">Fee</button>
         <span class="lc-label">Show</span>
-        <input class="lc-limit" type="number" min="1" max="500" value="50">
+        <input class="lc-limit" type="number" min="1" max="500" value="50" autocomplete="off">
       </div>
       <div class="table-scroll">
         <table class="dash-table">
@@ -425,7 +424,7 @@
         <button type="button" class="mini-btn sort-btn" data-sort="keyword">Keyword</button>
         <button type="button" class="mini-btn sort-btn" data-sort="fee">Fee</button>
         <span class="lc-label">Show</span>
-        <input class="lc-limit" type="number" min="1" max="500" value="50">
+        <input class="lc-limit" type="number" min="1" max="500" value="50" autocomplete="off">
       </div>
       <div class="table-scroll">
         <table class="dash-table">
@@ -447,7 +446,7 @@
         <button type="button" class="mini-btn sort-btn" data-sort="keyword">Keyword</button>
         <button type="button" class="mini-btn sort-btn" data-sort="fee">Fee</button>
         <span class="lc-label">Show</span>
-        <input class="lc-limit" type="number" min="1" max="500" value="50">
+        <input class="lc-limit" type="number" min="1" max="500" value="50" autocomplete="off">
       </div>
       <div class="table-scroll">
         <table class="dash-table">
@@ -469,7 +468,7 @@
         <button type="button" class="mini-btn sort-btn" data-sort="keyword">Keyword</button>
         <button type="button" class="mini-btn sort-btn" data-sort="fee">Fee</button>
         <span class="lc-label">Show</span>
-        <input class="lc-limit" type="number" min="1" max="500" value="50">
+        <input class="lc-limit" type="number" min="1" max="500" value="50" autocomplete="off">
       </div>
       <div class="table-scroll">
         <table class="dash-table">
@@ -511,17 +510,17 @@
               <option value="keyword">Anyone listed under a keyword</option>
               <option value="everyone">Every user on the site</option>
             </select></div>
-          <div class="auth-field"><label for="nt-link">Link <span class="cell-muted">(optional)</span></label><input id="nt-link" type="text" maxlength="300" placeholder="/portal or https://..."></div>
+          <div class="auth-field"><label for="nt-link">Link <span class="cell-muted">(optional)</span></label><input id="nt-link" type="text" maxlength="300" placeholder="/portal or https://..." autocomplete="off"></div>
         </div>
         <div class="auth-field" id="nt-users-field"><label>Users <span class="cell-muted">(username or email, one per line; + adds another)</span></label>
           <div id="nt-users">
-            <div class="nt-user"><input type="text" class="nt-user-in" maxlength="120" placeholder="username or email" aria-label="Username or email"><button type="button" class="pt-doc-x" data-rmuser aria-label="Remove this user">&times;</button></div>
+            <div class="nt-user"><input type="text" class="nt-user-in" maxlength="120" placeholder="username or email" aria-label="Username or email" autocomplete="off"><button type="button" class="pt-doc-x" data-rmuser aria-label="Remove this user">&times;</button></div>
             <button type="button" class="mini-btn green nt-plus" data-adduser aria-label="Add another user" title="Add another user">+</button>
           </div></div>
         <div class="auth-field" id="nt-kw-field" style="display:none"><label for="nt-kw">Keyword <span class="cell-muted">(every account behind a live listing for it, and every recruit who lists it)</span></label>
-          <input id="nt-kw" type="text" maxlength="80" placeholder="pcb layout"></div>
-        <div class="auth-field"><label for="nt-subject">Subject</label><input id="nt-subject" type="text" maxlength="120" placeholder="Short and specific"></div>
-        <div class="auth-field"><label for="nt-body">Message</label><textarea id="nt-body" rows="5" maxlength="4000" placeholder="Plain text. Blank lines make paragraphs."></textarea></div>
+          <input id="nt-kw" type="text" maxlength="80" placeholder="pcb layout" autocomplete="off"></div>
+        <div class="auth-field"><label for="nt-subject">Subject</label><input id="nt-subject" type="text" maxlength="120" placeholder="Short and specific" autocomplete="off"></div>
+        <div class="auth-field"><label for="nt-body">Message</label><textarea id="nt-body" rows="5" maxlength="4000" placeholder="Plain text. Blank lines make paragraphs." autocomplete="off"></textarea></div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <button class="btn btn-primary" type="button" id="nt-send" onclick="sendNotificationUI()">Send</button>
           <span class="pf-note" id="nt-msg"></span>
@@ -655,7 +654,7 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="/store.js?v=2779f089a3"></script>
 <script src="/app.js?v=74e100a7f2"></script>
-<script src="/portal.js?v=414e36d3ed"></script>
+<script src="/portal.js?v=5632ce6480"></script>
 <script src="/admin.js?v=8fbe9b7ffb"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));

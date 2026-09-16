@@ -48,7 +48,7 @@
       </select>
     </label>
     <label>Show
-      <input id="row-limit" type="number" min="1" max="500" value="100">
+      <input id="row-limit" type="number" min="1" max="500" value="100" autocomplete="off">
     </label>
   </div>
 
@@ -173,7 +173,7 @@ function rowHtml(a){
       <label class="cbx" title="Trust badge on/off"><input type="checkbox" data-badge="on" ${a.badge?'checked':''}> Yes</label>
       ${a.badge ? `
       <span class="ce" contenteditable data-badge="text" data-ph="none">${esc(a.badge.text)}</span>
-      <input type="color" class="badge-color" data-badge="color" value="${esc(a.badge.color||'#c9a227')}">
+      <input type="color" class="badge-color" data-badge="color" value="${esc(a.badge.color||'#c9a227')}" autocomplete="off">
       <span class="ce price" contenteditable data-price="badge_price" data-cell="badgeprice" data-ph="${money(BADGE_FEE)}">${money(effPrice(a.badge_price,BADGE_FEE))}</span>` : ''}
     </td>
     <td class="msg-cell"><span class="ce" contenteditable data-field="description" data-maxlen="300" data-ph="Add description…" title="Shown on the listing's Exclusive Sponsor banner once entered (max 300 characters)">${esc(a.description)}</span></td>

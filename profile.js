@@ -109,7 +109,7 @@ function personExperience(p){
       `<li><b>${escapeHtml(c.name.trim())}</b>${c.issuer ? `, ${escapeHtml(c.issuer)}` : ''}${c.year ? ` (${escapeHtml(String(c.year))})` : ''}</li>`).join('')}</ul>`;
   if((p.keywords || []).length) inner += `<div class="kw-tags">${p.keywords.map(k => `<span class="kw-tag">${escapeHtml(k)}</span>`).join('')}</div>`;
   /* their own posting, on the board it sits on (Jacob, 2026-09-15) */
-  inner += `<p class="pf-job-act"><a class="mini-btn" href="/talent?q=${encodeURIComponent((p.keywords || [])[0] || '')}">View on Recruit Board</a></p>`;
+  inner += `<p class="pf-job-act"><a class="mini-btn" href="/talent">View on Recruit Board</a></p>`;   // the whole board (Jacob, 2026-09-16)
   return section('Resumes Posted', inner, ' data-box="1"');   // its own box (Jacob, 2026-09-14)
 }
 
@@ -322,7 +322,7 @@ async function initProfile(){
       <div class="pf-job">
         <div><b>${escapeHtml(j.title)}</b>${j.location ? ` <span class="pf-note">${escapeHtml(j.location)}</span>` : ''}
           ${(j.keywords || []).length ? `<div class="kw-tags">${j.keywords.map(k => `<a class="kw-tag" href="/jobs?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join('')}</div>` : ''}</div>
-        <a class="mini-btn" href="/jobs?q=${encodeURIComponent((j.keywords || [])[0] || j.title)}">View on Job Board</a>
+        <a class="mini-btn" href="/jobs">View on Job Board</a>
       </div>`).join('')}</div>`, ' data-box="1"');   // its own box (Jacob, 2026-09-14)
 
   /* ---- the person behind the account: experience from the Seeking

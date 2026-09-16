@@ -20,6 +20,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
     the caller just filed. Nothing in the request body is ever used as a
     destination on its own, or this would be an open spam relay.
 
+    v14 (2026-09-16): the welcome mail carries three buttons.
     v13 (2026-09-15, site audit): the 'quote' kind is off. The in-page quote
     form has been off since 2026-08-21, but this kind still mailed whatever
     address and text the caller supplied, with a real company's name in the
@@ -178,12 +179,20 @@ Deno.serve(async (req: Request) => {
     const link = String(n.link ?? "");
     const href = !link ? `${SITE}/portal` : /^https?:\/\//.test(link) ? link : SITE + link;
     const paras = String(n.body ?? "").split(/\n{2,}/).map(p => `<p style="margin:0 0 12px;font-size:.95rem;line-height:1.55">${esc(p).replace(/\n/g, "<br>")}</p>`).join("");
+    /* the welcome is the on-boarding page (Jacob, 2026-09-16): three green
+       buttons, one per thing a new account can do, each straight into the
+       right dashboard tab */
+    const welcome = subject === "Welcome to Circuits.com";
+    const buttons = welcome
+      ? `<p style="margin:14px 0 0">${button(`${SITE}/portal#listings`, "Free Directory Listing")}</p>` +
+        `<p style="margin:10px 0 0">${button(`${SITE}/portal#hiring`, "Post Free Job")}</p>` +
+        `<p style="margin:10px 0 0">${button(`${SITE}/portal#seeking`, "Post Free Resume")}</p>`
+      : `<p style="margin:14px 0 0">${button(href, "Open on Circuits.com")}</p>`;
     const sent = await send(to, subject, shell(
       kicker(field(n.sender_name, 60) || "Circuits.com") +
       `<h1 style="margin:0 0 12px;font-size:1.25rem">${esc(subject)}</h1>` +
-      paras +
-      `<p style="margin:14px 0 0">${button(href, "Open on Circuits.com")}</p>` +
-      note("This is a copy of a notice in your Circuits.com inbox (the bell at the top of every page).")
+      paras + buttons +
+      note(welcome ? "Sign in at circuits.com/portal any time; each button above opens the tab it names." : "This is a copy of a notice in your Circuits.com inbox (the bell at the top of every page).")
     ));
     return json({ ok: sent });
   }

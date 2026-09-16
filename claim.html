@@ -98,11 +98,11 @@ function noCompany(){
   sub.innerHTML = 'For <b>' + escapeHtml(co.name) + '</b>, circuits.com/' + escapeHtml(co.handle);
   body.innerHTML = `
     <form id="cf" autocomplete="off">
-      <div class="auth-field"><label for="n">Your name</label><input id="n" type="text" required maxlength="80"></div>
-      <div class="auth-field"><label for="e">Your work email</label><input id="e" type="email" required placeholder="you@yourcompany.com"></div>
-      <div class="auth-field"><label for="r">Your role</label><input id="r" type="text" maxlength="80" placeholder="Sales Director"></div>
+      <div class="auth-field"><label for="n">Your name</label><input id="n" type="text" required maxlength="80" autocomplete="off"></div>
+      <div class="auth-field"><label for="e">Your work email</label><input id="e" type="email" required placeholder="you@yourcompany.com" autocomplete="off"></div>
+      <div class="auth-field"><label for="r">Your role</label><input id="r" type="text" maxlength="80" placeholder="Sales Director" autocomplete="off"></div>
       <div class="auth-field"><label>How can we verify you work there?</label>
-        <textarea id="v" rows="4" maxlength="1000" placeholder="Your name on the company website, a work phone number we can call, or the email address already on the listing."></textarea></div>
+        <textarea id="v" rows="4" maxlength="1000" placeholder="Your name on the company website, a work phone number we can call, or the email address already on the listing." autocomplete="off"></textarea></div>
       <div id="cm" style="font-size:.85rem;margin-bottom:12px;color:#b3261e"></div>
       <button class="submit" type="submit" id="cs">Send request →</button>
     </form>

@@ -75,7 +75,7 @@ function renderExperience(){
     <details class="pt-fold" open><summary>Certifications &amp; degrees <span class="pf-note" id="fold-creds-n"></span></summary><div class="pt-list" id="f-creds"></div></details>
     <details class="pt-fold" open id="me-resume-fold">${resumeFoldHtml()}</details>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
-      <button type="button" class="btn btn-primary me-save" data-list="keep">Save Resume</button>
+      <button type="button" class="btn btn-primary me-save" data-list="keep">Save All</button>
       <span class="pf-note me-msg" style="margin:0"></span></div>`;
   renderRepeater('creds', ME.credentials, ['name', 'issuer', 'year'], ['Certification or degree', 'Issued by', 'Year']);
   wireResume();
@@ -225,6 +225,11 @@ async function initPortal(){
     });
   }
 
+  /* no browser autofill on any dashboard field (Jacob, 2026-09-16: "reduce
+     mistakes filling out the forms"); the forms are drawn by script, so a
+     watcher stamps every new field */
+  const noFill = () => document.querySelectorAll('#pt-app input:not([autocomplete]), #pt-app textarea:not([autocomplete]), #pt-app select:not([autocomplete])').forEach(i => i.setAttribute('autocomplete', 'off'));
+  noFill(); new MutationObserver(noFill).observe(el('pt-app'), { childList: true, subtree: true });
   wireTabs();
   await wireAdminTab();
   renderAccount(user, 'pt-account-owner', true);
@@ -1438,13 +1443,10 @@ function renderListings(){
      two stacked (Jacob, 2026-09-14) */
   const gh = el('pt-getlisted-h'), gp = el('pt-getlisted-p');
   if(gh && gp){
-    if(PT.listings.length){
-      gh.textContent = 'Get Listed Under More Circuits-Keywords\u2122';
-      gp.textContent = 'Add Up to 10 More Keywords. Include the Exclusive Sponsor Banner and Trust Badge upgrades.';
-    } else {
-      gh.textContent = 'No Directory listings yet';
-      gp.textContent = 'Ask for one with Get Listed. Once Circuits.com approves a Circuits-Keyword\u2122 for you, it appears here. Up to 10 keywords per request, free. Include the Exclusive Sponsor Banner and Trust Badge upgrades.';
-    }
+    gh.textContent = 'Choose Your Free Directory Keywords';
+    gp.textContent = PT.listings.length
+      ? 'Add Up to 10 Circuits-Keywords\u2122'
+      : 'No listings yet. Add Up to 10 Circuits-Keywords\u2122 with Get Listed For Free. Once Circuits.com approves a keyword, it appears here.';
   }
 
   wireListings();
@@ -1624,8 +1626,8 @@ function renderUpgrades(){
   /* more keywords is the first "upgrade" (Jacob, 2026-09-14): free, up to 10
      per request, with the banner and badge extras chosen at the same time */
   const kwPack = `<div class="pt-upsell pt-kw-pack">
-      <div><b>Get Listed Under More Circuits-Keywords&trade;</b>
-        <p>Add up to 10 more keywords per request, free. Include the Exclusive Sponsor Banner and Trust Badge upgrades at the same time.</p></div>
+      <div><b>Choose Your Free Directory Keywords</b>
+        <p>Add up to 10 Circuits-Keywords&trade; per request, free.</p></div>
       <a class="btn btn-blue" href="/join">Add Keywords</a>
     </div>`;
   el('pt-upgrades').innerHTML = kwPack + (live.length ? `<div class="table-wrap"><table class="listings-table pt-uptable">

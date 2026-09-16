@@ -1725,8 +1725,8 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   const listTab = (ph.match(/<section class="pt-panel" id="tab-listings">[\s\S]*?<\/section>/) || [''])[0];
   assert.ok(/<h3 class="pt-sub-h"[^>]*>Jobs Posted<\/h3>\s*<div class="pt-list" id="pt-jobs">/.test(listTab) && /id="pt-list-hiring"/.test(listTab), 'Jobs Posted is not on Your Listings');
   assert.ok(/id="pt-list-seeking"/.test(listTab) && /Resumes Posted<\/h3>/.test(pj) && /data-resume-live="1"/.test(pj) && /data-new-jobs="1"/.test(pj), 'Resumes Posted is not on Your Listings as a job-shaped card');
-  assert.ok(/<h3 class="pt-sub-h">Circuits-Keyword Listing<\/h3>\s*<div class="pt-list" id="pt-listings">/.test(listTab), 'the keyword table lost its Circuits-Keyword Listing title');
-  assert.ok(/<b id="pt-getlisted-h">Get Listed Under More Circuits-Keywords&trade;<\/b>/.test(listTab) && /No Directory listings yet/.test(pj) && /data-go-tab="upgrades"/.test(listTab) && /pt-kw-pack/.test(pj), 'the Get Listed box or the Upgrades keyword package is missing');
+  assert.ok(/<h3 class="pt-sub-h">Directory Listings<\/h3>\s*<div class="pt-list" id="pt-listings">/.test(listTab), 'the keyword table lost its Directory Listings title');
+  assert.ok(/<b id="pt-getlisted-h">Choose Your Free Directory Keywords<\/b>/.test(listTab) && /Add Up to 10 Circuits-Keywords&trade;<\/p>/.test(listTab) && !/data-go-tab="upgrades"/.test(listTab) && !/Sponsor Banner and Trust Badge upgrades/.test(listTab) && /pt-kw-pack/.test(pj), 'the Choose Your Free Directory Keywords box or the Upgrades keyword package is wrong (Jacob, 2026-09-16)');
   assert.ok(!/pt-list-seeking|pt-jobs"/.test(seekTab + hireTab), 'a recruiting list is back on its old tab');
   assert.ok(/<h2>Post Free Resume<\/h2>/.test(seekTab) && /Post A Resume<\/h3>/.test(pj) && /href="\/talent"[^>]*>View Recruit Board</.test(pj) && /List Me on the Recruit Board</.test(pj), 'the Job Search tab is not Post Free Resume with its two buttons');
   assert.ok((fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8').match(/' data-box="1"'/g) || []).length === 2, 'Jobs Posted and Resumes Posted are not their own boxes on a profile');
@@ -1734,9 +1734,16 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   /* two board buttons top right of each Recruiting tab (Jacob, 2026-09-15) */
   assert.ok((hireTab.match(/class="pt-head-btns"/g) || []).length === 1 && (seekTab.match(/class="pt-head-btns"/g) || []).length === 1 && /View Job Board &#8599;/.test(hireTab) && /View Recruit Board &#8599;/.test(seekTab), 'a Recruiting tab lost its two board buttons top right');
   /* Save Resume lives in the form, List Me in box B; both cards have Delete */
-  assert.ok(/data-list="keep">Save Resume</.test(pj) && /data-list="on"[^>]*>List Me on the Recruit Board</.test(pj), 'Save Resume is not in the form, or List Me is not in box B');
+  assert.ok(/data-list="keep">Save All</.test(pj) && /data-list="on"[^>]*>List Me on the Recruit Board</.test(pj), 'Save All is not in the form, or List Me is not in box B');
   assert.ok(/data-del-job=/.test(pj) && /data-del-resume="1"/.test(pj) && /async function deleteJob/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')), 'Jobs Posted or Resumes Posted lost its Delete button');
-  assert.ok(/View on Job Board<\/a>[\s\S]{0,80}data-box="1"/.test(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8')) && /href="\/talent\?q=[^"]*">View on Recruit Board<\/a><\/p>`/.test(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8')), 'the profile boxes point at the wrong boards');
+  assert.ok(/href="\/jobs">View on Job Board<\/a>/.test(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8')) && /href="\/talent">View on Recruit Board<\/a><\/p>`/.test(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8')), 'the profile boxes must open the whole boards (Jacob, 2026-09-16)');
+  /* no browser autofill on any form (Jacob, 2026-09-16) */
+  for (const f of fs.readdirSync(ROOT).filter(n => n.endsWith('.html'))) {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    assert.ok(!/<form(?![^>]*autocomplete="off")[^>]*>/.test(src), `${f} has a form without autocomplete="off"`);
+    assert.ok(!/autocomplete="(?!off")[^"]*"/.test(src), `${f} still asks the browser to autofill a field`);
+  }
+  assert.ok(/new MutationObserver\(noFill\)/.test(pj), 'the dashboard forms are not stamped autocomplete=off');
   /* A, B, C top to bottom on both tabs: the form, the buttons, the search box */
   assert.ok(hireTab.indexOf('id="pt-job-form"') < hireTab.indexOf('id="pt-job-actions"') && hireTab.indexOf('id="pt-job-actions"') < hireTab.indexOf('id="pt-market-recruits"'), 'Post Free Job is not form, buttons, search');
   assert.ok(seekTab.indexOf('id="pt-experience"') < seekTab.indexOf('id="pt-recruit"') && seekTab.indexOf('id="pt-recruit"') < seekTab.indexOf('id="pt-market-jobs"'), 'Post Free Resume is not form, buttons, search');
@@ -1767,7 +1774,8 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     'the Recruit Board is not the table with View Resume & Contact');
   assert.ok(/<th>Job Title<\/th><th>Location<\/th><th>Company<\/th><th>Years Experience<\/th><th>Circuits-Keywords&trade;<\/th>/.test(jobsHtml) && /class="btn btn-blue" id="board-open" disabled>View Job Details &amp; Apply</.test(jobsHtml),
     'the Job Board is not the table with View Job Details & Apply');
-  assert.ok(/slice\(0, 3\)/.test(talentHtml) && /slice\(0, 3\)/.test(jobsHtml), 'a board cell shows more than three keywords');
+  /* every keyword shows and the rows rotate at random on each load (Jacob, 2026-09-16) */
+  assert.ok(!/slice\(0, 3\)/.test(talentHtml) && !/slice\(0, 3\)/.test(jobsHtml) && /Math\.floor\(Math\.random\(\) \* \(i \+ 1\)\)/.test(talentHtml) && /Math\.floor\(Math\.random\(\) \* \(i \+ 1\)\)/.test(jobsHtml), 'a board caps its keywords or lists in a fixed order');
   assert.ok(!/Talent Access/.test(talentHtml) && !/Get Talent Access/.test(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')), 'the paid Talent Access is back');
   assert.ok(/^\.btn-blue\{background:#1f5fbf/m.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the blue action button style is missing');
   assert.ok(/data-edit-job="\$\{escapeHtml\(j\.id\)\}">Edit</.test(pj) && /const err = await updateJob\(editingId, fields\)/.test(pj) && /docs: jobDocs/.test(pj),
