@@ -7,8 +7,10 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="description" content="Request access to manage your company's Circuits.com listing.">
 <link rel="icon" href="/assets/favicon.png">
-<link rel="stylesheet" href="/styles.css?v=00b2008fb9">
-<script src="/nav.js?v=ded2c647b5"></script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
+<link rel="stylesheet" href="/styles.css?v=fb3a7b65ea">
+<script src="/nav.js?v=b5adcdecca"></script>
 <script async src="/analytics.js?v=17b1c5b9b5"></script>
 </head>
 <body>
@@ -36,6 +38,7 @@
   </div>
 </header>
 
+<main id="content">
 <div class="auth-wrap">
   <div class="auth-card" id="claim-card">
     <h1>Request access to your profile</h1>
@@ -43,6 +46,8 @@
     <div id="claim-body"></div>
   </div>
 </div>
+
+</main>
 
 <footer class="footer">
   <div class="inner">
@@ -58,8 +63,8 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/store.js?v=ac1093bf15"></script>
-<script src="/app.js?v=6fa74c8465"></script>
+<script src="/store.js?v=2779f089a3"></script>
+<script src="/app.js?v=74e100a7f2"></script>
 <script>
 /* Accounts are only ever created through Get Listed. This page does NOT
    register anyone, it raises a request that Circuits.com staff verify, and
@@ -93,9 +98,9 @@ function noCompany(){
   sub.innerHTML = 'For <b>' + escapeHtml(co.name) + '</b>, circuits.com/' + escapeHtml(co.handle);
   body.innerHTML = `
     <form id="cf" autocomplete="off">
-      <div class="auth-field"><label>Your name</label><input id="n" type="text" required maxlength="80"></div>
-      <div class="auth-field"><label>Your work email</label><input id="e" type="email" required placeholder="you@yourcompany.com"></div>
-      <div class="auth-field"><label>Your role</label><input id="r" type="text" maxlength="80" placeholder="Sales Director"></div>
+      <div class="auth-field"><label for="n">Your name</label><input id="n" type="text" required maxlength="80"></div>
+      <div class="auth-field"><label for="e">Your work email</label><input id="e" type="email" required placeholder="you@yourcompany.com"></div>
+      <div class="auth-field"><label for="r">Your role</label><input id="r" type="text" maxlength="80" placeholder="Sales Director"></div>
       <div class="auth-field"><label>How can we verify you work there?</label>
         <textarea id="v" rows="4" maxlength="1000" placeholder="Your name on the company website, a work phone number we can call, or the email address already on the listing."></textarea></div>
       <div id="cm" style="font-size:.85rem;margin-bottom:12px;color:#b3261e"></div>

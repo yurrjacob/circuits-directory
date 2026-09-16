@@ -6,8 +6,10 @@
 <title>Dashboard | Circuits.com</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
-<link rel="stylesheet" href="/styles.css?v=00b2008fb9">
-<script src="/nav.js?v=ded2c647b5"></script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
+<link rel="stylesheet" href="/styles.css?v=fb3a7b65ea">
+<script src="/nav.js?v=b5adcdecca"></script>
 </head>
 <body>
 
@@ -52,7 +54,7 @@
 <!-- signed out -->
 <div class="auth-wrap" id="pt-auth" style="display:none">
   <div class="auth-card">
-    <h1 id="pt-auth-title" style="margin-bottom:22px">Profile Sign In</h1>
+    <h2 id="pt-auth-title" class="auth-title" style="margin-bottom:22px">Profile Sign In</h2>
     <form id="pt-auth-form" autocomplete="off">
       <div class="auth-field"><label for="pt-email">Email or Username</label>
         <input id="pt-email" type="text" required placeholder="you@company.com or yourname" autocomplete="username" spellcheck="false"></div>
@@ -82,7 +84,7 @@
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select id="pt-company" style="height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px"></select>
       <a class="mini-btn" id="pt-view" href="#" target="_blank" rel="noopener">View public profile ↗</a>
-      <a class="mini-btn" href="#" id="pt-signout">Sign out</a>
+      <button type="button" class="mini-btn" id="pt-signout">Sign out</button>
     </div>
   </div>
 
@@ -338,7 +340,7 @@
   <section class="pt-panel" id="tab-admin">
   <div class="console-head admin-head">
     <div>
-      <h1>Admin console</h1>
+      <h2 class="adm-title">Admin console</h2>
       <p>Every keyword listing, banner and application across Circuits.com.</p>
     </div>
   </div>
@@ -651,10 +653,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-<script src="/store.js?v=ac1093bf15"></script>
-<script src="/app.js?v=6fa74c8465"></script>
-<script src="/portal.js?v=1ad05d4de8"></script>
-<script src="/admin.js?v=939123951e"></script>
+<script src="/store.js?v=2779f089a3"></script>
+<script src="/app.js?v=74e100a7f2"></script>
+<script src="/portal.js?v=414e36d3ed"></script>
+<script src="/admin.js?v=8fbe9b7ffb"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));
 initPortal();

@@ -20,15 +20,17 @@
 <meta name="twitter:description" content="Find suppliers listed under a Circuits-Keyword™ on Circuits.com, the circuits industry directory.">
 <meta name="twitter:image" content="https://circuits.com/assets/og-card.png">
 <link rel="icon" href="assets/favicon.png">
-<link rel="stylesheet" href="styles.css?v=00b2008fb9">
-<script src="/nav.js?v=ded2c647b5"></script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
+<link rel="stylesheet" href="styles.css?v=fb3a7b65ea">
+<script src="/nav.js?v=b5adcdecca"></script>
 <script async src="/analytics.js?v=17b1c5b9b5"></script>
 </head>
 <body>
 
 <header class="topbar">
   <div class="inner">
-    <div class="brand"><a href="/"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-slogan">Free Circuits Directory Marketplace</span></div>
+    <div class="brand"><a href="/"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com" width="389" height="64"></a><span class="brand-slogan">Free Circuits Directory Marketplace</span></div>
     <nav class="nav">
       <a href="/">Home</a>
       <a href="/about">About</a>
@@ -49,6 +51,8 @@
   </div>
 </header>
 
+<main id="content">
+<h1 class="sr-only">Search results</h1>
 <div class="subbar">
   <div class="inner subbar-inner">
     <form id="mini-form" class="mini-search" autocomplete="off">
@@ -66,6 +70,8 @@
 
 <div id="results-body"></div>
 
+</main>
+
 <footer class="footer">
   <div class="inner">
     <div class="flinks">
@@ -74,14 +80,14 @@
     </div>
     <div style="display:flex;align-items:center;gap:14px">
       <span>© 2026 Circuits.com</span>
-      <span class="footer-brand"><img class="footer-mark" src="assets/favicon.png" alt="Circuits.com"></span>
+      <span class="footer-brand"><img class="footer-mark" src="assets/favicon.png" alt="" width="64" height="64"></span>
     </div>
   </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="store.js?v=ac1093bf15"></script>
-<script src="app.js?v=6fa74c8465"></script>
+<script src="store.js?v=2779f089a3"></script>
+<script src="app.js?v=74e100a7f2"></script>
 <script>initResults();</script>
 </body>
 </html>

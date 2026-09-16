@@ -111,11 +111,11 @@
     if(!document.querySelector('.skip-link')){
       var s = document.createElement('a');
       s.className = 'skip-link';
-      s.href = '#';
+      s.href = '#content';
       s.textContent = 'Skip to content';
       s.addEventListener('click', function(e){
         e.preventDefault();
-        var main = document.querySelector('main')
+        var main = document.getElementById('content') || document.querySelector('main:not([hidden])')
           || document.querySelector('.form-wrap, .auth-wrap, .browse-wrap, #results-body, .page, .console');
         if(!main) return;
         main.setAttribute('tabindex', '-1');

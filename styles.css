@@ -1,7 +1,7 @@
 /* ===== Circuits.com, shared styles ===== */
 :root{
   --green:#76c000;
-  --green-dark:#5f9b00;
+  --green-dark:#4a7a00;   /* 4.6:1 on white; #5f9b00 failed AA (audit, 2026-09-15) */
   --ink:#1a1a1a;
   --muted:#5f6368;
   --line:#e3e5e8;
@@ -131,7 +131,7 @@ img{max-width:100%}
 .btn-primary{background:var(--green);border-color:var(--green);color:#0f0f0f;font-weight:700}
 .btn-primary:hover{background:var(--green-dark);color:#fff;border-color:var(--green-dark)}
 .popular{margin-top:34px;text-align:center;color:var(--muted);font-size:.85rem}
-.popular a{color:var(--green-dark);text-decoration:none;margin:0 6px;font-weight:600}
+.popular a{color:var(--green-dark);text-decoration:none;margin:0 2px;padding:4px 4px;display:inline-block;font-weight:600}
 .popular a:hover{text-decoration:underline}
 .claim-line{margin:16px 0 0;text-align:center;font-size:.9rem}
 .claim-line a{color:var(--green-dark);text-decoration:none;font-weight:700}
@@ -385,7 +385,7 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 /* ===== Auth / Login ===== */
 .auth-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:48px 20px}
 .auth-card{width:min(430px,92vw);border:1px solid var(--line);border-radius:16px;padding:34px;box-shadow:var(--shadow);background:var(--card)}
-.auth-card h1{font-size:1.5rem;margin:0 0 4px}
+.auth-card h1,.auth-card .auth-title{font-size:1.5rem;margin:0 0 4px}
 .auth-card .sub{color:var(--muted);font-size:.92rem;margin:0 0 22px}
 .segment{display:flex;background:var(--bg-soft);border:1px solid var(--line);border-radius:10px;padding:4px;margin-bottom:22px;gap:4px}
 .segment button{flex:1;border:0;background:transparent;padding:9px;border-radius:7px;font-family:inherit;font-size:.85rem;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s}
@@ -405,6 +405,7 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 .listing-form{border:1px solid var(--line);border-radius:10px;padding:16px 16px 6px;margin-bottom:18px;background:var(--bg-soft)}
 .console-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:24px}
 .console-head h1{font-size:1.6rem;margin:0}
+.adm-title{font-size:1.6rem;margin:0}
 .console-head p{margin:5px 0 0;color:var(--muted)}
 .signout{color:#cfd2d6;text-decoration:none;font-size:.9rem;padding:8px 14px;border-radius:8px;border:1px solid #2a2a2a}
 
@@ -1252,6 +1253,7 @@ tr.row-warn td{background:#fff3cd}
 .handle-prefix{padding:9px 2px 9px 11px;color:var(--muted);font-size:.92rem;white-space:nowrap}
 .handle-row input{border:0!important;padding-left:2px!important;font-weight:700}
 .handle-row input:focus{outline:none}
+.handle-row:focus-within{outline:2px solid var(--green-dark);outline-offset:2px}
 
 /* ---- quality of life ---- */
 .pf-copy{display:flex;align-items:center;gap:8px;width:100%;margin:-6px 0 14px;padding:8px 10px;
@@ -1652,7 +1654,7 @@ body.nav-open .nav-burger .x{display:block}
 .pt-setting-text .pf-note{margin:3px 0 0}
 .switch{position:relative;display:inline-block;flex:0 0 auto}
 .switch input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
-.switch .knob{display:block;width:46px;height:26px;border-radius:999px;background:#c6cad1;
+.switch .knob{display:block;width:46px;height:26px;border-radius:999px;background:#8a9099;
   transition:background .18s;position:relative}
 .switch .knob::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;
   background:#fff;transition:left .18s;box-shadow:0 1px 3px rgba(0,0,0,.25)}

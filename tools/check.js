@@ -1804,7 +1804,7 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   assert.ok(/decision: decision \|\| null/.test(st), 'store.js no longer records the Approve/Deny decision');
   const aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
   assert.ok(/function approveUpgrade/.test(aj) && /function denyUpgrade/.test(aj), 'Upgrade Applications lost Approve or Deny');
-  assert.ok(/badge: \{ text: \(r\.badge_text \|\| ''\)\.slice\(0, 18\), color: r\.badge_color/.test(aj), 'Approve does not apply the label and colour the company chose');
+  assert.ok(/badge: \{ text: \(r\.badge_text \|\| ''\)\.slice\(0, 18\), color: hexColor\(r\.badge_color\)/.test(aj), 'Approve does not apply the label and colour the company chose (the colour validated as six hex digits, audit 2026-09-15)');
   /* the profile picture: the Profile Details logo, mirrored onto the person
      (photo_url), shown on circuits.com/<handle> and in the unlocked contact
      block, never on the anonymous recruit card */

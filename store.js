@@ -289,6 +289,7 @@ async function deleteApplication(id){
   if(!sb) return;
   const { error } = await sb.from('applications').delete().eq('id', id);
   if(error) console.error('deleteApplication', error);
+  return error || null;
 }
 
 /* ---- auth (staff) ---- */
@@ -313,6 +314,7 @@ async function signIn(identifier, password, captchaToken){
         headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY },
         body: JSON.stringify({ action: 'signin', identifier: id, password, captchaToken: captchaToken || undefined })
       });
+      if(res.status >= 500) return { error: { message: 'We could not reach the sign-in service. Check your connection and try again.' } };
       const out = await res.json().catch(() => ({}));
       if(out && out.session && out.session.access_token){
         const { error } = await sb.auth.setSession({
@@ -350,13 +352,17 @@ async function requestPasswordReset(identifier, captchaToken){
     /* A username is resolved and the recovery email sent server-side, so the
        address is never exposed. The answer is always the same whether or not
        the username exists, see the `auth` edge function. */
+    /* an outage is not a secret: say it, rather than send them to an inbox
+       that will stay empty (audit, 2026-09-15) */
+    const down = 'We could not reach the reset service. Check your connection and try again.';
     try{
-      await fetch(SUPABASE_URL + '/functions/v1/auth', {
+      const res = await fetch(SUPABASE_URL + '/functions/v1/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY },
         body: JSON.stringify({ action: 'reset', identifier: email, captchaToken: captchaToken || undefined })
       });
-    }catch(e){ console.warn('username reset lookup failed', e); }
+      if(!res.ok) return down;
+    }catch(e){ console.warn('username reset lookup failed', e); return down; }
     return '';
   }
   if(email.includes('@')){
@@ -498,7 +504,7 @@ async function fetchProfileByHandle(handle){
 async function myProfile(){
   if(!sb) return null;
   const { data, error } = await sb.rpc('my_profile');
-  if(error){ console.error('my_profile', error); return null; }
+  if(error){ console.error('my_profile', error); throw error; }   // an outage must not look like a new account
   return (data && data[0]) || null;
 }
 /* An account from before profiles existed (staff, early owners) has no row.
@@ -707,7 +713,7 @@ async function myJobs(slug){
   if(!sb || !slug) return [];
   const { data, error } = await sb.from('jobs').select('*, job_keywords(keyword)')
     .eq('company_slug', slug).order('created_at', { ascending: false });
-  if(error){ console.error('myJobs', error); return []; }
+  if(error){ console.error('myJobs', error); return null; }
   return (data || []).map(j => ({ ...j, keywords: (j.job_keywords || []).map(k => k.keyword).sort() }));
 }
 /* the live jobs one company has posted, for its public page (Jacob,
@@ -755,7 +761,7 @@ async function applyToJob(jobId, note){
 async function jobApplicants(jobId){
   if(!sb) return [];
   const { data, error } = await sb.rpc('job_applicants', { p_job: jobId });
-  if(error){ console.error('jobApplicants', error); return []; }
+  if(error){ console.error('jobApplicants', error); return null; }
   return data || [];
 }
 
@@ -972,7 +978,7 @@ function trackEvent(slug, kind, keyword){
 async function myCompanies(){
   if(!sb) return [];
   const { data, error } = await sb.rpc('my_companies');
-  if(error){ console.error('myCompanies', error); return []; }
+  if(error){ console.error('myCompanies', error); throw error; }
   return data || [];
 }
 /* A row-level-security refusal is NOT an error in PostgREST, a blocked update
@@ -989,7 +995,7 @@ async function fetchMyListings(slug){
   if(!sb) return [];
   const { data, error } = await sb.from('applications').select('*')
     .eq('company_slug', slug).order('created_at', { ascending:true });
-  if(error){ console.error('fetchMyListings', error); return []; }
+  if(error){ console.error('fetchMyListings', error); return null; }
   return data || [];
 }
 async function fetchMyReviews(slug){
@@ -1151,10 +1157,11 @@ async function notifySupplier(slug, quote, token){
    and acknowledges each row once, so this can never mail anyone else.
    Never throws: the request is already in the database either way. */
 async function notifyListingRequest(email, company){
+  const tok = await (async () => { try{ const { data } = await sb.auth.getSession(); return data && data.session ? data.session.access_token : ''; }catch(e){ return ''; } })();
   try{
     const res = await fetch(SUPABASE_URL + '/functions/v1/notify', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY },
+      headers: Object.assign({ 'Content-Type': 'application/json', apikey: SUPABASE_KEY }, tok ? { Authorization: 'Bearer ' + tok } : {}),
       body: JSON.stringify({ kind: 'listing-request', email: email, company: company })
     });
     const out = await res.json().catch(() => null);

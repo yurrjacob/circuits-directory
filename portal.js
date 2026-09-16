@@ -73,17 +73,25 @@ function renderExperience(){
         <input id="me-phone" type="tel" maxlength="40" placeholder="(555) 123-4567" value="${escapeHtml(ME.phone || '')}"></div>
     </div>
     <details class="pt-fold" open><summary>Certifications &amp; degrees <span class="pf-note" id="fold-creds-n"></span></summary><div class="pt-list" id="f-creds"></div></details>
-    <details class="pt-fold" open><summary>Resume <span class="pf-note">${ME.resume_path ? '· on file' : '· none yet'}</span></summary>
-      <div class="pt-list"><div class="pt-item" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <span id="me-resume-state" class="pf-note" style="margin:0;flex:1">${ME.resume_path ? 'Resume on file. PDF. Signed-in companies can view it from the Recruit Board.' : 'No resume yet. PDF, up to 10 MB. Signed-in companies can view it from the Recruit Board.'}</span>
-        ${ME.resume_path ? '<a class="mini-btn rp-add" href="#" id="me-resume-view">View</a><button class="mini-btn rp-add danger" type="button" id="me-resume-remove">Remove</button>' : ''}
-        <label class="mini-btn green rp-add" style="cursor:pointer">${ME.resume_path ? 'Replace' : '+ Upload'}<input id="me-resume" type="file" accept="application/pdf" style="display:none"></label>
-      </div></div></details>
+    <details class="pt-fold" open id="me-resume-fold">${resumeFoldHtml()}</details>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
       <button type="button" class="btn btn-primary me-save" data-list="keep">Save Resume</button>
       <span class="pf-note me-msg" style="margin:0"></span></div>`;
   renderRepeater('creds', ME.credentials, ['name', 'issuer', 'year'], ['Certification or degree', 'Issued by', 'Year']);
-
+  wireResume();
+}
+/* the Resume fold on its own, so an upload or a removal redraws this and
+   nothing the person was typing above it (audit, 2026-09-15) */
+function resumeFoldHtml(){
+  return `<summary>Resume <span class="pf-note">${ME.resume_path ? '· on file' : '· none yet'}</span></summary>
+      <div class="pt-list"><div class="pt-item" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <span id="me-resume-state" class="pf-note" style="margin:0;flex:1">${ME.resume_path ? 'Resume on file. PDF. Signed-in companies can view it from the Recruit Board.' : 'No resume yet. PDF, up to 10 MB. Signed-in companies can view it from the Recruit Board.'}</span>
+        ${ME.resume_path ? '<a class="mini-btn rp-add" href="#" id="me-resume-view">View</a><button class="mini-btn rp-add danger" type="button" id="me-resume-remove">Remove</button>' : ''}
+        <label class="mini-btn green rp-add" style="cursor:pointer">${ME.resume_path ? 'Replace' : '+ Upload'}<input id="me-resume" type="file" accept="application/pdf" style="display:none"></label>
+      </div></div>`;
+}
+function renderResumeRow(){ const d = el('me-resume-fold'); if(d){ d.innerHTML = resumeFoldHtml(); wireResume(); } }
+function wireResume(){
   const up = el('me-resume');
   if(up) up.addEventListener('change', async e => {
     const f = e.target.files && e.target.files[0]; if(!f) return;
@@ -93,7 +101,7 @@ function renderExperience(){
     st.textContent = 'Uploading…';
     const r = await uploadResume(f);
     if(r.error){ st.textContent = 'Upload failed: ' + r.error; return; }
-    ME.resume_path = r.path; renderExperience();
+    ME.resume_path = r.path; renderResumeRow();
   });
   const view = el('me-resume-view');
   if(view) view.addEventListener('click', async e => {
@@ -105,7 +113,7 @@ function renderExperience(){
     if(!confirm('Remove your resume from Circuits.com?')) return;
     const err = await removeResume();
     if(err){ el('me-resume-state').textContent = err; return; }
-    ME.resume_path = null; renderExperience();
+    ME.resume_path = null; renderResumeRow();
   });
 }
 
@@ -131,10 +139,16 @@ function renderRecruit(){
 
 function wireSeeking(){
   document.addEventListener('click', async e => {
-    const b = e.target.closest('.me-save'); if(!b) return;
+    const b = e.target.closest('.me-save'); if(!b || b.disabled) return;
     /* looked up on every call: a save re-renders the tab, and a message on the
        old, detached elements is a message nobody sees */
     const say = (t, bad) => document.querySelectorAll('.me-msg').forEach(m => { m.textContent = t; m.style.color = bad ? '#b3261e' : (t === 'Saving…' ? '' : '#3f6300'); });
+    b.disabled = true;
+    try{ await saveResume(b, say); } finally { b.disabled = false; }
+  });
+}
+async function saveResume(b, say){
+  {
     if(ME_FRESH){ say('Save your Profile Details first.', true); activateTab('profile'); return; }
     say('Saving…', false);
     if(!isValidPhone(val('me-phone'))){ say('A phone number (at least 10 digits) is needed to be listed. It is shown to signed-in companies only.', true); el('me-phone').focus(); return; }
@@ -157,9 +171,9 @@ function wireSeeking(){
     const kw = err ? {} : await setTalentKeywords(keywords, keywords.map(() => true));
     const bad = err || kw.error;
     if(bad){ say(bad, true); return; }
-    renderSeeking(await myProfile());
+    try{ renderSeeking(await myProfile()); }catch(e2){ say('Saved, but the page could not refresh. Reload to see it.', true); return; }
     say('Saved.', false);
-  });
+  }
 }
 
 /* ---------- boot ---------- */
@@ -176,7 +190,15 @@ async function initPortal(){
      is idempotent). An account with no profiles row at all (made by the old
      Get Listed form, or older than profiles) picks its address on the Profile
      Details tab; saveProfile creates both rows then. */
-  let [cos, me] = await Promise.all([myCompanies(), myProfile()]);
+  let cos, me;
+  try{ [cos, me] = await Promise.all([myCompanies(), myProfile()]); }
+  catch(e){
+    /* the read failed: say so, never offer a fresh-account form to an
+       existing owner (audit, 2026-09-15) */
+    show('pt-boot', false); show('pt-app', true);
+    el('pt-app').innerHTML = '<div class="pt-empty" style="margin:40px auto;max-width:560px"><b>Could not load your dashboard</b><p>The connection to Circuits.com dropped. <a href="/portal">Reload to try again.</a></p></div>';
+    return;
+  }
   if(!cos.length && me){
     const r = await registerCompany();
     if(!r.error) cos = await myCompanies();
@@ -252,8 +274,8 @@ async function initPortal(){
   /* #admin:<group> names an admin sub-tab as well (2026-09-15) */
   const admGroup = tab.startsWith('admin:') ? tab.slice(6) : '';
   if(admGroup) tab = 'admin';
-  if(tab && document.querySelector(`.pt-tab[data-tab="${tab}"]`)) activateTab(tab);
-  if(admGroup && typeof window.showAdminGroup === 'function' && document.querySelector(`.adm-tab[data-adm="${admGroup}"]`)) window.showAdminGroup(admGroup, true);
+  if(tab && document.querySelector(`.pt-tab[data-tab="${CSS.escape(tab)}"]`)) activateTab(tab);
+  if(admGroup && typeof window.showAdminGroup === 'function' && document.querySelector(`.adm-tab[data-adm="${CSS.escape(admGroup)}"]`)) window.showAdminGroup(admGroup, true);
   await loadCompany(cos[0].slug);
 }
 
@@ -294,7 +316,7 @@ function wireAuth(){
   el('pt-auth-form').addEventListener('submit', async e => {
     e.preventDefault();
     const msg = el('pt-auth-msg');
-    if(turnstileOn() && !turnstileToken(el('pt-auth-form'))){ msg.textContent = TURNSTILE_WAIT; return; }
+    { const tp = turnstileProblem(el('pt-auth-form')); if(tp){ msg.textContent = tp; return; } }
     el('pt-auth-submit').disabled = true;
     try{
       const { error } = await signIn(val('pt-email'), val('pt-password'), turnstileToken(el('pt-auth-form')));
@@ -350,8 +372,27 @@ function wireDirtyTracking(){
 }
 
 function wireTabs(){
+  /* tab semantics for assistive tech (audit, 2026-09-15): roles, the
+     selected state, which panel each tab controls, and Left/Right keys */
+  const strip = document.querySelector('.pt-tabs'); if(strip) strip.setAttribute('role', 'tablist');
+  document.querySelectorAll('.pt-tab').forEach(b => {
+    b.setAttribute('role', 'tab'); b.setAttribute('aria-controls', 'tab-' + b.dataset.tab);
+    if(!b.id) b.id = 'pt-tab-' + b.dataset.tab;
+    b.setAttribute('aria-selected', b.classList.contains('active') ? 'true' : 'false');
+    b.tabIndex = b.classList.contains('active') ? 0 : -1;
+    const panel = el('tab-' + b.dataset.tab);
+    if(panel){ panel.setAttribute('role', 'tabpanel'); panel.setAttribute('aria-labelledby', b.id); }
+  });
+  if(strip) strip.addEventListener('keydown', e => {
+    if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const tabs = [...strip.querySelectorAll('.pt-tab')].filter(t => t.style.display !== 'none');
+    const i = tabs.indexOf(document.activeElement); if(i < 0) return;
+    e.preventDefault();
+    const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+    next.focus(); next.click();
+  });
   document.querySelectorAll('.pt-tab').forEach(b => b.addEventListener('click', () => {
-    document.querySelectorAll('.pt-tab').forEach(x => x.classList.toggle('active', x === b));
+    document.querySelectorAll('.pt-tab').forEach(x => { const on = x === b; x.classList.toggle('active', on); x.setAttribute('aria-selected', on ? 'true' : 'false'); x.tabIndex = on ? 0 : -1; });
     document.querySelectorAll('.pt-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + b.dataset.tab));
     /* a reload stays on this tab (Jacob, 2026-09-15): the tab rides in the
        address, and is remembered for the reloads that arrive without one */
@@ -388,7 +429,8 @@ async function loadCompany(slug){
      their data is not fetched either. Their render functions stay below,
      dormant, for an easy restore. */
   const [listings, upgrades] = await Promise.all([fetchMyListings(slug), myUpgradeRequests(slug)]);
-  PT.listings = listings; PT.upgrades = upgrades;
+  PT.listingsFailed = listings === null;   // an outage is not "no listings yet"
+  PT.listings = listings || []; PT.upgrades = upgrades;
   renderReviewStatus();
   renderProfileForm();
   wireDirtyTracking();
@@ -536,8 +578,8 @@ async function renderAccount(user, hostId, canDelete){
     if(a.length < 8){ msg.textContent = 'Use at least 8 characters.'; return; }
     if(a !== b){ msg.textContent = 'Those two passwords do not match.'; return; }
     msg.style.color = ''; msg.textContent = 'Saving…';
-    const { error } = await setNewPassword(a);
-    if(error){ msg.style.color = '#b3261e'; msg.textContent = error.message; return; }
+    const err = await setNewPassword(a);   // a string: '' on success (audit, 2026-09-15)
+    if(err){ msg.style.color = '#b3261e'; msg.textContent = err; return; }
     el('ac-pass').value = el('ac-pass2').value = '';
     msg.textContent = 'Password changed. Your other devices stay signed in until you sign them out.';
   };
@@ -1165,7 +1207,9 @@ function wireHandleCheck(){
     if(input.value === (PT.co.handle || '')){ msg.textContent = ''; return; }
     msg.textContent = 'Checking…'; msg.style.color = '';
     handleTimer = setTimeout(async () => {
-      const why = await handleAvailable(input.value, PT.slug, PT.user && PT.user.id);
+      const asked = input.value;
+      const why = await handleAvailable(asked, PT.slug, PT.user && PT.user.id);
+      if(input.value !== asked) return;   // a slow answer for an earlier value
       msg.textContent = why || ('circuits.com/' + input.value + ' is available.');
       msg.style.color = why ? '#b3261e' : '#3f6300';
     }, 400);
@@ -1373,7 +1417,7 @@ function renderListings(){
       <td data-label="Keyword"><button type="button" class="pt-chevron" data-open="${l.id}" aria-expanded="${open}" aria-label="${open ? 'Close' : 'Open'} ${escapeHtml(l.keyword || '')}">${open ? '&#9662;' : '&#9656;'}</button>
         <b>${escapeHtml(l.keyword || '(no keyword)')}</b> ${listingStatusChip(l)}</td>
       <td data-label="Free listing">${TICK}</td>
-      <td data-label="Trust Badge">${l.badge ? `<span class="lb" style="background:${escapeHtml(l.badge.color || '#c9a227')}">${escapeHtml(l.badge.text)}</span>` : DASH}</td>
+      <td data-label="Trust Badge">${l.badge ? `<span class="lb" style="${badgeStyle(l.badge.color)}">${escapeHtml(l.badge.text)}</span>` : DASH}</td>
       <td data-label="Sponsor Banner">${l.banner ? TICK : DASH}</td>
       <td data-label="Locked Position">${l.locked_position ? `<b class="pt-pos">#${escapeHtml(String(l.locked_position))}</b>` : DASH}</td>
       <td class="row-actions" data-label="">
@@ -1389,7 +1433,7 @@ function renderListings(){
         <th>Trust Badge</th><th>Sponsor Banner</th><th>Locked Position</th><th></th>
       </tr></thead>
       <tbody>${rows}</tbody>
-    </table></div>` : '';
+    </table></div>` : PT.listingsFailed ? `<div class="pt-empty"><b>Could not load your listings</b><p>The connection dropped. <a href="/portal#listings">Reload to try again.</a></p></div>` : '';
   /* no keyword yet: the Get Listed box says so itself, one box instead of
      two stacked (Jacob, 2026-09-14) */
   const gh = el('pt-getlisted-h'), gp = el('pt-getlisted-p');
@@ -1435,7 +1479,7 @@ function renderRecruitingListings(){
       <div class="pt-applicants" id="resume-jobs" style="display:none"></div>
     </div>`
     : `<div class="pt-empty pt-getlisted"><div><b>No resume posted yet</b><p>Fill in the position you want and the keywords a recruiter would search on the Post Free Resume tab, and list yourself as open to work. Free.</p></div><button type="button" class="btn btn-primary btn-sm" data-go-form="pt-experience">Post Free Resume</button></div>`);
-  seek.onclick = e => { const b = e.target.closest('[data-go-form]'); if(!b) return; activateTab('seeking'); const f = el(b.dataset.goForm); if(f){ f.scrollIntoView({ behavior: 'smooth', block: 'start' }); const first = f.querySelector('input, textarea'); if(first) first.focus({ preventScroll: true }); } };
+  seek.onclick = e => { const b = e.target.closest('[data-go-form]'); if(!b) return; activateTab('seeking'); const f = el(b.dataset.goForm); if(f){ gentleScroll(f, 'start'); const first = f.querySelector('input, textarea'); if(first) first.focus({ preventScroll: true }); } };
   if(!seek.__wired){
     seek.__wired = true;
     /* New Jobs: the open roles under your keywords, every keyword at once,
@@ -1466,7 +1510,7 @@ function renderRecruitingListings(){
       if(!err && ME.resume_path) await removeResume();
       b.disabled = false;
       if(err){ toast('Could not delete: ' + err, false); return; }
-      renderSeeking(await myProfile());
+      try{ renderSeeking(await myProfile()); }catch(e2){ toast('Deleted, but the page could not refresh. Reload to see it.', false); return; }
       toast('Resume posting deleted.', true);
     });
     /* Live / Paused: the listing switch, the same as a job's */
@@ -1992,6 +2036,7 @@ function jobStateLabel(j){
 async function renderJobs(){
   const box = el('pt-jobs'); if(!box) return;
   const jobs = await myJobs(PT.slug);
+  if(jobs === null){ box.innerHTML = '<div class="pt-empty"><b>Could not load your jobs</b><p>The connection dropped. <a href="/portal#listings">Reload to try again.</a></p></div>'; return; }
   PT.jobs = jobs;
   box.innerHTML = jobs.length ? jobs.map(j => {
     const st = jobStateLabel(j);
@@ -2000,7 +2045,7 @@ async function renderJobs(){
       <div class="pt-job-head">
         <div><b>${escapeHtml(j.title)}</b>${j.location ? ' <span class="cell-muted">' + escapeHtml(j.location) + '</span>' : ''}${j.years_experience != null ? ' <span class="cell-muted">· ' + escapeHtml(String(j.years_experience)) + ' yrs</span>' : ''}
           <div class="pf-note" style="margin:4px 0 0">${escapeHtml((j.keywords || []).join(', ') || 'No keywords yet')}</div>
-          ${docs.length ? `<div class="pf-note" style="margin:4px 0 0">${docs.map(d => `<a class="doc-link" href="${escapeHtml(d.url)}" target="_blank" rel="noopener">${escapeHtml(d.name || 'Document')}</a>`).join(' ')}</div>` : ''}</div>
+          ${docs.length ? `<div class="pf-note" style="margin:4px 0 0">${docs.map(d => `<a class="doc-link" href="${escapeHtml(safeUrl(d.url))}" target="_blank" rel="noopener">${escapeHtml(d.name || 'Document')}</a>`).join(' ')}</div>` : ''}</div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${st ? `<span class="badge ${st.cls}">${escapeHtml(st.text)}</span>` : ''}
           <button type="button" class="mini-btn" data-edit-job="${escapeHtml(j.id)}">Edit</button>
           <button type="button" class="mini-btn" data-applicants="${escapeHtml(j.id)}">New Applicants</button>
@@ -2067,7 +2112,7 @@ function wireJobs(){
     if(ed){
       const j = (PT.jobs || []).find(x => x.id === ed.dataset.editJob);
       /* the list sits on Your Listings, the form on Find Recruits (2026-09-13) */
-      if(j){ setMode(j); activateTab('hiring'); el('pt-job-form').scrollIntoView({ behavior: 'smooth', block: 'start' }); el('job-title').focus({ preventScroll: true }); }
+      if(j){ setMode(j); activateTab('hiring'); gentleScroll(el('pt-job-form'), 'start'); el('job-title').focus({ preventScroll: true }); }
       return;
     }
     const del = e.target.closest('[data-del-job]');
@@ -2088,6 +2133,7 @@ function wireJobs(){
       if(panel.style.display !== 'none'){ panel.style.display = 'none'; return; }
       panel.style.display = ''; panel.innerHTML = '<span class="pf-note"><span class="spin" aria-hidden="true"></span>Loading…</span>';
       const rows = await jobApplicants(a.dataset.applicants);
+      if(rows === null){ panel.innerHTML = '<span class="pf-note">Could not load the applicants just now. Try again.</span>'; return; }
       panel.innerHTML = rows.length ? rows.map(r => `<div class="pt-app">
           <b><a href="/${escapeHtml(r.handle)}" target="_blank" rel="noopener">${escapeHtml(r.display_name || r.handle)}</a></b>
           ${r.title ? ' <span class="cell-muted">' + escapeHtml(r.title) + (r.years != null ? ', ' + r.years + ' yrs' : '') + '</span>' : ''}
@@ -2308,7 +2354,7 @@ function wirePromote(){
     const copyBtn  = e.target.closest('[data-copy]');
     const richBtn  = e.target.closest('[data-copy-rich]');
 
-    if(styleBtn){ KIT_STYLE = styleBtn.dataset.style; kit.__wired = false; renderPromote(); return; }
+    if(styleBtn){ KIT_STYLE = styleBtn.dataset.style; renderPromote(); return; }   // the delegated listener survives innerHTML, never re-bind it
     if(printBtn){ printArt(printBtn.dataset.print, printBtn.dataset.page); return; }
 
     const stage = e.target.closest('[data-zoom]');

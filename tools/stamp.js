@@ -16,7 +16,7 @@
    hashed for the pages. */
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
 const ROOT = path.join(__dirname, '..');
-const ASSETS = ['styles.css', 'nav.js', 'analytics.js', 'store.js', 'app.js', 'profile.js', 'portal.js', 'admin.js'];
+const ASSETS = ['styles.css', 'nav.js', 'analytics.js', 'store.js', 'app.js', 'profile.js', 'portal.js', 'admin.js', 'thread.js'];
 const hash = f => crypto.createHash('sha256').update(fs.readFileSync(path.join(ROOT, f))).digest('hex').slice(0, 10);
 const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 

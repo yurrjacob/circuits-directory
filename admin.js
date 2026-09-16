@@ -7,7 +7,7 @@
 (function(){
 'use strict';
 const $ = id => document.getElementById(id);
-const esc = s => (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let allApps = [];
 let editId = null;
 const panels = {
@@ -24,7 +24,7 @@ const pending  = () => allApps.filter(a=>a.status==='Pending');
    paid Trust Badge chosen for that one keyword, and there is no other kind:
    our own team mark is not a badge and never sits on a listing. */
 const badgeTag = b => !b ? 'none'
-  : `<span class="lb" style="background:${esc(b.color)}">${esc(b.text)}</span>`;
+  : `<span class="lb" style="${badgeStyle(b.color)}">${esc(b.text)}</span>`;
 
 /* A company name with its username underneath, everywhere the admin lists
    one: the name alone is ambiguous the day a second "Acme" signs up, the
@@ -203,7 +203,7 @@ function renderIdeas(){
     });
   $('ideas-body').innerHTML = rows.map(a=>`
     <tr>
-      <td class="cell-muted nowrap">${esc((a.created_at||'').slice(0,10))}</td>
+      <td class="cell-muted nowrap">${a.created_at ? new Date(a.created_at).toLocaleDateString() : ''}</td>
       ${coCell(a.company, a.company_handle)}
       <td class="cell-muted">${esc(a.contact)||''}${a.email?'<br><span class="cell-muted">'+esc(a.email)+'</span>':''}</td>
       <td class="idea-text">${esc(a.idea)}</td>
@@ -284,9 +284,15 @@ function bannerError(err){
   return 'Could not save. Make sure you are signed in as staff.';
 }
 
-async function removeListing(id){ if(!confirm('Remove this keyword listing?')) return; await deleteApplication(id); await reload(); }
-async function togglePause(id){ const l = allApps.find(a=>a.id===id); if(!l) return; await setPaused(id, !l.paused); await reload(); }
+async function removeListing(id){ if(!confirm('Remove this keyword listing?')) return; const err = await deleteApplication(id); if(err){ alert('Could not remove it: ' + (err.message || err)); return; } await reload(); }
+async function togglePause(id){ const l = allApps.find(a=>a.id===id); if(!l) return; const err = await setPaused(id, !l.paused); if(err){ alert('Could not change that: ' + (err.message || err)); return; } await reload(); }
+/* one decision at a time: a double click must not send two emails (audit, 2026-09-15) */
+let deciding = false;
 async function approveApp(id){
+  if(deciding) return; deciding = true;
+  try{ await approveAppNow(id); } finally { deciding = false; }
+}
+async function approveAppNow(id){
   const app = allApps.find(a=>a.id===id);
   if(app && bannerConflict(app)){
     alert('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword. Remove the existing banner first.');
@@ -307,9 +313,13 @@ async function rejectApp(id){
     + 'This is sent to the supplier. Leave it blank to send the plain notice with no reason.',
     '');
   if(reason === null) return;                 // cancelled, change nothing
-  await updateAppStatus(id,'Denied');
-  notifyDecision(id, reason.trim());
-  await reload();
+  if(deciding) return; deciding = true;
+  try{
+    const err = await updateAppStatus(id,'Denied');
+    if(err){ alert('Could not deny it: ' + (err.message || err)); return; }   // no email for a change that did not happen
+    notifyDecision(id, reason.trim());
+    await reload();
+  } finally { deciding = false; }
 }
 
 /* ---- companies: suspend and reinstate ----
@@ -355,7 +365,7 @@ async function reloadUpgrades(){
       ${coCell(r.company || r.company_slug, r.company_handle)}
       <td>${esc(r.keyword || 'none')}</td>
       <td><b>${esc(UPGRADE_NAMES[r.kind] || r.kind)}</b></td>
-      <td>${r.kind === 'badge' ? `<span class="lb" style="background:${esc(r.badge_color || '#c9a227')}">${esc(r.badge_text || '')}</span>` : r.kind === 'lock' ? 'Spot chosen on Approve' : 'Exclusive banner'}</td>
+      <td>${r.kind === 'badge' ? `<span class="lb" style="${badgeStyle(r.badge_color)}">${esc(r.badge_text || '')}</span>` : r.kind === 'lock' ? 'Spot chosen on Approve' : 'Exclusive banner'}</td>
       <td class="cell-muted">${new Date(r.created_at).toLocaleDateString()}</td>
       <td class="row-actions">
         <button class="mini-btn green" onclick="approveUpgrade('${esc(r.id)}')">Approve</button>
@@ -369,7 +379,7 @@ async function approveUpgrade(id){
   if(!l){ alert('That listing is gone.'); return; }
   let fields;
   if(r.kind === 'badge'){
-    fields = { badge: { text: (r.badge_text || '').slice(0, 18), color: r.badge_color || '#c9a227' } };
+    fields = { badge: { text: (r.badge_text || '').slice(0, 18), color: hexColor(r.badge_color) } };
     if(!fields.badge.text){ alert('This request has no badge label. Deny it and ask the company to request again.'); return; }
   }else if(r.kind === 'banner'){
     if(bannerConflict({ ...l, banner: true })){ alert('Blocked: "' + (l.keyword || '') + '" already has a live Exclusive Sponsor banner. Remove that one first.'); return; }
@@ -382,6 +392,10 @@ async function approveUpgrade(id){
     fields = { locked_position: n };
   }
   if(!confirm('Approve this ' + UPGRADE_NAMES[r.kind] + ' for ' + l.company + '? Only do this once payment is taken. It goes live now.')) return;
+  if(deciding) return; deciding = true;
+  try{ await approveUpgradeNow(id, r, l, fields); } finally { deciding = false; }
+}
+async function approveUpgradeNow(id, r, l, fields){
   const err = await updateApplication(l.id, fields);
   if(err){
     alert(/duplicate|unique|23505/i.test((err.message || '') + (err.code || ''))

@@ -1,0 +1,20 @@
+-- Site audit, 2026-09-15. Applied to circuits-com as audit_hardening_2026_09_15.
+-- The full statements ran through the Supabase MCP; this is the record.
+--
+-- 1. logos and docs buckets: INSERT for signed-in accounts only
+--    (logos_signed_in_upload, docs_signed_in_upload replace *_anyone_upload).
+-- 2. guard_application_insert(): a non-staff insert into applications must
+--    name a company the caller owns (or none), and arrives Pending with no
+--    price, fee, locked spot or paused flag. Banner and badge stay: they are
+--    the extras requested with the listing, approved after payment.
+-- 3. EXECUTE revoked from anon, authenticated and public on every function a
+--    trigger calls, plus client_ip(). Triggers still fire.
+-- 4. anon loses INSERT/UPDATE/DELETE/TRUNCATE/REFERENCES/TRIGGER on jobs,
+--    job_keywords, job_applications, notifications, talent_keywords,
+--    upgrade_requests, applications; TRUNCATE/REFERENCES/TRIGGER revoked from
+--    anon and authenticated on every public table.
+-- 5. rate_limit triggers: profile_events 600/h, searches 300/h, claims 5/h.
+-- 6. badge_text_problem(text, boolean) set search_path = public.
+-- 7. RLS policies rewritten with (select auth.uid()) on profiles,
+--    notifications, company_users, claims, job_applications.
+-- 8. Indexes on the five unindexed foreign keys.

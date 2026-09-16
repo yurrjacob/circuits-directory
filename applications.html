@@ -6,7 +6,9 @@
 <title>Website Applications - Circuits.com Admin</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="assets/favicon.png">
-<link rel="stylesheet" href="styles.css?v=00b2008fb9">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
+<link rel="stylesheet" href="styles.css?v=fb3a7b65ea">
 <script>if(new URLSearchParams(location.search).has('embed')) document.documentElement.classList.add('embed');</script>
 </head>
 <body>
@@ -87,10 +89,10 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="store.js?v=ac1093bf15"></script>
+<script src="store.js?v=2779f089a3"></script>
 <script>
 const $ = id => document.getElementById(id);
-const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc = s => (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let filter = 'all', companyFilter = '', sortBy = 'date-desc', rowLimit = 100;
 let apps = [];
 
@@ -146,12 +148,12 @@ function rowHtml(a){
     : '<span style="color:#c0c4bb">none</span>';
   const conflict = a.status!=='Approved' && bannerConflict(a);
   return `<tr data-id="${a.id}" class="${conflict?'row-warn':''}">
-    <td class="nowrap">${esc((a.created_at||'').slice(0,10))}</td>
+    <td class="nowrap">${a.created_at ? new Date(a.created_at).toLocaleDateString() : ''}</td>
     <td class="co-cell">
       <span class="ce co-name" contenteditable data-field="company" data-ph="Company">${esc(a.company)}</span>
       <div class="co-sub">Web: <span class="ce" contenteditable data-field="website" data-ph="none">${esc(a.website)}</span></div>
       <div class="co-sub">Logo: ${logoHtml}
-        <label class="mini-btn" style="padding:2px 8px;font-size:.72rem;cursor:pointer;margin-left:6px" title="Upload a logo image">Upload<input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" data-logo-up style="display:none"></label>
+        <label class="mini-btn" style="padding:2px 8px;font-size:.72rem;cursor:pointer;margin-left:6px" title="Upload a logo image">Upload<input type="file" accept="image/png,image/jpeg,image/webp" data-logo-up style="display:none"></label>
         ${isLogoUrl(a.logo)?`<button type="button" class="mini-btn danger" data-act="clearlogo" style="padding:2px 8px;font-size:.72rem;margin-left:6px" title="Remove this logo">Clear</button>`:''}
       </div>
     </td>

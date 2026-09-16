@@ -13,15 +13,16 @@
 <meta property="og:url" content="https://circuits.com/join">
 <meta property="og:image" content="https://circuits.com/assets/og-card.png">
 <link rel="icon" href="assets/favicon.png">
-<link rel="stylesheet" href="styles.css?v=00b2008fb9">
-<script src="/nav.js?v=ded2c647b5"></script>
-<script async src="/analytics.js?v=17b1c5b9b5"></script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
+<link rel="stylesheet" href="styles.css?v=fb3a7b65ea">
+<script src="/nav.js?v=b5adcdecca"></script>
 </head>
 <body>
 
 <header class="topbar">
 <div class="inner">
-<div class="brand"><a href="/"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-slogan">Free Circuits Directory Marketplace</span></div>
+<div class="brand"><a href="/"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com" width="389" height="64"></a><span class="brand-slogan">Free Circuits Directory Marketplace</span></div>
     <nav class="nav">
       <a href="/">Home</a>
       <a href="/about">About</a>
@@ -47,6 +48,7 @@
      the Sponsor Banner and the Trust Badge, filed as Pending applications
      with the company details taken from the account. The anonymous MVP1 form
      is kept in backups/join-2026-09-03/. -->
+<main id="content">
 <div class="form-wrap">
 <h1>Get Listed For Free</h1>
 <p class="lede">Get found by the people searching for what you offer.<br>Claim your Circuits-Keyword™ and establish your presence where the circuits industry connects.</p>
@@ -152,7 +154,7 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
 <button type="button" class="opt-btn" data-text="Specialist">Specialist</button>
 <button type="button" class="opt-btn" data-text="">Custom</button>
 </div>
-<input id="badge-custom" type="text" maxlength="18" placeholder="Type your custom badge" style="display:none;max-width:240px;margin:8px 0 4px">
+<input id="badge-custom" aria-label="Custom badge text" type="text" maxlength="18" placeholder="Type your custom badge" style="display:none;max-width:240px;margin:8px 0 4px">
 <span class="field-label">Badge Color</span>
 <div class="swatches" id="swatches">
 <button type="button" class="swatch selected" data-color="#c9a227" style="background:linear-gradient(135deg,#e9c95c,#c9a227)" aria-label="Gold"></button>
@@ -263,6 +265,8 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
 </form>
 </div>
 
+</main>
+
 <footer class="footer">
 <div class="inner">
 <div class="flinks">
@@ -271,14 +275,14 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
     </div>
 <div style="display:flex;align-items:center;gap:14px">
 <span>© 2026 Circuits.com</span>
-<span class="footer-brand"><img class="footer-mark" src="assets/favicon.png" alt="Circuits.com"></span>
+<span class="footer-brand"><img class="footer-mark" src="assets/favicon.png" alt="" width="64" height="64"></span>
 </div>
 </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="store.js?v=ac1093bf15"></script>
-<script src="app.js?v=6fa74c8465"></script>
+<script src="store.js?v=2779f089a3"></script>
+<script src="app.js?v=74e100a7f2"></script>
 <script>
 (async function initGetListed(){
   const el = id => document.getElementById(id);

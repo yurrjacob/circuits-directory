@@ -151,12 +151,21 @@ function mountTurnstile(form){
   window.__onTurnstile = window.__onTurnstile || [];
   window.__onTurnstile.push(render);
   if(!document.getElementById('cf-turnstile-js')){
-    window.__turnstileReady = () => { (window.__onTurnstile || []).forEach(f => f()); window.__onTurnstile = []; };
+    window.__turnstileReady = () => { window.__turnstileUp = true; (window.__onTurnstile || []).forEach(f => f()); window.__onTurnstile = []; };
     const s = document.createElement('script');
     s.id = 'cf-turnstile-js'; s.async = true; s.defer = true;
     s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=__turnstileReady&render=explicit';
+    /* blocked (an ad blocker, a locked-down network) or down: say so instead
+       of refusing every submit forever (audit, 2026-09-15) */
+    s.onerror = () => { window.__turnstileDown = true; };
+    setTimeout(() => { if(!window.__turnstileUp) window.__turnstileDown = true; }, 15000);
     document.head.appendChild(s);
   }
+}
+/* '' when the form may be sent, otherwise the message to show */
+function turnstileProblem(form){
+  if(!turnstileOn() || turnstileToken(form)) return '';
+  return window.__turnstileDown ? TURNSTILE_DOWN : TURNSTILE_WAIT;
 }
 function turnstileToken(form){ return form && form.__ts ? form.__ts.token : ''; }
 /* a token is single-use: after a refused attempt the widget has to run again */
@@ -166,6 +175,7 @@ function resetTurnstile(form){
   if(window.turnstile && form.__ts.id != null){ try{ window.turnstile.reset(form.__ts.id); }catch(e){} }
 }
 const TURNSTILE_WAIT = 'Please complete the "I am human" check first.';
+const TURNSTILE_DOWN = 'The "I am human" check could not load. Turn off any ad blocker for this page and reload, or contact us.';
 
 /* Silently accept a suspected bot. Telling it why it failed just teaches the
    author what to change. */
@@ -189,10 +199,18 @@ function teamMarkHtml(){
    than to the company: the same company can run "Authorized" on one keyword and
    nothing on another. So this is only ever rendered against a listing, never
    beside a name. */
+/* A badge colour is exactly six hex digits, and its text is black or white
+   by the colour's own brightness so it always reads (audit, 2026-09-15). */
+function hexColor(c){ return /^#[0-9a-f]{6}$/i.test(c || '') ? c : '#c9a227'; }
+function badgeStyle(c){
+  const h = hexColor(c), r = parseInt(h.slice(1,3),16), g = parseInt(h.slice(3,5),16), b = parseInt(h.slice(5,7),16);
+  const lum = (0.2126*r + 0.7152*g + 0.0722*b) / 255;
+  return 'background:' + h + ';color:' + (lum > 0.55 ? '#0f0f0f' : '#ffffff');
+}
 function badgeHtml(badge, extraClass){
   if(!badge || !badge.text) return '';
   const cls = 'lb' + (extraClass ? ' ' + extraClass : '');
-  return `<span class="${cls}" style="background:${escapeHtml(badge.color || '#c9a227')}"`
+  return `<span class="${cls}" style="${badgeStyle(badge.color)}"`
     + ` title="Trust Badge: a paid label chosen by this company for this listing. It is not a certification and Circuits.com has not assessed it.">`
     + `${escapeHtml(badge.text)}</span>`;
 }
@@ -349,7 +367,7 @@ async function initInbox(){
   if(typeof sb === 'undefined'){
     if(!storedSession()) return;
     const add = src => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
-    try{ await add('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'); await add('/store.js?v=ac1093bf15'); }catch(e){ return; }
+    try{ await add('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'); await add('/store.js?v=2779f089a3'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;
@@ -418,7 +436,7 @@ async function initInbox(){
         <div class="inbox-msg">
           <div class="inbox-from">${avatar(n)}<div><b>${escapeHtml(n.sender_name)}</b>${adminBadge(n)}<span>${escapeHtml(KINDS[kindOf(n)].label)} · ${escapeHtml(when(n.created_at))}</span></div></div>
           <div class="inbox-body"><p>${escapeHtml(n.body).replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>')}</p></div>
-          ${n.link ? `<a class="btn btn-primary inbox-open" href="${escapeHtml(n.link)}">Open</a>` : ''}
+          ${n.link ? `<a class="btn btn-primary inbox-open" href="${escapeHtml(safeLink(n.link))}">Open</a>` : ''}
         </div>`;
       return;
     }
@@ -525,7 +543,16 @@ async function sendFounderEmail(subject, fields, autoresponse){
 }
 
 /* Results page rendering */
-function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function escapeHtml(s){return String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+/* A link that may only be a same-site path or an http(s) address (audit,
+   2026-09-15): anything else becomes the dashboard. */
+function safeLink(u){ u = String(u || '').trim(); if(/^\/(?!\/)/.test(u)) return u; return safeUrl(u) || '/portal'; }
+/* scrollIntoView that respects reduced motion (audit, 2026-09-15) */
+function gentleScroll(el, block){
+  if(!el) return;
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: block || 'start' });
+}
 /* A URL safe to put in an href. These values (a listing's website and its
    uploaded-doc links) are supplied by the listing owner, so escaping alone is
    not enough, escapeHtml leaves `javascript:`/`data:` schemes intact. Only
@@ -813,7 +840,7 @@ async function initResults(forcedTerm){
         const r = target.getBoundingClientRect();
         const onScreen = r.top >= 0 && r.bottom <= innerHeight;
         if(onScreen){ light(); return; }
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        gentleScroll(target, 'center');
         document.addEventListener('scrollend', light, { once: true });
         setTimeout(light, 900);            // browsers without scrollend
       }, 60);
@@ -1159,7 +1186,7 @@ const msg = document.getElementById('msg');
     const termsOk = !!(termsBox && termsBox.checked);
     if(termsErr) termsErr.style.display = termsOk ? 'none' : 'block';
     if(!termsOk && !firstBad) firstBad = termsBox;
-    if(firstBad){ firstBad.scrollIntoView({behavior:'smooth', block:'center'}); firstBad.focus({preventScroll:true}); return false; }
+    if(firstBad){ gentleScroll(firstBad, 'center'); firstBad.focus({preventScroll:true}); return false; }
     return true;
   }
 
@@ -1325,7 +1352,7 @@ async function initReset(){
     const id = el('rq-id').value.trim();
     if(!id){ msg.textContent = 'Enter your email or username.'; msg.style.color = '#b3261e'; return; }
     if(id.includes('@') && !isValidEmail(id)){ msg.textContent = 'That email address looks incomplete. Check it and try again.'; msg.style.color = '#b3261e'; return; }
-    if(turnstileOn() && !turnstileToken(el('rq-form'))){ msg.textContent = TURNSTILE_WAIT; msg.style.color = '#b3261e'; return; }
+    { const tp = turnstileProblem(el('rq-form')); if(tp){ msg.textContent = tp; msg.style.color = '#b3261e'; return; } }
     btn.disabled = true; msg.style.color = ''; msg.textContent = 'Sending…';
     const err = await requestPasswordReset(id, turnstileToken(el('rq-form')));
     if(err) resetTurnstile(el('rq-form'));
@@ -1452,7 +1479,7 @@ async function initJoinAccount(){
     msg.textContent = '';
     await refresh();
     const next = document.querySelector('#acct-step + .step');
-    if(next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if(next) gentleScroll(next, 'start');
   });
 }
 
@@ -1531,7 +1558,7 @@ function initRegister(){
     /* a bot gets the same "check your inbox" screen and no account; telling
        it why would only teach it what to change */
     if(looksLikeSpam(form)){ showCreated(); return; }
-    if(turnstileOn() && !turnstileToken(form)) return fail(TURNSTILE_WAIT);
+    { const tp = turnstileProblem(form); if(tp) return fail(tp); }
 
     submitBtn.disabled = true; submitBtn.textContent = 'Creating…';
 
@@ -1541,7 +1568,7 @@ function initRegister(){
     if(why){
       submitBtn.disabled = false; submitBtn.textContent = 'Create Profile';
       handleMsg.textContent = why; handleMsg.style.color = '#b3261e';
-      handleInput.scrollIntoView({ behavior:'smooth', block:'center' });
+      gentleScroll(handleInput, 'center');
       return fail('That address just became unavailable.');
     }
 
