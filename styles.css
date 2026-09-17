@@ -1122,6 +1122,14 @@ tr.row-warn td{background:#fff3cd}
    a new tab. ---- */
 /* Every row carries its own View button, so the boards lost the single button
    that acted on a selected row (Jacob, 2026-09-17). */
+/* a little gallery inside a board panel: thumbnails that open full size */
+.bd-gallery{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 0}
+.bd-shot{padding:0;border:1px solid var(--line);border-radius:10px;background:var(--bg-soft);
+  cursor:zoom-in;overflow:hidden;line-height:0;transition:border-color .12s,opacity .12s}
+.bd-shot:hover{border-color:var(--green);opacity:.9}
+.bd-shot:focus-visible{outline:2px solid #1f5fbf;outline-offset:2px}
+.bd-shot img{width:112px;height:84px;object-fit:cover;display:block}
+@media(max-width:600px){.bd-shot img{width:96px;height:72px}}
 .th-act{width:1%}
 .board-table td.cell-act{width:1%;white-space:nowrap;text-align:right;vertical-align:middle}
 .board-view{padding:7px 18px;font-size:.86rem;line-height:1.2}

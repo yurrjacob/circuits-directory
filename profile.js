@@ -362,27 +362,7 @@ async function initProfile(){
   return true;
 }
 
-/* Full-size image overlay. Closes on click, on Esc, or with the button. */
-function openLightbox(src, caption){
-  const box = document.createElement('div');
-  box.className = 'pf-lb';
-  box.innerHTML = `<button class="pf-lb-x" aria-label="Close">×</button>
-    <img src="${escapeHtml(src)}" alt="${escapeHtml(caption || '')}">
-    ${caption ? `<p class="pf-lb-cap">${escapeHtml(caption)}</p>` : ''}`;
-
-  const close = () => {
-    box.remove();
-    document.removeEventListener('keydown', onKey);
-    document.body.style.overflow = '';
-  };
-  const onKey = e => { if(e.key === 'Escape') close(); };
-
-  box.addEventListener('click', close);
-  document.addEventListener('keydown', onKey);
-  document.body.style.overflow = 'hidden';
-  document.body.appendChild(box);
-  box.querySelector('.pf-lb-x').focus();
-}
+/* openLightbox lives in app.js now: the Job Board opens pictures too. */
 
 function socialLinks(socials){
   const s = socials && typeof socials === 'object' ? socials : {};

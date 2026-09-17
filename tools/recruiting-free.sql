@@ -141,3 +141,36 @@ grant select (contact_email), update (contact_email) on public.profiles to authe
 --    limit 200
 -- $$;
 -- grant execute on function public.talent_search(text) to anon, authenticated;
+
+-- 2026-09-17, applied as job_search_company_images. The Job Board panel shows a
+-- little gallery (Jacob): pictures attached to the post come from jobs.docs,
+-- which the page already reads, and job_search() now also returns the company's
+-- own gallery pictures, the same ones its profile page shows, from its approved
+-- and unpaused listings. Capped at 12 so one company cannot bloat the payload.
+-- drop function if exists public.job_search(text);
+-- create function public.job_search(p_keyword text)
+-- returns table(id uuid, title text, location text, description text,
+--               created_at timestamptz, paid_until timestamptz, company_slug text,
+--               company_name text, company_handle text, company_logo text,
+--               keywords text[], years_experience smallint, docs jsonb, images jsonb)
+-- language sql stable security definer set search_path to 'public'
+-- as $$
+--   select j.id, j.title, j.location, j.description, j.created_at, j.paid_until,
+--          j.company_slug, c.name, c.handle, c.logo,
+--          coalesce((select array_agg(k.keyword order by k.keyword) from job_keywords k where k.job_id = j.id), '{}'),
+--          j.years_experience, coalesce(j.docs, '[]'::jsonb),
+--          coalesce((select jsonb_agg(x.g) from (
+--                      select distinct g
+--                        from applications a, jsonb_array_elements(coalesce(a.gallery, '[]'::jsonb)) g
+--                       where a.company_slug = j.company_slug
+--                         and a.status = 'Approved' and not coalesce(a.paused, false)
+--                         and coalesce(g->>'url', '') <> ''
+--                       order by g limit 12) x), '[]'::jsonb)
+--     from jobs j join companies c on c.slug = j.company_slug
+--    where j.paid_until > now() and j.closed_at is null and c.suspended_at is null
+--      and (norm_kw(p_keyword) = '' or exists (
+--            select 1 from job_keywords k where k.job_id = j.id and k.keyword_norm = norm_kw(p_keyword)))
+--    order by j.paid_until desc
+--    limit 200
+-- $$;
+-- grant execute on function public.job_search(text) to anon, authenticated;

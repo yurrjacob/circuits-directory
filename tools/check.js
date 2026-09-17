@@ -1807,6 +1807,23 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     assert.ok(/createSignedUrl\(path, 900\)/.test(storeSrc) && /function resumeDownloadLink/.test(storeSrc),
       'a resume link is short lived again, or the Download button lost its link');
   }
+  /* A job panel shows its pictures as a little gallery (Jacob, 2026-09-17):
+     images attached to the post, then the company's own gallery. Anything that
+     is not a picture stays a document link. */
+  {
+    const appSrc2 = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+    const profSrc = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
+    assert.ok(/function isImageUrl\(/.test(appSrc2) && /function galleryHtml\(/.test(appSrc2) && /function openLightbox\(/.test(appSrc2),
+      'the shared picture helpers are not in app.js, so the Job Board cannot open a picture');
+    assert.ok(!/function openLightbox\(/.test(profSrc),
+      'openLightbox is defined twice, in app.js and profile.js');
+    assert.ok(/const files = docs\.filter\(d => !isImageUrl\(d\.url\)\)/.test(jobsHtml) && /galleryHtml\(pics, j\.company_name\)/.test(jobsHtml),
+      'the Job Board panel lost its gallery, or still lists pictures as documents');
+    assert.ok(/\(Array\.isArray\(j\.images\) \? j\.images : \[\]\)/.test(jobsHtml),
+      'the Job Board ignores the company gallery that job_search returns');
+    assert.ok(/detail\.addEventListener\('click'[\s\S]{0,160}openLightbox/.test(jobsHtml),
+      'a Job Board thumbnail no longer opens the full picture');
+  }
   /* every keyword shows and the rows rotate at random on each load (Jacob, 2026-09-16) */
   assert.ok(!/slice\(0, 3\)/.test(talentHtml) && !/slice\(0, 3\)/.test(jobsHtml) && /Math\.floor\(Math\.random\(\) \* \(i \+ 1\)\)/.test(talentHtml) && /Math\.floor\(Math\.random\(\) \* \(i \+ 1\)\)/.test(jobsHtml), 'a board caps its keywords or lists in a fixed order');
   assert.ok(!/Talent Access/.test(talentHtml) && !/Get Talent Access/.test(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')), 'the paid Talent Access is back');

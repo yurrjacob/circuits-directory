@@ -134,6 +134,44 @@ function resumeReaderHtml(url, who, collapsed){
     </div>`;
 }
 
+/* ---- pictures (shared by the profile pages and the Job Board) ----
+   An attachment is a picture if its file name says so. Anything else stays a
+   document link, so a PDF spec never lands in a gallery. */
+function isImageUrl(u){ return /\.(png|jpe?g|gif|webp|avif|bmp)(\?|#|$)/i.test(String(u || '')); }
+/* A little gallery: thumbnails that open the full picture. Each one is a real
+   button, so it is reachable by keyboard and announces what it opens. */
+function galleryHtml(pics, label){
+  pics = (pics || []).filter(p => p && safeUrl(p.url));
+  if(!pics.length) return '';
+  return `<div class="bd-gallery">${pics.map(p => `
+      <button type="button" class="bd-shot" data-full="${escapeHtml(safeUrl(p.url))}" data-cap="${escapeHtml(p.caption || '')}"
+        aria-label="Open picture${p.caption ? ': ' + escapeHtml(p.caption) : (label ? ' from ' + escapeHtml(label) : '')}">
+        <img src="${escapeHtml(safeUrl(p.url))}" alt="${escapeHtml(p.caption || label || '')}" loading="lazy">
+      </button>`).join('')}</div>`;
+}
+/* Full-size image overlay. Closes on click, on Esc, or with the button.
+   Lived in profile.js until the Job Board needed it too (Jacob, 2026-09-17). */
+function openLightbox(src, caption){
+  const box = document.createElement('div');
+  box.className = 'pf-lb';
+  box.innerHTML = `<button class="pf-lb-x" aria-label="Close">×</button>
+    <img src="${escapeHtml(src)}" alt="${escapeHtml(caption || '')}">
+    ${caption ? `<p class="pf-lb-cap">${escapeHtml(caption)}</p>` : ''}`;
+
+  const close = () => {
+    box.remove();
+    document.removeEventListener('keydown', onKey);
+    document.body.style.overflow = '';
+  };
+  const onKey = e => { if(e.key === 'Escape') close(); };
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', onKey);
+  document.body.style.overflow = 'hidden';
+  document.body.appendChild(box);
+  box.querySelector('.pf-lb-x').focus();
+}
+
 /* ---- validators (shared) ---- */
 function isValidEmail(s){ return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test((s||'').trim()); }
 function isValidPhone(s){ const d=(s||'').replace(/\D/g,''); return d.length>=10 && d.length<=15; }

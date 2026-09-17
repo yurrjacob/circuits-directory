@@ -9,7 +9,7 @@
 <link rel="canonical" href="https://circuits.com/jobs">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="styles.css?v=870b215c4a">
+<link rel="stylesheet" href="styles.css?v=afe044413e">
 <script src="/nav.js?v=b5adcdecca"></script>
 <script async src="/analytics.js?v=70049a2947"></script>
 </head>
@@ -78,7 +78,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="store.js?v=aa50fdf54b"></script>
-<script src="app.js?v=9788803f98"></script>
+<script src="app.js?v=c373f70ce1"></script>
 <script>
 /* The Job Board, a table (Jacob, 2026-09-13): Job Title, Location, Company,
    Years Experience, Circuits-Keywords. Pick a row, then View Job Details &
@@ -160,6 +160,12 @@
   function open(i){
     const j = rows[i]; if(!j) return;
     const docs = (Array.isArray(j.docs) ? j.docs : []).filter(d => d && d.url);
+    /* Pictures attached to the post itself come first, then the company's own
+       gallery, the same pictures its profile page shows (Jacob, 2026-09-17).
+       Anything that is not a picture stays a document link below. */
+    const files = docs.filter(d => !isImageUrl(d.url));
+    const pics = docs.filter(d => isImageUrl(d.url)).map(d => ({ url: d.url, caption: d.name || '' }))
+      .concat((Array.isArray(j.images) ? j.images : []).filter(g => g && g.url));
     detail.hidden = false;
     detail.innerHTML = `<div class="bd-main">
         <div class="job-co">
@@ -169,7 +175,8 @@
         <h3>${escapeHtml(j.title)}</h3>
         <p class="tal-meta">${j.years_experience != null ? j.years_experience + ' year' + (Number(j.years_experience) === 1 ? '' : 's') + ' of experience' : 'Experience not specified'}</p>
         ${j.description ? `<p class="tal-bio" style="white-space:pre-line">${escapeHtml(j.description)}</p>` : ''}
-        ${docs.length ? `<p class="tal-meta">${docs.map(d => `<a class="doc-link" href="${escapeHtml(safeUrl(d.url))}" target="_blank" rel="noopener">${escapeHtml(d.name || 'Document')}</a>`).join(' · ')}</p>` : ''}
+        ${files.length ? `<p class="tal-meta">${files.map(d => `<a class="doc-link" href="${escapeHtml(safeUrl(d.url))}" target="_blank" rel="noopener">${escapeHtml(d.name || 'Document')}</a>`).join(' · ')}</p>` : ''}
+        ${galleryHtml(pics, j.company_name)}
         <div class="kw-tags">${(j.keywords || []).map(k => `<a class="kw-tag" href="/jobs?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join('')}</div>
       </div>
       <div class="bd-side"><div class="job-apply" id="apply-${escapeHtml(j.id)}" style="margin:0;padding:0;border:0">${applyHtml(j)}</div></div>
@@ -183,6 +190,11 @@
     if(btn){ select(+btn.dataset.view); open(+btn.dataset.view); return; }
     if(e.target.closest('a')) return;
     const tr = e.target.closest('tr[data-i]'); if(tr) select(+tr.dataset.i);
+  });
+  /* one listener for the panel, which is redrawn on every open */
+  detail.addEventListener('click', e => {
+    const shot = e.target.closest('[data-full]');
+    if(shot) openLightbox(shot.dataset.full, shot.dataset.cap);
   });
   table.addEventListener('dblclick', e => { const tr = e.target.closest('tr[data-i]'); if(tr){ select(+tr.dataset.i); open(+tr.dataset.i); } });
   /* one Tab stop for the table, Up/Down to move, Enter or Space to open (audit, 2026-09-15) */
