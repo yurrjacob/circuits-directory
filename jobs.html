@@ -9,7 +9,7 @@
 <link rel="canonical" href="https://circuits.com/jobs">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="styles.css?v=7b7c0e7b97">
+<link rel="stylesheet" href="styles.css?v=870b215c4a">
 <script src="/nav.js?v=b5adcdecca"></script>
 <script async src="/analytics.js?v=70049a2947"></script>
 </head>
@@ -55,7 +55,7 @@
 </div>
 
 <div class="page prose tal-intro">
-  <p class="lede">The Job Board: Open jobs posted on Circuits.com, listed under the Circuits-Keywords&trade; they hire for. Pick a job, view job details and <a href="#board-table" class="lede-act" data-board-go>Apply</a>.</p>
+  <p class="lede">The Job Board: Open jobs posted on Circuits.com, listed under the Circuits-Keywords&trade; they hire for. Press View beside a job for the full details and to apply.</p>
   <div id="job-note" class="tal-note"></div>
 </div>
 
@@ -113,7 +113,6 @@
   for(let i = rows.length - 1; i > 0; i--){ const k = Math.floor(Math.random() * (i + 1)); [rows[i], rows[k]] = [rows[k], rows[i]]; }
 
   if(!rows.length){
-    document.querySelectorAll('[data-board-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); gentleScroll(body, 'start'); }));
     body.innerHTML = `<div class="empty"><div class="big">No open jobs${q ? ' for &ldquo;' + escapeHtml(q) + '&rdquo;' : ''} right now</div>
       <p>Check back soon, or <a href="/portal#seeking">post your free resume on the Recruit Board</a> so employers can find you.</p></div>`;
     return;
@@ -126,19 +125,16 @@
     : user ? `<button type="button" class="btn btn-primary job-apply-btn" data-id="${escapeHtml(j.id)}">Apply</button>`
            : `<a class="btn" href="/portal">Sign in to apply</a>`;
   body.innerHTML = `<div class="listings board">
-    <div class="board-head">
-      <p class="pf-note" id="board-hint" aria-live="polite">Pick a job in the table, then View Job Details &amp; Apply.</p>
-      <button type="button" class="btn btn-blue" id="board-open" disabled>View Job Details &amp; Apply</button>
-    </div>
     <div class="board-detail" id="board-detail" hidden></div>
     <div class="table-wrap"><table class="listings-table board-table" id="board-table">
-      <thead><tr><th>Job Title</th><th>Location</th><th>Company</th><th>Years Experience</th><th>Circuits-Keywords&trade;</th></tr></thead>
+      <thead><tr><th>Job Title</th><th>Location</th><th>Company</th><th>Years Experience</th><th>Circuits-Keywords&trade;</th><th class="th-act"><span class="sr-only">Job details</span></th></tr></thead>
       <tbody>${rows.map((j, i) => `<tr data-i="${i}" tabindex="-1">
         <td data-label="Job Title"><b>${escapeHtml(j.title)}</b>${applied.has(j.id) ? ' <span class="badge live">Applied</span>' : ''}</td>
         <td data-label="Location">${j.location ? escapeHtml(j.location) : '<span class="cell-muted">not given</span>'}</td>
         <td data-label="Company"><a href="${escapeHtml(profileUrl(j.company_handle) || '#')}">${escapeHtml(j.company_name)}</a></td>
         <td data-label="Years Experience">${years(j)}</td>
-        <td data-label="Circuits-Keywords&trade;">${kwCell(j.keywords)}</td></tr>`).join('')}</tbody>
+        <td data-label="Circuits-Keywords&trade;">${kwCell(j.keywords)}</td>
+        <td class="cell-act"><button type="button" class="btn btn-blue board-view" data-view="${i}" aria-label="View job details and apply for ${escapeHtml(j.title)}">View</button></td></tr>`).join('')}</tbody>
     </table></div></div>`;
 
   /* structured data for the live posts (audit, 2026-09-15), written with
@@ -154,14 +150,12 @@
     })));
     document.head.appendChild(ld);
   }catch(e){}
-  const table = document.getElementById('board-table'), openBtn = document.getElementById('board-open'),
-        hint = document.getElementById('board-hint'), detail = document.getElementById('board-detail');
+  const table = document.getElementById('board-table'), detail = document.getElementById('board-detail');
   let selected = -1;
+  /* selection is only a highlight now: it marks the row whose panel is open */
   function select(i){
     selected = i;
     table.querySelectorAll('tbody tr').forEach(tr => { const on = +tr.dataset.i === i; tr.classList.toggle('is-selected', on); if(on) tr.setAttribute('aria-current', 'true'); else tr.removeAttribute('aria-current'); tr.tabIndex = on ? 0 : -1; });
-    openBtn.disabled = i < 0;
-    hint.innerHTML = i < 0 ? 'Pick a job in the table, then View Job Details &amp; Apply.' : `Selected: <b>${escapeHtml(rows[i].title)}</b>`;
   }
   function open(i){
     const j = rows[i]; if(!j) return;
@@ -184,12 +178,17 @@
     document.getElementById('bd-close').addEventListener('click', () => { detail.hidden = true; detail.innerHTML = ''; });
   }
   /* the Apply link in the lede: down to the table, first row picked, button ready */
-  document.querySelectorAll('[data-board-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); if(selected < 0) select(0); gentleScroll(table, 'start'); openBtn.focus({ preventScroll: true }); }));
-  table.addEventListener('click', e => { if(e.target.closest('a')) return; const tr = e.target.closest('tr[data-i]'); if(tr) select(+tr.dataset.i); });
+  table.addEventListener('click', e => {
+    const btn = e.target.closest('[data-view]');
+    if(btn){ select(+btn.dataset.view); open(+btn.dataset.view); return; }
+    if(e.target.closest('a')) return;
+    const tr = e.target.closest('tr[data-i]'); if(tr) select(+tr.dataset.i);
+  });
   table.addEventListener('dblclick', e => { const tr = e.target.closest('tr[data-i]'); if(tr){ select(+tr.dataset.i); open(+tr.dataset.i); } });
   /* one Tab stop for the table, Up/Down to move, Enter or Space to open (audit, 2026-09-15) */
   table.addEventListener('keydown', e => {
     const tr = e.target.closest('tr[data-i]'); if(!tr) return;
+    if(e.target.closest('[data-view]')) return;   // the button handles its own keys
     if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); select(+tr.dataset.i); open(+tr.dataset.i); return; }
     if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
       e.preventDefault();
@@ -198,7 +197,6 @@
     }
   });
   const firstRow = table.querySelector('tbody tr'); if(firstRow) firstRow.tabIndex = 0;
-  openBtn.addEventListener('click', () => { if(selected >= 0) open(selected); });
 
   detail.addEventListener('click', async e => {
     const open = e.target.closest('button.job-apply-btn');

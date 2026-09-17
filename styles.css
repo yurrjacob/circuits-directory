@@ -1120,6 +1120,11 @@ tr.row-warn td{background:#fff3cd}
    The panel used to be a column of bare links. Now the person reads as a person,
    the PDF has real buttons, and the file opens in the page rather than only in
    a new tab. ---- */
+/* Every row carries its own View button, so the boards lost the single button
+   that acted on a selected row (Jacob, 2026-09-17). */
+.th-act{width:1%}
+.board-table td.cell-act{width:1%;white-space:nowrap;text-align:right;vertical-align:middle}
+.board-view{padding:7px 18px;font-size:.86rem;line-height:1.2}
 .res-chip{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:5px;background:#eaf1fb;color:#1f5fbf;
   border:1px solid #cfe0f7;font-size:.66rem;font-weight:800;letter-spacing:.06em;vertical-align:2px}
 .board-table tbody tr.is-selected td:first-child{box-shadow:inset 3px 0 0 #1f5fbf}
@@ -1423,6 +1428,8 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
   .board-table td[data-label]::before{width:104px;line-height:1.35}
   .board-table tr{padding:12px 14px}
   .board-table tbody tr.is-selected td:first-child{box-shadow:none}
+  .board-table td.cell-act{width:auto;text-align:left;padding-top:10px}
+  .board-view{display:block;width:100%;padding:10px 12px;font-size:.9rem}
   .table-wrap{overflow:visible}
   /* on a phone the row is a card: the number rides above the name, and the
      quote button goes full width where a thumb can actually hit it */

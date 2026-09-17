@@ -1770,15 +1770,25 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   }
   /* the boards are tables with one blue action button top right (Jacob, 2026-09-13) */
   const talentHtml = fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8'), jobsHtml = fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8');
-  assert.ok(/<th>Seeking Job As<\/th><th>Location<\/th><th>Years Experience<\/th><th>Circuits-Keywords&trade;<\/th>/.test(talentHtml) && /class="btn btn-blue" id="board-open" disabled>View Resume &amp; Contact</.test(talentHtml),
-    'the Recruit Board is not the table with View Resume & Contact');
-  assert.ok(/<th>Job Title<\/th><th>Location<\/th><th>Company<\/th><th>Years Experience<\/th><th>Circuits-Keywords&trade;<\/th>/.test(jobsHtml) && /class="btn btn-blue" id="board-open" disabled>View Job Details &amp; Apply</.test(jobsHtml),
-    'the Job Board is not the table with View Job Details & Apply');
+  assert.ok(/<th>Seeking Job As<\/th><th>Location<\/th><th>Years Experience<\/th><th>Circuits-Keywords&trade;<\/th>/.test(talentHtml),
+    'the Recruit Board is not the table of Seeking Job As, Location, Years Experience and keywords');
+  assert.ok(/<th>Job Title<\/th><th>Location<\/th><th>Company<\/th><th>Years Experience<\/th><th>Circuits-Keywords&trade;<\/th>/.test(jobsHtml),
+    'the Job Board is not the table of Job Title, Location, Company, Years Experience and keywords');
+  /* Every row carries its own blue View button, and the single button that
+     acted on a selected row is gone with its Selected: line (Jacob, 2026-09-17). */
+  for (const [f, src, label] of [['talent.html', talentHtml, 'View resume and contact for'], ['jobs.html', jobsHtml, 'View job details and apply for']]) {
+    assert.ok(/class="btn btn-blue board-view" data-view="\$\{i\}"/.test(src) && src.includes(label),
+      `${f} has no View button on each row`);
+    assert.ok(!/id="board-open"/.test(src) && !/id="board-hint"/.test(src) && !/board-head/.test(src),
+      `${f} still has the single top button or its Selected: line`);
+    assert.ok(/const btn = e\.target\.closest\('\[data-view\]'\);/.test(src) && /if\(e\.target\.closest\('\[data-view\]'\)\) return;/.test(src),
+      `${f} does not open the row its View button sits in, or the row keys fight the button`);
+    assert.ok(!/data-board-go/.test(src),
+      `${f} still carries a lede link to a table that is already on the page`);
+  }
   /* The Recruit Board reads the resume in the page (Jacob, 2026-09-17). The
      lede link that only scrolled to a table already on screen is gone, a row
      says whether there is a PDF, and the reader has real buttons. */
-  assert.ok(!/data-board-go/.test(talentHtml) && !/View Recruits now/.test(talentHtml),
-    'the Recruit Board lede still carries the View Recruits link, the table is already on the page');
   assert.ok(/r\.has_resume \? '<span class="res-chip"/.test(talentHtml),
     'a Recruit Board row no longer marks the people who attached a resume');
   assert.ok(/resumeReaderHtml\(resume, c\.display_name \|\| c\.handle, small\)/.test(talentHtml) && /id="bd-resume"/.test(talentHtml),

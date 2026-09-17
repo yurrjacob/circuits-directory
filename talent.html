@@ -9,7 +9,7 @@
 <link rel="canonical" href="https://circuits.com/talent">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="styles.css?v=7b7c0e7b97">
+<link rel="stylesheet" href="styles.css?v=870b215c4a">
 <script src="/nav.js?v=b5adcdecca"></script>
 <script async src="/analytics.js?v=70049a2947"></script>
 </head>
@@ -120,28 +120,23 @@
   /* every keyword in the cell (Jacob, 2026-09-16: "list all postings and keywords") */
   const kwCell = ks => (ks || []).map(k => `<a class="kw-tag kw-mini" href="/talent?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join('');
   body.innerHTML = `<div class="listings board">
-    <div class="board-head">
-      <p class="pf-note" id="board-hint" aria-live="polite">Pick a person in the table, then View Resume &amp; Contact.</p>
-      <button type="button" class="btn btn-blue" id="board-open" disabled>View Resume &amp; Contact</button>
-    </div>
     <div class="board-detail" id="board-detail" hidden></div>
     <div class="table-wrap"><table class="listings-table board-table" id="board-table">
-      <thead><tr><th>Seeking Job As</th><th>Location</th><th>Years Experience</th><th>Circuits-Keywords&trade;</th></tr></thead>
+      <thead><tr><th>Seeking Job As</th><th>Location</th><th>Years Experience</th><th>Circuits-Keywords&trade;</th><th class="th-act"><span class="sr-only">Resume and contact</span></th></tr></thead>
       <tbody>${rows.map((r, i) => `<tr data-i="${i}" tabindex="-1">
         <td data-label="Seeking Job As"><b>${escapeHtml(r.title || 'Circuits industry professional')}</b>${r.has_resume ? '<span class="res-chip" title="A resume PDF is attached">PDF</span>' : ''}</td>
         <td data-label="Location">${r.location ? escapeHtml(r.location) : '<span class="cell-muted">not given</span>'}</td>
         <td data-label="Years Experience">${years(r)}</td>
-        <td data-label="Circuits-Keywords&trade;">${kwCell(r.keywords)}</td></tr>`).join('')}</tbody>
+        <td data-label="Circuits-Keywords&trade;">${kwCell(r.keywords)}</td>
+        <td class="cell-act"><button type="button" class="btn btn-blue board-view" data-view="${i}" aria-label="View resume and contact for ${escapeHtml(r.title || 'this person')}">View</button></td></tr>`).join('')}</tbody>
     </table></div></div>`;
 
-  const table = document.getElementById('board-table'), openBtn = document.getElementById('board-open'),
-        hint = document.getElementById('board-hint'), detail = document.getElementById('board-detail');
+  const table = document.getElementById('board-table'), detail = document.getElementById('board-detail');
   let selected = -1;
+  /* selection is only a highlight now: it marks the row whose panel is open */
   function select(i){
     selected = i;
     table.querySelectorAll('tbody tr').forEach(tr => { const on = +tr.dataset.i === i; tr.classList.toggle('is-selected', on); if(on) tr.setAttribute('aria-current', 'true'); else tr.removeAttribute('aria-current'); tr.tabIndex = on ? 0 : -1; });
-    openBtn.disabled = i < 0;
-    hint.innerHTML = i < 0 ? 'Pick a person in the table, then View Resume &amp; Contact.' : `Selected: <b>${escapeHtml(rows[i].title || 'Circuits industry professional')}</b>`;
   }
   async function open(i){
     const r = rows[i]; if(!r) return;
@@ -185,11 +180,17 @@
       });
     }
   }
-  table.addEventListener('click', e => { if(e.target.closest('a')) return; const tr = e.target.closest('tr[data-i]'); if(tr) select(+tr.dataset.i); });
+  table.addEventListener('click', e => {
+    const btn = e.target.closest('[data-view]');
+    if(btn){ select(+btn.dataset.view); open(+btn.dataset.view); return; }
+    if(e.target.closest('a')) return;
+    const tr = e.target.closest('tr[data-i]'); if(tr) select(+tr.dataset.i);
+  });
   table.addEventListener('dblclick', e => { const tr = e.target.closest('tr[data-i]'); if(tr){ select(+tr.dataset.i); open(+tr.dataset.i); } });
   /* one Tab stop for the table, Up/Down to move, Enter or Space to open (audit, 2026-09-15) */
   table.addEventListener('keydown', e => {
     const tr = e.target.closest('tr[data-i]'); if(!tr) return;
+    if(e.target.closest('[data-view]')) return;   // the button handles its own keys
     if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); select(+tr.dataset.i); open(+tr.dataset.i); return; }
     if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
       e.preventDefault();
@@ -198,7 +199,6 @@
     }
   });
   const firstRow = table.querySelector('tbody tr'); if(firstRow) firstRow.tabIndex = 0;
-  openBtn.addEventListener('click', () => { if(selected >= 0) open(selected); });
 })();
 </script>
 </body>
