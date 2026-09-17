@@ -492,25 +492,25 @@ function jobState(j){
   if(j.closed_at) return 'Paused';
   if(j.paid_until && new Date(j.paid_until) > new Date()) return 'Live until ' + new Date(j.paid_until).toLocaleDateString();
   if(j.paid_until) return 'Expired';
-  return 'Awaiting payment';
+  return 'Awaiting approval';
 }
 async function reloadJobs(){
   const body = $('jobs-body'); if(!body) return;
   allJobs = await fetchAllJobs();
   body.innerHTML = allJobs.map(j => `
-    <tr class="${jobState(j) === 'Awaiting payment' ? 'row-waiting' : ''}">
+    <tr class="${jobState(j) === 'Awaiting approval' ? 'row-waiting' : ''}">
       <td><a href="/${esc(j.company_handle || j.company_slug)}" target="_blank" rel="noopener">${esc(j.company_name)}</a><br><span class="cell-muted">${j.company_handle ? 'circuits.com/' + esc(j.company_handle) : 'no username yet'}</span></td>
       <td><b>${esc(j.title)}</b>${j.location ? '<br><span class="cell-muted">' + esc(j.location) + '</span>' : ''}</td>
       <td class="cell-muted">${esc((j.keywords || []).join(', ') || 'none')}</td>
       <td class="cell-muted">${new Date(j.created_at).toLocaleDateString()}</td>
       <td>${esc(jobState(j))}</td>
       <td class="row-actions">
-        ${j.closed_at ? '' : `<button class="mini-btn green" onclick="markJobPaid('${esc(j.id)}')">Approve (30 days)</button>
+        ${j.closed_at ? '' : `<button class="mini-btn green" onclick="approveJob('${esc(j.id)}')">Approve (30 days)</button>
         <button class="mini-btn" onclick="closeJob('${esc(j.id)}')">Deny</button>`}
       </td></tr>`).join('');
   $('jobs-empty').style.display = allJobs.length ? 'none' : 'block';
 }
-async function markJobPaid(id){
+async function approveJob(id){
   const j = allJobs.find(x => x.id === id);
   const from = Math.max(Date.now(), j && j.paid_until ? new Date(j.paid_until).getTime() : 0);
   const err = await updateJob(id, { paid_until: new Date(from + 30 * 864e5).toISOString() });
@@ -648,6 +648,6 @@ window.initAdmin = async function(){
    tools/check.js fails if a new onclick appears without being listed here. */
 Object.assign(window, {
   editListing, editBadge, removeListing, togglePause, lockListing,
-  approveApp, rejectApp, setSuspended, markJobPaid, closeJob, approveUpgrade, denyUpgrade, sendNotificationUI, notifyAudienceUI, setRecruitStatus, deleteCompanyUI
+  approveApp, rejectApp, setSuspended, approveJob, closeJob, approveUpgrade, denyUpgrade, sendNotificationUI, notifyAudienceUI, setRecruitStatus, deleteCompanyUI
 });
 })();

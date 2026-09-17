@@ -771,7 +771,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     'the Circuits.com mark is back on a profile heading (removed 2026-09-14)');
   /* 2026-09-03 (Jacob): ONE account type, called a profile. One dashboard
      with every tab for everyone: Profile Details / Listings / Hiring /
-     Seeking Employment / Branding / Account Settings (+ Admin for staff).
+     Job Search / Branding / Account Settings (+ Admin for staff).
      No account kind anywhere: not on /register, not in signup metadata, not
      as a body class, not in the header label. */
   const portalHtml2 = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
@@ -805,11 +805,11 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   /* the person and the page share name, picture and address */
   assert.ok(/const mine = \{ display_name: fields\.name \};[\s\S]*mine\.photo_url = fields\.logo;[\s\S]*mine\.handle = fields\.handle;/.test(portalSrc2),
     'Profile Details no longer mirrors name, picture and address onto the person');
-  /* the Seeking Employment tab holds experience, keywords, the private phone and the listing switch */
+  /* the Job Search tab holds experience, keywords, the private phone and the listing switch */
   for (const id of ['id="me-title"', 'id="me-location"', 'id="me-keywords"', 'id="me-years"', 'id="me-email"', 'id="me-bio"', 'id="f-creds"', 'id="me-resume"', 'id="me-phone"']) {
-    assert.ok(portalSrc2.includes(id), `the Seeking Employment tab lost ${id}`);
+    assert.ok(portalSrc2.includes(id), `the Job Search tab lost ${id}`);
   }
-  assert.ok(!/id="me-handle"|id="me-name"|id="me-photo"/.test(portalSrc2), 'Seeking Employment still asks for address, name or picture, those live on Profile Details now');
+  assert.ok(!/id="me-handle"|id="me-name"|id="me-photo"/.test(portalSrc2), 'Job Search still asks for address, name or picture, those live on Profile Details now');
   /* the Hiring tab: post a job, search people, the board */
   for (const id of ['id="pt-jobs"', 'id="job-post"']) {
     assert.ok(portalHtml2.includes(id), `the Hiring tab lost ${id}`);
@@ -891,7 +891,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
      the same way and the toggle can come back when Recruiting does. */
   /* Recruiting is open from the homepage again (Jacob, 2026-09-03, "so that
      users can choose between searching for jobs and for workers"): Directory,
-     Hiring and Seeking Employment, three plain choices in one pill. */
+     Find Recruits and Job Search, three plain choices in one pill. */
   assert.ok(/id="home-form"[^>]*data-target="directory"/.test(home), 'the homepage form no longer says which index it searches');
   assert.ok(!/Coming Soon/i.test(home), 'Coming Soon is back on the homepage');
   /* Directory, Find Recruits (people on /talent, for employers), Job Search

@@ -555,12 +555,12 @@ async function renderAccount(user, hostId, canDelete){
       <hr class="ac-rule">
       <button class="mini-btn ac-danger" type="button" id="ac-delete">Delete my account</button>
       <p class="pf-note">Permanent. Your Circuits.com address is released and can be taken by
-        someone else. An account with a live keyword listing or a paid job post cannot be
-        deleted here, those are paid for and may be shared. Contact us for those.</p>
+        someone else. An account with a live keyword listing or a live job post cannot be
+        deleted here, because those may be shared with colleagues. Contact us for those.</p>
       <div id="ac-del-msg" class="pf-note"></div>` : `
       <hr class="ac-rule">
       <p class="pf-note">Need to close this account or hand the listing to a colleague?
-        <a href="/contact">Contact us</a>. Company listings are paid for and may be shared,
+        <a href="/contact">Contact us</a>. Company listings may be shared with colleagues,
         so we sort those out with you directly.</p>`}
     </div>`;
 
@@ -610,8 +610,8 @@ async function renderAccount(user, hostId, canDelete){
     if(res === 'deleted'){ await signOut(); location.href = '/'; return; }
     msg.style.color = '#b3261e';
     msg.textContent = res === 'still_owns_listing'
-      ? 'This account has a live keyword listing or a paid job post, so it cannot be deleted here. '
-        + 'Those are paid for and may be shared with colleagues. Contact us and we will sort it out.'
+      ? 'This account has a live keyword listing or a live job post, so it cannot be deleted here. '
+        + 'Those may be shared with colleagues. Contact us and we will sort it out.'
       : 'Your account could not be deleted just now. Please try again or contact us.';
   };
 }

@@ -412,7 +412,7 @@ async function signOutEverywhere(){
   if(error){ console.error('signOutEverywhere', error); return error.message; }
   return '';
 }
-/* Returns 'deleted', or 'still_owns_listing' when the account manages a paid
+/* Returns 'deleted', or 'still_owns_listing' when the account manages a live
    listing, see delete_own_account() for why that case is refused. */
 async function deleteOwnAccount(){
   if(!sb) return 'error';
@@ -708,7 +708,7 @@ async function setJobKeywords(id, keywords){
   if(error) return { error: /keyword_limit/.test(error.message) ? 'Ten keywords is the limit.' : error.message };
   return { keywords: data || [] };
 }
-/* a company's own jobs, with their keywords; owners see them paid or not */
+/* a company's own jobs, with their keywords; owners see them live or not */
 async function myJobs(slug){
   if(!sb || !slug) return [];
   const { data, error } = await sb.from('jobs').select('*, job_keywords(keyword)')
@@ -717,7 +717,7 @@ async function myJobs(slug){
   return (data || []).map(j => ({ ...j, keywords: (j.job_keywords || []).map(k => k.keyword).sort() }));
 }
 /* the live jobs one company has posted, for its public page (Jacob,
-   2026-09-03). Live means paid and open; the read policy already limits an
+   2026-09-03). Live means approved and open; the read policy already limits an
    anonymous reader to exactly that, the filter here keeps the owner's own
    view of the page honest too. */
 async function fetchCompanyJobs(slug){

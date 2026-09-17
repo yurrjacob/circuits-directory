@@ -77,8 +77,8 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="store.js?v=8935201922"></script>
-<script src="app.js?v=a16d3b456c"></script>
+<script src="store.js?v=ff98c42c94"></script>
+<script src="app.js?v=b0280744ee"></script>
 <script>
 /* The Recruit Board, a table (Jacob, 2026-09-13): Seeking Job As, Location,
    Years Experience, Circuits-Keywords. Pick a row, then View Resume & Contact
@@ -112,8 +112,8 @@
 
   if(!rows.length){
     document.querySelectorAll('[data-board-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); gentleScroll(body, 'start'); }));
-    body.innerHTML = `<div class="empty"><div class="big">Nobody seeking employment${q ? ' for &ldquo;' + escapeHtml(q) + '&rdquo;' : ''} yet</div>
-      <p>Are you one? <a href="/register">Create a free profile</a>, add your keywords under Job Search and switch on <b>List me under Seeking Employment</b>.</p></div>`;
+    body.innerHTML = `<div class="empty"><div class="big">No resumes posted${q ? ' for &ldquo;' + escapeHtml(q) + '&rdquo;' : ''} yet</div>
+      <p>Looking for work? <a href="/register">Create a free profile</a>, fill in Post Free Resume under Job Search, then press <b>List Me on the Recruit Board</b>.</p></div>`;
     return;
   }
 

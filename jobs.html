@@ -77,8 +77,8 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="store.js?v=8935201922"></script>
-<script src="app.js?v=a16d3b456c"></script>
+<script src="store.js?v=ff98c42c94"></script>
+<script src="app.js?v=b0280744ee"></script>
 <script>
 /* The Job Board, a table (Jacob, 2026-09-13): Job Title, Location, Company,
    Years Experience, Circuits-Keywords. Pick a row, then View Job Details &
@@ -115,7 +115,7 @@
   if(!rows.length){
     document.querySelectorAll('[data-board-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); gentleScroll(body, 'start'); }));
     body.innerHTML = `<div class="empty"><div class="big">No open jobs${q ? ' for &ldquo;' + escapeHtml(q) + '&rdquo;' : ''} right now</div>
-      <p>Check back soon, or <a href="/portal#seeking">list yourself on the Recruit Board</a> so employers can find you.</p></div>`;
+      <p>Check back soon, or <a href="/portal#seeking">post your free resume on the Recruit Board</a> so employers can find you.</p></div>`;
     return;
   }
 

@@ -458,11 +458,11 @@ begin
   reset role; perform set_config('request.jwt.claims', null, true);
 
   if res <> 'still_owns_listing' then
-    raise exception 'FAIL: an account managing a paid listing self-deleted (%)', res; end if;
+    raise exception 'FAIL: an account managing a live listing self-deleted (%)', res; end if;
   if not exists (select 1 from auth.users where id = u2) then
     raise exception 'FAIL: the listing owner was deleted anyway'; end if;
   if not exists (select 1 from companies where slug = 'zz-del') then
-    raise exception 'FAIL: a paid company listing was destroyed by an account deletion'; end if;
+    raise exception 'FAIL: a live company listing was destroyed by an account deletion'; end if;
 
   if not exists (select 1 from security_log
                   where action = 'delete_account' and target = 'zz-del-plain@rlstest.invalid') then
