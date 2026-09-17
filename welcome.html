@@ -9,7 +9,7 @@
 <link rel="icon" href="assets/favicon.png">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="styles.css?v=5682aba914">
+<link rel="stylesheet" href="styles.css?v=f018a606c0">
 <script src="/nav.js?v=b5adcdecca"></script>
 </head>
 <body>
@@ -33,36 +33,42 @@
 </header>
 
 <main id="content">
-<div class="wc-wrap">
+<div class="wc-hero">
+  <div class="wc-wrap">
+    <p class="wc-pill"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Email confirmed</p>
+    <h1 class="wc-h1">Welcome to Circuits.com</h1>
+    <p class="wc-sub" id="wc-sub">You are signed in and ready to go.</p>
+    <p class="wc-lede">Everything below is free. Pick what you want to do first. The other two
+      are waiting in your dashboard whenever you want them.</p>
+  </div>
+</div>
 
-  <h1 class="wc-h1">Welcome to Circuits.com</h1>
-  <p class="wc-sub" id="wc-sub">Your email is confirmed and you are signed in.</p>
-  <p class="wc-lede">Everything here is free. Choose what to do first, and come back for the
-    other two whenever you like. All three live in your dashboard.</p>
-
+<div class="wc-wrap wc-wrap-cards">
   <!-- The three things a new account can do, the same three the welcome email
        carries, each straight into the tab it names (Jacob, 2026-09-17). -->
-  <div class="wc-doors">
-    <a class="wc-door" href="/portal#listings">
-      <span class="wc-door-b">Free Directory Listing</span>
-      <span class="wc-door-t">List your company under the Circuits-Keywords&trade; buyers search,
-        up to ten of them, at no cost.</span>
+  <div class="wc-cards">
+    <a class="wc-card" href="/portal#listings">
+      <span class="wc-card-ico" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.7-4.5A2 2 0 0 1 6.6 3h10.8a2 2 0 0 1 1.9 1.5L21 9"/><path d="M4.5 9v10a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5V9"/><path d="M9 20.5V14h6v6.5"/></svg></span>
+      <span class="wc-card-b">Free Directory Listing</span>
+      <span class="wc-card-t">Put your company under the Circuits-Keywords&trade; buyers search. Up to ten of them, at no cost.</span>
+      <span class="wc-card-go">Start<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5.5 18.5 12 12 18.5"/></svg></span>
     </a>
-    <a class="wc-door" href="/portal#hiring">
-      <span class="wc-door-b">Post Free Job</span>
-      <span class="wc-door-t">Hiring? Put the role on the Job Board and take applications with a
-        link to each person's profile.</span>
+    <a class="wc-card" href="/portal#hiring">
+      <span class="wc-card-ico" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="18" height="12.5" rx="2"/><path d="M8.5 7.5V5.8A1.8 1.8 0 0 1 10.3 4h3.4a1.8 1.8 0 0 1 1.8 1.8v1.7"/><path d="M3 12.5h18"/></svg></span>
+      <span class="wc-card-b">Post Free Job</span>
+      <span class="wc-card-t">Hiring? Put the role on the Job Board and take applications with a link to each person&rsquo;s profile.</span>
+      <span class="wc-card-go">Start<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5.5 18.5 12 12 18.5"/></svg></span>
     </a>
-    <a class="wc-door" href="/portal#seeking">
-      <span class="wc-door-b">Post Free Resume</span>
-      <span class="wc-door-t">Looking for work? Put yourself on the Recruit Board so companies in
-        the industry can find you.</span>
+    <a class="wc-card" href="/portal#seeking">
+      <span class="wc-card-ico" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"/><path d="M14 3.5V8h4.5"/><circle cx="12" cy="13" r="2"/><path d="M8.8 18a3.4 3.4 0 0 1 6.4 0"/></svg></span>
+      <span class="wc-card-b">Post Free Resume</span>
+      <span class="wc-card-t">Looking for work? Put yourself on the Recruit Board so companies in the industry can find you.</span>
+      <span class="wc-card-go">Start<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5.5 18.5 12 12 18.5"/></svg></span>
     </a>
   </div>
 
   <p class="wc-foot">Not sure yet? <a href="/portal">Open your dashboard</a>. A copy of this
-    arrives by email too, so you can pick it up later.</p>
-
+    is on its way by email, so you can pick it up later.</p>
 </div>
 </main>
 
@@ -96,12 +102,20 @@
     sub.textContent = 'Your account is confirmed. Sign in to pick up where you left off.';
     return;
   }
-  /* the address is the thing they just claimed, so name it */
+  /* the address is the thing they just claimed, so name it and let them take it */
   let handle = '';
   try { const me = await myProfile(); handle = (me && me.handle) || ''; } catch(e){ handle = ''; }
-  sub.innerHTML = handle
-    ? 'Your email is confirmed and your address is live at <b>circuits.com/' + escapeHtml(handle) + '</b>.'
-    : 'Your email is confirmed and you are signed in.';
+  if(!handle){ sub.textContent = 'You are signed in and ready to go.'; return; }
+  const url = 'circuits.com/' + handle;
+  sub.innerHTML = 'Your address is live at <span class="wc-addr">'
+    + '<a href="/' + escapeHtml(handle) + '">' + escapeHtml(url) + '</a>'
+    + '<button type="button" class="wc-copy" id="wc-copy">Copy</button></span>';
+  const btn = document.getElementById('wc-copy');
+  btn.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText('https://' + url); btn.textContent = 'Copied'; }
+    catch(e){ btn.textContent = 'Press Ctrl C'; }
+    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+  });
 })();
 </script>
 </body>

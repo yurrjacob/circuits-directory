@@ -1125,22 +1125,55 @@ tr.row-warn td{background:#fff3cd}
 /* Every row carries its own View button, so the boards lost the single button
    that acted on a selected row (Jacob, 2026-09-17). */
 /* ---- welcome: the page an email confirmation opens (Jacob, 2026-09-17) ----
-   Three doors, the same three the welcome email carries. */
-.wc-wrap{max-width:820px;margin:0 auto;padding:54px 24px 72px}
-.wc-h1{margin:0 0 10px;font-size:2rem;line-height:1.2}
-.wc-sub{margin:0 0 6px;font-size:1.02rem;color:var(--ink)}
-.wc-lede{margin:0 0 26px;font-size:.95rem;color:var(--muted);max-width:60ch;line-height:1.55}
-.wc-doors{display:flex;flex-direction:column;gap:12px}
-.wc-door{display:flex;flex-direction:column;gap:4px;padding:18px 20px;border-radius:14px;
-  background:var(--green);color:#fff;text-decoration:none;box-shadow:var(--shadow);
-  transition:transform .12s,background .12s}
-.wc-door:hover{background:var(--green-dark);color:#fff;transform:translateY(-1px)}
-.wc-door:focus-visible{outline:3px solid var(--dark);outline-offset:3px}
-.wc-door-b{font-size:1.15rem;font-weight:800}
-.wc-door-t{font-size:.9rem;line-height:1.5;color:rgba(255,255,255,.92)}
-.wc-foot{margin:26px 0 0;font-size:.9rem;color:var(--muted)}
+   A quiet band at the top says the address is theirs, then three cards, one per
+   thing a new account can do. The same three the welcome email carries. */
+.wc-hero{background:linear-gradient(180deg,#f3f8e8 0%,var(--card) 100%);border-bottom:1px solid var(--line)}
+.wc-wrap{max-width:940px;margin:0 auto;padding:0 24px}
+.wc-hero .wc-wrap{padding-top:46px;padding-bottom:40px;text-align:center}
+.wc-pill{display:inline-flex;align-items:center;gap:7px;margin:0 0 16px;padding:5px 14px 5px 11px;
+  border-radius:999px;background:var(--green);color:#fff;font-size:.78rem;font-weight:800;
+  letter-spacing:.04em;text-transform:uppercase}
+.wc-h1{margin:0 0 12px;font-size:2.3rem;line-height:1.15;letter-spacing:-.02em}
+.wc-sub{margin:0 auto 10px;font-size:1.05rem;color:var(--ink)}
+.wc-addr{display:inline-flex;align-items:center;gap:8px;vertical-align:middle;
+  background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 5px 4px 14px;margin-left:4px}
+.wc-addr a{color:var(--green-dark);text-decoration:none;font-weight:700}
+.wc-addr a:hover{text-decoration:underline}
+.wc-copy{border:0;border-radius:999px;background:var(--bg-soft);color:var(--muted);cursor:pointer;
+  font:inherit;font-size:.78rem;font-weight:700;padding:5px 12px}
+.wc-copy:hover{background:var(--dark);color:#fff}
+.wc-lede{margin:0 auto;font-size:.97rem;color:var(--muted);max-width:56ch;line-height:1.6}
+.wc-wrap-cards{padding-top:34px;padding-bottom:72px}
+.wc-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.wc-card{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:24px 22px 20px;
+  border-radius:16px;background:var(--green);color:#fff;text-decoration:none;
+  box-shadow:0 2px 10px rgba(32,33,36,.14);transition:transform .14s,box-shadow .14s,background .14s}
+.wc-card:hover{background:var(--green-dark);color:#fff;transform:translateY(-3px);box-shadow:0 10px 22px rgba(32,33,36,.20)}
+.wc-card:focus-visible{outline:3px solid var(--dark);outline-offset:3px}
+.wc-card-ico{display:flex;align-items:center;justify-content:center;width:42px;height:42px;
+  border-radius:12px;background:rgba(255,255,255,.22);margin-bottom:4px}
+.wc-card-b{font-size:1.12rem;font-weight:800;line-height:1.25}
+.wc-card-t{font-size:.88rem;line-height:1.55;color:rgba(255,255,255,.93);flex:1 1 auto}
+.wc-card-go{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding-top:12px;
+  border-top:1px solid rgba(255,255,255,.28);width:100%;font-size:.85rem;font-weight:800}
+.wc-card:hover .wc-card-go svg{transform:translateX(3px)}
+.wc-card-go svg{transition:transform .14s}
+.wc-foot{margin:28px 0 0;font-size:.9rem;color:var(--muted);text-align:center}
 .wc-foot a{color:var(--green-dark)}
-@media(max-width:600px){.wc-wrap{padding:34px 16px 54px}.wc-h1{font-size:1.6rem}}
+@media(prefers-reduced-motion:reduce){.wc-card,.wc-card-go svg{transition:none}.wc-card:hover{transform:none}}
+@media(max-width:860px){.wc-cards{grid-template-columns:1fr}
+  .wc-card{flex-direction:row;flex-wrap:wrap;align-items:center;padding:18px 20px}
+  .wc-card-ico{margin:0}
+  .wc-card-b{flex:1 1 auto}
+  .wc-card-t{flex:1 1 100%}
+  .wc-card-go{margin-top:6px;padding-top:10px}}
+@media(max-width:600px){
+  .wc-hero .wc-wrap{padding:32px 16px 30px}
+  .wc-wrap{padding:0 16px}
+  .wc-h1{font-size:1.75rem}
+  .wc-sub{font-size:.98rem}
+  .wc-addr{margin-left:0;margin-top:6px}
+  .wc-wrap-cards{padding-bottom:48px}}
 
 /* ---- the job panel (Jacob, 2026-09-17) ----
    One column with a real shape: a company strip, the title, three facts, then
