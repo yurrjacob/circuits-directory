@@ -80,13 +80,57 @@ function talentCardHtml(r, o){
       </div>
     </article>`;
 }
-function talentContactHtml(c, resume){
+/* The panel a signed-in visitor sees beside a Recruit Board row: who this is,
+   how to reach them, and what to do with the PDF. It used to be four bare links
+   in a column, which read as a list of URLs rather than a person (Jacob,
+   2026-09-17). The resume itself is drawn by resumeReaderHtml below. */
+function talentContactHtml(c, resume, download){
+  const name = (c.display_name || c.handle || '').trim();
+  const row = (k, v) => `<div class="tal-row"><span class="tal-row-k">${k}</span><span class="tal-row-v">${v}</span></div>`;
   return `<div class="tal-open">
-      ${c.photo_url ? `<img class="tal-photo" src="${escapeHtml(c.photo_url)}" alt="">` : ''}
-      <b><a href="/${escapeHtml(c.handle)}">${escapeHtml(c.display_name || c.handle)}</a></b>
-      ${c.email ? `<a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>` : ''}
-      ${c.phone ? `<a href="tel:${escapeHtml(c.phone.replace(/[^\d+]/g, ''))}">${escapeHtml(c.phone)}</a>` : ''}
-      ${resume ? `<a href="${escapeHtml(resume)}" target="_blank" rel="noopener">Open resume (PDF)</a>` : '<span class="pf-note">No resume uploaded</span>'}
+      <div class="tal-who">
+        ${c.photo_url
+          ? `<img class="tal-photo" src="${escapeHtml(c.photo_url)}" alt="">`
+          : `<span class="tal-photo tal-photo-ph" aria-hidden="true">${escapeHtml((name || '?').charAt(0).toUpperCase())}</span>`}
+        <span class="tal-who-t">
+          <a class="tal-name" href="/${escapeHtml(c.handle)}">${escapeHtml(name || c.handle)}</a>
+          <span class="tal-handle">circuits.com/${escapeHtml(c.handle)}</span>
+        </span>
+      </div>
+      ${c.email ? row('Email', `<a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>`) : ''}
+      ${c.phone ? row('Phone', `<a href="tel:${escapeHtml(c.phone.replace(/[^\d+]/g, ''))}">${escapeHtml(c.phone)}</a>`) : ''}
+      ${resume
+        ? `<div class="tal-doc">
+             <span class="tal-doc-ico" aria-hidden="true">PDF</span>
+             <span class="tal-doc-t"><b>Resume</b><span class="pf-note">Open, download, or read it below</span></span>
+             <span class="tal-doc-acts">
+               <a class="mini-btn" href="${escapeHtml(resume)}" target="_blank" rel="noopener">Open</a>
+               <a class="mini-btn" href="${escapeHtml(download || resume)}">Download</a>
+             </span>
+           </div>`
+        : `<p class="pf-note tal-nodoc">No resume uploaded. ${c.email || c.phone ? 'Ask for one using the details above.' : 'Their profile page may carry more.'}</p>`}
+    </div>`;
+}
+/* The PDF itself, read in the page. navpanes=0 drops the thumbnail sidebar,
+   which ate half the width, and view=FitH starts on the page rather than at
+   27% zoom (tested in Chromium, 2026-09-17). No sandbox attribute: a sandboxed
+   frame renders a broken-file icon instead of the document, and the file is
+   cross-origin on storage, which always serves it as application/pdf.
+   Browsers that refuse to embed a PDF at all (some phones) show the fallback
+   line instead, and Open in a new tab always works. On a narrow screen the
+   frame starts closed and loads nothing until Show preview is pressed, so a
+   phone that cannot draw a PDF never shows a dead grey box. */
+function resumeReaderHtml(url, who, collapsed){
+  return `<div class="bd-doc">
+      <div class="bd-doc-bar">
+        <b>Resume${who ? ': ' + escapeHtml(who) : ''}</b>
+        <span class="bd-doc-acts">
+          <a class="mini-btn" href="${escapeHtml(url)}" target="_blank" rel="noopener">Open in a new tab</a>
+          <button type="button" class="mini-btn" id="bd-doc-toggle" aria-expanded="${collapsed ? 'false' : 'true'}" aria-controls="bd-doc-frame">${collapsed ? 'Show preview' : 'Hide preview'}</button>
+        </span>
+      </div>
+      <iframe class="bd-doc-frame" id="bd-doc-frame" ${collapsed ? 'hidden data-src' : 'src'}="${escapeHtml(url)}#navpanes=0&amp;view=FitH" title="Resume preview" loading="lazy" referrerpolicy="no-referrer"></iframe>
+      <p class="pf-note bd-doc-fall"${collapsed ? ' hidden' : ''}>Preview blank? Some browsers will not show a PDF inside a page. Use Open in a new tab.</p>
     </div>`;
 }
 
@@ -367,7 +411,7 @@ async function initInbox(){
   if(typeof sb === 'undefined'){
     if(!storedSession()) return;
     const add = src => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
-    try{ await add('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'); await add('/store.js?v=ff98c42c94'); }catch(e){ return; }
+    try{ await add('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'); await add('/store.js?v=aa50fdf54b'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;

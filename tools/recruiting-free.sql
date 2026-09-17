@@ -116,3 +116,28 @@ grant select (contact_email), update (contact_email) on public.profiles to authe
 -- on-boarding page (Jacob): it names the three things a new account can do
 -- and the email (notify, kind inbox) shows a button for each, into the tab.
 -- welcome_notification(p_user, p_name): new body, link '/portal#listings'.
+
+-- 2026-09-17, applied as talent_search_has_resume. The Recruit Board marks the
+-- rows that carry a PDF, so a company can see before opening one whether there
+-- is a resume to read (Jacob). talent_search() gains has_resume boolean; the
+-- path itself still only comes from talent_contact(), which is the real gate.
+-- drop function if exists public.talent_search(text);
+-- create function public.talent_search(p_keyword text)
+-- returns table(user_id uuid, title text, years smallint, bio text, keywords text[],
+--               credentials jsonb, location text, has_resume boolean)
+-- language sql stable security definer set search_path to 'public'
+-- as $$
+--   select p.user_id, p.title, p.years, p.bio,
+--          coalesce((select array_agg(k.keyword order by k.keyword) from talent_keywords k
+--                     where k.user_id = p.user_id and k.enabled), '{}'),
+--          p.credentials, p.location,
+--          (p.resume_path is not null and p.resume_path <> '')
+--     from profiles p
+--    where p.talent_listed and p.talent_status = 'Approved' and p.suspended_at is null
+--      and (norm_kw(p_keyword) = '' or exists (
+--            select 1 from talent_keywords k where k.user_id = p.user_id and k.enabled
+--                                              and k.keyword_norm = norm_kw(p_keyword)))
+--    order by p.updated_at desc nulls last
+--    limit 200
+-- $$;
+-- grant execute on function public.talent_search(text) to anon, authenticated;

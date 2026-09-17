@@ -1774,6 +1774,29 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     'the Recruit Board is not the table with View Resume & Contact');
   assert.ok(/<th>Job Title<\/th><th>Location<\/th><th>Company<\/th><th>Years Experience<\/th><th>Circuits-Keywords&trade;<\/th>/.test(jobsHtml) && /class="btn btn-blue" id="board-open" disabled>View Job Details &amp; Apply</.test(jobsHtml),
     'the Job Board is not the table with View Job Details & Apply');
+  /* The Recruit Board reads the resume in the page (Jacob, 2026-09-17). The
+     lede link that only scrolled to a table already on screen is gone, a row
+     says whether there is a PDF, and the reader has real buttons. */
+  assert.ok(!/data-board-go/.test(talentHtml) && !/View Recruits now/.test(talentHtml),
+    'the Recruit Board lede still carries the View Recruits link, the table is already on the page');
+  assert.ok(/r\.has_resume \? '<span class="res-chip"/.test(talentHtml),
+    'a Recruit Board row no longer marks the people who attached a resume');
+  assert.ok(/resumeReaderHtml\(resume, c\.display_name \|\| c\.handle, small\)/.test(talentHtml) && /id="bd-resume"/.test(talentHtml),
+    'the Recruit Board stopped drawing the resume in the page');
+  {
+    const appSrc = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+    assert.ok(/function resumeReaderHtml\(url, who, collapsed\)/.test(appSrc) && /navpanes=0&amp;view=FitH/.test(appSrc),
+      'the resume reader lost the PDF view settings, the viewer opens on its sidebar at 27%');
+    assert.ok(!/<iframe[^>]*id="bd-doc-frame"[^>]*sandbox=/.test(appSrc),
+      'the resume frame is sandboxed again, which renders a broken-file icon instead of the PDF');
+    assert.ok(/Open in a new tab</.test(appSrc) && />Download</.test(appSrc) && /bd-doc-fall/.test(appSrc),
+      'the resume panel lost Open in a new tab, Download, or the fallback line');
+    assert.ok(/class="tal-doc"/.test(appSrc) && /tal-row-k/.test(appSrc),
+      'the Recruit Board contact panel is a bare list of links again');
+    const storeSrc = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+    assert.ok(/createSignedUrl\(path, 900\)/.test(storeSrc) && /function resumeDownloadLink/.test(storeSrc),
+      'a resume link is short lived again, or the Download button lost its link');
+  }
   /* every keyword shows and the rows rotate at random on each load (Jacob, 2026-09-16) */
   assert.ok(!/slice\(0, 3\)/.test(talentHtml) && !/slice\(0, 3\)/.test(jobsHtml) && /Math\.floor\(Math\.random\(\) \* \(i \+ 1\)\)/.test(talentHtml) && /Math\.floor\(Math\.random\(\) \* \(i \+ 1\)\)/.test(jobsHtml), 'a board caps its keywords or lists in a fixed order');
   assert.ok(!/Talent Access/.test(talentHtml) && !/Get Talent Access/.test(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')), 'the paid Talent Access is back');

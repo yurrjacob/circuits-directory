@@ -611,12 +611,22 @@ async function removeResume(){
   await sb.storage.from('resumes').remove([u.id + '/resume.pdf']);
   return updateMyProfile({ resume_path: null });
 }
-/* a short-lived link to a resume: works for the owner and for subscribed companies */
+/* A short-lived link to a resume: the owner, a company that got an application,
+   and any signed-in account on the Recruit Board (free since 2026-09-13).
+   Fifteen minutes rather than five, because the Recruit Board now reads the PDF
+   in the page and a five minute link died mid-read (Jacob, 2026-09-17). */
 async function resumeLink(path){
   if(!sb || !path) return '';
-  const { data, error } = await sb.storage.from('resumes').createSignedUrl(path, 300);
+  const { data, error } = await sb.storage.from('resumes').createSignedUrl(path, 900);
   if(error){ console.warn('resumeLink', error.message); return ''; }
   return data.signedUrl;
+}
+/* The same link, asking storage to send the file as a download rather than
+   render it. Storage reads ?download= off the signed URL, so one round trip
+   serves both buttons. */
+function resumeDownloadLink(url, filename){
+  if(!url) return '';
+  return url + (url.includes('?') ? '&' : '?') + 'download=' + encodeURIComponent(filename || 'resume.pdf');
 }
 /* the directory: public metadata only, never a name or a handle */
 async function talentSearch(keyword){

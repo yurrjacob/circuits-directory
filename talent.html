@@ -9,7 +9,7 @@
 <link rel="canonical" href="https://circuits.com/talent">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="styles.css?v=fb3a7b65ea">
+<link rel="stylesheet" href="styles.css?v=7b7c0e7b97">
 <script src="/nav.js?v=b5adcdecca"></script>
 <script async src="/analytics.js?v=70049a2947"></script>
 </head>
@@ -55,7 +55,7 @@
 </div>
 
 <div class="page prose tal-intro">
-  <p class="lede">The Recruit Board: People in the circuits industry open to work, listed under the Circuits-Keywords&trade; that best describe their qualifications. <a href="#board-table" class="lede-act" data-board-go>View Recruits now</a></p>
+  <p class="lede">The Recruit Board: People in the circuits industry open to work, listed under the Circuits-Keywords&trade; that best describe their qualifications.</p>
   <div id="tal-access-note" class="tal-note"></div>
 </div>
 
@@ -77,8 +77,8 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="store.js?v=ff98c42c94"></script>
-<script src="app.js?v=b0280744ee"></script>
+<script src="store.js?v=aa50fdf54b"></script>
+<script src="app.js?v=9788803f98"></script>
 <script>
 /* The Recruit Board, a table (Jacob, 2026-09-13): Seeking Job As, Location,
    Years Experience, Circuits-Keywords. Pick a row, then View Resume & Contact
@@ -111,7 +111,6 @@
   for(let i = rows.length - 1; i > 0; i--){ const k = Math.floor(Math.random() * (i + 1)); [rows[i], rows[k]] = [rows[k], rows[i]]; }
 
   if(!rows.length){
-    document.querySelectorAll('[data-board-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); gentleScroll(body, 'start'); }));
     body.innerHTML = `<div class="empty"><div class="big">No resumes posted${q ? ' for &ldquo;' + escapeHtml(q) + '&rdquo;' : ''} yet</div>
       <p>Looking for work? <a href="/register">Create a free profile</a>, fill in Post Free Resume under Job Search, then press <b>List Me on the Recruit Board</b>.</p></div>`;
     return;
@@ -129,7 +128,7 @@
     <div class="table-wrap"><table class="listings-table board-table" id="board-table">
       <thead><tr><th>Seeking Job As</th><th>Location</th><th>Years Experience</th><th>Circuits-Keywords&trade;</th></tr></thead>
       <tbody>${rows.map((r, i) => `<tr data-i="${i}" tabindex="-1">
-        <td data-label="Seeking Job As"><b>${escapeHtml(r.title || 'Circuits industry professional')}</b></td>
+        <td data-label="Seeking Job As"><b>${escapeHtml(r.title || 'Circuits industry professional')}</b>${r.has_resume ? '<span class="res-chip" title="A resume PDF is attached">PDF</span>' : ''}</td>
         <td data-label="Location">${r.location ? escapeHtml(r.location) : '<span class="cell-muted">not given</span>'}</td>
         <td data-label="Years Experience">${years(r)}</td>
         <td data-label="Circuits-Keywords&trade;">${kwCell(r.keywords)}</td></tr>`).join('')}</tbody>
@@ -155,8 +154,9 @@
         ${creds.length ? `<p class="tal-meta">${creds.map(c => escapeHtml(c.name.trim()) + (c.issuer ? ', ' + escapeHtml(c.issuer) : '') + (c.year ? ' (' + escapeHtml(String(c.year)) + ')' : '')).join(' · ')}</p>` : ''}
         <div class="kw-tags">${(r.keywords || []).map(k => `<a class="kw-tag" href="/talent?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join('')}</div>
       </div>
-      <div class="bd-side" id="bd-side">${user ? '<span class="pf-note">Loading resume &amp; contact…</span>'
+      <div class="bd-side" id="bd-side">${user ? '<div class="bd-loading">' + loadingHtml('Loading resume and contact…') + '</div>'
         : '<p class="pf-note" style="margin:0 0 10px">Sign in to view this person\'s resume and contact details. It is free.</p><a class="btn btn-blue" href="/portal">Sign in</a> <a class="btn" href="/register">Create a free profile</a>'}</div>
+      <div class="bd-resume" id="bd-resume" hidden></div>
       <button type="button" class="mini-btn bd-close" id="bd-close">Close</button>`;
     gentleScroll(detail, 'start');
     document.getElementById('bd-close').addEventListener('click', () => { detail.hidden = true; detail.innerHTML = ''; });
@@ -167,10 +167,24 @@
     if(!side || !side.isConnected) return;
     if(!c){ side.innerHTML = '<p class="pf-note" style="color:#b3261e">Could not load this person\'s details just now. Try again in a moment.</p>'; return; }
     const resume = c.resume_path ? await resumeLink(c.resume_path) : '';
-    side.innerHTML = talentContactHtml(c, resume);
+    side.innerHTML = talentContactHtml(c, resume, resume ? resumeDownloadLink(resume, (c.handle || 'resume') + '-resume.pdf') : '');
+    /* the PDF reads in the page, full width under both columns */
+    const rz = document.getElementById('bd-resume');
+    if(rz && resume){
+      rz.hidden = false;
+      const small = window.matchMedia && matchMedia('(max-width: 760px)').matches;
+      rz.innerHTML = resumeReaderHtml(resume, c.display_name || c.handle, small);
+      const tog = document.getElementById('bd-doc-toggle'), frame = document.getElementById('bd-doc-frame'),
+            fall = rz.querySelector('.bd-doc-fall');
+      if(tog && frame) tog.addEventListener('click', () => {
+        const hide = !frame.hidden;
+        if(!hide && !frame.src && frame.dataset.src) frame.src = frame.dataset.src;
+        frame.hidden = hide; if(fall) fall.hidden = hide;
+        tog.textContent = hide ? 'Show preview' : 'Hide preview';
+        tog.setAttribute('aria-expanded', String(!hide));
+      });
+    }
   }
-  /* the View Recruits link in the lede: down to the table, first row picked, button ready */
-  document.querySelectorAll('[data-board-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); if(selected < 0) select(0); gentleScroll(table, 'start'); openBtn.focus({ preventScroll: true }); }));
   table.addEventListener('click', e => { if(e.target.closest('a')) return; const tr = e.target.closest('tr[data-i]'); if(tr) select(+tr.dataset.i); });
   table.addEventListener('dblclick', e => { const tr = e.target.closest('tr[data-i]'); if(tr){ select(+tr.dataset.i); open(+tr.dataset.i); } });
   /* one Tab stop for the table, Up/Down to move, Enter or Space to open (audit, 2026-09-15) */
