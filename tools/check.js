@@ -129,7 +129,7 @@ for (const bad of ['ab', '-lead', 'trail-', '_lead', 'trail_', 'Upper', 'has spa
 // every root page name must be in the reserved list, or a company could take it
 const RESERVED_IN_DB = ['about','admin','applications','browse','claim','companies','company','contact',
   'dashboard','data','directory','how-it-works','index','join','login','portal','profile',
-  'privacy','register','reset','results','robots','search','server','sitemap','store','styles','talent','jobs','terms','thread','tools'];
+  'privacy','register','reset','results','robots','search','server','sitemap','store','styles','talent','jobs','terms','thread','tools','welcome'];
 /* build-profiles.js writes one root page per live handle, so those files are
    named after handles on purpose, that company already owns the name. Only
    hand-written pages need reserving.
@@ -1807,6 +1807,32 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     assert.ok(/createSignedUrl\(path, 900\)/.test(storeSrc) && /function resumeDownloadLink/.test(storeSrc),
       'a resume link is short lived again, or the Download button lost its link');
   }
+  /* Confirming an email lands on /welcome, the on-boarding page with the same
+     three choices the welcome email carries (Jacob, 2026-09-17). The email
+     still follows, as a second net. */
+  {
+    const wc = fs.readFileSync(path.join(ROOT, 'welcome.html'), 'utf8');
+    const storeSrc2 = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+    const portalSrc3 = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
+    const appSrc4 = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+    for (const [label, href] of [['Free Directory Listing', '/portal#listings'],
+                                 ['Post Free Job', '/portal#hiring'],
+                                 ['Post Free Resume', '/portal#seeking']]) {
+      assert.ok(new RegExp(`href="${href.replace('#', '#')}"[\\s\\S]{0,120}${label}`).test(wc),
+        `the welcome page lost the ${label} door, or it no longer opens ${href}`);
+    }
+    assert.ok(/noindex/.test(wc), 'the welcome page is open to search engines');
+    assert.ok(/emailRedirectTo: location\.origin \+ '\/welcome'/.test(storeSrc2),
+      'a confirmation link no longer lands on the on-boarding page');
+    assert.ok(/type=signup[\s\S]{0,80}location\.replace\('\/welcome'/.test(portalSrc3),
+      'the dashboard no longer forwards a confirmation link to /welcome');
+    assert.ok(/if\(\/type=signup\/\.test\(location\.hash \|\| ''\)\)\{ location\.replace\('\/welcome'\); return; \}/.test(appSrc4),
+      'the reset sheet no longer forwards a confirmation link to /welcome');
+    /* the welcome email is the follow-up, so it must still be sent */
+    const notifySrc = fs.readFileSync(path.join(ROOT, 'tools', 'edge-notify.ts'), 'utf8');
+    assert.ok(/const welcome = subject === "Welcome to Circuits\.com"/.test(notifySrc) && /Free Directory Listing/.test(notifySrc),
+      'the welcome email lost its three buttons, it is the second net behind the landing page');
+  }
   /* Every notice carries a clock time, not just a day, and the job panel's
      Apply block is a bar rather than an empty second column (Jacob, 2026-09-17). */
   {
@@ -1817,6 +1843,14 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
       'the notification list or the opened notice no longer shows when it arrived');
     assert.ok(/detail\.className = 'board-detail bd-job'/.test(jobsHtml) && /class="bd-apply"/.test(jobsHtml) && !/class="bd-side"/.test(jobsHtml),
       'the job panel is back to a two column layout with an empty side');
+    /* the panel reads as a job page: company strip, title, three facts, then
+       labelled sections (Jacob, 2026-09-17) */
+    for (const part of ['class="jd-head"', 'class="jd-title"', 'class="jd-facts"', '<dt>Location</dt>', '<dt>Experience</dt>', '<dt>Posted</dt>',
+                        '<h4>About the role</h4>', '<h4>Pictures</h4>', '<h4>Documents</h4>']) {
+      assert.ok(jobsHtml.includes(part), `the job panel lost ${part}`);
+    }
+    assert.ok(/bar\.classList\.add\('is-writing'\)/.test(jobsHtml),
+      'the apply bar no longer gives the note box the full width');
   }
   /* A job panel shows its pictures as a little gallery (Jacob, 2026-09-17):
      images attached to the post, then the company's own gallery. Anything that

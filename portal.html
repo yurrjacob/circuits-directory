@@ -8,7 +8,12 @@
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=4293e8e6bb">
+<link rel="stylesheet" href="/styles.css?v=5682aba914">
+<!-- A confirmation link is meant for /welcome, the on-boarding page. If the
+     project's redirect allow list sends it here instead, forward it before
+     supabase-js reads the tokens out of the address bar, hash and all, so the
+     session is still there to pick up (Jacob, 2026-09-17). -->
+<script>if(/[#&]type=signup/.test(location.hash || '')) location.replace('/welcome' + location.hash);</script>
 <script src="/nav.js?v=b5adcdecca"></script>
 </head>
 <body>
@@ -652,8 +657,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-<script src="/store.js?v=aa50fdf54b"></script>
-<script src="/app.js?v=b7f301e81e"></script>
+<script src="/store.js?v=2f73792746"></script>
+<script src="/app.js?v=50663ba726"></script>
 <script src="/portal.js?v=d1b41449bc"></script>
 <script src="/admin.js?v=a280d00bb3"></script>
 <script>

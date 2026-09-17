@@ -1124,17 +1124,67 @@ tr.row-warn td{background:#fff3cd}
    a new tab. ---- */
 /* Every row carries its own View button, so the boards lost the single button
    that acted on a selected row (Jacob, 2026-09-17). */
-/* The job panel is one column: its only side content was the Apply button, so
-   the second column sat empty down the whole card (Jacob, 2026-09-17). Apply is
-   a bar under the details instead, with room for the note box to open. */
-.board-detail.bd-job{grid-template-columns:1fr}
-.bd-job .job-co,.bd-job .bd-main h3{padding-right:84px}
-.bd-apply{grid-column:1/-1;display:flex;justify-content:space-between;align-items:flex-start;gap:18px;
-  flex-wrap:wrap;border-top:1px solid var(--line);padding-top:14px}
-.bd-apply-t{display:flex;flex-direction:column;gap:3px;flex:1 1 260px;min-width:0}
+/* ---- welcome: the page an email confirmation opens (Jacob, 2026-09-17) ----
+   Three doors, the same three the welcome email carries. */
+.wc-wrap{max-width:820px;margin:0 auto;padding:54px 24px 72px}
+.wc-h1{margin:0 0 10px;font-size:2rem;line-height:1.2}
+.wc-sub{margin:0 0 6px;font-size:1.02rem;color:var(--ink)}
+.wc-lede{margin:0 0 26px;font-size:.95rem;color:var(--muted);max-width:60ch;line-height:1.55}
+.wc-doors{display:flex;flex-direction:column;gap:12px}
+.wc-door{display:flex;flex-direction:column;gap:4px;padding:18px 20px;border-radius:14px;
+  background:var(--green);color:#fff;text-decoration:none;box-shadow:var(--shadow);
+  transition:transform .12s,background .12s}
+.wc-door:hover{background:var(--green-dark);color:#fff;transform:translateY(-1px)}
+.wc-door:focus-visible{outline:3px solid var(--dark);outline-offset:3px}
+.wc-door-b{font-size:1.15rem;font-weight:800}
+.wc-door-t{font-size:.9rem;line-height:1.5;color:rgba(255,255,255,.92)}
+.wc-foot{margin:26px 0 0;font-size:.9rem;color:var(--muted)}
+.wc-foot a{color:var(--green-dark)}
+@media(max-width:600px){.wc-wrap{padding:34px 16px 54px}.wc-h1{font-size:1.6rem}}
+
+/* ---- the job panel (Jacob, 2026-09-17) ----
+   One column with a real shape: a company strip, the title, three facts, then
+   labelled sections. Its only side content was the Apply button, which left
+   the second column empty down the whole card. */
+.board-detail.bd-job{grid-template-columns:1fr;padding:0;overflow:hidden}
+.bd-job .bd-main{gap:0;padding:20px 24px 22px}
+.bd-job .bd-close{top:14px;right:16px}
+.jd-head{display:flex;align-items:center;gap:12px;padding-right:84px;margin:0 0 14px}
+.jd-head .co-logo{width:44px;height:44px;border-radius:12px;flex:none}
+.jd-head-t{display:flex;flex-direction:column;min-width:0}
+.jd-co{font-weight:700;color:var(--ink);text-decoration:none;font-size:1rem}
+.jd-co:hover{text-decoration:underline}
+.jd-co-sub{font-size:.8rem;color:var(--muted)}
+.bd-job .jd-title{margin:0 0 12px;font-size:1.45rem;line-height:1.25;padding-right:84px}
+.jd-facts{display:flex;flex-wrap:wrap;gap:0;margin:0 0 20px;border:1px solid var(--line);
+  border-radius:12px;background:var(--bg-soft);overflow:hidden}
+.jd-facts > div{flex:1 1 150px;padding:10px 16px;border-right:1px solid var(--line);min-width:0}
+.jd-facts > div:last-child{border-right:0}
+.jd-facts dt{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 2px}
+.jd-facts dd{margin:0;font-size:.95rem;font-weight:600;color:var(--ink);overflow-wrap:anywhere}
+.jd-sec{margin:0 0 20px}
+.jd-sec:last-child{margin-bottom:0}
+.jd-sec h4{margin:0 0 8px;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.jd-desc{margin:0;font-size:.98rem;line-height:1.6;max-width:70ch;white-space:pre-line}
+.jd-docs{display:flex;flex-wrap:wrap;gap:8px;margin:0}
+.jd-docs .doc-link{margin:0}
+/* Apply: text left, button hard right, and the whole bar turns over to the note
+   box once it opens so the textarea is not squeezed into a corner. */
+.bd-apply{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:18px;
+  flex-wrap:wrap;border-top:1px solid var(--line);background:var(--bg-soft);padding:16px 24px}
+.bd-apply-t{display:flex;flex-direction:column;gap:3px;flex:1 1 240px;min-width:0}
 .bd-apply-t .pf-note{margin:0}
-.bd-apply .job-apply{flex:1 1 320px;min-width:0}
-@media(max-width:600px){.bd-apply .job-apply{flex-basis:100%}.bd-apply .btn{width:100%;text-align:center}}
+.bd-apply .job-apply{flex:0 0 auto;margin-left:auto}
+.bd-apply.is-writing{align-items:flex-start}
+.bd-apply.is-writing .job-apply{flex:1 1 100%;margin-left:0}
+@media(max-width:600px){
+  .bd-job .bd-main{padding:18px 16px}
+  .bd-apply{padding:14px 16px}
+  .bd-apply .job-apply{flex:1 1 100%;margin-left:0}
+  .bd-apply .btn{width:100%;text-align:center}
+  .jd-facts > div{flex-basis:100%;border-right:0;border-bottom:1px solid var(--line)}
+  .jd-facts > div:last-child{border-bottom:0}
+}
 
 /* a little gallery inside a board panel: thumbnails that open full size */
 .bd-gallery{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 0}
@@ -1142,7 +1192,8 @@ tr.row-warn td{background:#fff3cd}
   cursor:zoom-in;overflow:hidden;line-height:0;transition:border-color .12s,opacity .12s}
 .bd-shot:hover{border-color:var(--green);opacity:.9}
 .bd-shot:focus-visible{outline:2px solid #1f5fbf;outline-offset:2px}
-.bd-shot img{width:112px;height:84px;object-fit:cover;display:block}
+.bd-shot img{width:132px;height:99px;object-fit:cover;display:block;
+  background:repeating-conic-gradient(#f1f3f5 0% 25%,#fff 0% 50%) 50%/16px 16px}
 @media(max-width:600px){.bd-shot img{width:96px;height:72px}}
 .th-act{width:1%}
 .board-table td.cell-act{width:1%;white-space:nowrap;text-align:right;vertical-align:middle}

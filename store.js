@@ -331,14 +331,19 @@ async function signIn(identifier, password, captchaToken){
   }
   return sb.auth.signInWithPassword({ email: id, password, options: { captchaToken: captchaToken || undefined } });
 }
-/* The confirmation link lands on /portal, the signed-in session in the URL is
-   picked up there and the new account sees its own portal. Without this it fell
-   back to whatever page the project's Site URL points at, which was the
-   password-reset sheet, alarming for someone who just set a password. */
+/* The confirmation link lands on /welcome, the on-boarding page: the session in
+   the URL is picked up there and the new account chooses what to do first
+   (Jacob, 2026-09-17). It used to land straight in the dashboard, which is a
+   lot of tabs to meet on your first second. Before that it fell back to
+   whatever page the project's Site URL points at, which was the password-reset
+   sheet, alarming for someone who just set a password.
+   If the address below is not in the project's allowed redirect URLs, Supabase
+   ignores it and falls back to the Site URL, so /portal and /reset both send a
+   signup link on to /welcome themselves. */
 async function signUp(email, password){
   if(!sb) return { error: { message: 'We could not reach the sign-up service. Check your connection and try again.' } };
   return sb.auth.signUp({ email, password,
-    options: { emailRedirectTo: location.origin + '/portal' } });
+    options: { emailRedirectTo: location.origin + '/welcome' } });
 }
 
 /* ---- password reset ----

@@ -449,7 +449,7 @@ async function initInbox(){
   if(typeof sb === 'undefined'){
     if(!storedSession()) return;
     const add = src => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
-    try{ await add('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'); await add('/store.js?v=aa50fdf54b'); }catch(e){ return; }
+    try{ await add('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'); await add('/store.js?v=2f73792746'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;
@@ -1408,6 +1408,10 @@ async function initReset(){
        Only a recovery link or a staff invite (no password yet) gets that
        sheet; a confirmation gets a plain "you're confirmed" and the portal. */
     if(/type=(signup|email_change|magiclink)/.test(location.hash || '')){
+      /* a brand new account belongs on the on-boarding page, not on a bare
+         "confirmed" card (Jacob, 2026-09-17). An email change is not new, so
+         that one keeps the card. */
+      if(/type=signup/.test(location.hash || '')){ location.replace('/welcome'); return; }
       const rc = el('rs-confirmed-email');
       if(rc) rc.textContent = user.email || 'your account';
       show('rs-confirmed', true);

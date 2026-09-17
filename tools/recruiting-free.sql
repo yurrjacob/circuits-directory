@@ -174,3 +174,7 @@ grant select (contact_email), update (contact_email) on public.profiles to authe
 --    limit 200
 -- $$;
 -- grant execute on function public.job_search(text) to anon, authenticated;
+
+-- 2026-09-17. /welcome is the on-boarding page a confirmation link opens, so
+-- the name must never be claimable as a Circuits.com address (Jacob).
+-- insert into reserved_handles (name) values ('welcome') on conflict do nothing;

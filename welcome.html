@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Welcome | Circuits.com</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Your Circuits.com account is confirmed. Choose what to do first.">
+<link rel="icon" href="assets/favicon.png">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
+<link rel="stylesheet" href="styles.css?v=5682aba914">
+<script src="/nav.js?v=b5adcdecca"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="inner">
+    <div class="brand"><a href="/"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com" width="389" height="64"></a><span class="brand-slogan">Free Circuits Directory Marketplace</span></div>
+    <nav class="nav">
+      <a href="/">Home</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+      <a class="nav-auth nav-signin" href="/portal">Sign In</a>
+      <a class="nav-auth nav-dash" href="/portal">Dashboard</a>
+      <a class="cta" href="/join">Get Listed</a>
+    </nav>
+      <button type="button" class="inbox-btn" aria-label="Notifications" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span class="inbox-n" hidden></span>
+      </button>
+  </div>
+</header>
+
+<main id="content">
+<div class="wc-wrap">
+
+  <h1 class="wc-h1">Welcome to Circuits.com</h1>
+  <p class="wc-sub" id="wc-sub">Your email is confirmed and you are signed in.</p>
+  <p class="wc-lede">Everything here is free. Choose what to do first, and come back for the
+    other two whenever you like. All three live in your dashboard.</p>
+
+  <!-- The three things a new account can do, the same three the welcome email
+       carries, each straight into the tab it names (Jacob, 2026-09-17). -->
+  <div class="wc-doors">
+    <a class="wc-door" href="/portal#listings">
+      <span class="wc-door-b">Free Directory Listing</span>
+      <span class="wc-door-t">List your company under the Circuits-Keywords&trade; buyers search,
+        up to ten of them, at no cost.</span>
+    </a>
+    <a class="wc-door" href="/portal#hiring">
+      <span class="wc-door-b">Post Free Job</span>
+      <span class="wc-door-t">Hiring? Put the role on the Job Board and take applications with a
+        link to each person's profile.</span>
+    </a>
+    <a class="wc-door" href="/portal#seeking">
+      <span class="wc-door-b">Post Free Resume</span>
+      <span class="wc-door-t">Looking for work? Put yourself on the Recruit Board so companies in
+        the industry can find you.</span>
+    </a>
+  </div>
+
+  <p class="wc-foot">Not sure yet? <a href="/portal">Open your dashboard</a>. A copy of this
+    arrives by email too, so you can pick it up later.</p>
+
+</div>
+</main>
+
+<footer class="footer">
+  <div class="inner">
+    <div class="flinks">
+      <a href="/terms">Terms</a>
+      <a href="/privacy">Privacy</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span>© 2026 Circuits.com</span>
+      <span class="footer-brand"><img class="footer-mark" src="assets/favicon.png" alt="" width="64" height="64"></span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="store.js?v=2f73792746"></script>
+<script src="app.js?v=50663ba726"></script>
+<script>
+/* The landing page a confirmation link opens. supabase-js reads the session out
+   of the URL when the client is created in store.js, so by the time this runs
+   the account is signed in and the tokens are off the address bar. The page
+   works signed out as well: the three doors go to the dashboard, which asks
+   whoever follows them to sign in. */
+(async function initWelcome(){
+  const sub = document.getElementById('wc-sub');
+  let user = null;
+  try { user = await currentUser(); } catch(e){ user = null; }
+  if(!user){
+    sub.textContent = 'Your account is confirmed. Sign in to pick up where you left off.';
+    return;
+  }
+  /* the address is the thing they just claimed, so name it */
+  let handle = '';
+  try { const me = await myProfile(); handle = (me && me.handle) || ''; } catch(e){ handle = ''; }
+  sub.innerHTML = handle
+    ? 'Your email is confirmed and your address is live at <b>circuits.com/' + escapeHtml(handle) + '</b>.'
+    : 'Your email is confirmed and you are signed in.';
+})();
+</script>
+</body>
+</html>

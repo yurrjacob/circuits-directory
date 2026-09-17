@@ -9,7 +9,7 @@
 <link rel="canonical" href="https://circuits.com/jobs">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="styles.css?v=4293e8e6bb">
+<link rel="stylesheet" href="styles.css?v=5682aba914">
 <script src="/nav.js?v=b5adcdecca"></script>
 <script async src="/analytics.js?v=70049a2947"></script>
 </head>
@@ -77,8 +77,8 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="store.js?v=aa50fdf54b"></script>
-<script src="app.js?v=b7f301e81e"></script>
+<script src="store.js?v=2f73792746"></script>
+<script src="app.js?v=50663ba726"></script>
 <script>
 /* The Job Board, a table (Jacob, 2026-09-13): Job Title, Location, Company,
    Years Experience, Circuits-Keywords. Pick a row, then View Job Details &
@@ -169,20 +169,28 @@
     detail.hidden = false;
     detail.className = 'board-detail bd-job';
     detail.innerHTML = `<div class="bd-main">
-        <div class="job-co">
+        <div class="jd-head">
           <span class="co-logo" style="background:var(--dark)">${isLogoUrl(j.company_logo) ? `<img src="${escapeHtml(j.company_logo)}" alt="">` : avatarSvg()}</span>
-          <div><a href="${escapeHtml(profileUrl(j.company_handle) || '#')}">${escapeHtml(j.company_name)}</a>${j.location ? `<span class="tal-meta">${escapeHtml(j.location)}</span>` : ''}</div>
+          <span class="jd-head-t">
+            <a class="jd-co" href="${escapeHtml(profileUrl(j.company_handle) || '#')}">${escapeHtml(j.company_name)}</a>
+            <span class="jd-co-sub">${j.company_handle ? 'circuits.com/' + escapeHtml(j.company_handle) : 'On Circuits.com'}</span>
+          </span>
         </div>
-        <h3>${escapeHtml(j.title)}</h3>
-        <p class="tal-meta">${j.years_experience != null ? j.years_experience + ' year' + (Number(j.years_experience) === 1 ? '' : 's') + ' of experience' : 'Experience not specified'}</p>
-        ${j.description ? `<p class="tal-bio" style="white-space:pre-line">${escapeHtml(j.description)}</p>` : ''}
-        ${files.length ? `<p class="tal-meta">${files.map(d => `<a class="doc-link" href="${escapeHtml(safeUrl(d.url))}" target="_blank" rel="noopener">${escapeHtml(d.name || 'Document')}</a>`).join(' · ')}</p>` : ''}
-        ${galleryHtml(pics, j.company_name)}
-        <div class="kw-tags">${(j.keywords || []).map(k => `<a class="kw-tag" href="/jobs?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join('')}</div>
+        <h3 class="jd-title">${escapeHtml(j.title)}</h3>
+        <dl class="jd-facts">
+          <div><dt>Location</dt><dd>${j.location ? escapeHtml(j.location) : 'Not given'}</dd></div>
+          <div><dt>Experience</dt><dd>${j.years_experience != null ? escapeHtml(j.years_experience + ' year' + (Number(j.years_experience) === 1 ? '' : 's')) : 'Not given'}</dd></div>
+          <div><dt>Posted</dt><dd>${j.created_at ? '<time datetime="' + escapeHtml(j.created_at) + '">' + escapeHtml(new Date(j.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })) + '</time>' : 'Not given'}</dd></div>
+        </dl>
+        ${j.description ? `<div class="jd-sec"><h4>About the role</h4><p class="jd-desc">${escapeHtml(j.description)}</p></div>` : ''}
+        ${pics.length ? `<div class="jd-sec"><h4>Pictures</h4>${galleryHtml(pics, j.company_name)}</div>` : ''}
+        ${files.length ? `<div class="jd-sec"><h4>Documents</h4><p class="jd-docs">${files.map(d => `<a class="doc-link" href="${escapeHtml(safeUrl(d.url))}" target="_blank" rel="noopener">${escapeHtml(d.name || 'Document')}</a>`).join('')}</p></div>` : ''}
+        ${(j.keywords || []).length ? `<div class="jd-sec"><h4>Circuits-Keywords&trade;</h4>
+          <div class="kw-tags">${(j.keywords || []).map(k => `<a class="kw-tag" href="/jobs?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join('')}</div></div>` : ''}
       </div>
-      <div class="bd-apply">
+      <div class="bd-apply" id="bar-${escapeHtml(j.id)}">
         <div class="bd-apply-t"><b>Apply for this job</b>
-          <span class="pf-note">${j.created_at ? 'Posted <time datetime="' + escapeHtml(j.created_at) + '">' + escapeHtml(new Date(j.created_at).toLocaleDateString([], { month: 'long', day: 'numeric' })) + '</time>. ' : ''}Your application goes to ${escapeHtml(j.company_name)} with a link to your profile.</span></div>
+          <span class="pf-note">Your application goes to ${escapeHtml(j.company_name)} with a link to your profile.</span></div>
         <div class="job-apply" id="apply-${escapeHtml(j.id)}" style="margin:0;padding:0;border:0">${applyHtml(j)}</div>
       </div>
       <button type="button" class="mini-btn bd-close" id="bd-close">Close</button>`;
@@ -219,13 +227,15 @@
     const open = e.target.closest('button.job-apply-btn');
     if(open){
       const box = document.getElementById('apply-' + open.dataset.id);
+      const bar = document.getElementById('bar-' + open.dataset.id); if(bar) bar.classList.add('is-writing');
       box.innerHTML = `<textarea class="job-note" rows="3" maxlength="2000" aria-label="Note to the employer" placeholder="Optional note to the employer (your profile link goes with it)" autocomplete="off"></textarea>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn btn-primary job-send" data-id="${escapeHtml(open.dataset.id)}">Send application</button>
         <button type="button" class="mini-btn job-cancel" data-id="${escapeHtml(open.dataset.id)}">Cancel</button></div><div class="pf-note job-msg"></div>`;
       return;
     }
     const cancel = e.target.closest('button.job-cancel');
-    if(cancel){ document.getElementById('apply-' + cancel.dataset.id).innerHTML = `<button type="button" class="btn btn-primary job-apply-btn" data-id="${escapeHtml(cancel.dataset.id)}">Apply</button>`; return; }
+    if(cancel){ const bar = document.getElementById('bar-' + cancel.dataset.id); if(bar) bar.classList.remove('is-writing');
+      document.getElementById('apply-' + cancel.dataset.id).innerHTML = `<button type="button" class="btn btn-primary job-apply-btn" data-id="${escapeHtml(cancel.dataset.id)}">Apply</button>`; return; }
     const send = e.target.closest('button.job-send');
     if(send){
       const box = document.getElementById('apply-' + send.dataset.id);
