@@ -445,7 +445,9 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 .inbox-row.k-bad{box-shadow:inset 4px 0 0 #b3261e}.inbox-row.k-good{box-shadow:inset 4px 0 0 #3f6300}.inbox-row.k-wait{box-shadow:inset 4px 0 0 #b8860b}.inbox-row.k-people{box-shadow:inset 4px 0 0 #1f5fbf}.inbox-row.k-note{box-shadow:inset 4px 0 0 #5d6a7e}
 .inbox-text{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
 .inbox-who{display:flex;justify-content:space-between;gap:10px;font-size:.82rem;align-items:center}
-.inbox-who span{color:var(--muted);white-space:nowrap}
+.inbox-who span,.inbox-who .inbox-when{color:var(--muted);white-space:nowrap}
+.inbox-who .inbox-when{flex:none;font-variant-numeric:tabular-nums}
+.inbox-from .inbox-when{color:inherit}
 /* The staff queue, marked with the dark pill the Admin tab already uses on the
    dashboard, so the two read as the same thing (Jacob, 2026-09-03). It sits
    next to the sender and pushes the timestamp to the right on its own. */
@@ -1122,6 +1124,18 @@ tr.row-warn td{background:#fff3cd}
    a new tab. ---- */
 /* Every row carries its own View button, so the boards lost the single button
    that acted on a selected row (Jacob, 2026-09-17). */
+/* The job panel is one column: its only side content was the Apply button, so
+   the second column sat empty down the whole card (Jacob, 2026-09-17). Apply is
+   a bar under the details instead, with room for the note box to open. */
+.board-detail.bd-job{grid-template-columns:1fr}
+.bd-job .job-co,.bd-job .bd-main h3{padding-right:84px}
+.bd-apply{grid-column:1/-1;display:flex;justify-content:space-between;align-items:flex-start;gap:18px;
+  flex-wrap:wrap;border-top:1px solid var(--line);padding-top:14px}
+.bd-apply-t{display:flex;flex-direction:column;gap:3px;flex:1 1 260px;min-width:0}
+.bd-apply-t .pf-note{margin:0}
+.bd-apply .job-apply{flex:1 1 320px;min-width:0}
+@media(max-width:600px){.bd-apply .job-apply{flex-basis:100%}.bd-apply .btn{width:100%;text-align:center}}
+
 /* a little gallery inside a board panel: thumbnails that open full size */
 .bd-gallery{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 0}
 .bd-shot{padding:0;border:1px solid var(--line);border-radius:10px;background:var(--bg-soft);

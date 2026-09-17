@@ -1807,6 +1807,17 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     assert.ok(/createSignedUrl\(path, 900\)/.test(storeSrc) && /function resumeDownloadLink/.test(storeSrc),
       'a resume link is short lived again, or the Download button lost its link');
   }
+  /* Every notice carries a clock time, not just a day, and the job panel's
+     Apply block is a bar rather than an empty second column (Jacob, 2026-09-17). */
+  {
+    const appSrc3 = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+    assert.ok(/const whenFull = iso =>/.test(appSrc3) && /const stamp = \(iso, full\)/.test(appSrc3) && /<time class="inbox-when"/.test(appSrc3),
+      'notifications lost their timestamp');
+    assert.ok(/stamp\(n\.created_at\)/.test(appSrc3) && /stamp\(n\.created_at, true\)/.test(appSrc3),
+      'the notification list or the opened notice no longer shows when it arrived');
+    assert.ok(/detail\.className = 'board-detail bd-job'/.test(jobsHtml) && /class="bd-apply"/.test(jobsHtml) && !/class="bd-side"/.test(jobsHtml),
+      'the job panel is back to a two column layout with an empty side');
+  }
   /* A job panel shows its pictures as a little gallery (Jacob, 2026-09-17):
      images attached to the post, then the company's own gallery. Anything that
      is not a picture stays a document link. */

@@ -464,8 +464,24 @@ async function initInbox(){
   document.body.appendChild(panel);
 
   let items = null, open = null, isStaff = false;
+  /* Every notice carries a time, not just a day (Jacob, 2026-09-17). The list
+     stays short: the clock today, the weekday and clock this week, then the
+     date. The full local date and time is always in the tooltip, and the
+     opened message spells it out. */
   const when = iso => { const d = new Date(iso), days = (Date.now() - d) / 864e5;
-    return days < 1 ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : days < 7 ? d.toLocaleDateString([], { weekday: 'short' }) : d.toLocaleDateString(); };
+    const clock = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    if(days < 1) return clock;
+    if(days < 7) return d.toLocaleDateString([], { weekday: 'short' }) + ' ' + clock;
+    if(d.getFullYear() === new Date().getFullYear()) return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + clock;
+    return d.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+  const whenFull = iso => { const d = new Date(iso);
+    try { return d.toLocaleString([], { dateStyle: 'full', timeStyle: 'short' }); }
+    catch(e){ return d.toLocaleString(); }   // dateStyle is newer than the rest of this file
+  };
+  const stamp = (iso, full) => iso
+    ? `<time class="inbox-when" datetime="${escapeHtml(iso)}" title="${escapeHtml(whenFull(iso))}">${escapeHtml(full ? whenFull(iso) : when(iso))}</time>`
+    : '';
   /* Each kind of notice looks different (Jacob, 2026-09-03): the icon and its
      colour say what happened before the subject is read. Decided from the
      wording, so every trigger in the database is covered without a column.
@@ -516,7 +532,7 @@ async function initInbox(){
       const n = open;
       panel.innerHTML = `<div class="inbox-head"><button type="button" class="inbox-back" aria-label="Back to notifications">&larr;</button><b>${escapeHtml(n.subject)}</b><button type="button" class="inbox-del" data-del="${escapeHtml(n.id)}">Delete</button></div>
         <div class="inbox-msg">
-          <div class="inbox-from">${avatar(n)}<div><b>${escapeHtml(n.sender_name)}</b>${adminBadge(n)}<span>${escapeHtml(KINDS[kindOf(n)].label)} · ${escapeHtml(when(n.created_at))}</span></div></div>
+          <div class="inbox-from">${avatar(n)}<div><b>${escapeHtml(n.sender_name)}</b>${adminBadge(n)}<span>${escapeHtml(KINDS[kindOf(n)].label)} · ${stamp(n.created_at, true)}</span></div></div>
           <div class="inbox-body"><p>${escapeHtml(n.body).replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>')}</p></div>
           ${n.link ? `<a class="btn btn-primary inbox-open" href="${escapeHtml(safeLink(n.link))}">Open</a>` : ''}
         </div>`;
@@ -525,7 +541,7 @@ async function initInbox(){
     panel.innerHTML = `<div class="inbox-head"><b>Notifications</b>${items.some(x => !x.read_at) ? '<button type="button" class="inbox-readall">Mark all read</button>' : ''}</div>` +
       (items.length ? items.map(n => `<div class="inbox-row k-${kindOf(n)}"><button type="button" class="inbox-item${n.read_at ? '' : ' unread'}" data-id="${escapeHtml(n.id)}">
           ${avatar(n)}
-          <span class="inbox-text"><span class="inbox-who"><b>${escapeHtml(n.sender_name)}</b>${adminBadge(n)}<span>${escapeHtml(when(n.created_at))}</span></span>
+          <span class="inbox-text"><span class="inbox-who"><b>${escapeHtml(n.sender_name)}</b>${adminBadge(n)}${stamp(n.created_at)}</span>
             <span class="inbox-subject">${escapeHtml(n.subject)}</span>
             <span class="inbox-snip">${escapeHtml(n.body.replace(/\s+/g, ' ').slice(0, 90))}${n.body.length > 90 ? '…' : ''}</span></span>
         </button><button type="button" class="inbox-x" data-del="${escapeHtml(n.id)}" aria-label="Delete notification">&times;</button></div>`).join('') : '<p class="inbox-empty">Nothing here yet.</p>');

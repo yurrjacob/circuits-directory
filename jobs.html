@@ -9,7 +9,7 @@
 <link rel="canonical" href="https://circuits.com/jobs">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="styles.css?v=afe044413e">
+<link rel="stylesheet" href="styles.css?v=4293e8e6bb">
 <script src="/nav.js?v=b5adcdecca"></script>
 <script async src="/analytics.js?v=70049a2947"></script>
 </head>
@@ -78,7 +78,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="store.js?v=aa50fdf54b"></script>
-<script src="app.js?v=c373f70ce1"></script>
+<script src="app.js?v=b7f301e81e"></script>
 <script>
 /* The Job Board, a table (Jacob, 2026-09-13): Job Title, Location, Company,
    Years Experience, Circuits-Keywords. Pick a row, then View Job Details &
@@ -167,6 +167,7 @@
     const pics = docs.filter(d => isImageUrl(d.url)).map(d => ({ url: d.url, caption: d.name || '' }))
       .concat((Array.isArray(j.images) ? j.images : []).filter(g => g && g.url));
     detail.hidden = false;
+    detail.className = 'board-detail bd-job';
     detail.innerHTML = `<div class="bd-main">
         <div class="job-co">
           <span class="co-logo" style="background:var(--dark)">${isLogoUrl(j.company_logo) ? `<img src="${escapeHtml(j.company_logo)}" alt="">` : avatarSvg()}</span>
@@ -179,7 +180,11 @@
         ${galleryHtml(pics, j.company_name)}
         <div class="kw-tags">${(j.keywords || []).map(k => `<a class="kw-tag" href="/jobs?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join('')}</div>
       </div>
-      <div class="bd-side"><div class="job-apply" id="apply-${escapeHtml(j.id)}" style="margin:0;padding:0;border:0">${applyHtml(j)}</div></div>
+      <div class="bd-apply">
+        <div class="bd-apply-t"><b>Apply for this job</b>
+          <span class="pf-note">${j.created_at ? 'Posted <time datetime="' + escapeHtml(j.created_at) + '">' + escapeHtml(new Date(j.created_at).toLocaleDateString([], { month: 'long', day: 'numeric' })) + '</time>. ' : ''}Your application goes to ${escapeHtml(j.company_name)} with a link to your profile.</span></div>
+        <div class="job-apply" id="apply-${escapeHtml(j.id)}" style="margin:0;padding:0;border:0">${applyHtml(j)}</div>
+      </div>
       <button type="button" class="mini-btn bd-close" id="bd-close">Close</button>`;
     gentleScroll(detail, 'start');
     document.getElementById('bd-close').addEventListener('click', () => { detail.hidden = true; detail.innerHTML = ''; });
