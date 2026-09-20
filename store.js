@@ -846,7 +846,7 @@ async function registerProfile(email, password, handle, displayName, captchaToke
     email, password,
     options: {
       data: { handle: (handle||'').toLowerCase().trim(), display_name: displayName || '' },
-      emailRedirectTo: location.origin + '/join',   // confirming your email lands on Get Listed (Jacob, 2026-09-03)
+      emailRedirectTo: location.origin + '/welcome',   // confirming lands on the on-boarding page (Jacob, 2026-09-20; was Get Listed from 2026-09-03)
       captchaToken: captchaToken || undefined
     }
   });
@@ -1311,7 +1311,7 @@ async function resendConfirmation(email){
   const addr = (email || '').trim();
   if(!addr.includes('@')) return 'That does not look like an email address.';
   const { error } = await sb.auth.resend({ type: 'signup', email: addr,
-    options: { emailRedirectTo: location.origin + '/join' } });
+    options: { emailRedirectTo: location.origin + '/welcome' } });   // the same landing as the first email
   if(error){
     console.warn('resendConfirmation', error.message);
     const secs = (/after (\d+) seconds?/i.exec(error.message || '') || [])[1];

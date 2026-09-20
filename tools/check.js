@@ -1248,8 +1248,20 @@ assert.ok(/async function addApplicationRows\(rows\)/.test(fs.readFileSync(path.
 assert.ok(/referencing new table as inserted/.test(fs.readFileSync(path.join(ROOT, 'tools', 'grouped-listing-notifications.sql'), 'utf8')),
   'the grouped staff notification SQL is gone from tools/');
 assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'join-2026-09-03', 'join.html')), 'the old Get Listed form backup is missing');
-assert.ok(/emailRedirectTo: location\.origin \+ '\/join'/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8').slice(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8').indexOf('async function registerProfile'))),
-  'confirming a new account no longer lands on Get Listed');
+/* A confirmation link landed on Get Listed from 2026-09-03; since 2026-09-20 it
+   lands on /welcome, the on-boarding page, and the resend button matches. The
+   email-change link is the one redirect that still goes to the dashboard. */
+{
+  const storeAll = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+  const reg = storeAll.slice(storeAll.indexOf('async function registerProfile'));
+  assert.ok(/emailRedirectTo: location\.origin \+ '\/welcome'/.test(reg.slice(0, reg.indexOf('\n}'))),
+    'confirming a new profile no longer lands on the on-boarding page');
+  const rs = storeAll.slice(storeAll.indexOf('async function resendConfirmation'));
+  assert.ok(/emailRedirectTo: location\.origin \+ '\/welcome'/.test(rs.slice(0, rs.indexOf('\n}'))),
+    'a resent confirmation lands somewhere other than the first one');
+  assert.ok(!/emailRedirectTo: location\.origin \+ '\/join'/.test(storeAll),
+    'a confirmation link still lands on Get Listed');
+}
 const joinJs = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
 assert.ok(/status: 'Pending'/.test(joinJs), 'a listing request is not filed as Pending');
 const navSrc = fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8');
@@ -1826,8 +1838,8 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
       'the welcome page lost its confirmed badge or its three cards');
     assert.ok(/id="wc-copy"/.test(wc) && /clipboard\.writeText\('https:\/\/' \+ url\)/.test(wc),
       'the welcome page no longer offers the new address to copy');
-    assert.ok(/emailRedirectTo: location\.origin \+ '\/welcome'/.test(storeSrc2),
-      'a confirmation link no longer lands on the on-boarding page');
+    assert.ok((storeSrc2.match(/emailRedirectTo: location\.origin \+ '\/welcome'/g) || []).length >= 2 && !/emailRedirectTo: location\.origin \+ '\/join'/.test(storeSrc2),
+      'a confirmation link no longer lands on the on-boarding page (both signUp and registerProfile must send it to /welcome)');
     assert.ok(/type=signup[\s\S]{0,80}location\.replace\('\/welcome'/.test(portalSrc3),
       'the dashboard no longer forwards a confirmation link to /welcome');
     assert.ok(/if\(\/type=signup\/\.test\(location\.hash \|\| ''\)\)\{ location\.replace\('\/welcome'\); return; \}/.test(appSrc4),
