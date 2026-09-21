@@ -1,72 +1,72 @@
-# Email Forms Setup, How to Turn On the Contact & Get Listed Forms
+# Email: how Circuits.com sends mail, and what to do when it stops
 
-Both the **Contact** form (`contact.html`) and the **Get Listed** form (`join.html`)
-send their submissions to the founders by email using [FormSubmit.co](https://formsubmit.co).
-FormSubmit is free and needs **no API key**, but each recipient address must be
-**activated once** before any email will actually be delivered. Until that one-time
-activation is done, the form appears to work (it shows the success message) but **no
-email arrives**. That is almost always why "the form still isn't working."
+Every email the site sends goes through one Supabase edge function, `notify`,
+which sends through [Resend](https://resend.com). The source is
+`tools/edge-notify.ts`; deploy it after editing. FormSubmit is no longer used
+by any live form.
 
-## The one thing that's probably wrong
+## The rule that matters
 
-Email goes to **both** of these addresses (set in `app.js`):
+The caller of `notify` can never choose who gets mail. Every kind looks its
+recipient up in the database: a staff address from the `staff` table, the
+owner of a notification row, the email on the listing request or claim that
+was just filed, the employer on a job. Nothing in a request body is ever a
+destination on its own. Keep it that way when adding a kind, or the function
+becomes an open relay.
 
-- `mike@circuits.com`
-- `john@circuits.com`
+## What sends what
 
-**Each address must be activated separately.** If only one is activated, the other
-silently drops every message. Do the steps below for **both** inboxes.
+| Kind | Fired by | Goes to |
+|---|---|---|
+| `inbox` | the database, after a row lands in `notifications` (or the every-minute sweeper for rows whose `email_after` is ahead, which is how the welcome waits ten minutes) | the row's owner |
+| `listing-request` | Get Listed | the address on the rows just filed, and every staff address |
+| `contact` | the contact form | every staff address; a copy to the sender only when Turnstile verifiably passed |
+| `claim` | the access request on a company page | every staff address; the claimant, from the claims row, only when Turnstile verifiably passed |
+| `decision` | staff approving or denying a listing | the listing's owner |
+| `claim-invite` | staff approving a claim with no login behind it | Supabase Auth invites the claimant (this one does not use Resend) |
+| `reply` | a supplier answering a quote thread | the buyer on that thread |
+| `job-apply` | applying to a job | the employer on that job |
+| `quote` | nothing: switched off | returns 410 |
 
-## Step-by-step: activate the forms (do this once)
+Staff addresses are rows in the `staff` table. To change who receives contact
+messages, listing requests and access requests, change that table. There is
+nothing to activate and no address to confirm.
 
-1. **Submit a form to trigger the activation email.**
-   Open the live site, go to **Contact**, fill it in, and hit *Send*. (The Get Listed
-   form works too, either one triggers it.) FormSubmit sends an activation email the
-   first time it sees a new recipient address.
+## Secrets the function needs
 
-2. **Open the `mike@circuits.com` inbox.** Look for an email from
-   **FormSubmit** with a subject like *"Confirm your email"* / *"Activate Your Form"*.
-   **Check the Spam/Junk folder**, it very often lands there.
+Set under Edge Functions, Secrets, in the Supabase dashboard (or
+`supabase secrets set NAME=value`):
 
-3. **Click the button in that email** (labeled *"Activate Form"* / *"Confirm"*).
-   A confirmation page opens saying the form is active. That's it for this address.
+| Secret | What for | Without it |
+|---|---|---|
+| `RESEND_API_KEY` | sending mail | every kind but `claim-invite` answers `not_configured` and nothing is sent |
+| `NOTIFY_FROM` | the From line | defaults to `Circuits.com <notifications@circuits.com>` |
+| `TURNSTILE_SECRET` | verifying the "I am human" token on `contact` and `claim` | staff still get the mail, marked `[unverified]` in the subject with a line saying to set the secret, and no copy goes to the sender or claimant |
 
-4. **Repeat steps 2–3 for `john@circuits.com`.** This is the step that's easy to
-   miss. Both mailboxes get their own separate activation email and both must be
-   confirmed.
+The Turnstile **site** key is public and lives in `store.js`. The **secret** is
+the one from the same Cloudflare widget, and it belongs only in the function's
+secrets. It is separate from the CAPTCHA setting in Supabase Auth, which
+covers sign-up, sign-in and reset on its own.
 
-5. **Test.** Submit the Contact form again and confirm the message lands in both
-   inboxes. Do the same for the Get Listed form.
+## When mail stops
 
-Once both addresses are confirmed, activation is permanent, you never repeat this
-unless you change the recipient addresses.
+1. Open the function's logs in the Supabase dashboard (Edge Functions,
+   `notify`, Logs). A failed Resend call is logged as `resend failed` with the
+   status and Resend's own message.
+2. `not_configured` means `RESEND_API_KEY` is missing.
+3. A contact or claim answering `captcha` (HTTP 403) means Turnstile refused
+   the token: the page shows "The I am human check did not pass" and lets the
+   person try again. If every submission fails, the secret in the function
+   does not match the site key in `store.js`.
+4. Nothing arriving for a listing request or claim usually means the row was
+   acknowledged already: each is mailed at most once (`ack_sent_at`).
+5. The welcome email arrives ten minutes after the profile exists. To change
+   that, edit the interval in `welcome_notification()`; see
+   `tools/delayed-welcome-email.sql`.
 
-## Troubleshooting
+## Where this lives in the code
 
-- **Success message shows but no email arrives** → the recipient address isn't
-  activated yet. Re-do the steps above and check spam.
-- **One founder gets email, the other doesn't** → only one address was activated.
-  Activate the other one.
-- **The activation email never showed up** → the mailbox may not exist or isn't
-  being checked. The address must be a real, accessible inbox. Confirm you can log
-  into `mike@circuits.com` and `john@circuits.com`.
-- **Applicant confirmation ("thanks for your message") isn't sent** → that
-  auto-reply only goes out from an *activated* endpoint, so it's the same fix:
-  activate both addresses.
-- **Still nothing after activation** → open the browser dev console (F12) on the
-  form page, submit, and look for a line beginning `Email to … NOT delivered:`, the
-  message after it is FormSubmit's own error and tells you exactly what it rejected.
-
-## Where this lives in the code (for developers)
-
-- File: **`app.js`**, function **`sendFounderEmail(...)`** (top of the file).
-- Recipient list: the **`FOUNDER_EMAILS`** array. To change who receives form
-  submissions, edit that array, then remember that **any new address must be
-  activated once** using the same steps above.
-- Endpoint used: `https://formsubmit.co/ajax/<recipient-email>` (AJAX/JSON mode).
-- Contact form wiring: inline `<script>` at the bottom of `contact.html`.
-- Get Listed form wiring: the join-form submit handler in `app.js`
-  (search for `sendFounderEmail('New Listing Application`).
-
-There is no separate "senders form" toggle to switch on, **FormSubmit activation
-is the entire on/off mechanism.** Activate both addresses and the forms are live.
+- Function: `tools/edge-notify.ts` (the deployed copy is `notify`, verify_jwt off on purpose; the protection is the recipient rule above, not authentication).
+- Browser side: `notifyFunction(kind, payload)` in `store.js`, used by `contact.html` and `claim.html`; `notifyListingRequest` in `store.js` for Get Listed.
+- Turnstile in the page: `mountTurnstile`, `turnstileProblem`, `turnstileToken`, `resetTurnstile` in `app.js`.
+- The sweeper and the retention job: `tools/delayed-welcome-email.sql`, `tools/retention.sql`.
