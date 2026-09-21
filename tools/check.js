@@ -645,9 +645,10 @@ assert.ok(vid.includes("removeItem('cx_v')"),
 
 /* --- the privacy policy has to say what the site actually does --- */
 const priv = fs.readFileSync(path.join(ROOT, 'privacy.html'), 'utf8');
-for (const must of ['Supabase', 'Google Analytics', 'FormSubmit', 'GitHub Pages', 'jsDelivr']) {
+for (const must of ['Supabase', 'Google Analytics', 'GitHub Pages', 'Resend', 'Cloudflare Turnstile', 'Recruit Board', 'resume', 'thirteen months']) {
   assert.ok(priv.includes(must), `privacy policy does not disclose ${must}`);
 }
+assert.ok(!priv.includes('jsDelivr'), 'privacy policy still names jsDelivr, nothing loads from it since 2026-09-21');
 // the uploads really are world-readable; the policy must not soften that
 assert.ok(/public storage|stored publicly/i.test(priv),
   'privacy policy does not warn that uploaded files are publicly accessible');
@@ -1874,6 +1875,31 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     const notifySrc = fs.readFileSync(path.join(ROOT, 'tools', 'edge-notify.ts'), 'utf8');
     assert.ok(/const welcome = subject === "Welcome to Circuits\.com"/.test(notifySrc) && /Free Directory Listing/.test(notifySrc),
       'the welcome email lost its three buttons, it is the second net behind the landing page');
+  }
+  /* The contact form and the access request go through the notify function
+     behind Cloudflare Turnstile, not FormSubmit (audit item 7, 2026-09-21). */
+  {
+    const contact = fs.readFileSync(path.join(ROOT, 'contact.html'), 'utf8');
+    const claim = fs.readFileSync(path.join(ROOT, 'claim.html'), 'utf8');
+    const notify = fs.readFileSync(path.join(ROOT, 'tools', 'edge-notify.ts'), 'utf8');
+    const storeN = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+    for (const [f, src] of [['contact.html', contact], ['claim.html', claim]]) {
+      assert.ok(/mountTurnstile\(/.test(src) && /turnstileProblem\(/.test(src) && /turnstileToken\(/.test(src) && /resetTurnstile\(/.test(src),
+        `${f} does not run the Turnstile widget`);
+      assert.ok(!/sendFounderEmail/.test(src), `${f} still sends through FormSubmit`);
+    }
+    assert.ok(/notifyFunction\('contact', \{/.test(contact) && /notifyFunction\('claim', \{ email, company_slug: co\.slug, captchaToken/.test(claim),
+      'a form no longer calls the notify function');
+    assert.ok(/vendor\/supabase-js-[\d.]+\.js/.test(contact) && /src="\/?store\.js/.test(contact), 'contact.html does not load the client it now needs');
+    assert.ok(/async function notifyFunction\(kind, payload\)/.test(storeN), 'store.js lost notifyFunction');
+    assert.ok(/async function humanCheck\(token: unknown, req: Request\)/.test(notify) && /turnstile\/v0\/siteverify/.test(notify),
+      'the notify function no longer verifies Turnstile');
+    assert.ok(/kind === "contact"/.test(notify) && /kind === "claim"/.test(notify), 'the notify function lost the contact or claim kind');
+    assert.ok(/if \(human === "ok" && staffSent > 0\) \{/.test(notify) && /if \(human === "ok"\) \{\n      claimantSent/.test(notify),
+      'a copy goes to the address in the request without a passed human check, which is a relay');
+    assert.ok(/staffEmails\(db\)/.test(notify.slice(notify.indexOf('kind === "contact"'), notify.indexOf('kind === "quote"'))),
+      'contact or claim mail no longer takes its staff recipients from the staff table');
+    assert.ok(/ack_sent_at/.test(notify.slice(notify.indexOf('kind === "claim"'))), 'a claim can be acknowledged more than once');
   }
   /* Every notice carries a clock time, not just a day, and the job panel's
      Apply block is a bar rather than an empty second column (Jacob, 2026-09-17). */

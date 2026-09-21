@@ -62,8 +62,8 @@
 </footer>
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
-<script src="/store.js?v=4fec6ca931"></script>
-<script src="/app.js?v=b2169aeed2"></script>
+<script src="/store.js?v=28a3d059fb"></script>
+<script src="/app.js?v=1a4bb08bbb"></script>
 <script>
 /* Accounts are only ever created through Get Listed. This page does NOT
    register anyone, it raises a request that Circuits.com staff verify, and
@@ -109,9 +109,11 @@ function noCompany(){
     verifying you work there. Once approved we email you your sign-in details.</div>`;
 
   armSpamTrap(document.getElementById('cf'));
+  mountTurnstile(document.getElementById('cf'));
   document.getElementById('cf').addEventListener('submit', async e => {
     e.preventDefault();
-    if(looksLikeSpam(e.currentTarget)){
+    const form = e.currentTarget;
+    if(looksLikeSpam(form)){
       document.getElementById('claim-card').innerHTML = '<h1>Request Sent</h1>'
         + '<p class="sub">We will verify your request and email you back.</p>';
       return;
@@ -125,15 +127,14 @@ function noCompany(){
       document.getElementById('cm').textContent = 'Please enter a valid email address.';
       btn.disabled = false; return;
     }
+    { const tp = turnstileProblem(form); if(tp){ document.getElementById('cm').textContent = tp; btn.disabled = false; return; } }
     const err = await submitClaim(co.slug, { name, email, role_title: role, evidence: ev });
-    if(err){ document.getElementById('cm').textContent = err; btn.disabled = false; return; }
-    /* Best-effort notification: the claim is already saved above and staff see
-       it in the admin console, so this must not block the confirmation. */
-    await sendFounderEmail('Profile access request: ' + co.name, {
-      company: co.name, circuits_address: 'circuits.com/' + co.handle,
-      claimant: name, role: role || '(none)', email, evidence: ev || '(none)'
-    }, 'Thanks. We received your request for ' + co.name + ' on Circuits.com. We will verify it and '
-     + 'email you back, usually within 1 business day.');
+    if(err){ document.getElementById('cm').textContent = err; btn.disabled = false; resetTurnstile(form); return; }
+    /* Best-effort notification (through the notify function since 2026-09-21,
+       audit item 7): the claim is already saved above and staff see it in the
+       admin console, so this must not block the confirmation. The function
+       finds the row it just saved and mails from that. */
+    await notifyFunction('claim', { email, company_slug: co.slug, captchaToken: turnstileToken(form) });
     document.getElementById('claim-card').innerHTML =
       '<h1>Request Sent</h1><p class="sub">We will verify you work at ' + escapeHtml(co.name) +
       ' and email you your sign-in details.</p><div class="auth-foot"><a href="/">Back to Circuits.com</a></div>';

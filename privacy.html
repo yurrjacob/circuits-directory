@@ -51,7 +51,7 @@
   <h1>Privacy Policy</h1>
   <p class="lede">This explains what Circuits.com collects, why we collect it, who else can see it,
   and how to get it corrected or deleted.</p>
-  <p><b>Last updated:</b> 17 August 2026</p>
+  <p><b>Last updated:</b> 21 September 2026</p>
 
   <h2 class="section-title">1. Who We Are</h2>
   <p>Circuits.com operates this directory. Where this policy says &ldquo;we&rdquo;, it means Circuits.com.</p>
@@ -67,6 +67,9 @@
     anyone with the link. Do not upload anything confidential.</li>
     <li>Analytics cookies only load if you agree. You can change your mind at any time.</li>
     <li>Buyers can search and contact companies without creating an account.</li>
+    <li>Recruiting is free. A job you post is public. A resume you post is shown on the Recruit
+    Board without your name, and your name, contact details and resume file are shown only to
+    people who are signed in. You can take it down at any time.</li>
   </ul>
 
   <h2 class="section-title">3. What We Collect</h2>
@@ -92,6 +95,38 @@
   <h3>If You Leave a Review</h3>
   <p>Your name, email address, star rating and review text. Reviews are read by Circuits.com staff
   before publication. If published, your <b>name and review are public</b>; your email address is not.</p>
+
+  <h3>If You Post a Resume</h3>
+  <p>Whatever you fill in under Job Search: the job you are seeking, your location, years of
+  experience, a statement, certifications and degrees, up to ten Circuits-Keywords&trade;, a
+  contact email, a phone number, and a resume as a PDF. While you have switched on
+  <b>List Me on the Recruit Board</b>, the job you are seeking, your location, years, statement,
+  certifications and keywords appear on the Recruit Board to anyone. Your name, contact email, phone
+  number and resume file are shown only to people signed in to a Circuits.com account, and the
+  resume is served through a link that expires after fifteen minutes. Switch the listing off and
+  none of it is shown; remove the resume and the file is deleted from storage.</p>
+
+  <h3>If You Post a Job</h3>
+  <p>The job title, location, years of experience, description, keywords and any files you attach,
+  together with your company name and logo. Once Circuits.com approves the post it is public on the
+  Job Board for thirty days per approval, and search engines may index it.</p>
+
+  <h3>If You Apply to a Job</h3>
+  <p>Your application carries a link to your Circuits.com profile and any note you add. It is shown
+  to the company that posted the job and to Circuits.com staff, and the company is emailed that it
+  arrived. We keep a record that you applied so the same job cannot be applied to twice.</p>
+
+  <h3>Notifications</h3>
+  <p>Notices about your account, listings, jobs and applications appear under the bell at the top
+  of every page, with the date and time each arrived, and a copy of most of them is emailed to your
+  sign-in address. Notices are kept while your account exists; you can delete any of them.</p>
+
+  <h3>Keeping Bots Out</h3>
+  <p>Creating an account, signing in with a username, resetting a password, sending us a contact
+  message and requesting access to a listing each include a check by Cloudflare Turnstile that you
+  are a person. Cloudflare sees the network address and browser details of whoever completes it and
+  gives us only a pass or fail; it sets no cookie of ours. The result is not stored with your
+  message or account.</p>
 
   <h3>If You Claim a Listing</h3>
   <p>Your name, email address, your role at the company, and whatever evidence you give us to show
@@ -134,15 +169,21 @@
     <li>Logos, images and documents you upload. These are served from public storage, so anyone
     holding the file&rsquo;s address can open it, whether or not your listing is live.</li>
     <li>Published reviews, with the reviewer&rsquo;s name.</li>
+    <li>Approved job posts on the Job Board, including attachments.</li>
+    <li>The Recruit Board entry described above, minus your name, contact details and resume,
+    which need a sign-in.</li>
   </ul>
-  <p>Quote requests, unpublished reviews, claim submissions and your account email are not public.</p>
+  <p>Quote requests, job applications, unpublished reviews, claim submissions, contact messages and
+  your account email are not public.</p>
 
   <h2 class="section-title">5. Why We Collect It</h2>
   <ul>
     <li><b>To run the directory</b>: so buyers can find companies and contact them.</li>
     <li><b>To operate your account</b>: signing in, resetting a password, showing you your listing.</li>
     <li><b>To pass on quote requests</b> to the company you chose.</li>
-    <li><b>To moderate</b>: checking reviews and claims before they take effect.</li>
+    <li><b>To moderate</b>: checking reviews, claims and job posts before they take effect.</li>
+    <li><b>To run the Job Board and Recruit Board</b>: showing posts and resumes to the people they
+    are meant for and passing applications to the company that posted the job.</li>
     <li><b>To report performance</b> to the company paying for a listing.</li>
     <li><b>To keep the site secure</b> and to audit decisions that affect access or billing.</li>
   </ul>
@@ -153,11 +194,13 @@
   <p>We do not sell personal information. We use these providers to run the site, and they only
   handle your data to provide their service to us:</p>
   <ul>
-    <li><b>Supabase</b>: database, sign-in, and file storage.</li>
-    <li><b>GitHub Pages</b>: hosts the website itself.</li>
-    <li><b>FormSubmit</b>: delivers listing applications and contact messages to us by email.</li>
-    <li><b>jsDelivr</b>: serves some of the site&rsquo;s JavaScript. Like any content network,
-    it can see the network address of the browser requesting a file.</li>
+    <li><b>Supabase</b>: database, sign-in, file storage, and the functions that send our email.</li>
+    <li><b>GitHub Pages</b>: hosts the website itself, including every script it runs.</li>
+    <li><b>Resend</b>: delivers our email, such as notices, listing acknowledgements, contact
+    messages and access requests. It handles the address and the message text in order to deliver it.</li>
+    <li><b>Cloudflare Turnstile</b>: the bot check on the forms named in section 3.</li>
+    <li><b>FormSubmit</b>: used only to copy us on replies in quote threads. The quote form is
+    switched off, so nothing currently goes through it.</li>
     <li><b>Google Analytics</b>: visitor statistics. <b>Only loaded if you accept analytics cookies.</b></li>
   </ul>
   <p>We may also disclose information if the law requires it, or to protect the site and its users
@@ -168,6 +211,10 @@
   <p><b>Necessary, always on.</b> Your sign-in session is stored in your browser so you stay signed
   in between pages. Your cookie choice is stored so we stop asking. Neither is used for tracking and
   the site cannot work without them.</p>
+  <p><b>Conveniences, in your browser only.</b> The dashboard remembers which tab you had open, the
+  results page remembers the profiles you saved, and a form you left half filled may keep its draft.
+  These live in your browser&rsquo;s own storage, never leave it, and are cleared when you clear site
+  data.</p>
   <p><b>Analytics, only with your consent.</b> If you accept, Google Analytics loads and sets its own
   cookies, and we store the random visitor identifier described in section 3. If you decline, neither
   happens.</p>
@@ -182,8 +229,15 @@
     keep your company data so the listing can be restored if you come back, rather than making you
     start again. Ask us and we will delete it.</li>
     <li><b>Quote requests and messages</b>: kept so both sides have a record of the conversation.</li>
+    <li><b>Resumes and Recruit Board entries</b>: until you remove them or delete your account.
+    Removing the resume deletes the file.</li>
+    <li><b>Job posts and applications</b>: a post stays with your company until you delete it, and
+    the applications to it stay with the post. Deleting your account deletes both.</li>
+    <li><b>Contact messages and access requests</b>: in our email and, for access requests, in the
+    admin record until decided and then as history.</li>
     <li><b>Reviews</b>: published reviews stay until removed under our policies or on request.</li>
-    <li><b>Profile view statistics</b>: kept so companies can compare periods over time.</li>
+    <li><b>Profile view statistics and search tallies</b>: thirteen months, so a company can compare a
+    month with the same month last year, then purged automatically.</li>
     <li><b>The staff action record</b>: kept permanently. It is append-only by design and is
     what allows an access or billing decision to be audited later.</li>
   </ul>
@@ -207,8 +261,9 @@
   <h2 class="section-title">10. Security</h2>
   <p>Access to data is enforced in the database itself, not only in the website, so a company can
   only reach its own listing, quote requests and reviews. Passwords are hashed. Uploads are limited
-  by type and size. Decisions affecting access or billing are logged to a record that cannot be
-  altered.</p>
+  by type and size. Resumes sit in private storage and are only ever handed out through short-lived
+  links to signed-in accounts. Decisions affecting access or billing are logged to a record that
+  cannot be altered.</p>
   <p>No system is perfectly secure. If we discover a breach affecting your personal information, we
   will tell you and any regulator we are required to notify.</p>
 
@@ -218,9 +273,10 @@
   your information being transferred there.</p>
 
   <h2 class="section-title">12. Children</h2>
-  <p>Circuits.com is a business directory and is not intended for children. We do not knowingly
-  collect information from anyone under 16. If you believe a child has given us information, contact
-  us and we will delete it.</p>
+  <p>Circuits.com is a business and professional directory and is not intended for children. You
+  must be 18 or older to hold an account, list a company, post a job or post a resume. We do not
+  knowingly collect information from anyone under 18. If you believe a child has given us
+  information, contact us and we will delete it.</p>
 
   <h2 class="section-title">13. Changes</h2>
   <p>If we change this policy we will update the date at the top. If a change materially affects how
@@ -255,6 +311,6 @@ document.getElementById('cookie-reset').addEventListener('click', function(){
 </script>
 <!-- for the notifications bell; a signed-out visitor pays nothing, initInbox
      returns before it fetches anything (Jacob, 2026-09-03) -->
-<script src="/app.js?v=b2169aeed2"></script>
+<script src="/app.js?v=1a4bb08bbb"></script>
 </body>
 </html>

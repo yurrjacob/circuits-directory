@@ -4,8 +4,8 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 /*  Circuits.com, outbound email.
 
     Deployed as the `notify` edge function (Supabase project circuits-com).
-    This copy is the record; deploy it with the Supabase MCP or CLI after
-    editing.
+    The repo copy is tools/edge-notify.ts; deploy it with the Supabase MCP or
+    CLI after editing.
 
     Why this exists: FormSubmit only delivers to addresses that have clicked a
     confirmation link, so it can never reach an arbitrary supplier.
@@ -20,6 +20,13 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
     the caller just filed. Nothing in the request body is ever used as a
     destination on its own, or this would be an open spam relay.
 
+    v15 (2026-09-21, audit item 7): 'contact' and 'claim' replace FormSubmit
+    for the contact form and access requests. Both sit behind Cloudflare
+    Turnstile: the page's token is verified here against TURNSTILE_SECRET
+    (a function secret). Staff mail comes from the staff table, a claim's
+    acknowledgement from the claims row, and the sender of a contact message
+    only gets a copy when the check verifiably passed, so an address typed
+    into the request is never mailed on the request's say-so alone.
     v14 (2026-09-16): the welcome mail carries three buttons.
     v13 (2026-09-15, site audit): the 'quote' kind is off. The in-page quote
     form has been off since 2026-08-21, but this kind still mailed whatever
@@ -134,6 +141,30 @@ async function hasAccount(db: any, email: string): Promise<boolean> {
   const { data } = await db.rpc("user_id_by_email", { p_email: email });
   return !!data;
 }
+
+/* ---------- Cloudflare Turnstile: is the caller a person? ----------
+   The widget runs in the page with the public site key; this is the server
+   half. It needs TURNSTILE_SECRET in the function's secrets. Without it
+   nothing can be verified: the mail still reaches staff, marked unverified,
+   and nothing goes to an address the request supplied. */
+const TURNSTILE_SECRET = Deno.env.get("TURNSTILE_SECRET") ?? "";
+type Human = "ok" | "failed" | "unverified";
+async function humanCheck(token: unknown, req: Request): Promise<Human> {
+  if (!TURNSTILE_SECRET) return "unverified";
+  const t = String(token ?? "").trim();
+  if (!t || t.length > 2048) return "failed";
+  const ip = (req.headers.get("cf-connecting-ip") ?? req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim();
+  try {
+    const r = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ secret: TURNSTILE_SECRET, response: t, ...(ip ? { remoteip: ip } : {}) })
+    });
+    const out = await r.json().catch(() => null);
+    return out?.success ? "ok" : "failed";
+  } catch { return "failed"; }
+}
+const UNVERIFIED_NOTE = "Not verified as a person: TURNSTILE_SECRET is not set on the notify function. Set it in the function's secrets and this line goes away.";
 
 /* Every staff address, for the alerts that used to go through FormSubmit. */
 async function staffEmails(db: any): Promise<string[]> {
@@ -260,6 +291,104 @@ Deno.serve(async (req: Request) => {
     let staffSent = 0;
     for (const to of staff) if (await send(to, `New listing request: ${company} (${kwText})`, staffHtml, email)) staffSent++;
     return json({ ok: applicantSent || staffSent > 0, applicant: applicantSent, staff: staffSent, keywords: kws.length });
+  }
+
+  /* ---------- the contact form ----------
+     Replaces FormSubmit (audit item 7, 2026-09-21). Staff addresses come from
+     the staff table. The sender gets a copy only when Turnstile verifiably
+     passed: with the secret unset or the check failed, the address typed
+     into the form is never mailed, because that would be a relay. */
+  if (kind === "contact") {
+    const human = await humanCheck(payload.captchaToken, req);
+    if (human === "failed") return json({ ok: false, error: "captcha" }, 403);
+    const name = field(payload.name, 80), company = field(payload.company, 120), phone = field(payload.phone, 40);
+    const email = validEmail(payload.email);
+    const message = String(payload.message ?? "").trim().slice(0, 4000);
+    if (!name || !email || !message) return json({ error: "name, email and message required" }, 400);
+
+    const staff = await staffEmails(db);
+    if (!staff.length) return json({ ok: false, error: "no_staff" }, 200);
+    const details =
+      `<table style="width:100%;border-collapse:collapse;font-size:.92rem">` +
+      row("From", name) + row("Company", company) + row("Email", email) + row("Phone", phone) +
+      `</table>`;
+    const staffHtml = shell(
+      kicker("Contact form") +
+      `<h1 style="margin:0 0 14px;font-size:1.25rem">${esc(name)}${company ? ", " + esc(company) : ""} wrote</h1>` +
+      details + quoteBlock(message) +
+      note(human === "ok" ? "Replying to this email goes to the sender." : UNVERIFIED_NOTE)
+    );
+    const flag = human === "ok" ? "" : " [unverified]";
+    let staffSent = 0;
+    for (const to of staff) if (await send(to, `Contact: ${name}${company ? " (" + company + ")" : ""}${flag}`, staffHtml, email)) staffSent++;
+
+    let copy = false;
+    if (human === "ok" && staffSent > 0) {
+      copy = await send(email, "We have your message", shell(
+        kicker("Message received") +
+        `<h1 style="margin:0 0 10px;font-size:1.25rem">Thanks, ${esc(name)}</h1>` +
+        `<p style="margin:0 0 14px;font-size:.92rem">Your message reached Circuits.com. A person reads every one and we reply within one business day. Here is what you sent:</p>` +
+        quoteBlock(message) +
+        note("Sent because this address was entered on the Circuits.com contact form. If that was not you, ignore this email and nothing else happens.")
+      ));
+    }
+    return json({ ok: staffSent > 0, staff: staffSent, copy, verified: human === "ok" });
+  }
+
+  /* ---------- someone asked for access to a listing ----------
+     The claims row is already in the database (rate limited there). This
+     acknowledges it once: the row is found by the email and company the
+     claimant just typed among recent Pending rows, marked ack_sent_at, and
+     both mails are built from the row. The claimant's copy goes out only
+     when Turnstile verifiably passed, for the same reason as above. */
+  if (kind === "claim") {
+    const human = await humanCheck(payload.captchaToken, req);
+    if (human === "failed") return json({ ok: false, error: "captcha" }, 403);
+    const email = validEmail(payload.email);
+    const slug = field(payload.company_slug, 120);
+    if (!email || !slug) return json({ error: "email and company_slug required" }, 400);
+
+    const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const { data: rows, error } = await db.from("claims")
+      .update({ ack_sent_at: new Date().toISOString() })
+      .eq("email", email).eq("company_slug", slug).eq("status", "Pending")
+      .is("ack_sent_at", null).gte("created_at", since)
+      .select("id, name, role_title, evidence, email");
+    if (error) return json({ ok: false, error: "lookup_failed" }, 502);
+    const c = rows?.[0];
+    if (!c) return json({ ok: false, error: "nothing_to_acknowledge" }, 200);
+
+    const { data: co } = await db.from("companies").select("name, handle").eq("slug", slug).maybeSingle();
+    const coName = field(co?.name, 120) || slug;
+    const name = field(c.name, 80) || "Someone";
+    const details =
+      `<table style="width:100%;border-collapse:collapse;font-size:.92rem">` +
+      row("Company", coName) + row("Address", co?.handle ? `circuits.com/${co.handle}` : "") +
+      row("Claimant", name) + row("Role", field(c.role_title, 80)) + row("Email", c.email) +
+      `</table>`;
+    const staff = await staffEmails(db);
+    const staffHtml = shell(
+      kicker("Access request") +
+      `<h1 style="margin:0 0 14px;font-size:1.25rem">${esc(name)} asks for ${esc(coName)}</h1>` +
+      details +
+      (c.evidence ? `<p style="margin:14px 0 0;font-size:.85rem;color:#5f6368">How to verify them:</p>` + quoteBlock(String(c.evidence).slice(0, 2000)) : "") +
+      `<p style="margin:18px 0 0">${button(`${SITE}/portal`, "Review in Admin")}</p>` +
+      note((human === "ok" ? "" : UNVERIFIED_NOTE + " ") + "Admin, then Claims. Replying to this email goes to the claimant.")
+    );
+    const flag = human === "ok" ? "" : " [unverified]";
+    let staffSent = 0;
+    for (const to of staff) if (await send(to, `Access request: ${coName} (${name})${flag}`, staffHtml, c.email)) staffSent++;
+
+    let claimantSent = false;
+    if (human === "ok") {
+      claimantSent = await send(c.email, `We have your request for ${coName} on Circuits.com`, shell(
+        kicker("Request received") +
+        `<h1 style="margin:0 0 10px;font-size:1.25rem">We have your request for ${esc(coName)}</h1>` +
+        `<p style="margin:0 0 14px;font-size:.92rem">A person checks every request. We will verify you work there and email you your sign-in details, usually within one business day.</p>` +
+        note("Sent because this address was entered on a Circuits.com access request. If that was not you, ignore this email and nothing else happens.")
+      ));
+    }
+    return json({ ok: staffSent > 0, staff: staffSent, claimant: claimantSent, verified: human === "ok" });
   }
 
   /* ---------- quote requests: OFF (site audit, 2026-09-15) ----------

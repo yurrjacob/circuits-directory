@@ -135,12 +135,17 @@
   </div>
 </footer>
 
-<script src="app.js?v=b2169aeed2"></script>
+<script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
+<script src="store.js?v=28a3d059fb"></script>
+<script src="app.js?v=1a4bb08bbb"></script>
 <script>
 /* /contact?topic=... prefills the message, for the Request buttons on the
    dashboard's recruiting upgrades (Jacob, 2026-09-09) */
 (function(){ const t = new URLSearchParams(location.search).get('topic'); const m = document.getElementById('c-message'); if(t && m && !m.value) m.value = t; })();
+/* Sent through the notify function since 2026-09-21 (audit item 7), behind
+   Cloudflare Turnstile; FormSubmit is gone from this form. */
 armSpamTrap(document.getElementById('contact-form'));
+mountTurnstile(document.getElementById('contact-form'));
 document.getElementById('contact-form').addEventListener('submit',async function(e){
   e.preventDefault();
   if(looksLikeSpam(this)){ fakeSuccess(this, 'Thanks! Your message has been sent.'); return; }
@@ -151,29 +156,20 @@ document.getElementById('contact-form').addEventListener('submit',async function
   const phone = v('c-phone');
   if(!isValidEmail(v('c-email'))){ showErr('Please enter a valid email address (e.g. you@company.com).'); return; }
   if(phone && !isValidPhone(phone)){ showErr('Please enter a valid phone number (at least 10 digits).'); return; }
+  { const tp = turnstileProblem(this); if(tp){ showErr(tp); return; } }
   const btn = this.querySelector('.submit');
   btn.disabled = true; btn.textContent = 'Sending…';
-  let ok = false;
-  try{
-    ok = await sendFounderEmail('Contact - Circuits.com', {
-      name: v('c-name'),
-      company: v('c-company'),
-      email: v('c-email'),
-      phone: phone || '(not provided)',
-      message: v('c-message')
-    }, 'Hi ' + v('c-name') + ',\n\nThanks for reaching out to Circuits.com! We received your message and will respond within 1 business day.\n\n'
-      + 'Here is a copy of what you sent:\n'
-      + '- Name: ' + v('c-name') + '\n'
-      + '- Company: ' + v('c-company') + '\n'
-      + '- Email: ' + v('c-email') + '\n'
-      + '- Phone: ' + (phone || '(not provided)') + '\n'
-      + '- Message: ' + v('c-message') + '\n\n'
-      + '- John & Mike, Circuits.com');
-  }catch(e){ ok = false; }
+  const out = await notifyFunction('contact', {
+    name: v('c-name'), company: v('c-company'), email: v('c-email'), phone: phone || '',
+    message: v('c-message'), captchaToken: turnstileToken(this)
+  });
   btn.disabled = false; btn.textContent = 'Send to John & Mike';
-  if(ok){
+  resetTurnstile(this);   // a token is single use, whatever happened
+  if(out && out.ok){
     document.getElementById('contact-success').classList.add('show');
     this.reset();
+  }else if(out && out.error === 'captcha'){
+    showErr('The "I am human" check did not pass. Please complete it again and resend.');
   }else{
     showErr('We couldn’t send your message just now. Please email us directly at john@circuits.com or mike@circuits.com, or try again in a few minutes.');
   }

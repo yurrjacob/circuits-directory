@@ -1185,6 +1185,24 @@ async function notifyListingRequest(email, company){
   }catch(err){ console.warn('listing request email failed', err); return false; }
 }
 
+/* One call to the notify function (audit item 7, 2026-09-21). The session
+   token rides along when there is one. Every kind looks its addresses up in
+   database rows, so nothing in the payload names where mail goes. Returns the
+   function's JSON, or an {ok:false, error} of its own when the network failed. */
+async function notifyFunction(kind, payload){
+  let tok = '';
+  if(sb){ try{ const { data } = await sb.auth.getSession(); tok = data && data.session ? data.session.access_token : ''; }catch(e){ tok = ''; } }
+  try{
+    const res = await fetch(SUPABASE_URL + '/functions/v1/notify', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json', apikey: SUPABASE_KEY }, tok ? { Authorization: 'Bearer ' + tok } : {}),
+      body: JSON.stringify(Object.assign({ kind: kind }, payload || {}))
+    });
+    const out = await res.json().catch(() => null);
+    return out || { ok: false, error: 'no_response' };
+  }catch(err){ console.warn('notify ' + kind + ' failed', err); return { ok: false, error: 'network' }; }
+}
+
 /* Every company, including suspended ones, staff only, enforced by the
    companies_read policy rather than by asking nicely here. */
 async function fetchAllCompanies(){
