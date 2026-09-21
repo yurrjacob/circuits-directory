@@ -52,7 +52,7 @@ function renderExperience(){
   box.innerHTML = `
     <h3 style="margin-top:0">Post a Resume</h3>
     <div class="grid2">
-      <div class="auth-field"><label for="me-title">Position Desired</label>
+      <div class="auth-field"><label for="me-title">Seeking Job As</label>
         <input id="me-title" type="text" maxlength="80" placeholder="RF Design Engineer" value="${escapeHtml(ME.title || '')}"></div>
       <div class="auth-field"><label for="me-location">Location</label>
         <input id="me-location" type="text" maxlength="120" placeholder="Austin, TX or Remote" value="${escapeHtml(ME.location || '')}"></div>
@@ -1398,7 +1398,7 @@ async function saveProfile(){
   if(opt) opt.textContent = PT.co.name;
   renderProfileForm();
   renderPromote();
-  renderRecruitingListings();   // Positions Desired reads the refreshed profile
+  renderRecruitingListings();   // Resumes Posted reads the refreshed profile
   markClean();
 }
 
@@ -2198,7 +2198,7 @@ function wireJobs(){
   });
 }
 
-/* Search Job Market (Jacob, 2026-09-13): one box on each Recruiting tab, a
+/* Board search (Jacob, 2026-09-13; named after its board 2026-09-21): one box on each Recruiting tab, a
    keyword search of the board that tab feeds. Find Recruits searches the
    Recruit Board, Job Search searches the Job Board, each in a new tab like
    the View buttons beside them. */

@@ -6,7 +6,6 @@
 <title>Dashboard | Circuits.com</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
 <link rel="stylesheet" href="/styles.css?v=f018a606c0">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
@@ -112,7 +111,7 @@
   </div>
 
   <!-- ===== seeking employment: Post Free Resume (Jacob, 2026-09-14). Box A the
-       form, box B the buttons, box C Search Job Market, top to bottom. ===== -->
+       form, box B the buttons, box C Search the Job Board, top to bottom. ===== -->
   <section class="pt-panel" id="tab-seeking">
     <div class="pt-tab-head">
       <div>
@@ -130,10 +129,10 @@
     <div class="pf-form" id="pt-experience"></div>
     <div id="pt-recruit"></div>
     <form class="pf-form pt-market" id="pt-market-jobs" autocomplete="off">
-      <h3 style="margin-top:0">Search Job Market</h3>
+      <h3 style="margin-top:0">Search the Job Board</h3>
       <div class="pt-market-row">
         <input type="text" id="pt-market-jobs-q" maxlength="80" placeholder="Search open jobs by Circuits-Keyword&trade;..." aria-label="Search open jobs by keyword" autocomplete="off">
-        <button type="submit" class="btn btn-primary">Search Job Market</button>
+        <button type="submit" class="btn btn-primary">Search Jobs</button>
       </div>
       <p class="pf-note">Open jobs posted by companies on Circuits.com, listed by the Circuits-Keywords&trade; they hire for.</p>
     </form>
@@ -226,7 +225,7 @@
   </section>
 
   <!-- hiring: Post Free Job (Jacob, 2026-09-14). Box A the form, box B the
-       buttons, box C Search Job Market, top to bottom. Searching people happens on /talent. -->
+       buttons, box C Search the Recruit Board, top to bottom. Searching people happens on /talent. -->
   <section class="pt-panel" id="tab-hiring">
     <div class="pt-section" style="margin-top:0;padding-top:0;border-top:0">
       <div class="pt-tab-head">
@@ -272,10 +271,10 @@
       <span id="job-live-note"></span>
     </div>
       <form class="pf-form pt-market" id="pt-market-recruits" autocomplete="off">
-        <h3 style="margin-top:0">Search Job Market</h3>
+        <h3 style="margin-top:0">Search the Recruit Board</h3>
         <div class="pt-market-row">
           <input type="text" id="pt-market-recruits-q" maxlength="80" placeholder="Search recruits by Circuits-Keyword&trade;..." aria-label="Search recruits by keyword" autocomplete="off">
-          <button type="submit" class="btn btn-primary">Search Job Market</button>
+          <button type="submit" class="btn btn-primary">Search Recruits</button>
         </div>
         <p class="pf-note">Resumes posted by people seeking employment, listed by the Circuits-Keywords&trade; that best describe their qualifications.</p>
       </form>
@@ -655,11 +654,11 @@
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
+<script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
 <script src="/store.js?v=4fec6ca931"></script>
-<script src="/app.js?v=0761ac238b"></script>
-<script src="/portal.js?v=d1b41449bc"></script>
+<script src="/app.js?v=b2169aeed2"></script>
+<script src="/portal.js?v=2c4812a491"></script>
 <script src="/admin.js?v=a280d00bb3"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));

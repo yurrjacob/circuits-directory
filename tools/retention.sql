@@ -1,0 +1,18 @@
+-- Retention for the two tables that grow with every visitor (audit item 5,
+-- Jacob, 2026-09-21). Applied as analytics_retention.
+--
+-- searches holds what people typed, with no identifier at all; profile_events
+-- holds a view or click per company with a random visitor id when analytics
+-- were accepted. Both are kept for 13 months, so a company can still compare
+-- this month with the same month last year, then purged nightly. The Privacy
+-- Policy states the same window.
+--
+-- create or replace function public.purge_old_analytics() returns void
+-- language sql security definer set search_path to 'public' as $$
+--   delete from searches       where at         < now() - interval '13 months';
+--   delete from profile_events where created_at < now() - interval '13 months';
+-- $$;
+-- revoke execute on function public.purge_old_analytics() from public, anon, authenticated;
+-- select cron.schedule('purge-old-analytics', '17 4 * * *', 'select public.purge_old_analytics()');
+--
+-- To change the window: edit both intervals, and section 8 of privacy.html.

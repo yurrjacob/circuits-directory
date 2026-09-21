@@ -102,6 +102,9 @@ function row(label, value, opts){
    page (folded in below About) and the plain person page. */
 function personExperience(p){
   const creds = (Array.isArray(p.credentials) ? p.credentials : []).filter(c => c && (c.name || '').trim());
+  /* nothing filled in, no box: every person page used to carry an empty
+     Resumes Posted box with only a button in it (audit item, 2026-09-21) */
+  if(!p.title && p.years == null && !p.bio && !creds.length && !(p.keywords || []).length) return '';
   let inner = '';
   if(p.title || (p.years != null)) inner += `<p class="pf-prose"><b>${escapeHtml(p.title || 'Circuits industry professional')}</b>${p.years != null ? ` &middot; ${p.years} year${p.years === 1 ? '' : 's'} of experience` : ''}</p>`;
   if(p.bio) inner += `<p class="pf-prose">${escapeHtml(p.bio)}</p>`;

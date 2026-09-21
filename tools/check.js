@@ -37,7 +37,8 @@ const ROOT = path.join(__dirname, '..');
 {
   const walk = d => fs.readdirSync(d, { withFileTypes: true }).flatMap(e => {
     const p = path.join(d, e.name);
-    if(e.isDirectory()) return ['backups', 'node_modules', '.git'].includes(e.name) ? [] : walk(p);
+    /* vendor/ is a third party's file, served as shipped; the rule is for what we write */
+    if(e.isDirectory()) return ['backups', 'node_modules', '.git', 'vendor'].includes(e.name) ? [] : walk(p);
     return /\.(html|js|css|md|txt|xml|json|svg)$/.test(e.name) ? [p] : [];
   });
   const dash = new RegExp(String.fromCharCode(0x2014) + '|&md' + 'ash;');   // spelled out so this file passes its own check
@@ -1729,8 +1730,8 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
      the jobs posted and the person's own listing, each read-only here with a
      button to the tab that edits it */
   /* both recruiting lists are back on Your Listings (Jacob, 2026-09-13): Jobs
-     Posted and Positions Desired under the keyword table; each tab keeps only
-     its forms and a Search Job Market box. Recruiting is free: no upgrades,
+     Posted and Resumes Posted under the keyword table; each tab keeps only
+     its forms and a board search box. Recruiting is free: no upgrades,
      no fees, no paid preview. */
   const seekTab = (ph.match(/<section class="pt-panel" id="tab-seeking">[\s\S]*?<\/section>/) || [''])[0];
   const hireTab = (ph.match(/<section class="pt-panel" id="tab-hiring">[\s\S]*?<\/section>/) || [''])[0];
@@ -1765,8 +1766,33 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   assert.ok(/id="job-years"/.test(hireTab) && /years_experience: years/.test(pj), 'Post a Job lost Years of experience');
   assert.ok(!/\$99|btn-upgrade|pt-rec-upgrades|Talent Access/.test(hireTab + seekTab), 'Recruiting is free: an upgrade or a fee is back on a Recruiting tab');
   assert.ok(!/Preview How Companies See You|pt-recruit-preview/.test(ph) && !/renderRecruitPreview|data-preview=/.test(pj), 'the paid preview is back on Job Search');
-  assert.ok(/id="pt-market-jobs"/.test(seekTab) && /id="pt-market-recruits"/.test(hireTab) && (ph.match(/>Search Job Market<\/button>/g) || []).length === 2 && /function wireMarketSearch/.test(pj),
-    'each Recruiting tab needs its own Search Job Market box');
+  assert.ok(/id="pt-market-jobs"/.test(seekTab) && /id="pt-market-recruits"/.test(hireTab) && />Search Jobs<\/button>/.test(seekTab) && />Search Recruits<\/button>/.test(hireTab) && /function wireMarketSearch/.test(pj),
+    'each Recruiting tab needs its own board search box, named after the board it searches');
+  assert.ok(!/Search Job Market|Position Desired|Positions Desired/.test(ph + pj), 'an old name is back: the boxes are Search the Job Board and Search the Recruit Board, the field is Seeking Job As');
+  /* the Supabase library is pinned with an integrity hash on every page (audit item 3, 2026-09-21) */
+  for (const f of fs.readdirSync(ROOT).filter(x => x.endsWith('.html'))) {
+    const h = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    if (!/supabase-js/.test(h)) continue;
+    assert.ok(/src="\/vendor\/supabase-js-2\.\d+\.\d+\.js" integrity="sha384-[A-Za-z0-9+\/=]{64}"/.test(h) && !/cdn\.jsdelivr\.net/.test(h),
+      `${f} loads the Supabase library from a CDN, unpinned, or without an integrity hash; it is served from /vendor`);
+  }
+  {
+    const crypto = require('crypto');
+    const tag = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8').match(/src="\/vendor\/(supabase-js-[\d.]+\.js)" integrity="sha384-([A-Za-z0-9+\/=]+)"/);
+    assert.ok(tag, 'portal.html does not load the vendored Supabase library');
+    const got = crypto.createHash('sha384').update(fs.readFileSync(path.join(ROOT, 'vendor', tag[1]))).digest('base64');
+    assert.strictEqual(got, tag[2], `vendor/${tag[1]} does not match the integrity hash the pages carry; every page would refuse to load it`);
+    const qr = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8').match(/src="\/vendor\/(qrcode-generator-[\d.]+\.js)" integrity="sha384-([A-Za-z0-9+\/=]+)"/);
+    assert.ok(qr, 'portal.html does not load the vendored QR library with an integrity hash');
+    const gotQr = crypto.createHash('sha384').update(fs.readFileSync(path.join(ROOT, 'vendor', qr[1]))).digest('base64');
+    assert.strictEqual(gotQr, qr[2], `vendor/${qr[1]} does not match its integrity hash`);
+    /* the lazy loader in app.js (the bell on pages without the client) must name the same file and hash */
+    const lazy = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8').match(/add\('\/vendor\/(supabase-js-[\d.]+\.js)', 'sha384-([A-Za-z0-9+\/=]+)'\)/);
+    assert.ok(lazy && lazy[1] === tag[1] && lazy[2] === tag[2], 'the lazy loader in app.js loads a different Supabase file or hash than the pages do');
+    assert.ok(!/cdn\.jsdelivr\.net/.test(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')), 'app.js still loads something from the CDN');
+  }
+  assert.ok(/if\(!p\.title && p\.years == null && !p\.bio && !creds\.length && !\(p\.keywords \|\| \[\]\)\.length\) return '';/.test(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8')),
+    'an empty Resumes Posted box is back on every person page');
   assert.ok(/renderExperience\(\); renderRecruit\(\); renderRecruitingListings\(\);/.test(pj) && /data-go-form="pt-experience"/.test(pj) && /activateTab\('seeking'\); const f = el\(b\.dataset\.goForm\)/.test(pj), 'Positions Desired is not drawn, or Edit does not open the Job Search tab');
   assert.ok(/setMode\(j\); activateTab\('hiring'\)/.test(pj), 'Edit on a posted job does not open the Find Recruits form');
   /* a reload stays on the tab you were on (Jacob, 2026-09-15) */
