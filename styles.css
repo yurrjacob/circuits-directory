@@ -852,9 +852,10 @@ tr.row-warn td{background:#fff3cd}
 .pf-kws .kw-tag{gap:9px}
 .pf-kws .kw-tag:has(.kw-lb){padding:5px 6px 5px 14px}
 .pf-kws .kw-tag .kw-lb{font-size:.66rem;padding:4px 9px;border-radius:999px}
-.pf-kws .kw-tag.kw-sponsored{background:var(--green);border-color:var(--green);color:#0f0f0f;box-shadow:0 4px 12px rgba(118,192,0,.28)}
-.pf-kws .kw-tag.kw-sponsored:hover{background:var(--green-dark);border-color:var(--green-dark);color:#fff}
-.pf-kws .kw-tag.kw-sponsored .pf-flag{margin-right:-1px}
+.pf-kws .kw-tag.kw-sponsored{background:#fff;border:2px solid var(--green);color:#1a1a1a;box-shadow:0 0 0 3px rgba(118,192,0,.14);padding-top:6px;padding-bottom:6px}
+.pf-kws .kw-tag.kw-sponsored:has(.kw-lb){padding-top:4px;padding-bottom:4px;padding-right:5px}
+.pf-kws .kw-tag.kw-sponsored:hover{background:#f1fae0;color:#1a1a1a}
+.pf-kws .kw-tag.kw-sponsored .pf-flag{margin-right:-1px;color:var(--green-dark)}
 .stars{color:#e8a800;letter-spacing:.5px}
 .stars-off{color:#dfe1e5}
 

@@ -7,6 +7,8 @@ global.avatarSvg = () => '<svg class="silhouette"></svg>';
 global.isLogoUrl = s => /^https?:\/\//i.test(s||'');
 global.isValidEmail = () => true;
 global.sendFounderEmail = () => {};
+/* the picture test lives in app.js outside the slice evaluated below; same rule */
+global.isImageUrl = u => /\.(png|jpe?g|gif|webp|avif|bmp)(\?|#|$)/i.test(String(u || ''));
 global.trackEvent = () => {};
 global.submitInquiry = async () => {};
 global.submitReview = async () => {};

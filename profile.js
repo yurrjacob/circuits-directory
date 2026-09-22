@@ -270,7 +270,7 @@ async function initProfile(){
         + badgeHtml(k.badge, 'kw-lb')
         + `</a>`
       ).join('')}</div>`
-      + (anyBanner ? `<p class="pf-note">A green keyword is one this company exclusively sponsors: its banner stands above that keyword's results.</p>` : '')
+      + (anyBanner ? `<p class="pf-note">A keyword outlined in green is one this company exclusively sponsors: its banner stands above that keyword's results.</p>` : '')
     : '');
 
   /* Listing documents deliberately do NOT get their own section here, they
@@ -287,13 +287,17 @@ async function initProfile(){
     (d.name || '').toLowerCase().includes((name || '').toLowerCase().slice(0, 12)) && (name || '').length > 3);
   for(const k of kws){
     const ldocs = (Array.isArray(k.docs) ? k.docs : []).filter(d => d && d.url);
-    const gallery = Array.isArray(k.gallery) ? k.gallery.filter(g => g && g.url) : [];
+    /* a picture attached to the listing is a picture, not a file to download
+       (Jacob, 2026-09-22): it joins the gallery, named after its file */
+    const files = ldocs.filter(d => !isImageUrl(d.url));
+    const gallery = ldocs.filter(d => isImageUrl(d.url)).map(d => ({ url: d.url, caption: String(d.name || '').replace(/\.[a-z0-9]+$/i, '') }))
+      .concat(Array.isArray(k.gallery) ? k.gallery.filter(g => g && g.url) : []);
     const certs = (Array.isArray(k.certifications) ? k.certifications : []).filter(c => c && (c.name || '').trim());
     const team = (Array.isArray(k.team) ? k.team : []).filter(t => t && ((t.name || '').trim() || t.photo));
     const rv = byListing[k.id] || [];
     let inner = '';
     if(k.description) inner += `<p class="pf-prose">${escapeHtml(k.description)}</p>`;
-    if(ldocs.length) inner += `<p class="pf-ldocs">${ldocs.map(d =>
+    if(files.length) inner += `<p class="pf-ldocs">${files.map(d =>
       `<a class="doc-link" href="${escapeHtml(safeUrl(d.url))}" target="_blank" rel="noopener nofollow">${escapeHtml(d.name || 'Document')}</a>`).join(' ')}</p>`;
     if(gallery.length) inner += `<h3 class="pf-sub">Gallery</h3><div class="pf-gallery">${gallery.map(g =>
         `<figure><img src="${escapeHtml(g.url)}" alt="${escapeHtml(g.caption || co.name)}" loading="lazy"
