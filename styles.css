@@ -854,6 +854,8 @@ tr.row-warn td{background:#fff3cd}
 .pf-kws .kw-tag.kw-sponsored{background:#fff;border:2px solid var(--green);color:#1a1a1a;box-shadow:0 0 0 3px rgba(118,192,0,.14);padding-top:6px;padding-bottom:6px}
 .pf-kws .kw-tag.kw-sponsored:has(.kw-lb){padding-top:4px;padding-bottom:4px;padding-right:5px}
 .pf-kws .kw-tag.kw-sponsored:hover{background:#f1fae0;color:#1a1a1a}
+.pf-kws .kw-tag .kw-sp{font-size:.62rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--green-dark);
+  padding-left:9px;margin-left:-1px;border-left:1px solid rgba(47,74,0,.28);line-height:1.1;align-self:center}
 
 .stars{color:#e8a800;letter-spacing:.5px}
 .stars-off{color:#dfe1e5}

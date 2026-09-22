@@ -54,8 +54,9 @@ function fitsLine(v, max){
 
 /* The exclusive sponsor of a Circuits-Keyword (Jacob, 2026-09-22: "clean yet
    noticeable", and not a star, not a black pill, not a flag). The keyword pill
-   itself is outlined in green with a soft halo, and a listing heading carries
-   a light green Sponsored tag in the site's own pill style. */
+   itself is outlined in green with a soft halo and carries the word Sponsored
+   in small green capitals after the keyword; a listing heading carries a
+   light green Sponsored tag in the site's own pill style. */
 const SPONSOR_TITLE = 'Exclusive sponsor: this company holds the banner above this Circuits-Keyword\'s results.';
 function sponsorHtml(){
   return `<span class="lb kw-lb lb-sponsor" title="${SPONSOR_TITLE}">Sponsored</span>`;
@@ -265,11 +266,11 @@ async function initProfile(){
   const anyBanner = kws.some(k => k.banner);
   html += section('Keyword Listings', kws.length
     ? `<div class="kw-tags pf-kws">${kws.map(k =>
-        `<a class="kw-tag${k.banner ? ' kw-sponsored' : ''}" href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}"${k.banner ? ` title="${SPONSOR_TITLE}"` : ''}>${escapeHtml(k.keyword)}`
+        `<a class="kw-tag${k.banner ? ' kw-sponsored' : ''}" href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}"${k.banner ? ` title="${SPONSOR_TITLE}"` : ''}>${escapeHtml(k.keyword)}${k.banner ? '<span class="kw-sp">Sponsored</span>' : ''}`
         + badgeHtml(k.badge, 'kw-lb')
         + `</a>`
       ).join('')}</div>`
-      + (anyBanner ? `<p class="pf-note">A keyword outlined in green is one this company exclusively sponsors: its banner stands above that keyword's results.</p>` : '')
+      + (anyBanner ? `<p class="pf-note">A keyword marked Sponsored is one this company exclusively sponsors: its banner stands above that keyword's results.</p>` : '')
     : '');
 
   /* Listing documents deliberately do NOT get their own section here, they
