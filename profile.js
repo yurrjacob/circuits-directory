@@ -52,11 +52,14 @@ function fitsLine(v, max){
   return !!s && s.length <= max && !/[\r\n]/.test(s) && !/^https?:\/\//i.test(s);
 }
 
-/* The exclusive sponsor of a Circuits-Keyword: a small dark label beside the
-   keyword, the same shape as a Trust Badge, in place of the star it used to be
-   (Jacob, 2026-09-22: "clean yet noticeable"). */
+/* The exclusive sponsor of a Circuits-Keyword (Jacob, 2026-09-22: "clean yet
+   noticeable", and not a star, and not a black pill). The keyword pill itself
+   fills solid green with a small flag, and a listing heading carries a light
+   green Sponsored tag in the site's own pill style. */
+const SPONSOR_TITLE = 'Exclusive sponsor: this company holds the banner above this Circuits-Keyword\'s results.';
+const FLAG_ICON = '<svg class="pf-flag" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4"/><path d="M5 4h11l-2.5 4 2.5 4H5"/></svg>';
 function sponsorHtml(){
-  return `<span class="lb kw-lb lb-sponsor" title="Exclusive sponsor: this company holds the banner above this Circuits-Keyword's results.">Sponsor</span>`;
+  return `<span class="lb kw-lb lb-sponsor" title="${SPONSOR_TITLE}">${FLAG_ICON}Sponsored</span>`;
 }
 
 function section(title, inner, extra){
@@ -135,6 +138,7 @@ function linkBoxHtml(handle, co){
         <a href="#" class="pf-linkact" id="pf-save" data-slug="${escapeHtml(co.slug || '')}" data-handle="${escapeHtml(handle || '')}" data-name="${escapeHtml(co.name || '')}">Save this Profile</a>
         <a href="#" class="pf-linkact" id="pf-copy" data-url="https://circuits.com/${escapeHtml(handle)}">Copy this Profile</a>
       </div>
+      <p class="pf-save-note" id="pf-save-note" hidden></p>
     </div>`;
 }
 
@@ -262,11 +266,11 @@ async function initProfile(){
   const anyBanner = kws.some(k => k.banner);
   html += section('Keyword Listings', kws.length
     ? `<div class="kw-tags pf-kws">${kws.map(k =>
-        `<a class="kw-tag" href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}">${escapeHtml(k.keyword)}${k.banner ? sponsorHtml() : ''}`
+        `<a class="kw-tag${k.banner ? ' kw-sponsored' : ''}" href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}"${k.banner ? ` title="${SPONSOR_TITLE}"` : ''}>${k.banner ? FLAG_ICON : ''}${escapeHtml(k.keyword)}`
         + badgeHtml(k.badge, 'kw-lb')
         + `</a>`
       ).join('')}</div>`
-      + (anyBanner ? `<p class="pf-note">Sponsor marks a Circuits-Keyword&trade; this company exclusively sponsors: its banner stands above that keyword's results.</p>` : '')
+      + (anyBanner ? `<p class="pf-note">A green keyword is one this company exclusively sponsors: its banner stands above that keyword's results.</p>` : '')
     : '');
 
   /* Listing documents deliberately do NOT get their own section here, they
@@ -594,6 +598,9 @@ function wireSave(){
   const btn = document.getElementById('pf-save');
   if(!btn) return;
   const entry = { slug: btn.dataset.slug, handle: btn.dataset.handle, name: btn.dataset.name };
+  const note = document.getElementById('pf-save-note');
+  /* say where it went (Jacob, 2026-09-22): the Saved suppliers strip that sits
+     above every search result on this browser */
   const paint = () => {
     const on = isSaved(entry.slug);
     btn.textContent = on ? 'Saved ✓' : 'Save this Profile';
@@ -601,6 +608,10 @@ function wireSave(){
     btn.title = on
       ? 'Saved in this browser only. Click to remove.'
       : 'Keeps this profile in a list in this browser. No account needed.';
+    if(note){
+      note.hidden = !on;
+      note.innerHTML = on ? 'Saved. You will find it under <b>Saved suppliers</b> at the top of every search result on this browser.' : '';
+    }
   };
   btn.addEventListener('click', e => { e.preventDefault(); toggleSaved(entry); paint(); });
   paint();

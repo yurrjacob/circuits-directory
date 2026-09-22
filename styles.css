@@ -612,6 +612,8 @@ tr.row-warn td{background:#fff3cd}
 .pf-linkact{color:#fff;font-weight:700;text-decoration:none;border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:5px 12px;transition:background .12s,border-color .12s}
 .pf-linkact:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.5);text-decoration:none}
 .pf-linkact.is-saved{background:var(--green);border-color:var(--green);color:#0f0f0f}
+.pf-save-note{margin:10px 0 0;font-size:.78rem;line-height:1.45;color:#c9d1c0}
+.pf-save-note b{color:#fff}
 .pf-job-act{margin:14px 0 0}
 .pf-job-act .mini-btn{background:#1f5fbf;color:#fff;border-color:#1f5fbf;font-weight:700;padding:9px 16px;border-radius:10px}
 .pf-job-act .mini-btn:hover{background:#174a96;border-color:#174a96;color:#fff}
@@ -842,9 +844,17 @@ tr.row-warn td{background:#fff3cd}
 .pf-chip .pf-ico{color:var(--green-dark)}
 .pf-rating{display:inline-flex;align-items:center;gap:5px;font-weight:600;color:var(--ink)}
 .pf-rating i{font-style:normal;color:var(--muted);font-weight:400}
-.lb-sponsor{background:var(--dark);color:#fff}
+.lb-sponsor{display:inline-flex;align-items:center;gap:5px;background:#f1fae0;color:#2f4a00;border:1px solid var(--green);text-transform:none;letter-spacing:0;font-weight:700;font-size:.72rem;padding:3px 9px 3px 7px}
 .pf-sec-h .kw-lb,.pf-sec-h .lb-sponsor{margin-left:2px;vertical-align:middle}
-.pf-kws .kw-tag .lb-sponsor{margin-left:-2px}
+.pf-flag{flex:none}
+/* the sponsored keyword is the filled pill, the rest stay soft; a pill that
+   carries a badge gets room around it instead of squeezing it to the edge */
+.pf-kws .kw-tag{gap:9px}
+.pf-kws .kw-tag:has(.kw-lb){padding:5px 6px 5px 14px}
+.pf-kws .kw-tag .kw-lb{font-size:.66rem;padding:4px 9px;border-radius:999px}
+.pf-kws .kw-tag.kw-sponsored{background:var(--green);border-color:var(--green);color:#0f0f0f;box-shadow:0 4px 12px rgba(118,192,0,.28)}
+.pf-kws .kw-tag.kw-sponsored:hover{background:var(--green-dark);border-color:var(--green-dark);color:#fff}
+.pf-kws .kw-tag.kw-sponsored .pf-flag{margin-right:-1px}
 .stars{color:#e8a800;letter-spacing:.5px}
 .stars-off{color:#dfe1e5}
 

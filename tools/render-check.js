@@ -194,9 +194,9 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
      symbol, and the line just advertises something the company has not bought. */
   // the star lives on the keyword tags; the note explaining it is separate
   const kwTags = () => (captured.match(/<div class="kw-tags[\s\S]*?<\/div>/) || [''])[0];
-  assert.ok(/Sponsor marks a Circuits-Keyword/.test(captured),
+  assert.ok(/exclusively sponsors/.test(captured),
     'the star note is missing for a company that does sponsor a keyword');
-  assert.ok(/lb-sponsor/.test(kwTags()), 'the sponsored keyword lost its Sponsor label');
+  assert.ok(/kw-sponsored/.test(kwTags()), 'the sponsored keyword is not drawn as the filled green pill');
   {
     const noBanner = [
       { keyword:'analog ics', banner:false, badge:{text:'Authorized',color:'#c9a227'}, docs:[] },
@@ -204,9 +204,9 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
     const saved = global.fetchCompanyKeywords;
     global.fetchCompanyKeywords = async () => noBanner;
     await initProfile();
-    assert.ok(!/lb-sponsor/.test(kwTags()),
+    assert.ok(!/kw-sponsored/.test(kwTags()),
       'a company with no sponsored keyword is showing a star on a keyword');
-    assert.ok(!/marks a Circuits-Keyword/.test(captured),
+    assert.ok(!/exclusively sponsors/.test(captured),
       'a company with no sponsor banner is still told what the star means');
     // the section itself must survive, only the note goes
     assert.ok(/Keyword Listings/.test(captured), 'the keyword section vanished with the note');
