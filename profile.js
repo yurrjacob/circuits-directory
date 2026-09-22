@@ -58,18 +58,12 @@ function fitsLine(v, max){
    in small green capitals after the keyword; a listing heading carries a
    light green Sponsored tag in the site's own pill style. */
 const SPONSOR_TITLE = 'Exclusive sponsor: this company holds the banner above this Circuits-Keyword\'s results.';
-/* The sponsor mark is a star (Jacob, 2026-09-22: "go back to the star but
-   make it clean and expensive looking"): a small gold one drawn as an SVG with
-   a metallic fill, not a text glyph, sitting between the keyword and its
-   badge. The gradient is defined once per page, in starDefsHtml(). */
+/* The sponsor mark is a star (Jacob, 2026-09-22): flat, one colour, no
+   gradient, no edge line, no shadow. A single dark shape reads as expensive;
+   a shaded gold one read as cheap. It sits between the keyword and its badge. */
 function starHtml(){
   return `<svg class="kw-star" viewBox="0 0 24 24" role="img" aria-label="Exclusive sponsor"><title>${SPONSOR_TITLE}</title>`
-    + `<path d="M12 2.8l2.75 5.75 6.3.85-4.6 4.4 1.15 6.3L12 17.05 6.4 20.1l1.15-6.3-4.6-4.4 6.3-.85z" fill="url(#cx-gold)" stroke="#9a7300" stroke-width=".9" stroke-linejoin="round"/></svg>`;
-}
-function starDefsHtml(){
-  return `<svg width="0" height="0" aria-hidden="true" style="position:absolute"><defs>`
-    + `<linearGradient id="cx-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6dd84"/><stop offset=".55" stop-color="#dcb24a"/><stop offset="1" stop-color="#b8891a"/></linearGradient>`
-    + `</defs></svg>`;
+    + `<path d="M12 2.6l2.85 6.1 6.65.8-4.9 4.6 1.25 6.6L12 17.4l-5.85 3.3 1.25-6.6-4.9-4.6 6.65-.8z" fill="currentColor"/></svg>`;
 }
 
 function section(title, inner, extra){
@@ -275,8 +269,7 @@ async function initProfile(){
      where the position, the sponsor banner and the quote button live. */
   const anyBanner = kws.some(k => k.banner);
   html += section('Keyword Listings', kws.length
-    ? (anyBanner ? starDefsHtml() : '')
-      + `<div class="kw-tags pf-kws">${kws.map(k =>
+    ? `<div class="kw-tags pf-kws">${kws.map(k =>
         `<a class="kw-tag${k.banner ? ' kw-sponsored' : ''}" href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}"${k.banner ? ` title="${SPONSOR_TITLE}"` : ''}>${escapeHtml(k.keyword)}${k.banner ? starHtml() : ''}`
         + badgeHtml(k.badge, 'kw-lb')
         + `</a>`

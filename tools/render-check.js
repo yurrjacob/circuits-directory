@@ -200,7 +200,6 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
     'the sponsor note is missing for a company that does sponsor a keyword');
   assert.ok(/kw-sponsored/.test(kwTags()), 'the sponsored keyword is not drawn as the outlined pill');
   assert.ok(/kw-star/.test(kwTags()), 'the sponsored keyword has no gold star');
-  assert.ok(/id="cx-gold"/.test(captured), 'the star gradient is never defined');
   {
     const noBanner = [
       { keyword:'analog ics', banner:false, badge:{text:'Authorized',color:'#c9a227'}, docs:[] },

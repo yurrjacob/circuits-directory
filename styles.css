@@ -846,10 +846,9 @@ tr.row-warn td{background:#fff3cd}
 .pf-rating{display:inline-flex;align-items:center;gap:5px;font-weight:600;color:var(--ink)}
 .pf-rating i{font-style:normal;color:var(--muted);font-weight:400}
 .pf-sec-h .kw-lb{margin-left:2px;vertical-align:middle}
-/* the sponsor star: gold with a metallic fill, small and sharp, between the
-   keyword and its badge; the pill only gets a firmer border so the badge
-   keeps its own colour */
-.kw-star{width:16px;height:16px;flex:none;vertical-align:-2px;filter:drop-shadow(0 1px 1px rgba(90,60,0,.18))}
+/* the sponsor star: flat and dark, one colour, between the keyword and its
+   badge; the pill only gets a firmer border so the badge keeps its own colour */
+.kw-star{width:14px;height:14px;flex:none;vertical-align:-1px;color:#1a1a1a}
 .pf-kws .kw-tag{gap:9px}
 .pf-kws .kw-tag:has(.kw-lb){padding:5px 6px 5px 14px}
 .pf-kws .kw-tag .kw-lb{font-size:.66rem;padding:4px 9px;border-radius:999px}
@@ -857,7 +856,7 @@ tr.row-warn td{background:#fff3cd}
 .pf-kws .kw-tag.kw-sponsored:has(.kw-lb){padding-top:4px;padding-bottom:4px;padding-right:5px}
 .pf-kws .kw-tag.kw-sponsored:hover{background:#f1fae0;color:#1a1a1a}
 .pf-kws .kw-tag .kw-star{margin-left:-1px}
-.pf-sec-h .kw-star{width:22px;height:22px;margin-left:-2px}
+.pf-sec-h .kw-star{width:19px;height:19px;margin-left:-2px}
 
 .stars{color:#e8a800;letter-spacing:.5px}
 .stars-off{color:#dfe1e5}
