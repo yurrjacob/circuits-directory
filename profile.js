@@ -53,13 +53,12 @@ function fitsLine(v, max){
 }
 
 /* The exclusive sponsor of a Circuits-Keyword (Jacob, 2026-09-22: "clean yet
-   noticeable", and not a star, and not a black pill). The keyword pill itself
-   fills solid green with a small flag, and a listing heading carries a light
-   green Sponsored tag in the site's own pill style. */
+   noticeable", and not a star, not a black pill, not a flag). The keyword pill
+   itself is outlined in green with a soft halo, and a listing heading carries
+   a light green Sponsored tag in the site's own pill style. */
 const SPONSOR_TITLE = 'Exclusive sponsor: this company holds the banner above this Circuits-Keyword\'s results.';
-const FLAG_ICON = '<svg class="pf-flag" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4"/><path d="M5 4h11l-2.5 4 2.5 4H5"/></svg>';
 function sponsorHtml(){
-  return `<span class="lb kw-lb lb-sponsor" title="${SPONSOR_TITLE}">${FLAG_ICON}Sponsored</span>`;
+  return `<span class="lb kw-lb lb-sponsor" title="${SPONSOR_TITLE}">Sponsored</span>`;
 }
 
 function section(title, inner, extra){
@@ -266,7 +265,7 @@ async function initProfile(){
   const anyBanner = kws.some(k => k.banner);
   html += section('Keyword Listings', kws.length
     ? `<div class="kw-tags pf-kws">${kws.map(k =>
-        `<a class="kw-tag${k.banner ? ' kw-sponsored' : ''}" href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}"${k.banner ? ` title="${SPONSOR_TITLE}"` : ''}>${k.banner ? FLAG_ICON : ''}${escapeHtml(k.keyword)}`
+        `<a class="kw-tag${k.banner ? ' kw-sponsored' : ''}" href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}"${k.banner ? ` title="${SPONSOR_TITLE}"` : ''}>${escapeHtml(k.keyword)}`
         + badgeHtml(k.badge, 'kw-lb')
         + `</a>`
       ).join('')}</div>`

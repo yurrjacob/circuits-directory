@@ -846,7 +846,6 @@ tr.row-warn td{background:#fff3cd}
 .pf-rating i{font-style:normal;color:var(--muted);font-weight:400}
 .lb-sponsor{display:inline-flex;align-items:center;gap:5px;background:#f1fae0;color:#2f4a00;border:1px solid var(--green);text-transform:none;letter-spacing:0;font-weight:700;font-size:.72rem;padding:3px 9px 3px 7px}
 .pf-sec-h .kw-lb,.pf-sec-h .lb-sponsor{margin-left:2px;vertical-align:middle}
-.pf-flag{flex:none}
 /* the sponsored keyword is the filled pill, the rest stay soft; a pill that
    carries a badge gets room around it instead of squeezing it to the edge */
 .pf-kws .kw-tag{gap:9px}
@@ -855,7 +854,7 @@ tr.row-warn td{background:#fff3cd}
 .pf-kws .kw-tag.kw-sponsored{background:#fff;border:2px solid var(--green);color:#1a1a1a;box-shadow:0 0 0 3px rgba(118,192,0,.14);padding-top:6px;padding-bottom:6px}
 .pf-kws .kw-tag.kw-sponsored:has(.kw-lb){padding-top:4px;padding-bottom:4px;padding-right:5px}
 .pf-kws .kw-tag.kw-sponsored:hover{background:#f1fae0;color:#1a1a1a}
-.pf-kws .kw-tag.kw-sponsored .pf-flag{margin-right:-1px;color:var(--green-dark)}
+
 .stars{color:#e8a800;letter-spacing:.5px}
 .stars-off{color:#dfe1e5}
 
