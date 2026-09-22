@@ -197,8 +197,10 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
   // the star lives on the keyword tags; the note explaining it is separate
   const kwTags = () => (captured.match(/<div class="kw-tags[\s\S]*?<\/div>/) || [''])[0];
   assert.ok(/exclusively sponsors/.test(captured),
-    'the star note is missing for a company that does sponsor a keyword');
-  assert.ok(/kw-sponsored/.test(kwTags()), 'the sponsored keyword is not drawn as the filled green pill');
+    'the sponsor note is missing for a company that does sponsor a keyword');
+  assert.ok(/kw-sponsored/.test(kwTags()), 'the sponsored keyword is not drawn as the outlined pill');
+  assert.ok(/pf-eyebrow-sp"[^>]*>Exclusive sponsor</.test(captured), 'the sponsored keyword has no Exclusive sponsor caption');
+  assert.ok(/pf-eyebrow"[^>]*>Also listed under</.test(captured), 'the unsponsored keywords lost their caption');
   {
     const noBanner = [
       { keyword:'analog ics', banner:false, badge:{text:'Authorized',color:'#c9a227'}, docs:[] },
@@ -209,7 +211,8 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
     assert.ok(!/kw-sponsored/.test(kwTags()),
       'a company with no sponsored keyword is showing a star on a keyword');
     assert.ok(!/exclusively sponsors/.test(captured),
-      'a company with no sponsor banner is still told what the star means');
+      'a company with no sponsor banner is still told what the caption means');
+    assert.ok(!/pf-eyebrow/.test(captured), 'a company with no sponsor is showing sponsor captions');
     // the section itself must survive, only the note goes
     assert.ok(/Keyword Listings/.test(captured), 'the keyword section vanished with the note');
     assert.ok(/kw-lb/.test(captured), 'the listing badges vanished with the note');

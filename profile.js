@@ -58,8 +58,12 @@ function fitsLine(v, max){
    in small green capitals after the keyword; a listing heading carries a
    light green Sponsored tag in the site's own pill style. */
 const SPONSOR_TITLE = 'Exclusive sponsor: this company holds the banner above this Circuits-Keyword\'s results.';
-function sponsorHtml(){
-  return `<span class="lb kw-lb lb-sponsor" title="${SPONSOR_TITLE}">Sponsored</span>`;
+/* The sponsor mark is a caption, not a decoration on the pill: a small
+   "Exclusive sponsor" line above the keyword. Stars, flags and pills of every
+   colour were tried and turned down (Jacob, 2026-09-22); a plain label reads
+   at a glance and leaves the keyword and its badge alone. */
+function eyebrowHtml(text, sponsor){
+  return `<p class="pf-eyebrow${sponsor ? ' pf-eyebrow-sp' : ''}"${sponsor ? ` title="${SPONSOR_TITLE}"` : ''}>${text}</p>`;
 }
 
 function section(title, inner, extra){
@@ -263,14 +267,21 @@ async function initProfile(){
   /* Each tag walks the visitor to the results page for that keyword and
      highlights this company's row there (?hl= picks it out), the listing is
      where the position, the sponsor banner and the quote button live. */
-  const anyBanner = kws.some(k => k.banner);
+  const sponsored = kws.filter(k => k.banner), others = kws.filter(k => !k.banner);
+  const anyBanner = sponsored.length > 0;
+  const kwPill = k =>
+    `<a class="kw-tag${k.banner ? ' kw-sponsored' : ''}" href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}"${k.banner ? ` title="${SPONSOR_TITLE}"` : ''}>${escapeHtml(k.keyword)}`
+    + badgeHtml(k.badge, 'kw-lb')
+    + `</a>`;
+  /* sponsored keywords come first under their own caption; the rest follow
+     under a second one, so the split itself is the indicator */
+  const kwRow = (label, list, sponsor) =>
+    `<div class="pf-kw-row">${label ? eyebrowHtml(label, sponsor) : ''}<div class="kw-tags pf-kws">${list.map(kwPill).join('')}</div></div>`;
   html += section('Keyword Listings', kws.length
-    ? `<div class="kw-tags pf-kws">${kws.map(k =>
-        `<a class="kw-tag${k.banner ? ' kw-sponsored' : ''}" href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}"${k.banner ? ` title="${SPONSOR_TITLE}"` : ''}>${escapeHtml(k.keyword)}${k.banner ? '<span class="kw-sp">Sponsored</span>' : ''}`
-        + badgeHtml(k.badge, 'kw-lb')
-        + `</a>`
-      ).join('')}</div>`
-      + (anyBanner ? `<p class="pf-note">A keyword marked Sponsored is one this company exclusively sponsors: its banner stands above that keyword's results.</p>` : '')
+    ? (anyBanner
+        ? kwRow('Exclusive sponsor', sponsored, true) + (others.length ? kwRow('Also listed under', others, false) : '')
+        : kwRow('', kws, false))
+      + (anyBanner ? `<p class="pf-note">This company exclusively sponsors the keywords listed first: its banner stands above their results, so buyers see it before anyone else.</p>` : '')
     : '');
 
   /* Listing documents deliberately do NOT get their own section here, they
@@ -331,7 +342,7 @@ async function initProfile(){
       </div>`).join('')}</div>`;
     if(!inner) continue;
     html += `<section class="pf-sec pf-listing" id="kw-${escapeHtml(k.id)}">
-      <h2 class="pf-sec-h"><a href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}" class="tc">${escapeHtml(k.keyword)}</a>${k.banner ? sponsorHtml() : ''}${badgeHtml(k.badge, 'kw-lb')}</h2>
+      ${k.banner ? eyebrowHtml('Exclusive sponsor', true) : ''}<h2 class="pf-sec-h"><a href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}" class="tc">${escapeHtml(k.keyword)}</a>${badgeHtml(k.badge, 'kw-lb')}</h2>
       ${inner}</section>`;
   }
 
