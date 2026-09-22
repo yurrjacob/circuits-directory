@@ -58,12 +58,18 @@ function fitsLine(v, max){
    in small green capitals after the keyword; a listing heading carries a
    light green Sponsored tag in the site's own pill style. */
 const SPONSOR_TITLE = 'Exclusive sponsor: this company holds the banner above this Circuits-Keyword\'s results.';
-/* The sponsor mark is a caption, not a decoration on the pill: a small
-   "Exclusive sponsor" line above the keyword. Stars, flags and pills of every
-   colour were tried and turned down (Jacob, 2026-09-22); a plain label reads
-   at a glance and leaves the keyword and its badge alone. */
-function eyebrowHtml(text, sponsor){
-  return `<p class="pf-eyebrow${sponsor ? ' pf-eyebrow-sp' : ''}"${sponsor ? ` title="${SPONSOR_TITLE}"` : ''}>${text}</p>`;
+/* The sponsor mark is a star (Jacob, 2026-09-22: "go back to the star but
+   make it clean and expensive looking"): a small gold one drawn as an SVG with
+   a metallic fill, not a text glyph, sitting between the keyword and its
+   badge. The gradient is defined once per page, in starDefsHtml(). */
+function starHtml(){
+  return `<svg class="kw-star" viewBox="0 0 24 24" role="img" aria-label="Exclusive sponsor"><title>${SPONSOR_TITLE}</title>`
+    + `<path d="M12 2.8l2.75 5.75 6.3.85-4.6 4.4 1.15 6.3L12 17.05 6.4 20.1l1.15-6.3-4.6-4.4 6.3-.85z" fill="url(#cx-gold)" stroke="#9a7300" stroke-width=".9" stroke-linejoin="round"/></svg>`;
+}
+function starDefsHtml(){
+  return `<svg width="0" height="0" aria-hidden="true" style="position:absolute"><defs>`
+    + `<linearGradient id="cx-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6dd84"/><stop offset=".55" stop-color="#dcb24a"/><stop offset="1" stop-color="#b8891a"/></linearGradient>`
+    + `</defs></svg>`;
 }
 
 function section(title, inner, extra){
@@ -267,21 +273,15 @@ async function initProfile(){
   /* Each tag walks the visitor to the results page for that keyword and
      highlights this company's row there (?hl= picks it out), the listing is
      where the position, the sponsor banner and the quote button live. */
-  const sponsored = kws.filter(k => k.banner), others = kws.filter(k => !k.banner);
-  const anyBanner = sponsored.length > 0;
-  const kwPill = k =>
-    `<a class="kw-tag${k.banner ? ' kw-sponsored' : ''}" href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}"${k.banner ? ` title="${SPONSOR_TITLE}"` : ''}>${escapeHtml(k.keyword)}`
-    + badgeHtml(k.badge, 'kw-lb')
-    + `</a>`;
-  /* sponsored keywords come first under their own caption; the rest follow
-     under a second one, so the split itself is the indicator */
-  const kwRow = (label, list, sponsor) =>
-    `<div class="pf-kw-row">${label ? eyebrowHtml(label, sponsor) : ''}<div class="kw-tags pf-kws">${list.map(kwPill).join('')}</div></div>`;
+  const anyBanner = kws.some(k => k.banner);
   html += section('Keyword Listings', kws.length
-    ? (anyBanner
-        ? kwRow('Exclusive sponsor', sponsored, true) + (others.length ? kwRow('Also listed under', others, false) : '')
-        : kwRow('', kws, false))
-      + (anyBanner ? `<p class="pf-note">This company exclusively sponsors the keywords listed first: its banner stands above their results, so buyers see it before anyone else.</p>` : '')
+    ? (anyBanner ? starDefsHtml() : '')
+      + `<div class="kw-tags pf-kws">${kws.map(k =>
+        `<a class="kw-tag${k.banner ? ' kw-sponsored' : ''}" href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}"${k.banner ? ` title="${SPONSOR_TITLE}"` : ''}>${escapeHtml(k.keyword)}${k.banner ? starHtml() : ''}`
+        + badgeHtml(k.badge, 'kw-lb')
+        + `</a>`
+      ).join('')}</div>`
+      + (anyBanner ? `<p class="pf-note">A starred keyword is one this company exclusively sponsors: its banner stands above that keyword's results.</p>` : '')
     : '');
 
   /* Listing documents deliberately do NOT get their own section here, they
@@ -342,7 +342,7 @@ async function initProfile(){
       </div>`).join('')}</div>`;
     if(!inner) continue;
     html += `<section class="pf-sec pf-listing" id="kw-${escapeHtml(k.id)}">
-      ${k.banner ? eyebrowHtml('Exclusive sponsor', true) : ''}<h2 class="pf-sec-h"><a href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}" class="tc">${escapeHtml(k.keyword)}</a>${badgeHtml(k.badge, 'kw-lb')}</h2>
+      <h2 class="pf-sec-h"><a href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}" class="tc">${escapeHtml(k.keyword)}</a>${k.banner ? starHtml() : ''}${badgeHtml(k.badge, 'kw-lb')}</h2>
       ${inner}</section>`;
   }
 

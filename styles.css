@@ -777,6 +777,7 @@ tr.row-warn td{background:#fff3cd}
 
   /* reclaim horizontal room everywhere so content isn't pinched */
   .subbar .inner{padding:10px 14px}
+  .saved-inner{padding:10px 14px}
   .subbar-inner{grid-template-columns:1fr;gap:8px}
   .subbar .mini-search{width:100%}
   .subbar-meta{grid-column:1;justify-self:center}
@@ -845,21 +846,18 @@ tr.row-warn td{background:#fff3cd}
 .pf-rating{display:inline-flex;align-items:center;gap:5px;font-weight:600;color:var(--ink)}
 .pf-rating i{font-style:normal;color:var(--muted);font-weight:400}
 .pf-sec-h .kw-lb{margin-left:2px;vertical-align:middle}
-/* the sponsor mark is a caption above the keyword, green for the sponsored
-   row and grey for the rest; the pill itself only gets a firmer border so the
-   badge inside it keeps its own colour */
-.pf-eyebrow{margin:0 0 8px;font-size:.66rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:#7a828c;line-height:1.2}
-.pf-eyebrow-sp{color:var(--green-dark);display:inline-flex;align-items:center;gap:7px;cursor:help}
-.pf-eyebrow-sp::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green);flex:none}
-.pf-kw-row + .pf-kw-row{margin-top:16px}
+/* the sponsor star: gold with a metallic fill, small and sharp, between the
+   keyword and its badge; the pill only gets a firmer border so the badge
+   keeps its own colour */
+.kw-star{width:16px;height:16px;flex:none;vertical-align:-2px;filter:drop-shadow(0 1px 1px rgba(90,60,0,.18))}
 .pf-kws .kw-tag{gap:9px}
 .pf-kws .kw-tag:has(.kw-lb){padding:5px 6px 5px 14px}
 .pf-kws .kw-tag .kw-lb{font-size:.66rem;padding:4px 9px;border-radius:999px}
-.pf-kws .kw-tag.kw-sponsored{background:#fff;border:2px solid var(--green);color:#1a1a1a;padding-top:6px;padding-bottom:6px}
+.pf-kws .kw-tag.kw-sponsored{background:#fff;border:2px solid var(--green);color:#1a1a1a;padding-top:6px;padding-bottom:6px;gap:8px}
 .pf-kws .kw-tag.kw-sponsored:has(.kw-lb){padding-top:4px;padding-bottom:4px;padding-right:5px}
 .pf-kws .kw-tag.kw-sponsored:hover{background:#f1fae0;color:#1a1a1a}
-.pf-listing .pf-eyebrow{margin-bottom:6px;padding-left:18px}
-.pf-listing .pf-eyebrow-sp::before{display:none}
+.pf-kws .kw-tag .kw-star{margin-left:-1px}
+.pf-sec-h .kw-star{width:22px;height:22px;margin-left:-2px}
 
 .stars{color:#e8a800;letter-spacing:.5px}
 .stars-off{color:#dfe1e5}
@@ -1978,7 +1976,7 @@ tr.hl-flash td{animation:hl-pulse 2s ease-in-out both}
 
 /* --- saved profiles strip (buyer's per-browser shortlist, shown on results) --- */
 .saved-strip{border-bottom:1px solid var(--line);background:var(--bg-soft)}
-.saved-inner{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0}
+.saved-inner{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 32px}
 .saved-label{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;white-space:nowrap}
 .saved-chips{display:flex;gap:8px;flex-wrap:wrap}
 .saved-chip{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px}
