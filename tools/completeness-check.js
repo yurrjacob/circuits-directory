@@ -70,13 +70,13 @@ assert.ok(/↑ 100%/.test(changeLabel('20', '10')), 'string counts from the data
 
 console.log('change-vs-previous OK, no NaN, no Infinity, no divide by zero');
 
-/* --- saved suppliers live in the visitor's own browser ---
+/* --- saved profiles live in the visitor's own browser ---
    No account, no server, so the whole thing rests on localStorage behaving.
    It does not always: private mode throws on write, and anything can end up
    in the key. Neither may break a profile page. */
 const profSrc = fs.readFileSync(path.join(__dirname, '..', 'profile.js'), 'utf8');
 const savedBlock = profSrc.slice(profSrc.indexOf('const SAVED_KEY'), profSrc.indexOf('function wireSave'));
-assert.ok(savedBlock, 'the saved-supplier code is gone from profile.js');
+assert.ok(savedBlock, 'the saved-profile code is gone from profile.js');
 
 const store = {};
 globalThis.localStorage = {
@@ -123,4 +123,4 @@ globalThis.localStorage.setItem = () => { throw new Error('QuotaExceededError');
   assert.ok(warned, 'a blocked save is now silent in the app, so nobody would ever find out');
 }
 
-console.log('saved suppliers OK, no duplicates, capped, survives corrupt and blocked storage');
+console.log('saved profiles OK, no duplicates, capped, survives corrupt and blocked storage');

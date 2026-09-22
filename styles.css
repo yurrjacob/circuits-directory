@@ -1970,7 +1970,7 @@ tr.hl-flash td{animation:hl-pulse 2s ease-in-out both}
   .pt-tab{padding:7px 10px;font-size:.85rem}
 }
 
-/* --- saved suppliers strip (buyer's per-browser shortlist, shown on results) --- */
+/* --- saved profiles strip (buyer's per-browser shortlist, shown on results) --- */
 .saved-strip{border-bottom:1px solid var(--line);background:var(--bg-soft)}
 .saved-inner{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0}
 .saved-label{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;white-space:nowrap}

@@ -66,7 +66,7 @@ const el = (id) => ({ set innerHTML(v){ if(id==='profile-body') captured = v; },
   classList:{ toggle(){}, add(){}, remove(){}, contains(){ return false; } },
   textContent:'', title:'' });
 
-/* Saved suppliers live in localStorage. Node has none, and the site must not
+/* Saved profiles live in localStorage. Node has none, and the site must not
    fall over in a browser that blocks it either, so stub it and let the real
    try/catch in profile.js do its job. */
 global.localStorage = {
@@ -151,7 +151,7 @@ eval(require('fs').readFileSync(require("path").join(__dirname,"..","profile.js"
     'the badge note still implies the certifications list is verified');
 
   // buyers compare several suppliers; saving one must not require an account
-  assert.ok(captured.includes('id="pf-save"'), 'the save-supplier control is missing');
+  assert.ok(captured.includes('id="pf-save"'), 'the save-profile control is missing');
   assert.ok(captured.includes('data-slug="aaa"'), 'the save control does not identify the company');
 
   // the short link must be copyable, it is what goes on adverts

@@ -678,7 +678,7 @@ function initials(name){return name.split(/\s+/).slice(0,2).map(w=>w[0]).join(''
    varying color) shown whenever a listing has no uploaded logo */
 function avatarSvg(){return '<svg class="silhouette" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="8.2" r="4.2"/><path d="M12 13.6c-4.5 0-7.7 2.4-7.7 5.4V21h15.4v-2c0-3-3.2-5.4-7.7-5.4z"/></svg>';}
 
-/* ---- saved suppliers (buyer side) ----
+/* ---- saved profiles (buyer side; called Saved suppliers until 2026-09-22) ----
    A buyer saves suppliers from a profile page (see wireSave in profile.js);
    the list lives in this browser only, under the same 'cx_saved' key. This is
    where they get to SEE that list, without it the Save button wrote to
@@ -701,10 +701,10 @@ function renderSavedStrip(){
   if(!list.length){ strip.hidden = true; strip.innerHTML = ''; return; }
   strip.hidden = false;
   strip.innerHTML = `<div class="inner saved-inner">
-    <span class="saved-label">Saved suppliers</span>
+    <span class="saved-label">Saved profiles</span>
     <div class="saved-chips">${list.map(c => `<span class="saved-chip">
       <a href="/${escapeHtml(c.handle || '')}">${escapeHtml(c.name || c.handle || 'Supplier')}</a>
-      <button type="button" class="saved-x" data-unsave="${escapeHtml(c.slug)}" aria-label="Remove ${escapeHtml(c.name || 'supplier')} from saved">×</button>
+      <button type="button" class="saved-x" data-unsave="${escapeHtml(c.slug)}" aria-label="Remove ${escapeHtml(c.name || 'this profile')} from saved">×</button>
     </span>`).join('')}</div>
   </div>`;
   strip.querySelectorAll('[data-unsave]').forEach(btn =>

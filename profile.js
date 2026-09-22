@@ -571,7 +571,7 @@ function wireProfile(slug, co){
   });
 }
 
-/* ---- saved suppliers ----
+/* ---- saved profiles ----
    A buyer comparing five distributors needs somewhere to put them, and making
    them create an account first would lose most of them. This lives in their
    own browser: no account, no server, nothing sent to us, so it is not
@@ -599,7 +599,7 @@ function wireSave(){
   if(!btn) return;
   const entry = { slug: btn.dataset.slug, handle: btn.dataset.handle, name: btn.dataset.name };
   const note = document.getElementById('pf-save-note');
-  /* say where it went (Jacob, 2026-09-22): the Saved suppliers strip that sits
+  /* say where it went (Jacob, 2026-09-22): the Saved profiles strip that sits
      above every search result on this browser */
   const paint = () => {
     const on = isSaved(entry.slug);
@@ -610,7 +610,7 @@ function wireSave(){
       : 'Keeps this profile in a list in this browser. No account needed.';
     if(note){
       note.hidden = !on;
-      note.innerHTML = on ? 'Saved. You will find it under <b>Saved suppliers</b> at the top of every search result on this browser.' : '';
+      note.innerHTML = on ? 'Saved. You will find it under <b>Saved profiles</b> at the top of every search result on this browser.' : '';
     }
   };
   btn.addEventListener('click', e => { e.preventDefault(); toggleSaved(entry); paint(); });
