@@ -67,6 +67,8 @@ const ICON_PATHS = {
   Email:    '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
   Website:  '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
   Address:  '<path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',
+  Founded:  '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  Employees:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2"/>',
   linkedin: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7"/>',
   x:        '<path d="M4 4l16 16M20 4L4 20"/>',
   facebook: '<path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v7h4v-7h3l1-4h-4V8z"/>',
@@ -224,9 +226,9 @@ async function initProfile(){
       ${co.tagline ? `<p class="pf-tagline">${escapeHtml(co.tagline)}</p>` : ''}
       <div class="pf-meta">
         ${reviews.length ? `<span class="pf-rating">${stars(avg)} ${avg.toFixed(1)} <i>(${reviews.length})</i></span>` : ''}
-        ${fitsLine(co.address, 60) ? `<span class="pf-chip">${escapeHtml(co.address)}</span>` : ''}
-        ${/^\d{4}$/.test((co.founded || '').trim()) ? `<span class="pf-chip">Est. ${escapeHtml(co.founded.trim())}</span>` : ''}
-        ${fitsLine(co.employees, 20) ? `<span class="pf-chip">${escapeHtml(co.employees)} employees</span>` : ''}
+        ${fitsLine(co.address, 60) ? `<span class="pf-chip">${iconHtml('Address')}${escapeHtml(co.address)}</span>` : ''}
+        ${/^\d{4}$/.test((co.founded || '').trim()) ? `<span class="pf-chip">${iconHtml('Founded')}Est. ${escapeHtml(co.founded.trim())}</span>` : ''}
+        ${fitsLine(co.employees, 20) ? `<span class="pf-chip">${iconHtml('Employees')}${escapeHtml(co.employees)} employees</span>` : ''}
       </div>
     </div>
   </div>
@@ -340,6 +342,7 @@ async function initProfile(){
   /* ---- sidebar: one place for everything a buyer needs to act ---- */
   html += `</div><aside class="pf-side">
     <div class="pf-side-card">
+      <h2 class="pf-sec-h">Get in touch</h2>
       ${looksEmail(co.email)
         ? `<a class="btn btn-primary pf-cta" id="pf-email-cta"
              href="mailto:${escapeHtml(co.email.trim())}?subject=${encodeURIComponent('Enquiry via Circuits.com: ' + co.name)}">Email ${escapeHtml(co.name)}</a>`
