@@ -52,6 +52,13 @@ function fitsLine(v, max){
   return !!s && s.length <= max && !/[\r\n]/.test(s) && !/^https?:\/\//i.test(s);
 }
 
+/* The exclusive sponsor of a Circuits-Keyword: a small dark label beside the
+   keyword, the same shape as a Trust Badge, in place of the star it used to be
+   (Jacob, 2026-09-22: "clean yet noticeable"). */
+function sponsorHtml(){
+  return `<span class="lb kw-lb lb-sponsor" title="Exclusive sponsor: this company holds the banner above this Circuits-Keyword's results.">Sponsor</span>`;
+}
+
 function section(title, inner, extra){
   if(!inner) return '';
   return `<section class="pf-sec"${extra || ''}><h2 class="pf-sec-h">${escapeHtml(title)}</h2>${inner}</section>`;
@@ -255,11 +262,11 @@ async function initProfile(){
   const anyBanner = kws.some(k => k.banner);
   html += section('Keyword Listings', kws.length
     ? `<div class="kw-tags pf-kws">${kws.map(k =>
-        `<a class="kw-tag" href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}">${escapeHtml(k.keyword)}${k.banner ? ' ★' : ''}`
+        `<a class="kw-tag" href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}">${escapeHtml(k.keyword)}${k.banner ? sponsorHtml() : ''}`
         + badgeHtml(k.badge, 'kw-lb')
         + `</a>`
       ).join('')}</div>`
-      + (anyBanner ? `<p class="pf-note">★ marks a Circuits-Keyword&trade; this company exclusively sponsors.</p>` : '')
+      + (anyBanner ? `<p class="pf-note">Sponsor marks a Circuits-Keyword&trade; this company exclusively sponsors: its banner stands above that keyword's results.</p>` : '')
     : '');
 
   /* Listing documents deliberately do NOT get their own section here, they
@@ -316,7 +323,7 @@ async function initProfile(){
       </div>`).join('')}</div>`;
     if(!inner) continue;
     html += `<section class="pf-sec pf-listing" id="kw-${escapeHtml(k.id)}">
-      <h2 class="pf-sec-h"><a href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}" class="tc">${escapeHtml(k.keyword)}</a>${k.banner ? ' ★' : ''}${badgeHtml(k.badge, 'kw-lb')}</h2>
+      <h2 class="pf-sec-h"><a href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}" class="tc">${escapeHtml(k.keyword)}</a>${k.banner ? sponsorHtml() : ''}${badgeHtml(k.badge, 'kw-lb')}</h2>
       ${inner}</section>`;
   }
 
