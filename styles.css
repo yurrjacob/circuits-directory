@@ -1458,6 +1458,14 @@ tr.row-warn td{background:#fff3cd}
   .pf-page{padding:16px 15px 55px}
   .pf-row-l{width:98px}   /* the icon needs the room on a phone too */
 }
+.handle-line{display:flex;gap:10px;align-items:stretch}
+.handle-line .handle-row{flex:1;min-width:0}
+.handle-line .btn{white-space:nowrap;display:inline-flex;align-items:center}
+.auth-field.is-missing label,.auth-field.is-missing .req{color:#b3261e}
+.auth-field.is-missing input{border-color:#d93025;background:#fff7f6}
+.pt-save-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.pt-save-msg{font-weight:600;color:#3f6300}
+.pt-save-msg.bad{color:#b3261e}
 .handle-row{display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--card);overflow:hidden}
 .handle-prefix{padding:9px 2px 9px 11px;color:var(--muted);font-size:.92rem;white-space:nowrap}
 .handle-row input{border:0!important;padding-left:2px!important;font-weight:700}

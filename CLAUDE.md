@@ -16,7 +16,7 @@ security decides everything. There is no build step.
 - No em dashes anywhere a reader sees, and none in the code either.
 - Database changes: apply to the project, then record the SQL under tools/
   (audit-hardening.sql, recruiting-free.sql, bot-signup-guard.sql,
-  grouped-listing-notifications.sql). Edge functions live at
+  grouped-listing-notifications.sql, profile-sync.sql). Edge functions live at
   tools/edge-auth.ts and tools/edge-notify.ts; deploy after editing.
 - The Ideas panel, notifications and every email derive their recipient from
   a database row, never from the request.

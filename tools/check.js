@@ -689,8 +689,8 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     assert.ok(new RegExp(`<label for="${id}">[^<]*<span class="req">\\*</span></label><input id="${id}"[^>]*\\brequired\\b`).test(portalHtmlReq),
       `Profile Details no longer marks ${id} as required`);
   }
-  assert.ok(/if\(!val\('f-contact'\)\)\{ btn\.disabled = false; toast\('Not saved: a contact person is needed/.test(portalSrc)
-    && /if\(!val\('f-email'\)\)\{ btn\.disabled = false; toast\('Not saved: a public email is needed/.test(portalSrc),
+  assert.ok(/if\(!val\('f-contact'\)\)\{ btn\.disabled = false; (?:toast|saveNote)\('Not saved: a contact person is needed/.test(portalSrc)
+    && /if\(!val\('f-email'\)\)\{ btn\.disabled = false; (?:toast|saveNote)\('Not saved: a public email is needed/.test(portalSrc),
     'saveProfile saves without a contact person or a public email');
   assert.ok(/isValidEmail\(val\('f-email'\)\)/.test(portalSrc) && /isValidYear\(val\('f-founded'\)\)/.test(portalSrc),
     'portal profile save no longer validates its fields');
@@ -734,6 +734,22 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   }
   assert.strictEqual((portalHtml.match(/class="btn btn-primary pt-save(?: pt-save-big)?"/g) || []).length, 1,
     'the merged profile tab should have exactly one Save profile button');
+  /* Profile Details, the 2026-09-21 list: preview beside the address, the
+     rows in order (contact, then website/phone/address, then tagline), the
+     saved note beside the button, the three required fields marked when empty */
+  assert.ok(/id="f-preview"[^>]*target="_blank"/.test(portalHtml), 'the Preview profile link beside the address is gone');
+  assert.ok(portalHtml.indexOf('id="f-contact"') < portalHtml.indexOf('id="f-website"')
+         && portalHtml.indexOf('id="f-website"') < portalHtml.indexOf('id="f-phone"')
+         && portalHtml.indexOf('id="f-address"') < portalHtml.indexOf('id="f-tagline"')
+         && portalHtml.indexOf('id="f-tagline"') < portalHtml.indexOf('id="f-founded"'), 'the Profile Details rows are out of the agreed order');
+  assert.ok(portalHtml.includes('id="pt-save-msg"'), 'the saved note beside the Save profile button is gone');
+  {
+    const pjs = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
+    assert.ok(/const REQUIRED_FIELDS = \['f-name', 'f-contact', 'f-email'\]/.test(pjs) && /is-missing/.test(pjs), 'empty required fields are no longer marked');
+    assert.ok(/saveNote\(fresh \? 'Profile created/.test(pjs), 'a saved profile no longer says so beside the button');
+    const css = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
+    assert.ok(/\.auth-field\.is-missing input\{border-color:#d93025/.test(css), 'the missing-field mark is not red');
+  }
   const portalJs = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
   assert.ok(portalJs.includes('class="pt-edit-grid"'), 'the listing editor lost its description and documents');
   /* Certifications, Team and Gallery came off the listing editor (Jacob, 2026-09-14) */
@@ -797,6 +813,10 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   const regHtml = fs.readFileSync(path.join(ROOT, 'register.html'), 'utf8');
   assert.ok(!/reg-kind|r-kind/.test(regHtml), 'the Individual / Company choice is back on /register');
   assert.ok(/id="r-name"[^>]*required/.test(regHtml), 'a name is no longer required at registration');
+  /* the page creates the account; the name on it is the contact person, the
+     company's name is added on the dashboard (bug list, 2026-09-21) */
+  assert.ok(/<h1>Create Your Account Profile<\/h1>/.test(regHtml), 'the register page lost its Create Your Account Profile heading');
+  assert.ok(/id="r-name-label">Your Name/.test(regHtml), 'the register page asks for a company name again; it should ask for the person');
   /* every account gets its companies row on first visit (listings, jobs and
      Talent Access hang off it), and the Profile Details save creates both
      rows for an account that has neither */

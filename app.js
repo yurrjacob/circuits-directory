@@ -1653,7 +1653,7 @@ function initRegister(){
     const handle = v('r-handle'), email = v('r-email');
 
     if(!handle) return fail('Choose the username that will be your Circuits.com address.');
-    if(!v('r-name')) return fail('Please enter your name, or your company\'s.');
+    if(!v('r-name')) return fail('Please enter your name.');
     if(!isValidEmail(email)) return fail('Please enter a valid email address (e.g. you@company.com). It is how you sign in.');
     if(passEl.value.length < 8) return fail('Your password must be at least 8 characters.');
     if(passEl.value !== pass2El.value) return fail('The two passwords do not match.');

@@ -428,6 +428,7 @@ async function loadCompany(slug){
   el('pt-name').textContent = PT.co.name;
   el('pt-view').href = profileUrl(PT.co.handle) || '#';
   el('pt-view').style.display = PT.co.handle ? '' : 'none';
+  if(el('f-preview')){ el('f-preview').href = profileUrl(PT.co.handle) || '#'; el('f-preview').hidden = !PT.co.handle; }
   el('pt-fresh-note').innerHTML = '';
   /* Overview, Quote requests and Reviews are off the dashboard for now
      (Jacob, 2026-08-20, full copies in backups/dashboard-2026-08-20/), so
@@ -1143,6 +1144,23 @@ function wireLogoCrop(){
 }
 
 /* ---------- profile editing ---------- */
+/* The three fields every listing, sponsor banner and job post shows. Empty
+   ones are marked in red until they are filled (Jacob, 2026-09-21). */
+const REQUIRED_FIELDS = ['f-name', 'f-contact', 'f-email'];
+function markMissing(){
+  REQUIRED_FIELDS.forEach(id => {
+    const i = el(id); const box = i && i.closest('.auth-field');
+    if(box) box.classList.toggle('is-missing', !i.value.trim());
+  });
+}
+/* Every word about the save goes beside the Save button as well as into the
+   toast at the top: the button is at the bottom of a long form. */
+function saveNote(text, ok){
+  toast(text, ok);
+  const m = el('pt-save-msg'); if(!m) return;
+  m.textContent = text; m.classList.toggle('bad', !ok);
+  clearTimeout(PT.saveMsgT); PT.saveMsgT = setTimeout(() => { m.textContent = ''; }, 6000);
+}
 function renderProfileForm(){
   const c = PT.co;
   const set = (id, v) => { if(el(id)) el(id).value = v || ''; };
@@ -1151,6 +1169,8 @@ function renderProfileForm(){
   set('f-phone', c.phone); set('f-email', c.email); set('f-contact', c.contact);
   set('f-address', c.address); set('f-founded', c.founded); set('f-employees', c.employees);
   set('f-handle', c.handle);
+  markMissing();
+  if(!PT.missingWired){ PT.missingWired = true; REQUIRED_FIELDS.forEach(id => el(id) && el(id).addEventListener('input', markMissing)); }
   wireHandleCheck();
   PT.clearLogo = false;
   PT.logoFile = null;
@@ -1304,18 +1324,18 @@ async function saveProfile(){
   const wantHandle = val('f-handle');
   const handleChanged = wantHandle !== (PT.co.handle || '');
   const fresh = !PT.slug;   // no rows yet: this save creates the profile and its company row
-  if(fresh && !wantHandle){ btn.disabled = false; toast('Pick your Circuits.com address first.', false); el('f-handle').focus(); return; }
-  if(!val('f-name')){ btn.disabled = false; toast('Not saved: a name is needed. Yours, or your company\'s.', false); el('f-name').focus(); return; }
+  if(fresh && !wantHandle){ btn.disabled = false; saveNote('Pick your Circuits.com address first.', false); el('f-handle').focus(); return; }
+  if(!val('f-name')){ btn.disabled = false; saveNote('Not saved: a name is needed. Yours, or your company\'s.', false); el('f-name').focus(); return; }
   /* The contact person and the public email are what every listing shows in
      its Contact and Email columns, and what the public page shows under
      Contact (Jacob, 2026-09-03: "required ... to populate both the listing and
      profile"). register_company seeds the email from the account but never a
      contact, which is how companies ended up listed with no one to call. */
-  if(!val('f-contact')){ btn.disabled = false; toast('Not saved: a contact person is needed. It is who buyers see on your listings.', false); el('f-contact').focus(); return; }
-  if(!val('f-email')){ btn.disabled = false; toast('Not saved: a public email is needed. It is how buyers reach you from your listings.', false); el('f-email').focus(); return; }
+  if(!val('f-contact')){ btn.disabled = false; saveNote('Not saved: a contact person is needed. It is who buyers see on your listings.', false); el('f-contact').focus(); return; }
+  if(!val('f-email')){ btn.disabled = false; saveNote('Not saved: a public email is needed. It is how buyers reach you from your listings.', false); el('f-email').focus(); return; }
   if(handleChanged && wantHandle){
     const why = await handleAvailable(wantHandle, PT.slug, PT.user && PT.user.id);
-    if(why){ btn.disabled = false; toast('Address not saved: ' + why + ' Your other changes were not saved either. Fix the address or put the old one back.', false); return; }
+    if(why){ btn.disabled = false; saveNote('Address not saved: ' + why + ' Your other changes were not saved either. Fix the address or put the old one back.', false); return; }
   }
   const socials = {};
   SOCIAL_KEYS.forEach(([k]) => { const v = val('s-' + k); if(v) socials[k] = v; });
@@ -1330,7 +1350,7 @@ async function saveProfile(){
     const v = val('s-' + k);
     if(v && !isValidWebsite(v)){ bad = label + ' needs to be a link (https://…).'; break; }
   }
-  if(bad){ btn.disabled = false; toast('Not saved: ' + bad, false); return; }
+  if(bad){ btn.disabled = false; saveNote('Not saved: ' + bad, false); return; }
 
   const fields = {
     name: val('f-name') || PT.co.name,   // never let the company lose its name
@@ -1353,13 +1373,13 @@ async function saveProfile(){
   if(PT.logoFile){
     const url = await uploadImage(PT.logoFile);
     if(url) fields.logo = url;
-    else { btn.disabled = false; toast('That logo could not be uploaded. Try a smaller PNG or JPEG.', false); return; }
+    else { btn.disabled = false; saveNote('That logo could not be uploaded. Try a smaller PNG or JPEG.', false); return; }
   }
   else if(PT.clearLogo){ fields.logo = null; }
   if(PT.coverFile){
     const url = await uploadCover(PT.coverFile);
     if(url) fields.cover_url = url;
-    else { btn.disabled = false; toast('That banner could not be uploaded. Try a smaller PNG or JPEG.', false); return; }
+    else { btn.disabled = false; saveNote('That banner could not be uploaded. Try a smaller PNG or JPEG.', false); return; }
   }
   else if(PT.clearCover){ fields.cover_url = null; }
 
@@ -1367,9 +1387,9 @@ async function saveProfile(){
     /* first save: the profiles row (the address), then the company row that
        shares it, then the rest of the form lands on that row below */
     const e1 = await createMyProfile(wantHandle, fields.name);
-    if(e1){ btn.disabled = false; toast('Could not create your profile: ' + e1, false); return; }
+    if(e1){ btn.disabled = false; saveNote('Could not create your profile: ' + e1, false); return; }
     const r = await registerCompany();
-    if(r.error){ btn.disabled = false; toast('Could not create your profile: ' + r.error, false); return; }
+    if(r.error){ btn.disabled = false; saveNote('Could not create your profile: ' + r.error, false); return; }
     PT.slug = r.slug;
     delete fields.handle;
   }
@@ -1384,7 +1404,7 @@ async function saveProfile(){
   if(fields.handle) mine.handle = fields.handle;
   const e2 = await updateMyProfile(mine);
   if(e2) console.warn('profile mirror', e2);
-  toast(fresh ? 'Profile created. Your page is at circuits.com/' + wantHandle : 'Profile saved.', true);
+  saveNote(fresh ? 'Profile created. Your page is at circuits.com/' + wantHandle : 'Profile saved.', true);
   markClean();
   if(fresh){
     renderSeeking(await myProfile());

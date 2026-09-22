@@ -133,7 +133,7 @@ itself, and that rate limits fire. It cleans up after itself at both ends.
 ## Database and function changes
 
 Apply to the project, then record the SQL under `tools/` (`audit-hardening.sql`,
-`recruiting-free.sql`, `bot-signup-guard.sql`, `grouped-listing-notifications.sql`,
+`recruiting-free.sql`, `bot-signup-guard.sql`, `grouped-listing-notifications.sql`, `profile-sync.sql`,
 `delayed-welcome-email.sql`, `retention.sql`). The edge function sources are
 `tools/edge-auth.ts` and `tools/edge-notify.ts`; deploy after editing. A new
 column on `profiles` needs a SELECT grant for anon or every person page goes
