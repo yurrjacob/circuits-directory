@@ -2026,26 +2026,44 @@ tr.hl-flash td{animation:hl-pulse 2s ease-in-out both}
 .pf-promo-k{display:block;font-size:.66rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--green-dark)}
 .pf-promo h3{margin:4px 0 6px;font-size:1.02rem}
 .pf-promo p{margin:0;font-size:.9rem;line-height:1.55;color:#3c4046}
-.pf-showcase{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
-.pf-project{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card);display:flex;flex-direction:column}
-.pf-project-cover{display:block;width:100%;height:170px;object-fit:cover;border:0;padding:0;background:var(--bg-soft);cursor:zoom-in}
-.pf-project-cover img{width:100%;height:100%;object-fit:cover;display:block}
-.pf-project-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:10px}
-.pf-project-t{margin:0;font-size:1.05rem;line-height:1.3}
-.pf-project .pf-prose{margin:0;font-size:.92rem}
+/* one wide card per project: the cover down the left, everything else with
+   room to breathe; the student's page uses the small grid version */
+.pf-showcase{display:flex;flex-direction:column;gap:14px}
+.pf-project{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card);display:grid;grid-template-columns:200px minmax(0,1fr)}
+.pf-project:has(> .pf-project-body:only-child){grid-template-columns:1fr}
+.pf-project-cover{display:block;position:relative;width:100%;height:100%;min-height:200px;object-fit:cover;border:0;padding:0;background:var(--bg-soft);cursor:zoom-in}
+.pf-project-cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.pf-showcase-mini .pf-project-cover img{position:static}
+.pf-project-body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.pf-project-t{margin:0;font-size:1.12rem;line-height:1.3;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pf-year{font-size:.68rem;font-weight:800;letter-spacing:.08em;color:var(--green-dark);background:#f1fae0;border:1px solid var(--green);border-radius:999px;padding:2px 8px}
+.pf-project .pf-prose{margin:0;font-size:.94rem}
+.pf-project .pf-ldocs{margin:0}
 .pf-project .bd-gallery{margin:0}
+.pf-project .bd-gallery .bd-shot img{width:96px;height:72px}
+.pf-project-role{margin:0;font-size:.88rem;font-weight:600;color:#3c4046}
 .pf-project-link{text-decoration:none;color:inherit}
 .pf-project-link:hover{border-color:var(--green)}
-.pf-showcase-mini .pf-project-cover{height:120px}
+.pf-showcase-mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.pf-showcase-mini .pf-project{display:flex;flex-direction:column}
+.pf-showcase-mini .pf-project-cover{height:130px;min-height:0;cursor:pointer}
+.pf-showcase-mini .pf-project-body{padding:12px 14px 14px;gap:4px}
+.pf-showcase-mini .pf-project-t{font-size:1rem}
+@media(max-width:640px){
+  .pf-project{grid-template-columns:1fr}
+  .pf-project-cover{min-height:0;height:180px}
+}
 .pf-tags{display:flex;flex-wrap:wrap;gap:6px}
-.pf-tag{display:inline-flex;align-items:center;gap:5px;font-size:.8rem;font-weight:600;color:#1a1a1a;background:var(--bg-soft);border:1px solid var(--line);border-radius:999px;padding:4px 10px;text-decoration:none}
+.pf-tag{display:inline-flex;align-items:center;gap:5px;font-size:.76rem;font-weight:600;color:#1a1a1a;background:var(--bg-soft);border:1px solid var(--line);border-radius:999px;padding:3px 9px;text-decoration:none;line-height:1.3}
 .pf-tag i{font-style:normal;font-weight:400;color:var(--muted)}
 a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
 .pf-skills{display:flex;flex-wrap:wrap;gap:8px}
 .pf-skill{font-size:.86rem;font-weight:600;color:#1a1a1a;background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px 11px}
 .pf-badges{display:flex;flex-wrap:wrap;gap:10px}
-.pf-badge{display:inline-flex;flex-direction:column;gap:2px;min-width:180px;text-decoration:none;color:inherit;border:1px solid var(--line);border-radius:14px;padding:10px 14px;background:var(--card)}
-.pf-badge:hover{border-color:var(--green)}
+.pf-badge{display:inline-flex;flex-direction:column;gap:2px;min-width:180px;text-decoration:none;color:inherit;border:1px solid var(--line);border-left-width:4px;border-radius:14px;padding:10px 14px;background:var(--card);transition:transform .12s,box-shadow .12s}
+.pf-badge:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(15,15,15,.08)}
+.pf-badge-lead{border-left-color:#d4a72c;background:#fffbea}
+.pf-badge-proj{border-left-color:var(--green);background:#f7fcec}
 .pf-badge-k{display:inline-flex;align-items:center;gap:5px;font-size:.64rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .pf-badge-k svg{width:13px;height:13px}
 .pf-badge-lead .pf-badge-k{color:#8a6d00}

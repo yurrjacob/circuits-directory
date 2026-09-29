@@ -183,7 +183,7 @@ function projectCardHtml(p, co){
   return `<article class="pf-project" id="project-${escapeHtml(String(p.id))}">
       ${cover ? `<button type="button" class="bd-shot pf-project-cover" data-full="${escapeHtml(cover)}" data-cap="${escapeHtml(p.title)}" aria-label="Open picture: ${escapeHtml(p.title)}"><img src="${escapeHtml(cover)}" alt="${escapeHtml(p.title)}" loading="lazy"></button>` : ''}
       <div class="pf-project-body">
-        <h3 class="pf-project-t">${escapeHtml(p.title)}${p.year ? ` <span class="pf-note">${escapeHtml(String(p.year))}</span>` : ''}</h3>
+        <h3 class="pf-project-t">${escapeHtml(p.title)}${p.year ? `<span class="pf-year">${escapeHtml(String(p.year))}</span>` : ''}</h3>
         ${p.summary ? `<p class="pf-prose">${escapeHtml(p.summary).replace(/\n+/g, '<br>')}</p>` : ''}
         ${docs.length ? `<div class="pf-ldocs">${docs.map(d => `<a class="doc-link" href="${escapeHtml(safeUrl(d.url))}" target="_blank" rel="noopener nofollow">${escapeHtml(d.name || 'Document')}</a>`).join('')}</div>` : ''}
         ${pics.length > 1 ? galleryHtml(pics.slice(cover === safeUrl(pics[0].url) ? 1 : 0), p.title) : ''}
@@ -228,9 +228,11 @@ function personClubSections(p){
   if(projects.length) html += section('Projects', `<div class="pf-showcase pf-showcase-mini">${projects.map(x => {
       const c = x.companies || {};
       const cover = safeUrl(x.cover_url);
+      const me = (Array.isArray(x.team) ? x.team : []).find(t => t && String(t.handle || '').toLowerCase() === String(p.handle || '').toLowerCase()) || {};
       return `<a class="pf-project pf-project-link" href="${handleLink(c.handle)}#project-${escapeHtml(String(x.id))}">
         ${cover ? `<img class="pf-project-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(x.title)}" loading="lazy">` : ''}
-        <div class="pf-project-body"><h3 class="pf-project-t">${escapeHtml(x.title)}${x.year ? ` <span class="pf-note">${escapeHtml(String(x.year))}</span>` : ''}</h3>
+        <div class="pf-project-body"><h3 class="pf-project-t">${escapeHtml(x.title)}${x.year ? `<span class="pf-year">${escapeHtml(String(x.year))}</span>` : ''}</h3>
+        ${me.role ? `<p class="pf-project-role">${escapeHtml(me.role)}</p>` : ''}
         <p class="pf-note">${escapeHtml(c.name || '')}${c.college_name ? `, ${escapeHtml(c.college_name)}` : ''}</p></div></a>`;
     }).join('')}</div>`);
   return html;
@@ -344,7 +346,8 @@ async function initProfile(){
     <div class="pf-logo">${logo}</div>
     <div class="pf-id">
       <h1>${escapeHtml(co.name)}</h1>
-      ${co.tagline ? `<p class="pf-tagline">${escapeHtml(co.tagline)}</p>` : ''}
+      ${co.tagline ? `<p class="pf-tagline">${escapeHtml(co.tagline)}</p>`
+        : person && person.title ? `<p class="pf-tagline">${escapeHtml(person.title)}</p>` : ''}
       ${isClub ? clubHeadHtml(co) : ''}
       <div class="pf-meta">
         ${reviews.length ? `<span class="pf-rating">${stars(avg)} ${avg.toFixed(1)} <i>(${reviews.length})</i></span>` : ''}
