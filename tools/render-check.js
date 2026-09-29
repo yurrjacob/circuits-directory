@@ -59,6 +59,12 @@ global.fetchReviews = async () => ([{ application_id:'l1', rating:5, author_name
 global.companyClaimed = async () => true;
 global.fetchCompanyJobs = async () => [];
 global.companyRunByStaff = async () => false;
+/* college clubs (2026-09-29): a person's badges come from club pages */
+global.fetchClubRoles = async () => ([{ name:'Circuits Club', handle:'circuits-club', logo:'', college_name:'MIT', role:'President' }]);
+global.fetchProjectsForHandle = async () => ([{ id:'p1', company_slug:'club', title:'Solar Tracker', year:'2026', cover_url:'https://x/p.png',
+  team:[{handle:'aaa_electronics', name:'Jane Doe', role:'Firmware'}], companies:{ name:'Circuits Club', handle:'circuits-club', kind:'club', college_name:'MIT' } }]);
+global.fetchProjects = async () => [];
+global.galleryHtml = (pics) => `<div class="bd-gallery">${(pics||[]).length}</div>`;
 
 let captured = '';
 const el = (id) => ({ set innerHTML(v){ if(id==='profile-body') captured = v; },

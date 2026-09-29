@@ -497,7 +497,7 @@ async function profileRunByStaff(handle){
 /* Only these columns are readable by visitors: email, phone and resume_path are
    private (talent marketplace, 2026-09-02) and leave the table solely through
    my_profile() for the owner and talent_contact() for subscribed companies. */
-const PROFILE_PUBLIC_COLS = 'user_id, handle, display_name, created_at, updated_at, suspended_at, title, years, bio, talent_listed, talent_hidden, talent_status, account_type, credentials, photo_url, location';
+const PROFILE_PUBLIC_COLS = 'user_id, handle, display_name, created_at, updated_at, suspended_at, title, years, bio, talent_listed, talent_hidden, talent_status, account_type, credentials, photo_url, location, skills, show_clubs';
 async function fetchProfileByHandle(handle){
   if(!sb || !handle) return null;
   const { data, error } = await sb.from('profiles').select(PROFILE_PUBLIC_COLS)
@@ -743,6 +743,57 @@ async function fetchCompanyJobs(slug){
   if(error){ console.error('fetchCompanyJobs', error); return []; }
   return (data || []).map(j => ({ ...j, keywords: (j.job_keywords || []).map(k => k.keyword).sort() }));
 }
+/* ---- college clubs and projects (Jacob's hiring brief, 2026-09-29) ----
+   A club is a companies row with kind = 'club'; its projects are their own
+   rows. Both are public reads under RLS, so the column lists are explicit. */
+const PROJECT_COLS = 'id, company_slug, title, year, summary, cover_url, pics, docs, team, published, created_at';
+/* every project on one club page, newest first (the owner also sees unpublished ones) */
+async function fetchProjects(slug){
+  if(!sb || !slug) return [];
+  const { data, error } = await sb.from('projects').select(PROJECT_COLS)
+    .eq('company_slug', slug).order('created_at', { ascending: false });
+  if(error){ console.warn('fetchProjects', error.message); return []; }
+  return data || [];
+}
+/* the projects a person is tagged on, with the club they belong to: the
+   source of the Project badges on that person's page */
+async function fetchProjectsForHandle(handle){
+  if(!sb || !handle) return [];
+  const { data, error } = await sb.from('projects')
+    .select('id, company_slug, title, year, cover_url, team, companies(name, handle, logo, kind, college_name)')
+    .eq('published', true).contains('team', [{ handle: handle.toLowerCase() }])
+    .order('created_at', { ascending: false });
+  if(error){ console.warn('fetchProjectsForHandle', error.message); return []; }
+  return data || [];
+}
+/* the club pages that list this person as an officer: the Leadership badges */
+async function fetchClubRoles(handle){
+  if(!sb || !handle) return [];
+  const { data, error } = await sb.from('companies').select('name, handle, logo, college_name, team')
+    .eq('kind', 'club').eq('published', true).contains('team', [{ handle: handle.toLowerCase() }]);
+  if(error){ console.warn('fetchClubRoles', error.message); return []; }
+  return (data || []).map(c => {
+    const me = (Array.isArray(c.team) ? c.team : []).find(t => t && String(t.handle || '').toLowerCase() === handle.toLowerCase()) || {};
+    return { name: c.name, handle: c.handle, logo: c.logo, college_name: c.college_name, role: me.role || 'Officer' };
+  });
+}
+/* owner writes; RLS refuses anyone who does not own the club page */
+async function saveProject(p){
+  if(!sb) return { error: 'No connection' };
+  const row = { company_slug: p.company_slug, title: p.title, year: p.year || null, summary: p.summary || null,
+    cover_url: p.cover_url || null, pics: p.pics || [], docs: p.docs || [], team: p.team || [], published: p.published !== false };
+  const q = p.id ? sb.from('projects').update(row).eq('id', p.id) : sb.from('projects').insert(row);
+  const { data, error } = await q.select('id');
+  if(error) return { error: error.message };
+  if(!data || !data.length) return { error: 'That change was refused.' };
+  return { id: data[0].id };
+}
+async function deleteProject(id){
+  if(!sb) return 'No connection';
+  const { error } = await sb.from('projects').delete().eq('id', id);
+  return error ? error.message : '';
+}
+
 /* the public board: live jobs under a keyword, or every live job when blank */
 async function jobSearch(keyword){
   if(!sb) throw new Error('no connection');

@@ -146,6 +146,101 @@ function linkBoxHtml(handle, co){
     </div>`;
 }
 
+/* ===== college clubs and student profiles (Jacob's hiring brief, 2026-09-29) =====
+   A club is a page with the college's name and logo beside its own. Badges on
+   a student's page are earned, not typed: Leadership comes from being an
+   officer on a club page, Project from being on a project's team. */
+function handleLink(h){ return '/' + encodeURIComponent(String(h || '').toLowerCase()); }
+function clubHeadHtml(co){
+  const college = (co.college_name || '').trim();
+  return `<div class="pf-college">
+      ${isLogoUrl(co.college_logo) ? `<img class="pf-college-logo" src="${escapeHtml(co.college_logo)}" alt="${escapeHtml(college || 'College')} logo">` : ''}
+      ${college ? `<span class="pf-college-name">${escapeHtml(college)}</span>` : ''}
+      <span class="pf-kind">College club</span>
+    </div>`;
+}
+const PROMO_KEYS = [['members', 'New members', 'Thinking of joining?'], ['alumni', 'Alumni', 'Stay connected.'], ['employers', 'Employers', 'Hire from the club.']];
+function promoHubHtml(co){
+  const promo = co.club_promo && typeof co.club_promo === 'object' ? co.club_promo : {};
+  const cards = PROMO_KEYS.filter(([k]) => (promo[k] || '').trim()).map(([k, title, kicker]) =>
+    `<div class="pf-promo"><span class="pf-promo-k">${kicker}</span><h3>${title}</h3><p>${escapeHtml(promo[k].trim())}</p></div>`);
+  return cards.length ? section('Promo Hub', `<div class="pf-promos">${cards.join('')}</div>`) : '';
+}
+function teamTagsHtml(team){
+  const list = (Array.isArray(team) ? team : []).filter(t => t && ((t.handle || '').trim() || (t.name || '').trim()));
+  if(!list.length) return '';
+  return `<div class="pf-tags">${list.map(t => {
+    const label = escapeHtml((t.name || t.handle || '').trim()) + (t.role ? ` <i>${escapeHtml(t.role)}</i>` : '');
+    return (t.handle || '').trim()
+      ? `<a class="pf-tag" href="${handleLink(t.handle)}" title="circuits.com/${escapeHtml(String(t.handle).toLowerCase())}">${label}</a>`
+      : `<span class="pf-tag">${label}</span>`;
+  }).join('')}</div>`;
+}
+function projectCardHtml(p, co){
+  const pics = (Array.isArray(p.pics) ? p.pics : []).filter(x => x && safeUrl(x.url));
+  const docs = (Array.isArray(p.docs) ? p.docs : []).filter(d => d && safeUrl(d.url));
+  const cover = safeUrl(p.cover_url) || (pics[0] && safeUrl(pics[0].url)) || '';
+  return `<article class="pf-project" id="project-${escapeHtml(String(p.id))}">
+      ${cover ? `<button type="button" class="bd-shot pf-project-cover" data-full="${escapeHtml(cover)}" data-cap="${escapeHtml(p.title)}" aria-label="Open picture: ${escapeHtml(p.title)}"><img src="${escapeHtml(cover)}" alt="${escapeHtml(p.title)}" loading="lazy"></button>` : ''}
+      <div class="pf-project-body">
+        <h3 class="pf-project-t">${escapeHtml(p.title)}${p.year ? ` <span class="pf-note">${escapeHtml(String(p.year))}</span>` : ''}</h3>
+        ${p.summary ? `<p class="pf-prose">${escapeHtml(p.summary).replace(/\n+/g, '<br>')}</p>` : ''}
+        ${docs.length ? `<div class="pf-ldocs">${docs.map(d => `<a class="doc-link" href="${escapeHtml(safeUrl(d.url))}" target="_blank" rel="noopener nofollow">${escapeHtml(d.name || 'Document')}</a>`).join('')}</div>` : ''}
+        ${pics.length > 1 ? galleryHtml(pics.slice(cover === safeUrl(pics[0].url) ? 1 : 0), p.title) : ''}
+        ${teamTagsHtml(p.team)}
+      </div>
+    </article>`;
+}
+function projectsShowcaseHtml(projects, co){
+  const list = (projects || []).filter(p => p && p.title && p.published !== false);
+  return list.length ? section('Project Showcase', `<div class="pf-showcase">${list.map(p => projectCardHtml(p, co)).join('')}</div>`) : '';
+}
+function officersHtml(co){
+  const team = (Array.isArray(co.team) ? co.team : []).filter(t => t && ((t.name || '').trim() || (t.handle || '').trim()));
+  if(!team.length) return '';
+  return section('Officers', `<div class="pf-team">${team.map(t => `
+      <div class="founder-card">
+        <div class="founder-avatar">${escapeHtml(((t.name || t.handle || '?').trim()).slice(0, 1).toUpperCase())}</div>
+        <div><div class="founder-name">${(t.handle || '').trim() ? `<a href="${handleLink(t.handle)}">${escapeHtml((t.name || t.handle).trim())}</a>` : escapeHtml((t.name || '').trim())}</div>
+        <div class="founder-role">${escapeHtml(t.role || 'Officer')}</div></div>
+      </div>`).join('')}</div>`);
+}
+/* the student's side: skills they typed, badges they earned, projects they are on */
+function badgeIcon(kind){
+  return kind === 'lead'
+    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.85 6.1 6.65.8-4.9 4.6 1.25 6.6L12 17.4l-5.85 3.3 1.25-6.6-4.9-4.6 6.65-.8z" fill="currentColor"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4.5 19.5 9.5 9 20H4v-5z"/><path d="m12.5 6.5 5 5"/></svg>';
+}
+function personClubSections(p){
+  let html = '';
+  const skills = (Array.isArray(p.skills) ? p.skills : []).map(s => String(s || '').trim()).filter(Boolean);
+  if(skills.length) html += section('Technical Skills', `<div class="pf-skills">${skills.map(s => `<span class="pf-skill">${escapeHtml(s)}</span>`).join('')}</div>`);
+  if(p.show_clubs === false) return html;
+  const roles = Array.isArray(p.club_roles) ? p.club_roles : [];
+  const projects = (Array.isArray(p.club_projects) ? p.club_projects : []).filter(x => x && x.title);
+  const pills = roles.map(r => `<a class="pf-badge pf-badge-lead" href="${handleLink(r.handle)}"><span class="pf-badge-k">${badgeIcon('lead')}Leadership</span><b>${escapeHtml(r.role || 'Officer')}</b><span>${escapeHtml(r.name || '')}${r.college_name ? `, ${escapeHtml(r.college_name)}` : ''}</span></a>`)
+    .concat(projects.map(x => {
+      const c = x.companies || {};
+      const me = (Array.isArray(x.team) ? x.team : []).find(t => t && String(t.handle || '').toLowerCase() === String(p.handle || '').toLowerCase()) || {};
+      return `<a class="pf-badge pf-badge-proj" href="${handleLink(c.handle)}#project-${escapeHtml(String(x.id))}"><span class="pf-badge-k">${badgeIcon('proj')}Project</span><b>${escapeHtml(x.title)}</b><span>${escapeHtml(me.role || '')}${me.role && c.name ? ' at ' : ''}${escapeHtml(c.name || '')}</span></a>`;
+    }));
+  if(pills.length) html += section('Badges', `<div class="pf-badges">${pills.join('')}</div><p class="pf-note">Badges are awarded by the club pages that list this person, not written here.</p>`);
+  if(projects.length) html += section('Projects', `<div class="pf-showcase pf-showcase-mini">${projects.map(x => {
+      const c = x.companies || {};
+      const cover = safeUrl(x.cover_url);
+      return `<a class="pf-project pf-project-link" href="${handleLink(c.handle)}#project-${escapeHtml(String(x.id))}">
+        ${cover ? `<img class="pf-project-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(x.title)}" loading="lazy">` : ''}
+        <div class="pf-project-body"><h3 class="pf-project-t">${escapeHtml(x.title)}${x.year ? ` <span class="pf-note">${escapeHtml(String(x.year))}</span>` : ''}</h3>
+        <p class="pf-note">${escapeHtml(c.name || '')}${c.college_name ? `, ${escapeHtml(c.college_name)}` : ''}</p></div></a>`;
+    }).join('')}</div>`);
+  return html;
+}
+/* the printable resume page for anyone with something on their profile */
+function resumeExportHtml(p){
+  const has = p && (p.title || p.bio || (p.credentials || []).length || (p.skills || []).length || (p.keywords || []).length);
+  return has ? `<a class="btn btn-outline pf-cta-2" href="/resume?u=${encodeURIComponent(String(p.handle || '').toLowerCase())}">Export resume (PDF)</a>` : '';
+}
+
 /* A person's profile with no company row behind it (accounts older than the
    one-account model). */
 function personProfile(p, staffRun){
@@ -162,11 +257,12 @@ function personProfile(p, staffRun){
     </div>
   </div>
   <div class="pf-layout"><div class="pf-main">
-    ${personExperience(p) || section('About', `<p class="pf-prose">This is a Circuits.com profile.</p>`)}
+    ${(personExperience(p) + personClubSections(p)) || section('About', `<p class="pf-prose">This is a Circuits.com profile.</p>`)}
   </div>
   <aside class="pf-side">
     <div class="pf-side-card">
       ${linkBoxHtml(p.handle, { slug: '', name: name })}
+      ${resumeExportHtml(p)}
     </div>
     <p class="pf-claim">Is this you? <a href="/portal">Sign in</a> to manage your profile.</p>
   </aside></div>`;
@@ -188,6 +284,14 @@ async function initProfile(){
   try {
     [co, person] = await Promise.all([fetchCompanyByHandle(handle), fetchProfileByHandle(handle)]);
     if(person && typeof fetchTalentKeywords === 'function') person.keywords = await fetchTalentKeywords(person.user_id);
+    /* badges and projects come from club pages, never from the person's own
+       row; one switch on the profile (show_clubs) hides them all */
+    if(person && person.show_clubs !== false){
+      const [roles, projects] = await Promise.all([
+        typeof fetchClubRoles === 'function' ? fetchClubRoles(person.handle).catch(() => []) : [],
+        typeof fetchProjectsForHandle === 'function' ? fetchProjectsForHandle(person.handle).catch(() => []) : []]);
+      person.club_roles = roles || []; person.club_projects = projects || [];
+    } else if(person){ person.club_roles = []; person.club_projects = []; }
   } catch(err){
     console.error('profile lookup failed', err);
     root.innerHTML = loadErrorHtml('circuits.com/' + handle);
@@ -205,8 +309,10 @@ async function initProfile(){
   }
 
   const slug = co.slug;   // internal key: everything else still hangs off this
-  const [kws, staffRun, jobs] = await Promise.all([
-    fetchCompanyKeywords(slug), companyRunByStaff(slug), fetchCompanyJobs(slug)
+  const isClub = co.kind === 'club';
+  const [kws, staffRun, jobs, projects] = await Promise.all([
+    fetchCompanyKeywords(slug), companyRunByStaff(slug), fetchCompanyJobs(slug),
+    isClub && typeof fetchProjects === 'function' ? fetchProjects(slug).catch(() => []) : []
   ]);
   /* Buyer reviews are off the site (Jacob, 2026-09-03). The rows, reviewForm()
      and submitReview stay dormant in case they come back. */
@@ -239,6 +345,7 @@ async function initProfile(){
     <div class="pf-id">
       <h1>${escapeHtml(co.name)}</h1>
       ${co.tagline ? `<p class="pf-tagline">${escapeHtml(co.tagline)}</p>` : ''}
+      ${isClub ? clubHeadHtml(co) : ''}
       <div class="pf-meta">
         ${reviews.length ? `<span class="pf-rating">${stars(avg)} ${avg.toFixed(1)} <i>(${reviews.length})</i></span>` : ''}
         ${fitsLine(co.address, 60) ? `<span class="pf-chip">${iconHtml('Address')}${escapeHtml(co.address)}</span>` : ''}
@@ -252,6 +359,10 @@ async function initProfile(){
   /* ---- about ---- */
   html += section('About ' + co.name, co.description
     ? `<p class="pf-prose">${escapeHtml(co.description).replace(/\n+/g, '</p><p class="pf-prose">')}</p>` : '');
+
+  /* ---- a club page (Jacob's hiring brief, 2026-09-29): who it is for, what
+     it has built, who runs it. Each section draws only when it has content. */
+  if(isClub) html += promoHubHtml(co) + projectsShowcaseHtml(projects, co) + officersHtml(co);
 
   /* ---- keywords ----
      The badge belongs against the keyword it applies to, "PCB Design
@@ -351,7 +462,7 @@ async function initProfile(){
 
   /* ---- the person behind the account: experience from the Seeking
      Employment tab, public bits only (name and picture are the page's own) ---- */
-  if(person) html += personExperience(person);
+  if(person) html += personExperience(person) + personClubSections(person);
 
   /* The in-page quote form is OFF (Jacob, 2026-08-21: "Request a quote part
      of the profile should be removed. Just make it provide their emails and
@@ -367,6 +478,7 @@ async function initProfile(){
              href="mailto:${escapeHtml(co.email.trim())}?subject=${encodeURIComponent('Enquiry via Circuits.com: ' + co.name)}">Email ${escapeHtml(co.name)}</a>`
         : ''}
       ${linkBoxHtml(co.handle, co)}
+      ${person ? resumeExportHtml(person) : ''}
       <div class="pf-rows">
         ${fitsLine(co.contact, 80) ? row('Contact', co.contact) : ''}
         ${looksPhone(co.phone) ? row('Phone', co.phone, { href: 'tel:' + co.phone.replace(/[^\d+]/g, ''), id: 'pf-phone' }) : ''}
@@ -471,6 +583,10 @@ function jsonLd(co, avg, count, site){
 
 function wireProfile(slug, co){
   trackEvent(slug, 'view');
+
+  /* project pictures use the Job Board's gallery buttons and its lightbox */
+  document.querySelectorAll('.pf-showcase .bd-shot').forEach(b =>
+    b.addEventListener('click', () => openLightbox(b.dataset.full, b.dataset.cap)));
 
   /* Gallery photos open full size, a 140px thumbnail of a warehouse tells a
      buyer nothing. */

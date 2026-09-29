@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=3d3a5cb360">
+<link rel="stylesheet" href="/styles.css?v=d4ceb0e37d">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -105,6 +105,8 @@
     <button class="pt-tab" data-tab="hiring">Find Recruits</button>
     <button class="pt-tab" data-tab="seeking">Job Search</button>
     <button class="pt-tab" data-tab="branding">Branding</button>
+    <!-- shown by portal.js once Profile Details says this page is a college club -->
+    <button class="pt-tab" data-tab="projects" id="pt-tab-projects" style="display:none">Projects</button>
     <button class="pt-tab" data-tab="account" id="pt-tab-account">Account Settings</button>
     <!-- shown by portal.js only when the signed-in account is a Circuits.com admin -->
     <button class="pt-tab" data-tab="admin" id="pt-tab-admin" style="display:none">Admin</button>
@@ -180,6 +182,34 @@
         <div class="auth-field"><label for="f-founded">Founded</label><input id="f-founded" type="text" placeholder="1998" autocomplete="off"></div>
         <div class="auth-field"><label for="f-employees">Employees</label><input id="f-employees" type="text" placeholder="50 to 200" autocomplete="off"></div>
       </div>
+      <!-- College club (Jacob's hiring brief, 2026-09-29): the same page, with
+           the college beside the club, three promo texts and the officers.
+           Officers tagged with a handle earn a Leadership badge on their page. -->
+      <details class="pt-fold" id="pt-club-fold"><summary>College club <span class="pf-note" id="pt-club-state">· off</span></summary>
+        <div class="pt-list">
+          <label class="pt-check"><input type="checkbox" id="f-club" autocomplete="off"> This page is a college club</label>
+          <div class="pt-club-fields">
+            <div class="pt-row">
+              <div class="auth-field"><label for="f-college">College or university</label><input id="f-college" type="text" maxlength="160" placeholder="University of Texas at Austin" autocomplete="off"></div>
+              <div class="auth-field"><label for="pt-college-logo">College logo</label>
+                <div class="rp-img"><span id="pt-college-prev"><span class="rp-img-ph">None</span></span>
+                  <input id="pt-college-logo" type="file" accept="image/png,image/jpeg,image/webp">
+                  <button type="button" class="mini-btn" id="pt-college-rm" style="display:none">Clear</button></div>
+                <p class="field-hint">Shown beside your club's logo at the top of the page.</p></div>
+            </div>
+            <h4 class="pt-sub-h" style="margin:8px 0">Promo hub</h4>
+            <p class="pf-note" style="margin:0 0 8px">Three short pitches on your page, one for each audience. Leave one blank to leave it off.</p>
+            <div class="pt-row">
+              <div class="auth-field"><label for="f-promo-members">New members</label><textarea id="f-promo-members" rows="4" maxlength="600" placeholder="Who should join, when you meet, how to sign up." autocomplete="off"></textarea></div>
+              <div class="auth-field"><label for="f-promo-alumni">Alumni</label><textarea id="f-promo-alumni" rows="4" maxlength="600" placeholder="How past members stay involved." autocomplete="off"></textarea></div>
+              <div class="auth-field"><label for="f-promo-employers">Employers</label><textarea id="f-promo-employers" rows="4" maxlength="600" placeholder="Why hire from this club, how to sponsor or recruit." autocomplete="off"></textarea></div>
+            </div>
+            <details class="pt-fold" open><summary>Officers <span class="pf-note" id="fold-officers-n"></span></summary>
+              <p class="pf-note" style="margin:0 16px 8px">An officer with a Circuits.com address gets a Leadership badge on their own profile, linked to this page.</p>
+              <div class="pt-list" id="f-officers"></div></details>
+          </div>
+        </div>
+      </details>
       <p class="pf-note">Everything here is public. Contact person, phone, email, website and picture update everywhere:
       your profile, every keyword listing and your sponsor banner.</p>
 
@@ -338,6 +368,47 @@
   </section>
 
   <!-- branding: the printable artwork (was the Promote tab until 2026-09-11) -->
+  <!-- Projects (Jacob's hiring brief, 2026-09-29): a club's showcase. Each
+       project is a card on the club page; every team member with a handle
+       gets a Project badge on their own profile. -->
+  <section class="pt-panel" id="tab-projects">
+    <div class="pt-tab-head">
+      <div>
+        <h2>Project Showcase</h2>
+        <p class="kit-intro">The projects your club has built, each with pictures, build documents and the team behind it.
+          Tag members by their Circuits.com address and the project appears on their profile as a badge.</p>
+      </div>
+      <div class="pt-head-btns"><a class="btn btn-outline" id="pt-projects-view" href="#" target="_blank" rel="noopener">View club page &#8599;</a></div>
+    </div>
+    <div class="pt-project-list" id="pt-project-list"></div>
+    <div class="pf-form">
+      <h3 id="pj-form-h" style="margin-top:0">Add a project</h3>
+      <input type="hidden" id="pj-id" value="">
+      <div class="grid2">
+        <div class="auth-field"><label for="pj-title">Project title</label><input id="pj-title" type="text" maxlength="120" placeholder="Solar tracker" autocomplete="off"></div>
+        <div class="auth-field"><label for="pj-year">Year</label><input id="pj-year" type="text" maxlength="20" placeholder="2026" autocomplete="off"></div>
+      </div>
+      <div class="auth-field"><label for="pj-summary">What it is and what it does</label>
+        <textarea id="pj-summary" rows="5" maxlength="2000" placeholder="The problem, the design, the result." autocomplete="off"></textarea></div>
+      <div class="auth-field"><label for="pj-pics">Pictures</label>
+        <input id="pj-pics" type="file" multiple accept="image/png,image/jpeg,image/webp">
+        <p class="field-hint">The first picture is the card's cover. PNG or JPEG, up to 10 MB each.</p>
+        <div class="kw-tags" id="pj-pics-list"></div></div>
+      <div class="auth-field"><label for="pj-docs">Build documents</label>
+        <input id="pj-docs" type="file" multiple accept="application/pdf,image/png,image/jpeg,image/webp">
+        <p class="field-hint">Schematics, reports, slides. PDF, PNG or JPEG, up to 10 MB each.</p>
+        <div class="kw-tags" id="pj-docs-list"></div></div>
+      <details class="pt-fold" open><summary>Team <span class="pf-note" id="fold-pjteam-n"></span></summary>
+        <p class="pf-note" style="margin:0 16px 8px">Address is the member's circuits.com/<b>address</b>. Members without one are named only.</p>
+        <div class="pt-list" id="f-pjteam"></div></details>
+      <div class="pt-save-row">
+        <button class="btn btn-primary" type="button" id="pj-save">Add to showcase</button>
+        <button class="mini-btn" type="button" id="pj-cancel" style="display:none">Cancel</button>
+        <span class="pf-note" id="pj-msg" style="margin:0"></span>
+      </div>
+    </div>
+  </section>
+
   <section class="pt-panel" id="tab-branding">
     <p class="kit-intro">Print these and put your listing in front of people.
     They pull your logo and link from your profile, so update it once and these follow.</p>
@@ -662,9 +733,9 @@
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
-<script src="/store.js?v=28a3d059fb"></script>
-<script src="/app.js?v=e1fa4b2b3a"></script>
-<script src="/portal.js?v=fb5de4b273"></script>
+<script src="/store.js?v=50d8f22451"></script>
+<script src="/app.js?v=ec96691bb0"></script>
+<script src="/portal.js?v=446e316c39"></script>
 <script src="/admin.js?v=a280d00bb3"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));

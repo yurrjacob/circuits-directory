@@ -60,6 +60,9 @@ function renderExperience(){
     <div class="auth-field"><label for="me-keywords">Circuits-Keywords&trade; <span class="cell-muted">(up to 10, comma separated)</span></label>
       <input id="me-keywords" type="text" placeholder="rf design, pcb layout" value="${escapeHtml(kwList().join(', '))}">
       <div class="pf-note">The words a recruiter searches for. One idea per keyword: <b>pcb layout</b>, not <b>pcb layout and test</b>.</div></div>
+    <div class="auth-field"><label for="me-skills">Technical skills <span class="cell-muted">(up to 20, comma separated)</span></label>
+      <input id="me-skills" type="text" placeholder="KiCad, LTspice, FPGA, embedded C, SMT rework" value="${escapeHtml((Array.isArray(ME.skills) ? ME.skills : []).join(', '))}">
+      <div class="pf-note">The specific tools and techniques you can do, the things a resume never shows. On your profile and your exported resume.</div></div>
     <div class="auth-field"><label for="me-bio">Qualifying statement</label>
       <textarea id="me-bio" rows="5" maxlength="600" placeholder="What you do, what you are good at, what you are looking for.">${escapeHtml(ME.bio || '')}</textarea></div>
     <div class="grid2">
@@ -74,6 +77,7 @@ function renderExperience(){
     </div>
     <details class="pt-fold" open><summary>Certifications &amp; degrees <span class="pf-note" id="fold-creds-n"></span></summary><div class="pt-list" id="f-creds"></div></details>
     <details class="pt-fold" open id="me-resume-fold">${resumeFoldHtml()}</details>
+    <label class="pt-check"><input type="checkbox" id="me-show-clubs" ${ME.show_clubs === false ? '' : 'checked'}> Show the badges and projects club pages give me on my profile</label>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
       <button type="button" class="btn btn-primary me-save" data-list="keep">Save All</button>
       <span class="pf-note me-msg" style="margin:0"></span></div>`;
@@ -130,6 +134,7 @@ function renderRecruit(){
   box.innerHTML = `<div class="pf-form pt-actions">
       <button type="button" class="btn btn-primary me-save" data-list="on" ${listed ? 'disabled title="Already listed. Pause it under Your Listings, Resumes Posted."' : ''}>List Me on the Recruit Board</button>
       <a class="btn btn-outline" href="/talent" target="_blank" rel="noopener">View Recruit Board</a>
+      <a class="btn btn-outline" href="/resume?u=${encodeURIComponent(ME.handle || '')}" target="_blank" rel="noopener">Export resume (PDF)</a>
       ${status}
       <span class="pf-note me-msg" style="margin:0"></span>
     </div>
@@ -164,7 +169,11 @@ async function saveResume(b, say){
     const credentials = (el('f-creds') && el('f-creds').__list || []).filter(o => Object.values(o).some(v => (v || '').trim()));
     for(const c of credentials){ if((c.year || '').trim() && !isValidYear(c.year)){ say(`"${c.name || '(unnamed)'}" needs a 4-digit year.`, true); return; } }
     /* Save Resume (in the form) keeps the listing as it is; List Me (box B) switches it on */
-    const fields = { phone: val('me-phone') || null, contact_email: email || null,
+    const seenSkill = new Set();
+    const skills = val('me-skills').split(',').map(s => s.trim().slice(0, 40)).filter(s => s && !seenSkill.has(s.toLowerCase()) && seenSkill.add(s.toLowerCase()));
+    if(skills.length > 20){ say('Twenty skills is the limit.', true); el('me-skills').focus(); return; }
+    const fields = { phone: val('me-phone') || null, contact_email: email || null, skills,
+      show_clubs: !(el('me-show-clubs') && !el('me-show-clubs').checked),
       title: val('me-title') || null, location: val('me-location') || null, years, bio: val('me-bio') || null, credentials,
       talent_listed: b.dataset.list === 'on' ? true : !!ME.talent_listed };
     const err = await updateMyProfile(fields);
@@ -282,6 +291,90 @@ async function initPortal(){
   if(tab && document.querySelector(`.pt-tab[data-tab="${CSS.escape(tab)}"]`)) activateTab(tab);
   if(admGroup && typeof window.showAdminGroup === 'function' && document.querySelector(`.adm-tab[data-adm="${CSS.escape(admGroup)}"]`)) window.showAdminGroup(admGroup, true);
   await loadCompany(cos[0].slug);
+}
+
+/* ===== Projects (Jacob's hiring brief, 2026-09-29): the club's showcase =====
+   One card per project on the club page; every team member with an address
+   gets a Project badge on their own profile, linked back to the card. */
+const PJ = { list: [], pics: [], docs: [], wired: false };
+async function renderProjects(){
+  const list = el('pt-project-list'); if(!list) return;
+  if(!PT.slug || !(PT.co && PT.co.kind === 'club')){ list.innerHTML = ''; return; }
+  PJ.list = await fetchProjects(PT.slug);
+  list.innerHTML = PJ.list.length ? PJ.list.map(p => {
+    const cover = isLogoUrl(p.cover_url) ? p.cover_url : '';
+    return `<div class="pt-project">
+      ${cover ? `<img src="${escapeHtml(cover)}" alt="">` : ''}
+      <div class="pt-project-b"><b>${escapeHtml(p.title)}${p.year ? ` <span class="pf-note">${escapeHtml(String(p.year))}</span>` : ''}</b>
+        <span class="pf-note">${(p.team || []).length} on the team &middot; ${(p.pics || []).length} pictures &middot; ${(p.docs || []).length} documents</span>
+        <div class="pt-project-acts">
+          <button type="button" class="mini-btn" data-edit-pj="${escapeHtml(p.id)}">Edit</button>
+          <button type="button" class="mini-btn danger" data-del-pj="${escapeHtml(p.id)}">Delete</button>
+        </div></div></div>`; }).join('')
+    : '<p class="pf-note">No projects yet. Add the first one below.</p>';
+  if(!PJ.wired){ PJ.wired = true; wireProjects(); pjSetMode(null); }
+}
+function pjDraw(){
+  const pics = el('pj-pics-list'), docs = el('pj-docs-list');
+  if(pics) pics.innerHTML = PJ.pics.map((p, i) => `<span class="kw-tag"><img src="${escapeHtml(p.url)}" alt="" style="width:22px;height:22px;object-fit:cover;border-radius:4px">${escapeHtml(p.caption || 'Picture')}${i === 0 ? ' <i class="pf-note">cover</i>' : ''}<button type="button" data-rmpjpic="${i}" aria-label="Remove">&times;</button></span>`).join('');
+  if(docs) docs.innerHTML = PJ.docs.map((d, i) => `<span class="kw-tag">${escapeHtml(d.name || 'Document')}<button type="button" data-rmpjdoc="${i}" aria-label="Remove">&times;</button></span>`).join('');
+}
+function pjSetMode(p){
+  el('pj-id').value = p ? p.id : '';
+  el('pj-form-h').textContent = p ? 'Edit project' : 'Add a project';
+  el('pj-save').textContent = p ? 'Save changes' : 'Add to showcase';
+  el('pj-cancel').style.display = p ? '' : 'none';
+  el('pj-title').value = p ? p.title || '' : '';
+  el('pj-year').value = p ? p.year || '' : '';
+  el('pj-summary').value = p ? p.summary || '' : '';
+  PJ.pics = p && Array.isArray(p.pics) ? p.pics.slice() : [];
+  PJ.docs = p && Array.isArray(p.docs) ? p.docs.slice() : [];
+  pjDraw();
+  renderRepeater('pjteam', p && Array.isArray(p.team) ? p.team : [], ['handle', 'name', 'role'], ['Circuits.com address', 'Name', 'Role']);
+  el('pj-msg').textContent = '';
+}
+function wireProjects(){
+  const say = (t, bad) => { const m = el('pj-msg'); m.textContent = t; m.style.color = bad ? '#b3261e' : '#3f6300'; };
+  const uploadList = async (input, into, picsOnly) => {
+    const files = [...(input.files || [])]; input.value = '';
+    for(const f of files){
+      if(f.size > 10 * 1024 * 1024){ toast(f.name + ' is over 10 MB.', false); continue; }
+      if(picsOnly && !/^image\/(png|jpeg|webp)$/.test(f.type)){ toast(f.name + ' is not a PNG, JPEG or WebP picture.', false); continue; }
+      const d = await uploadDoc(f);
+      if(d && d.url) into.push(picsOnly ? { url: d.url, caption: d.name.replace(/\.[a-z0-9]+$/i, '') } : d);
+      else toast('Could not upload ' + f.name + '.', false);
+    }
+    pjDraw();
+  };
+  el('pj-pics').addEventListener('change', () => uploadList(el('pj-pics'), PJ.pics, true));
+  el('pj-docs').addEventListener('change', () => uploadList(el('pj-docs'), PJ.docs, false));
+  el('pj-pics-list').addEventListener('click', e => { const b = e.target.closest('[data-rmpjpic]'); if(!b) return; PJ.pics.splice(+b.dataset.rmpjpic, 1); pjDraw(); });
+  el('pj-docs-list').addEventListener('click', e => { const b = e.target.closest('[data-rmpjdoc]'); if(!b) return; PJ.docs.splice(+b.dataset.rmpjdoc, 1); pjDraw(); });
+  el('pj-cancel').addEventListener('click', () => pjSetMode(null));
+  el('pt-project-list').addEventListener('click', async e => {
+    const ed = e.target.closest('[data-edit-pj]'), del = e.target.closest('[data-del-pj]');
+    if(ed){ const p = PJ.list.find(x => x.id === ed.dataset.editPj); if(p){ pjSetMode(p); el('pj-title').focus(); } return; }
+    if(del){
+      const p = PJ.list.find(x => x.id === del.dataset.delPj);
+      if(!confirm('Delete ' + (p ? '"' + p.title + '"' : 'this project') + '? It comes off the club page and off every team member\'s profile.')) return;
+      const err = await deleteProject(del.dataset.delPj);
+      if(err){ toast(err, false); return; }
+      toast('Project deleted.', true); if(el('pj-id').value === del.dataset.delPj) pjSetMode(null); renderProjects();
+    }
+  });
+  el('pj-save').addEventListener('click', async () => {
+    const title = val('pj-title');
+    if(!title){ say('A project needs a title.', true); el('pj-title').focus(); return; }
+    const team = cleanTeam(el('f-pjteam') && el('f-pjteam').__list);
+    const tp = teamProblem(team); if(tp){ say(tp, true); return; }
+    el('pj-save').disabled = true; say('Saving…', false);
+    const r = await saveProject({ id: el('pj-id').value || null, company_slug: PT.slug, title, year: val('pj-year'), summary: val('pj-summary'),
+      cover_url: PJ.pics[0] ? PJ.pics[0].url : null, pics: PJ.pics, docs: PJ.docs, team });
+    el('pj-save').disabled = false;
+    if(r.error){ say(r.error, true); return; }
+    say(el('pj-id').value ? 'Saved.' : 'Added to the showcase.', false);
+    pjSetMode(null); renderProjects();
+  });
 }
 
 /* No profiles row and no company: the Profile Details form with nothing in it,
@@ -445,6 +538,8 @@ async function loadCompany(slug){
   renderUpgrades();
   renderPromote();
   renderJobs();
+  syncClubTab();
+  renderProjects();
 }
 
 /* Applying used to end in silence: the supplier refreshed the portal hoping,
@@ -1211,11 +1306,65 @@ function renderProfileForm(){
     };
   }
   wireLogoCrop();
+  wireClubFields(c);
 
   const soc = c.socials && typeof c.socials === 'object' ? c.socials : {};
   el('f-socials').innerHTML = SOCIAL_KEYS.map(([k, label]) =>
     `<div class="auth-field"><label>${label}</label><input id="s-${k}" type="text" placeholder="https://…" value="${escapeHtml(soc[k] || '')}"></div>`
   ).join('');
+}
+
+/* ===== College club (Jacob's hiring brief, 2026-09-29) =====
+   The same page, flagged as a club: the college beside it, three promo texts
+   and the officers. Officers with a Circuits.com address earn a Leadership
+   badge on their own profile, so the list is the source of that badge. */
+function clubOn(){ return !!(el('f-club') && el('f-club').checked); }
+function syncClubTab(){
+  const on = !!(PT.co && PT.co.kind === 'club');
+  const t = el('pt-tab-projects'); if(t) t.style.display = on ? '' : 'none';
+  const v = el('pt-projects-view'); if(v) v.href = profileUrl(PT.co && PT.co.handle) || '#';
+}
+function wireClubFields(c){
+  const fold = el('pt-club-fold'), box = el('f-club'); if(!fold || !box) return;
+  const promo = c.club_promo && typeof c.club_promo === 'object' ? c.club_promo : {};
+  box.checked = c.kind === 'club';
+  el('f-college').value = c.college_name || '';
+  el('f-promo-members').value = promo.members || '';
+  el('f-promo-alumni').value = promo.alumni || '';
+  el('f-promo-employers').value = promo.employers || '';
+  const paint = () => {
+    fold.classList.toggle('pt-club-on', box.checked);
+    el('pt-club-state').textContent = box.checked ? '· on' : '· off';
+    if(box.checked) fold.open = true;
+  };
+  paint();
+  box.onchange = () => { paint(); markDirty(); };
+  /* the college logo: no crop, shown as given */
+  const prev = el('pt-college-prev'), inp = el('pt-college-logo'), rm = el('pt-college-rm');
+  const show = url => { prev.innerHTML = url ? `<img src="${escapeHtml(url)}" alt="">` : '<span class="rp-img-ph">None</span>'; rm.style.display = url ? '' : 'none'; };
+  PT.collegeFile = null; PT.clearCollege = false;
+  show(isLogoUrl(c.college_logo) ? c.college_logo : '');
+  inp.value = '';
+  inp.onchange = () => {
+    const f = inp.files && inp.files[0]; if(!f) return;
+    if(!/^image\/(png|jpeg|webp)$/.test(f.type)){ inp.value = ''; toast('The college logo must be a PNG, JPEG or WebP image.', false); return; }
+    if(f.size > 4 * 1024 * 1024){ inp.value = ''; toast('The college logo must be 4 MB or smaller.', false); return; }
+    PT.collegeFile = f; PT.clearCollege = false; show(URL.createObjectURL(f)); markDirty();
+  };
+  rm.onclick = () => { PT.clearCollege = true; PT.collegeFile = null; inp.value = ''; show(''); markDirty(); };
+  renderRepeater('officers', Array.isArray(c.team) ? c.team : [], ['handle', 'name', 'role'], ['Circuits.com address', 'Name', 'Role']);
+}
+/* an address as typed: with or without @ or circuits.com/, any case */
+function cleanHandle(h){
+  return String(h || '').trim().toLowerCase().replace(/^@/, '').replace(/^(https?:\/\/)?(www\.)?circuits\.com\//, '').replace(/\/+$/, '');
+}
+function cleanTeam(list){
+  return (list || []).map(t => ({ handle: cleanHandle(t.handle), name: String(t.name || '').trim(), role: String(t.role || '').trim() }))
+    .filter(t => t.handle || t.name);
+}
+function teamProblem(list){
+  for(const t of list) if(t.handle && !/^[a-z0-9]([a-z0-9_-]*[a-z0-9])?$/.test(t.handle)) return `"${t.handle}" is not a Circuits.com address. Use the part after circuits.com/.`;
+  return '';
 }
 
 /* Live availability check on the vanity handle. Debounced so typing does not
@@ -1365,6 +1514,24 @@ async function saveProfile(){
     employees: val('f-employees') || null,
     socials
   };
+  /* College club: only saved as one when the box is ticked; the officers list
+     is validated because a bad address would tag nobody */
+  if(el('f-club')){
+    fields.kind = clubOn() ? 'club' : 'company';
+    if(clubOn()){
+      fields.college_name = val('f-college') || null;
+      fields.club_promo = { members: val('f-promo-members') || '', alumni: val('f-promo-alumni') || '', employers: val('f-promo-employers') || '' };
+      const officers = cleanTeam(el('f-officers') && el('f-officers').__list);
+      const tp = teamProblem(officers);
+      if(tp){ btn.disabled = false; saveNote('Not saved: ' + tp, false); return; }
+      fields.team = officers;
+      if(PT.collegeFile){
+        const url = await uploadLogo(PT.collegeFile);
+        if(url) fields.college_logo = url;
+        else { btn.disabled = false; saveNote('That college logo could not be uploaded. Try a smaller PNG or JPEG.', false); return; }
+      } else if(PT.clearCollege){ fields.college_logo = null; }
+    }
+  }
   /* only touch the address when it actually changed and is non-empty, so a
      blank field can never wipe an existing circuits.com/<handle> */
   if(handleChanged && wantHandle) fields.handle = wantHandle;

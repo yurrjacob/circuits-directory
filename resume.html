@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resume | Circuits.com</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="A Circuits.com profile as a printable resume.">
+<link rel="icon" href="assets/favicon.png">
+<link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
+<link rel="stylesheet" href="styles.css?v=d4ceb0e37d">
+<script src="/nav.js?v=b5adcdecca"></script>
+</head>
+<body class="rs-body">
+
+<header class="topbar rs-hide">
+  <div class="inner">
+    <div class="brand"><a href="/"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com" width="389" height="64"></a><span class="brand-slogan">Free Circuits Directory Marketplace</span></div>
+    <nav class="nav">
+      <a href="/">Home</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+      <a class="nav-auth nav-signin" href="/portal">Sign In</a>
+      <a class="nav-auth nav-dash" href="/portal">Dashboard</a>
+      <a class="cta" href="/join">Get Listed</a>
+    </nav>
+      <button type="button" class="inbox-btn" aria-label="Notifications" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span class="inbox-n" hidden></span>
+      </button>
+  </div>
+</header>
+
+<main id="content">
+<!-- The exportable digital resume (Jacob's hiring brief, 2026-09-29): the
+     public profile laid out as one printed page. Download PDF is the browser's
+     own print-to-PDF, so nothing is generated on a server and nothing private
+     leaves the page: contact details appear only when the owner is signed in. -->
+<div class="rs-bar rs-hide">
+  <div class="rs-bar-inner">
+    <span class="pf-note" id="rs-note">Preparing the resume…</span>
+    <div class="rs-bar-btns">
+      <a class="btn btn-outline" id="rs-back" href="/">Back to profile</a>
+      <button type="button" class="btn btn-primary" id="rs-print">Download PDF</button>
+    </div>
+  </div>
+</div>
+<div class="rs-page" id="rs-page" hidden></div>
+</main>
+
+<footer class="footer rs-hide">
+  <div class="inner">
+    <div class="flinks">
+      <a href="/terms">Terms</a>
+      <a href="/privacy">Privacy</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span>© 2026 Circuits.com</span>
+      <span class="footer-brand"><img class="footer-mark" src="assets/favicon.png" alt="" width="64" height="64"></span>
+    </div>
+  </div>
+</footer>
+
+<script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
+<script src="store.js?v=50d8f22451"></script>
+<script src="app.js?v=ec96691bb0"></script>
+<script>
+(async function initResume(){
+  const page = document.getElementById('rs-page'), note = document.getElementById('rs-note');
+  const handle = String(new URLSearchParams(location.search).get('u') || '').trim().toLowerCase();
+  document.getElementById('rs-print').addEventListener('click', () => window.print());
+  if(!handle){ note.textContent = 'No profile named. Open a profile and press Export resume.'; return; }
+  document.getElementById('rs-back').href = '/' + encodeURIComponent(handle);
+  let p = null;
+  try{ p = await fetchProfileByHandle(handle); }catch(e){ p = null; }
+  if(!p){ note.textContent = 'That profile could not be loaded.'; return; }
+  const [keywords, roles, projects] = await Promise.all([
+    fetchTalentKeywords(p.user_id).catch(() => []),
+    p.show_clubs === false ? [] : fetchClubRoles(handle).catch(() => []),
+    p.show_clubs === false ? [] : fetchProjectsForHandle(handle).catch(() => [])]);
+  /* the owner sees their own contact line; everyone else gets the address of the page */
+  let mine = null;
+  try{ const u = await currentUser(); if(u){ const me = await myProfile(); if(me && me.handle === p.handle) mine = me; } }catch(e){ mine = null; }
+
+  const name = p.display_name || p.handle;
+  document.title = name + ' resume | Circuits.com';
+  const creds = (Array.isArray(p.credentials) ? p.credentials : []).filter(c => c && (c.name || '').trim());
+  const skills = (Array.isArray(p.skills) ? p.skills : []).map(s => String(s || '').trim()).filter(Boolean);
+  const contact = mine ? [mine.contact_email || mine.email, mine.phone].filter(Boolean) : [];
+  const line = (a) => a.filter(Boolean).map(escapeHtml).join(' &middot; ');
+  const sec = (title, inner) => inner ? `<section class="rs-sec"><h2>${title}</h2>${inner}</section>` : '';
+  page.innerHTML = `
+    <header class="rs-head">
+      ${p.photo_url ? `<img class="rs-photo" src="${escapeHtml(p.photo_url)}" alt="">` : ''}
+      <div>
+        <h1>${escapeHtml(name)}</h1>
+        <p class="rs-title">${line([p.title, p.location, p.years != null ? p.years + ' year' + (p.years === 1 ? '' : 's') + ' experience' : ''])}</p>
+        <p class="rs-contact">${line(contact.concat(['circuits.com/' + p.handle]))}</p>
+      </div>
+    </header>
+    ${sec('Summary', p.bio ? `<p>${escapeHtml(p.bio)}</p>` : '')}
+    ${sec('Technical Skills', skills.length ? `<p class="rs-chips">${skills.map(escapeHtml).join('<span class="rs-dot"></span>')}</p>` : '')}
+    ${sec('Circuits-Keywords&trade;', (keywords || []).length ? `<p class="rs-chips">${keywords.map(escapeHtml).join('<span class="rs-dot"></span>')}</p>` : '')}
+    ${sec('Leadership', (roles || []).length ? `<ul>${roles.map(r => `<li><b>${escapeHtml(r.role || 'Officer')}</b>, ${escapeHtml(r.name || '')}${r.college_name ? `, ${escapeHtml(r.college_name)}` : ''}</li>`).join('')}</ul>` : '')}
+    ${sec('Projects', (projects || []).length ? `<ul>${projects.map(x => {
+        const c = x.companies || {};
+        const me = (Array.isArray(x.team) ? x.team : []).find(t => t && String(t.handle || '').toLowerCase() === handle) || {};
+        return `<li><b>${escapeHtml(x.title)}</b>${x.year ? ` (${escapeHtml(String(x.year))})` : ''}${me.role ? `, ${escapeHtml(me.role)}` : ''}${c.name ? `, ${escapeHtml(c.name)}` : ''}</li>`;
+      }).join('')}</ul>` : '')}
+    ${sec('Certifications &amp; Degrees', creds.length ? `<ul>${creds.map(c => `<li><b>${escapeHtml(c.name.trim())}</b>${c.issuer ? `, ${escapeHtml(c.issuer)}` : ''}${c.year ? ` (${escapeHtml(String(c.year))})` : ''}</li>`).join('')}</ul>` : '')}
+    <p class="rs-foot">From the Circuits.com profile at circuits.com/${escapeHtml(p.handle)}${mine ? '' : '. Contact details are shared through the Recruit Board.'}</p>`;
+  page.hidden = false;
+  note.textContent = mine ? 'This is your resume as recruiters will read it. Download PDF prints it to a file.' : 'Download PDF prints this page to a file.';
+})();
+</script>
+</body>
+</html>

@@ -749,7 +749,7 @@ select c.column_name as missing_anon_select_grant
   from information_schema.columns c
  where c.table_schema = 'public' and c.table_name = 'profiles'
    and c.column_name in ('user_id','handle','display_name','created_at','updated_at','suspended_at','title','years','bio',
-                         'talent_listed','talent_hidden','talent_status','account_type','credentials','photo_url','location')
+                         'talent_listed','talent_hidden','talent_status','account_type','credentials','photo_url','location','skills','show_clubs')
    and not exists (select 1 from information_schema.column_privileges p
                     where p.table_schema = 'public' and p.table_name = 'profiles'
                       and p.column_name = c.column_name and p.grantee = 'anon' and p.privilege_type = 'SELECT');

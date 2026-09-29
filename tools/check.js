@@ -130,7 +130,8 @@ for (const bad of ['ab', '-lead', 'trail-', '_lead', 'trail_', 'Upper', 'has spa
 // every root page name must be in the reserved list, or a company could take it
 const RESERVED_IN_DB = ['about','admin','applications','browse','claim','companies','company','contact',
   'dashboard','data','directory','how-it-works','index','join','login','portal','profile',
-  'privacy','register','reset','results','robots','search','server','sitemap','store','styles','talent','jobs','terms','thread','tools','welcome'];
+  'privacy','register','reset','results','robots','search','server','sitemap','store','styles','talent','jobs','terms','thread','tools','welcome',
+  'resume','resumes','club','clubs','project','projects'];
 /* build-profiles.js writes one root page per live handle, so those files are
    named after handles on purpose, that company already owns the name. Only
    hand-written pages need reserving.
@@ -738,6 +739,35 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
      rows in order (contact, then website/phone/address, then tagline), the
      saved note beside the button, the three required fields marked when empty */
   assert.ok(/id="f-preview"[^>]*target="_blank"/.test(portalHtml), 'the Preview profile link beside the address is gone');
+  /* ---- college clubs, student badges, projects and the resume (2026-09-29) ---- */
+  {
+    const rd = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
+    const sql = rd('tools/clubs.sql'), st = rd('store.js'), pf = rd('profile.js'), pj = rd('portal.js'), ph = rd('portal.html'), rs = rd('resume.html');
+    assert.ok(/create table if not exists public\.projects/.test(sql) && /enable row level security/.test(sql) && /owns_company\(company_slug\)/.test(sql),
+      'tools/clubs.sql must create the projects table under row level security keyed on owns_company');
+    assert.ok(/kind in \('company','club'\)/.test(sql) && /show_clubs boolean/.test(sql) && /grant select \(skills, show_clubs\)/.test(sql),
+      'clubs.sql must flag club pages, add the privacy switch and grant the new profile columns');
+    assert.ok(/skills, show_clubs'/.test(st), 'PROFILE_PUBLIC_COLS must carry skills and show_clubs, or every person page goes blank');
+    for (const fn of ['fetchProjects', 'fetchProjectsForHandle', 'fetchClubRoles', 'saveProject', 'deleteProject'])
+      assert.ok(new RegExp(`async function ${fn}\\(`).test(st), `store.js lost ${fn}`);
+    assert.ok(!/from\('projects'\)\.select\('\*'\)/.test(st), 'projects are read with select(*), which fails for anon on any ungranted column');
+    /* badges are derived from club pages, never typed on the profile */
+    assert.ok(/function personClubSections/.test(pf) && /fetchClubRoles\(person\.handle\)/.test(pf) && /fetchProjectsForHandle\(person\.handle\)/.test(pf),
+      'the profile no longer derives Leadership and Project badges from club pages');
+    assert.ok(/show_clubs === false/.test(pf), 'the profile ignores the show_clubs privacy switch');
+    assert.ok(/function promoHubHtml/.test(pf) && /function projectsShowcaseHtml/.test(pf) && /function officersHtml/.test(pf) && /function clubHeadHtml/.test(pf),
+      'the club page lost a section (promo hub, showcase, officers, college head)');
+    assert.ok(/href="\/resume\?u=/.test(pf) && /href="\/resume\?u=/.test(pj), 'the Export resume link is gone from the profile or the dashboard');
+    assert.ok(/<meta name="robots" content="noindex, nofollow">/.test(rs) && /window\.print\(\)/.test(rs) && /@media print/.test(rd('styles.css')),
+      'resume.html must be noindex, print through the browser and carry a print stylesheet');
+    assert.ok(/myProfile\(\)/.test(rs) && !/resume_path/.test(rs), 'the resume page must take contact details from my_profile only, never from a public read');
+    for (const id of ['f-club', 'f-college', 'pt-college-logo', 'f-promo-members', 'f-promo-alumni', 'f-promo-employers', 'f-officers',
+                      'pj-title', 'pj-pics', 'pj-docs', 'f-pjteam', 'pj-save', 'pt-project-list'])
+      assert.ok(ph.includes(`id="${id}"`), `the dashboard lost ${id}`);
+    assert.ok(/id="me-skills"/.test(pj) && /id="me-show-clubs"/.test(pj) && /skills,\s*\n?\s*show_clubs:/.test(pj), 'Post a Resume lost the skills field or the privacy switch');
+    assert.ok(/function teamProblem/.test(pj) && /cleanHandle/.test(pj), 'team addresses are saved unvalidated');
+    assert.ok(/data-del-pj/.test(pj) && /confirm\(/.test(pj.slice(pj.indexOf('function wireProjects'))), 'a project can be deleted without a confirmation');
+  }
   assert.ok(portalHtml.indexOf('id="f-contact"') < portalHtml.indexOf('id="f-website"')
          && portalHtml.indexOf('id="f-website"') < portalHtml.indexOf('id="f-phone"')
          && portalHtml.indexOf('id="f-address"') < portalHtml.indexOf('id="f-tagline"')
@@ -798,8 +828,10 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   /* Upgrades sits immediately right of Your Listings (Jacob, 2026-09-03): the
      listings table says what each keyword has, the tab beside it is where the
      paid extras are switched on. */
-  assert.deepStrictEqual(tabs, ['profile', 'listings', 'upgrades', 'hiring', 'seeking', 'branding', 'account', 'admin'],
-    'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Find Recruits / Job Search / Branding / Account Settings / Admin');
+  /* Projects (2026-09-29) sits after Branding and is shown only to a club page */
+  assert.deepStrictEqual(tabs, ['profile', 'listings', 'upgrades', 'hiring', 'seeking', 'branding', 'projects', 'account', 'admin'],
+    'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Find Recruits / Job Search / Branding / Projects / Account Settings / Admin');
+  assert.ok(/id="pt-tab-projects"[^>]*display:none/.test(portalHtml2), 'the Projects tab must start hidden; portal.js shows it for a club page');
   /* the two Recruiting tabs are named for what they hold (Jacob, 2026-09-03,
      "respectively"): the jobs tab is Job Search, the recruit listing is Find
      Recruits; the ids stay hiring / seeking so nothing else moves */
