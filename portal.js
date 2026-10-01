@@ -629,6 +629,28 @@ function markInquirySeen(q){
    returns 'still_owns_listing'); showing them a button that always fails is
    worse than not showing it, so the section is omitted and they are pointed at
    us instead. */
+/* The account's address, drawn from the company row. renderAccount runs at
+   boot, before that row is loaded, so loadCompany redraws this piece once it
+   knows the handle (Jacob, 2026-10-01: "No address yet" on an account that
+   had one). */
+function accountUrlHtml(){
+  const h = (typeof PT !== 'undefined' && PT.co && PT.co.handle) ? PT.co.handle : '';
+  return h
+    ? `<span class="ac-url"><a href="${escapeHtml(profileUrl(h) || '#')}" target="_blank" rel="noopener">circuits.com/${escapeHtml(h)}</a><button type="button" class="ac-copy" id="ac-copy-url" data-url="https://circuits.com/${escapeHtml(h)}">Copy</button></span>`
+    : '<span class="ac-url ac-url-none">No Circuits.com address yet. Pick one on Profile Details.</span>';
+}
+function wireAccountUrl(){
+  const cp = el('ac-copy-url');
+  if(cp) cp.onclick = async () => {
+    try{ await navigator.clipboard.writeText(cp.dataset.url); cp.textContent = 'Copied'; }
+    catch(e){ cp.textContent = 'Press Ctrl C'; }
+    setTimeout(() => { cp.textContent = 'Copy'; }, 2000);
+  };
+}
+function syncAccountUrl(){
+  const host = el('ac-url-host'); if(!host) return;
+  host.innerHTML = accountUrlHtml(); wireAccountUrl();
+}
 async function renderAccount(user, hostId, canDelete){
   hostId = hostId || 'pt-account';
   if(canDelete === undefined) canDelete = true;
@@ -642,9 +664,7 @@ async function renderAccount(user, hostId, canDelete){
       <div class="ac-id">
         <div class="ac-avatar" aria-hidden="true">${escapeHtml(String(user.email || '?').slice(0, 1).toUpperCase())}</div>
         <div class="ac-who"><b>${escapeHtml(user.email || '')}</b><span>Your sign-in email</span>
-          ${(typeof PT !== 'undefined' && PT.co && PT.co.handle)
-            ? `<span class="ac-url"><a href="${escapeHtml(profileUrl(PT.co.handle) || '#')}" target="_blank" rel="noopener">circuits.com/${escapeHtml(PT.co.handle)}</a><button type="button" class="ac-copy" id="ac-copy-url" data-url="https://circuits.com/${escapeHtml(PT.co.handle)}">Copy</button></span>`
-            : '<span class="ac-url ac-url-none">No Circuits.com address yet. Pick one on Profile Details.</span>'}
+          <span id="ac-url-host">${accountUrlHtml()}</span>
         </div>
         ${confirmed
           ? '<span class="ac-pill ac-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Email confirmed</span>'
@@ -713,12 +733,7 @@ async function renderAccount(user, hostId, canDelete){
     location.href = '/';
   };
 
-  const cp = el('ac-copy-url');
-  if(cp) cp.onclick = async () => {
-    try{ await navigator.clipboard.writeText(cp.dataset.url); cp.textContent = 'Copied'; }
-    catch(e){ cp.textContent = 'Press Ctrl C'; }
-    setTimeout(() => { cp.textContent = 'Copy'; }, 2000);
-  };
+  wireAccountUrl();
   if(canDelete && el('ac-delete')) el('ac-delete').onclick = async () => {
     const msg = el('ac-del-msg');
     // typing the address is deliberate friction; this cannot be undone
@@ -1266,6 +1281,62 @@ function wireLogoCrop(){
 }
 
 /* ---------- profile editing ---------- */
+/* ===== profile completeness (Jacob, 2026-10-01) =====
+   One bar above the tabs that says how much of the profile is filled in and
+   what is left, each item a chip that opens the tab and focuses the field.
+   Hide keeps it away for two days (this browser only); it comes back by
+   itself, and goes for good once everything is done. */
+const PROGRESS_HIDE_MS = 48 * 60 * 60 * 1000;
+const PROGRESS_KEY = 'cx_pt_progress_until';
+function progressItems(){
+  const c = PT.co || {};
+  const has = v => !!(v && String(v).trim());
+  const soc = c.socials && typeof c.socials === 'object' ? c.socials : {};
+  const live = (PT.listings || []).some(l => l.status === 'Approved' || l.status === 'Pending');
+  return [
+    { label: 'Add your name', done: has(c.name), tab: 'profile', focus: 'f-name' },
+    { label: 'Name a contact person', done: has(c.contact), tab: 'profile', focus: 'f-contact' },
+    { label: 'Add a public email', done: has(c.email), tab: 'profile', focus: 'f-email' },
+    { label: 'Add a logo', done: isLogoUrl(c.logo), tab: 'profile', focus: 'pt-logo' },
+    { label: 'Write a tagline', done: has(c.tagline), tab: 'profile', focus: 'f-tagline' },
+    { label: 'Write your About', done: has(c.description), tab: 'profile', focus: 'f-desc' },
+    { label: 'Add your website', done: has(c.website), tab: 'profile', focus: 'f-website' },
+    { label: 'Add a phone number', done: has(c.phone), tab: 'profile', focus: 'f-phone' },
+    { label: 'Add your address', done: has(c.address), tab: 'profile', focus: 'f-address' },
+    { label: 'Link a social profile', done: Object.values(soc).some(has), tab: 'profile', focus: 's-linkedin' },
+    { label: 'Get listed under a keyword', done: live, tab: 'listings', focus: '' }
+  ];
+}
+function renderProgress(){
+  const box = el('pt-progress'); if(!box) return;
+  if(!PT.slug){ box.hidden = true; return; }
+  const items = progressItems();
+  const done = items.filter(i => i.done).length, pct = Math.round(done / items.length * 100);
+  let until = 0; try{ until = +localStorage.getItem(PROGRESS_KEY) || 0; }catch(e){ until = 0; }
+  if(pct >= 100 || until > Date.now()){ box.hidden = true; box.innerHTML = ''; return; }
+  const todo = items.filter(i => !i.done);
+  box.hidden = false;
+  box.innerHTML = `<div class="pg">
+      <div class="pg-head">
+        <div class="pg-text"><b>Your profile is ${pct}% complete</b>
+          <span>Complete profiles get found more and trusted faster. ${todo.length} thing${todo.length === 1 ? '' : 's'} left.</span></div>
+        <button type="button" class="pg-x" id="pg-dismiss">Hide for 2 days</button>
+      </div>
+      <div class="pg-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Profile ${pct}% complete"><span style="width:${pct}%"></span></div>
+      <div class="pg-todo">${todo.map((t, i) => `<button type="button" class="pg-chip" data-pg="${i}">${escapeHtml(t.label)}</button>`).join('')}</div>
+    </div>`;
+  el('pg-dismiss').onclick = () => {
+    try{ localStorage.setItem(PROGRESS_KEY, String(Date.now() + PROGRESS_HIDE_MS)); }catch(e){}
+    box.hidden = true;
+  };
+  box.querySelectorAll('[data-pg]').forEach(b => b.addEventListener('click', () => {
+    const t = todo[+b.dataset.pg]; if(!t) return;
+    activateTab(t.tab);
+    const f = t.focus && el(t.focus);
+    if(f){ f.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { try{ f.focus({ preventScroll: true }); }catch(e){} }, 350); }
+  }));
+}
+
 /* The three fields every listing, sponsor banner and job post shows. Empty
    ones are marked in red until they are filled (Jacob, 2026-09-21). */
 const REQUIRED_FIELDS = ['f-name', 'f-contact', 'f-email'];
@@ -1291,6 +1362,8 @@ function renderProfileForm(){
   set('f-phone', c.phone); set('f-email', c.email); set('f-contact', c.contact);
   set('f-address', c.address); set('f-founded', c.founded); set('f-employees', c.employees);
   set('f-handle', c.handle);
+  renderProgress();
+  syncAccountUrl();
   markMissing();
   if(!PT.missingWired){ PT.missingWired = true; REQUIRED_FIELDS.forEach(id => el(id) && el(id).addEventListener('input', markMissing)); }
   wireHandleCheck();

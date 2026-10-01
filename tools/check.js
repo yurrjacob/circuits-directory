@@ -779,6 +779,13 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
          && portalHtml.indexOf('id="f-address"') < portalHtml.indexOf('id="f-tagline"')
          && portalHtml.indexOf('id="f-tagline"') < portalHtml.indexOf('id="f-founded"'), 'the Profile Details rows are out of the agreed order');
   assert.ok(portalHtml.includes('id="pt-save-msg"'), 'the saved note beside the Save profile button is gone');
+  /* the completeness bar (2026-10-01): above the tabs, hidden for two days on Hide, gone at 100% */
+  assert.ok(portalHtml.indexOf('id="pt-progress"') < portalHtml.indexOf('<div class="pt-tabs">'), 'the completeness bar must sit above the tabs');
+  {
+    const pjs = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
+    assert.ok(/const PROGRESS_HIDE_MS = 48 \* 60 \* 60 \* 1000;/.test(pjs) && /pct >= 100 \|\| until > Date\.now\(\)/.test(pjs), 'the completeness bar must hide for 48 hours on dismiss and disappear at 100%');
+    assert.ok(/function progressItems/.test(pjs) && /Get listed under a keyword/.test(pjs), 'the completeness items are missing');
+  }
   {
     const pjs = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
     assert.ok(/const REQUIRED_FIELDS = \['f-name', 'f-contact', 'f-email'\]/.test(pjs) && /is-missing/.test(pjs), 'empty required fields are no longer marked');

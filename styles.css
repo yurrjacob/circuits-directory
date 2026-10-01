@@ -2319,3 +2319,20 @@ a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
 .ac-url-none{color:var(--muted)}
 .ac-copy{border:1px solid var(--line);background:var(--card);border-radius:999px;font:inherit;font-size:.72rem;font-weight:700;padding:3px 10px;cursor:pointer;color:var(--muted)}
 .ac-copy:hover{border-color:var(--green);color:var(--green-dark)}
+
+/* ===== profile completeness bar (2026-10-01) ===== */
+#pt-progress{margin:16px 0 4px}
+.pg{border:1px solid var(--line);border-radius:16px;background:var(--card);padding:16px 18px;box-shadow:0 1px 2px rgba(15,15,15,.04)}
+.pg-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.pg-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.pg-text b{font-size:1.02rem}
+.pg-text span{font-size:.86rem;color:var(--muted)}
+.pg-x{border:1px solid var(--line);background:var(--card);border-radius:999px;font:inherit;font-size:.78rem;font-weight:700;padding:6px 12px;cursor:pointer;color:var(--muted);flex:none}
+.pg-x:hover{border-color:var(--ink);color:var(--ink)}
+.pg-bar{height:10px;border-radius:999px;background:#eceef1;overflow:hidden;margin:12px 0}
+.pg-bar span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#5fa300,var(--green));transition:width .4s ease}
+.pg-todo{display:flex;flex-wrap:wrap;gap:8px}
+.pg-chip{border:1px dashed #b9c4a6;background:#f7fcec;color:var(--green-dark);border-radius:999px;font:inherit;font-size:.82rem;font-weight:700;padding:6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.pg-chip::before{content:"+";font-weight:800}
+.pg-chip:hover{background:var(--green);border-color:var(--green);border-style:solid;color:#0f2a00}
+@media(prefers-reduced-motion:reduce){.pg-bar span{transition:none}}

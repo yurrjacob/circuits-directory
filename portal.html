@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=7907aa433a">
+<link rel="stylesheet" href="/styles.css?v=0b7ff6bdc5">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -98,6 +98,10 @@
        type of account and login", called a profile). Every tab shows for
        everyone. Overview, Quote requests and Reviews stay off (2026-08-20,
        backups/dashboard-2026-08-20/). -->
+  <!-- profile completeness (Jacob, 2026-10-01): one bar above the tabs,
+       each missing piece a chip that jumps to its field; Hide keeps it away
+       for two days, in this browser only -->
+  <div id="pt-progress" hidden></div>
   <div class="pt-tabs">
     <button class="pt-tab active" data-tab="profile"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profile Details</button>
     <button class="pt-tab" data-tab="listings"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1.3" fill="currentColor" stroke="none"/></svg>Your Listings</button>
@@ -777,7 +781,7 @@
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
 <script src="/store.js?v=c0ffb7a4b3"></script>
 <script src="/app.js?v=2892a73191"></script>
-<script src="/portal.js?v=7071cb2282"></script>
+<script src="/portal.js?v=ff8df890c0"></script>
 <script src="/admin.js?v=a280d00bb3"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));
