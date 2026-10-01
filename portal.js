@@ -641,7 +641,11 @@ async function renderAccount(user, hostId, canDelete){
       <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Your Account</h3>
       <div class="ac-id">
         <div class="ac-avatar" aria-hidden="true">${escapeHtml(String(user.email || '?').slice(0, 1).toUpperCase())}</div>
-        <div class="ac-who"><b>${escapeHtml(user.email || '')}</b><span>Your sign-in email</span></div>
+        <div class="ac-who"><b>${escapeHtml(user.email || '')}</b><span>Your sign-in email</span>
+          ${(typeof PT !== 'undefined' && PT.co && PT.co.handle)
+            ? `<span class="ac-url"><a href="${escapeHtml(profileUrl(PT.co.handle) || '#')}" target="_blank" rel="noopener">circuits.com/${escapeHtml(PT.co.handle)}</a><button type="button" class="ac-copy" id="ac-copy-url" data-url="https://circuits.com/${escapeHtml(PT.co.handle)}">Copy</button></span>`
+            : '<span class="ac-url ac-url-none">No Circuits.com address yet. Pick one on Profile Details.</span>'}
+        </div>
         ${confirmed
           ? '<span class="ac-pill ac-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Email confirmed</span>'
           : '<span class="ac-pill ac-warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/></svg>Not confirmed yet</span>'}
@@ -709,6 +713,12 @@ async function renderAccount(user, hostId, canDelete){
     location.href = '/';
   };
 
+  const cp = el('ac-copy-url');
+  if(cp) cp.onclick = async () => {
+    try{ await navigator.clipboard.writeText(cp.dataset.url); cp.textContent = 'Copied'; }
+    catch(e){ cp.textContent = 'Press Ctrl C'; }
+    setTimeout(() => { cp.textContent = 'Copy'; }, 2000);
+  };
   if(canDelete && el('ac-delete')) el('ac-delete').onclick = async () => {
     const msg = el('ac-del-msg');
     // typing the address is deliberate friction; this cannot be undone

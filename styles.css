@@ -2312,3 +2312,10 @@ a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
 .ac-pill.ac-warn{background:#fff6e0;color:#8a5a00;border-color:#e8c267}
 .ac-pill.ac-warn svg{color:#8a5a00;padding:0}
 .ac-warn-note{margin:-8px 0 16px}
+
+.ac-url{display:inline-flex;align-items:center;gap:8px;margin-top:6px;font-size:.9rem}
+.ac-url a{color:var(--green-dark);font-weight:700;text-decoration:none}
+.ac-url a:hover{text-decoration:underline}
+.ac-url-none{color:var(--muted)}
+.ac-copy{border:1px solid var(--line);background:var(--card);border-radius:999px;font:inherit;font-size:.72rem;font-weight:700;padding:3px 10px;cursor:pointer;color:var(--muted)}
+.ac-copy:hover{border-color:var(--green);color:var(--green-dark)}
