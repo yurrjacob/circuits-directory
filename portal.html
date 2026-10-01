@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=28c690f2dc">
+<link rel="stylesheet" href="/styles.css?v=a4a4e39ce1">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -340,10 +340,11 @@
 
   <!-- branding: the printable artwork (was the Promote tab until 2026-09-11) -->
 
-  <!-- College Club (Jacob, 2026-10-01: its own tab). The switch, the college
-       beside the club, the Join link, three promo texts, the officers, then
-       the Project Showcase editor. Officers and team members tagged with a
-       handle earn Leadership and Project badges on their own profiles. -->
+  <!-- College Club (Jacob, 2026-10-01: its own tab, redrawn the same day).
+       A switch at the top; the settings as three cards (the college, the
+       promo hub, the officers); the Project Showcase as a tile grid with the
+       project form beneath it. Officers and team members tagged with a handle
+       earn Leadership and Project badges on their own profiles. -->
   <section class="pt-panel" id="tab-club">
     <div class="pt-tab-head">
       <div>
@@ -354,69 +355,90 @@
       </div>
       <div class="pt-head-btns"><a class="btn btn-outline" id="pt-projects-view" href="#" target="_blank" rel="noopener">View club page &#8599;</a></div>
     </div>
-    <div class="pf-form" id="pt-club-fold">
-
-          <label class="pt-check"><input type="checkbox" id="f-club" autocomplete="off"> This page is a college club <span class="pf-note" id="pt-club-state" style="margin:0 0 0 6px">· off</span></label>
-          <div class="pt-club-fields">
-            <div class="pt-row">
-              <div class="auth-field"><label for="f-college">College or university</label><input id="f-college" type="text" maxlength="160" placeholder="University of Texas at Austin" autocomplete="off"></div>
-              <div class="auth-field"><label for="pt-college-logo">College logo</label>
-                <div class="rp-img"><span id="pt-college-prev"><span class="rp-img-ph">None</span></span>
-                  <input id="pt-college-logo" type="file" accept="image/png,image/jpeg,image/webp">
-                  <button type="button" class="mini-btn" id="pt-college-rm" style="display:none">Clear</button></div>
-                <p class="field-hint">Shown beside your club's logo at the top of the page.</p></div>
+    <div id="pt-club-fold">
+      <div class="cb-switch-card">
+        <label class="cb-switch"><input type="checkbox" id="f-club" autocomplete="off"><span class="cb-knob" aria-hidden="true"></span></label>
+        <div class="cb-switch-text">
+          <b>College club page <span class="cb-state" id="pt-club-state">off</span></b>
+          <p>Switch it on and this page becomes your club's page. Everything below appears on it once you save.</p>
+        </div>
+      </div>
+      <div class="pt-club-fields">
+        <div class="cb-grid">
+          <section class="cb-card">
+            <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/><path d="M22 9v6"/></svg>Your college</h3>
+            <div class="cb-logo-row">
+              <div class="cb-logo-prev" id="pt-college-prev"><span class="rp-img-ph">Logo</span></div>
+              <div class="cb-logo-acts">
+                <label class="btn btn-outline cb-file">Choose college logo<input id="pt-college-logo" type="file" accept="image/png,image/jpeg,image/webp"></label>
+                <button type="button" class="mini-btn" id="pt-college-rm" style="display:none">Clear</button>
+                <p class="field-hint">Shown beside your club's logo at the top of the page. PNG, JPEG or WebP, square is best.</p>
+              </div>
             </div>
-            <div class="auth-field"><label for="f-join">Join Club link</label><input id="f-join" type="text" maxlength="500" placeholder="https://forms.example/join or a sign-up page" autocomplete="off">
+            <div class="auth-field"><label for="f-college">College or university</label><input id="f-college" type="text" maxlength="160" placeholder="University of Texas at Austin" autocomplete="off"></div>
+            <div class="auth-field"><label for="f-join">Join Club link</label><input id="f-join" type="text" maxlength="500" placeholder="https://forms.example/join" autocomplete="off">
               <p class="field-hint">The Join Club button on your page opens this. Leave it blank and the button emails the club instead.</p></div>
-            <h4 class="pt-sub-h" style="margin:8px 0">Promo hub</h4>
-            <p class="pf-note" style="margin:0 0 8px">Three short pitches on your page, one for each audience. Leave one blank to leave it off.</p>
-            <div class="pt-row">
-              <div class="auth-field"><label for="f-promo-members">New members</label><textarea id="f-promo-members" rows="4" maxlength="600" placeholder="Who should join, when you meet, how to sign up." autocomplete="off"></textarea></div>
-              <div class="auth-field"><label for="f-promo-alumni">Alumni</label><textarea id="f-promo-alumni" rows="4" maxlength="600" placeholder="How past members stay involved." autocomplete="off"></textarea></div>
-              <div class="auth-field"><label for="f-promo-employers">Employers</label><textarea id="f-promo-employers" rows="4" maxlength="600" placeholder="Why hire from this club, how to sponsor or recruit." autocomplete="off"></textarea></div>
+          </section>
+          <section class="cb-card">
+            <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10"/></svg>Promo hub</h3>
+            <p class="pf-note" style="margin:0 0 12px">One short pitch per audience. Leave one blank to leave it off the page.</p>
+            <div class="cb-promo">
+              <div class="auth-field"><label for="f-promo-members"><span class="cb-k">Thinking of joining?</span>New members</label><textarea id="f-promo-members" rows="4" maxlength="600" placeholder="Who should join, when you meet, how to sign up." autocomplete="off"></textarea></div>
+              <div class="auth-field"><label for="f-promo-alumni"><span class="cb-k">Stay connected.</span>Alumni</label><textarea id="f-promo-alumni" rows="4" maxlength="600" placeholder="How past members stay involved." autocomplete="off"></textarea></div>
+              <div class="auth-field"><label for="f-promo-employers"><span class="cb-k">Hire from the club.</span>Employers</label><textarea id="f-promo-employers" rows="4" maxlength="600" placeholder="Why hire from this club, how to sponsor or recruit." autocomplete="off"></textarea></div>
             </div>
-            <details class="pt-fold" open><summary>Officers <span class="pf-note" id="fold-officers-n"></span></summary>
-              <p class="pf-note" style="margin:0 16px 8px">An officer with a Circuits.com address gets a Leadership badge on their own profile, linked to this page.</p>
-              <div class="pt-list" id="f-officers"></div></details>
-          </div>
-      <div class="pt-save-row" style="margin-top:14px"><button class="btn btn-primary pt-save-club" type="button">Save club</button><span class="pt-save-msg" id="pt-club-msg" role="status"></span></div>
+          </section>
+          <section class="cb-card cb-span">
+            <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2"/></svg>Officers <span class="pf-note" id="fold-officers-n"></span></h3>
+            <p class="pf-note" style="margin:0 0 12px">An officer with a Circuits.com address gets a Leadership badge on their own profile, linked to this page.</p>
+            <div class="pt-list cb-rows" id="f-officers"></div>
+          </section>
+        </div>
+        <div class="pt-save-row cb-save"><button class="btn btn-primary pt-save-club" type="button">Save club</button><span class="pt-save-msg" id="pt-club-msg" role="status"></span></div>
+      </div>
     </div>
     <div class="pt-club-fields" id="pt-club-showcase">
-      <h3 class="pt-sub-h" style="margin:22px 0 10px">Project Showcase</h3>
-      <div class="pt-project-list" id="pt-project-list"></div>
-    <div class="pf-form">
-      <h3 id="pj-form-h" style="margin-top:0">Add a project</h3>
-      <input type="hidden" id="pj-id" value="">
-      <div class="grid2">
-        <div class="auth-field"><label for="pj-title">Project title</label><input id="pj-title" type="text" maxlength="120" placeholder="Solar tracker" autocomplete="off"></div>
-        <div class="auth-field"><label for="pj-year">Year</label><input id="pj-year" type="text" maxlength="20" placeholder="2026" autocomplete="off"></div>
-      </div>
-      <div class="auth-field"><label for="pj-summary">What it is and what it does</label>
-        <textarea id="pj-summary" rows="5" maxlength="2000" placeholder="The problem, the design, the result." autocomplete="off"></textarea></div>
-      <div class="auth-field"><label for="pj-pics">Pictures</label>
-        <input id="pj-pics" type="file" multiple accept="image/png,image/jpeg,image/webp">
-        <p class="field-hint">The first picture is the card's cover. PNG or JPEG, up to 10 MB each.</p>
-        <div class="kw-tags" id="pj-pics-list"></div></div>
-      <div class="auth-field"><label for="pj-docs">Build documents</label>
-        <input id="pj-docs" type="file" multiple accept="application/pdf,image/png,image/jpeg,image/webp">
-        <p class="field-hint">Schematics, reports, slides. PDF, PNG or JPEG, up to 10 MB each.</p>
-        <div class="kw-tags" id="pj-docs-list"></div></div>
-      <div class="auth-field"><label for="pj-videos">Videos <span class="cell-muted">(one link per line)</span></label>
-        <textarea id="pj-videos" rows="3" maxlength="2000" placeholder="https://youtu.be/… or https://vimeo.com/…" autocomplete="off"></textarea>
-        <p class="field-hint">YouTube and Vimeo links play on the card. Any other link is shown as a link.</p></div>
-      <div class="auth-field"><label for="pj-other">Other documents</label>
-        <input id="pj-other" type="file" multiple accept="application/pdf,image/png,image/jpeg,image/webp">
-        <p class="field-hint">Posters, datasheets, anything else worth attaching. PDF, PNG or JPEG, up to 10 MB each.</p>
-        <div class="kw-tags" id="pj-other-list"></div></div>
-      <details class="pt-fold" open><summary>Team <span class="pf-note" id="fold-pjteam-n"></span></summary>
-        <p class="pf-note" style="margin:0 16px 8px">Address is the member's circuits.com/<b>address</b>. Members without one are named only.</p>
-        <div class="pt-list" id="f-pjteam"></div></details>
-      <div class="pt-save-row">
-        <button class="btn btn-primary" type="button" id="pj-save">Add to showcase</button>
-        <button class="mini-btn" type="button" id="pj-cancel" style="display:none">Cancel</button>
-        <span class="pf-note" id="pj-msg" style="margin:0"></span>
-      </div>
-    </div>
+      <section class="cb-card cb-showcase">
+        <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 11v5M9.5 13.5h5"/></svg>Project Showcase</h3>
+        <p class="pf-note" style="margin:0 0 12px">Each project is a thumbnail on your page that opens a card: the team, the build pictures, the documents, the videos.</p>
+        <div class="pt-project-list" id="pt-project-list"></div>
+      </section>
+      <section class="cb-card" id="pj-form">
+        <h3 class="cb-h" id="pj-form-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add a project</h3>
+        <input type="hidden" id="pj-id" value="">
+        <div class="cb-form2">
+          <div>
+            <div class="grid2">
+              <div class="auth-field"><label for="pj-title">Project title</label><input id="pj-title" type="text" maxlength="120" placeholder="Solar tracker" autocomplete="off"></div>
+              <div class="auth-field"><label for="pj-year">Year</label><input id="pj-year" type="text" maxlength="20" placeholder="2026" autocomplete="off"></div>
+            </div>
+            <div class="auth-field"><label for="pj-summary">What it is and what it does</label>
+              <textarea id="pj-summary" rows="7" maxlength="2000" placeholder="The problem, the design, the result." autocomplete="off"></textarea></div>
+            <div class="auth-field"><label for="pj-videos">Videos <span class="cell-muted">(one link per line)</span></label>
+              <textarea id="pj-videos" rows="3" maxlength="2000" placeholder="https://youtu.be/… or https://vimeo.com/…" autocomplete="off"></textarea>
+              <p class="field-hint">YouTube and Vimeo links play on the card. Any other link is shown as a link.</p></div>
+          </div>
+          <div>
+            <div class="auth-field"><label for="pj-pics">Pictures</label>
+              <label class="cb-drop"><input id="pj-pics" type="file" multiple accept="image/png,image/jpeg,image/webp"><span>Choose pictures</span><small>The first one is the cover. PNG or JPEG, up to 10 MB each.</small></label>
+              <div class="kw-tags cb-chips" id="pj-pics-list"></div></div>
+            <div class="auth-field"><label for="pj-docs">Build documents</label>
+              <label class="cb-drop"><input id="pj-docs" type="file" multiple accept="application/pdf,image/png,image/jpeg,image/webp"><span>Choose documents</span><small>Schematics, reports, slides. PDF, PNG or JPEG, up to 10 MB each.</small></label>
+              <div class="kw-tags cb-chips" id="pj-docs-list"></div></div>
+            <div class="auth-field"><label for="pj-other">Other documents</label>
+              <label class="cb-drop"><input id="pj-other" type="file" multiple accept="application/pdf,image/png,image/jpeg,image/webp"><span>Choose documents</span><small>Posters, datasheets, anything else worth attaching.</small></label>
+              <div class="kw-tags cb-chips" id="pj-other-list"></div></div>
+          </div>
+        </div>
+        <h4 class="cb-h cb-h-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2"/></svg>Team <span class="pf-note" id="fold-pjteam-n"></span></h4>
+        <p class="pf-note" style="margin:0 0 10px">Address is the member's circuits.com/<b>address</b>. Members without one are named only. Tagged members get a Project badge on their profile.</p>
+        <div class="pt-list cb-rows" id="f-pjteam"></div>
+        <div class="pt-save-row cb-save">
+          <button class="btn btn-primary" type="button" id="pj-save">Add to showcase</button>
+          <button class="mini-btn" type="button" id="pj-cancel" style="display:none">Cancel</button>
+          <span class="pf-note" id="pj-msg" style="margin:0"></span>
+        </div>
+      </section>
     </div>
   </section>
 
@@ -446,13 +468,13 @@
   <!-- One console, six rooms. Every panel below carries data-adm="<room>";
        admin.js shows one room at a time and remembers the last one opened. -->
   <div class="adm-tabs" role="tablist">
-    <button type="button" class="adm-tab active" data-adm="companies">All Profiles</button>
-    <button type="button" class="adm-tab" data-adm="listings">Listings</button>
-    <button type="button" class="adm-tab" data-adm="applications">Website Applications</button>
-    <button type="button" class="adm-tab" data-adm="upgrades">Upgrade Applications</button>
-    <button type="button" class="adm-tab" data-adm="employment">Recruiting Applications</button>
-    <button type="button" class="adm-tab" data-adm="messages">Notifications</button>
-    <button type="button" class="adm-tab" data-adm="activity">Activity</button>
+    <button type="button" class="adm-tab active" data-adm="companies"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2.2"/><path d="M5.5 17a3.5 3.5 0 0 1 7 0M14 9h4M14 13h4"/></svg>All Profiles</button>
+    <button type="button" class="adm-tab" data-adm="listings"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1.3" fill="currentColor" stroke="none"/></svg>Listings</button>
+    <button type="button" class="adm-tab" data-adm="applications"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"/><path d="M14 3.5V8h4.5M8.5 13h7M8.5 16.5h5"/></svg>Website Applications</button>
+    <button type="button" class="adm-tab" data-adm="upgrades"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>Upgrade Applications</button>
+    <button type="button" class="adm-tab" data-adm="employment"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="18" height="12.5" rx="2"/><path d="M8.5 7.5V5.8A1.8 1.8 0 0 1 10.3 4h3.4a1.8 1.8 0 0 1 1.8 1.8v1.7"/><path d="M3 12.5h18"/></svg>Recruiting Applications</button>
+    <button type="button" class="adm-tab" data-adm="messages"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>Notifications</button>
+    <button type="button" class="adm-tab" data-adm="activity"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Activity</button>
   </div>
 
   <!-- Keyword Listings -->
@@ -746,7 +768,7 @@
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
 <script src="/store.js?v=c0ffb7a4b3"></script>
 <script src="/app.js?v=2892a73191"></script>
-<script src="/portal.js?v=f19715661f"></script>
+<script src="/portal.js?v=48ef3b0e6d"></script>
 <script src="/admin.js?v=a280d00bb3"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));

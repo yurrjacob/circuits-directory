@@ -1755,7 +1755,7 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
 /* --- Admin console order and Trust Badge attributes (Jacob, 2026-09-02) --- */
 {
   const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
-  const tabs = [...ph.matchAll(/class="adm-tab[^"]*" data-adm="([a-z]+)">([^<]+)</g)].map(m => m[1] + ':' + m[2]);
+  const tabs = [...ph.matchAll(/class="adm-tab[^"]*" data-adm="([a-z]+)">(?:<svg[\s\S]*?<\/svg>)?([^<]+)</g)].map(m => m[1] + ':' + m[2]);
   assert.deepStrictEqual(tabs, ['companies:All Profiles', 'listings:Listings', 'applications:Website Applications',
     'upgrades:Upgrade Applications', 'employment:Recruiting Applications', 'messages:Notifications', 'activity:Activity'],
     'the admin sub-tabs are out of order or renamed: ' + tabs.join(', '));

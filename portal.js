@@ -300,7 +300,7 @@ const PJ = { list: [], pics: [], docs: [], other: [], wired: false };
 async function renderProjects(){
   const list = el('pt-project-list'); if(!list) return;
   if(!PT.slug || !(PT.co && PT.co.kind === 'club')){
-    list.innerHTML = '<p class="pf-note">Save the club settings above first. Projects go on the page once it is a club.</p>';
+    list.innerHTML = '<div class="cb-empty">Save the club settings above first. Projects go on the page once it is a club.</div>';
     if(!PJ.wired){ PJ.wired = true; wireProjects(); pjSetMode(null); }
     return;
   }
@@ -308,14 +308,14 @@ async function renderProjects(){
   list.innerHTML = PJ.list.length ? PJ.list.map(p => {
     const cover = isLogoUrl(p.cover_url) ? p.cover_url : '';
     return `<div class="pt-project">
-      ${cover ? `<img src="${escapeHtml(cover)}" alt="">` : ''}
-      <div class="pt-project-b"><b>${escapeHtml(p.title)}${p.year ? ` <span class="pf-note">${escapeHtml(String(p.year))}</span>` : ''}</b>
+      ${cover ? `<img src="${escapeHtml(cover)}" alt="">` : `<div class="pt-project-ph">${escapeHtml(p.title.slice(0, 1).toUpperCase())}</div>`}
+      <div class="pt-project-b"><b>${escapeHtml(p.title)}${p.year ? ` <span class="pf-year">${escapeHtml(String(p.year))}</span>` : ''}</b>
         <span class="pf-note">${(p.team || []).length} on the team &middot; ${(p.pics || []).length} pictures &middot; ${(p.docs || []).length + (p.other_docs || []).length} documents &middot; ${(p.videos || []).length} videos</span>
         <div class="pt-project-acts">
           <button type="button" class="mini-btn" data-edit-pj="${escapeHtml(p.id)}">Edit</button>
           <button type="button" class="mini-btn danger" data-del-pj="${escapeHtml(p.id)}">Delete</button>
         </div></div></div>`; }).join('')
-    : '<p class="pf-note">No projects yet. Add the first one below.</p>';
+    : '<div class="cb-empty">No projects yet. Add the first one below and it appears on your page as a thumbnail.</div>';
   if(!PJ.wired){ PJ.wired = true; wireProjects(); pjSetMode(null); }
 }
 function pjDraw(){
@@ -1347,7 +1347,7 @@ function wireClubFields(c){
   const paint = () => {
     fold.classList.toggle('pt-club-on', box.checked);
     const sc = el('pt-club-showcase'); if(sc) sc.classList.toggle('pt-club-on', box.checked);
-    const st = el('pt-club-state'); if(st) st.textContent = box.checked ? '· on' : '· off';
+    const st = el('pt-club-state'); if(st){ st.textContent = box.checked ? 'on' : 'off'; st.classList.toggle('on', box.checked); }
   };
   paint();
   box.onchange = () => { paint(); markDirty(); };
