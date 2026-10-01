@@ -50,7 +50,7 @@ function renderExperience(){
   const box = el('pt-experience'); if(!box) return;
   if(ME_FRESH){ box.innerHTML = freshNote(); return; }
   box.innerHTML = `
-    <h3 style="margin-top:0">Post a Resume</h3>
+    <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"/><path d="M14 3.5V8h4.5"/><circle cx="12" cy="13" r="2"/><path d="M8.8 18a3.4 3.4 0 0 1 6.4 0"/></svg>Post a Resume</h3>
     <div class="grid2">
       <div class="auth-field"><label for="me-title">Seeking Job As</label>
         <input id="me-title" type="text" maxlength="80" placeholder="RF Design Engineer" value="${escapeHtml(ME.title || '')}"></div>
@@ -638,7 +638,7 @@ async function renderAccount(user, hostId, canDelete){
 
   host.innerHTML = `
     <div class="pt-account">
-      <h3>Your Account</h3>
+      <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Your Account</h3>
       <p class="pf-note">Signed in as <b>${escapeHtml(user.email || '')}</b>
         ${confirmed
           ? '<span class="ac-ok">email confirmed</span>'
@@ -1668,7 +1668,7 @@ function renderRecruitingListings(){
     : me.talent_status === 'Approved' ? { text: 'Live until paused', cls: 'live' }
     : me.talent_status === 'Denied' ? { text: 'Not approved', cls: '' }
     : { text: 'Awaiting approval by Circuits.com', cls: 'pending' };
-  seek.innerHTML = `<h3 class="pt-sub-h">Resumes Posted</h3>` + (has
+  seek.innerHTML = `<h3 class="pt-sub-h cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"/><path d="M14 3.5V8h4.5"/><circle cx="12" cy="13" r="2"/><path d="M8.8 18a3.4 3.4 0 0 1 6.4 0"/></svg>Resumes Posted</h3>` + (has
     ? `<div class="pt-job" id="pt-resume-card">
       <div class="pt-job-head">
         <div><b>${escapeHtml(me.title || 'Circuits industry professional')}</b>${me.location ? ' <span class="cell-muted">' + escapeHtml(me.location) + '</span>' : ''}${me.years != null ? ' <span class="cell-muted">· ' + escapeHtml(String(me.years)) + ' yrs</span>' : ''}

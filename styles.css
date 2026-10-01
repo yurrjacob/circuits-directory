@@ -2255,3 +2255,35 @@ a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
 .adm-tab{padding:9px 10px;font-size:.93rem}
 #pt-tab-admin::before{display:none}
 #pt-tab-admin{display:inline-flex;align-items:center;gap:7px}
+
+/* ===== one card language across the dashboard (2026-10-01) ===== */
+.pt-panel .pf-form{background:var(--card);border-radius:16px;padding:18px 20px 20px;box-shadow:0 1px 2px rgba(15,15,15,.04)}
+.pt-panel .pf-form.cb-plain{background:none;border:0;padding:0;box-shadow:none}
+.pt-panel .cb-plain > .cb-card{margin-bottom:16px}
+.pt-panel .pf-form > h3:not(.cb-h){font-size:1.02rem;margin:0 0 12px}
+.pt-panel .pf-form .auth-field label{font-size:.82rem;margin-bottom:6px;color:var(--muted)}
+.pt-panel .pf-form input,.pt-panel .pf-form select{padding:11px 13px;border-radius:9px;font-size:.95rem}
+.pt-panel .pf-form input:focus,.pt-panel .pf-form select:focus,.pt-panel .pf-form textarea:focus{outline:0;border-color:var(--green);box-shadow:0 0 0 3px rgba(118,192,0,.16)}
+.pt-panel textarea{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font-family:inherit;font-size:.95rem;line-height:1.5;background:var(--input-bg);resize:vertical;box-sizing:border-box}
+.pt-panel .pt-getlisted,.pt-panel .pt-empty{background:var(--card);border-radius:16px;border-style:solid}
+.pt-panel .pt-upsell{border-radius:16px}
+.pt-panel .pt-list-rec{margin-top:18px}
+.pt-panel .pt-sub-h.cb-h{margin:0 0 10px}
+/* repeater rows everywhere read like the officers list */
+.pt-panel .pt-list .pt-item:has(> .pt-row){display:flex;align-items:flex-end;gap:10px;padding:10px 12px;margin:0;background:var(--bg-soft)}
+.pt-panel .pt-list .pt-item:has(> .pt-row) > .pt-row{flex:1;min-width:0;gap:10px}
+.pt-panel .pt-list .pt-item:has(> .pt-row) .auth-field{margin:0}
+.pt-panel .pt-list .pt-item:has(> .pt-row) > .rp-add{margin-bottom:2px}
+.pt-panel .pt-fold{border-radius:14px}
+.pt-panel .pt-fold > summary{font-size:.98rem}
+/* the logo and banner controls match the college logo tile */
+.cb-cover-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.cb-cover-row .cover-thumb{width:220px;height:56px;border-radius:12px;border:1px solid var(--line);background:var(--bg-soft) center/cover no-repeat;flex:none}
+.auth-field label.cb-file{display:inline-flex;font-size:.88rem;margin:0;color:var(--ink);font-weight:600}
+.pt-panel .pf-form .auth-field label.cb-file{color:var(--ink)}
+.pt-panel .pf-form .auth-field label.cb-drop{display:flex;color:var(--ink);font-weight:400}
+#pt-logo-prev img{width:100%;height:100%;object-fit:cover;display:block}
+#pt-logo-prev .silhouette{width:40px;height:40px;color:#c2c6cb}
+.pt-panel .pt-actions{margin-top:16px}
+.pt-panel .pt-market{margin-top:16px}
+.pt-panel .pt-market-row input{padding:11px 13px}

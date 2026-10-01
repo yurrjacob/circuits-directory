@@ -1803,14 +1803,14 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   const seekTab = (ph.match(/<section class="pt-panel" id="tab-seeking">[\s\S]*?<\/section>/) || [''])[0];
   const hireTab = (ph.match(/<section class="pt-panel" id="tab-hiring">[\s\S]*?<\/section>/) || [''])[0];
   const listTab = (ph.match(/<section class="pt-panel" id="tab-listings">[\s\S]*?<\/section>/) || [''])[0];
-  assert.ok(/<h3 class="pt-sub-h"[^>]*>Jobs Posted<\/h3>\s*<div class="pt-list" id="pt-jobs">/.test(listTab) && /id="pt-list-hiring"/.test(listTab), 'Jobs Posted is not on Your Listings');
+  assert.ok(/<h3 class="pt-sub-h[^"]*"[^>]*>(?:<svg[\s\S]*?<\/svg>)?Jobs Posted<\/h3>\s*<div class="pt-list" id="pt-jobs">/.test(listTab) && /id="pt-list-hiring"/.test(listTab), 'Jobs Posted is not on Your Listings');
   assert.ok(/id="pt-list-seeking"/.test(listTab) && /Resumes Posted<\/h3>/.test(pj) && /data-resume-live="1"/.test(pj) && /data-new-jobs="1"/.test(pj), 'Resumes Posted is not on Your Listings as a job-shaped card');
-  assert.ok(/<h3 class="pt-sub-h">Directory Listings<\/h3>\s*<div class="pt-list" id="pt-listings">/.test(listTab), 'the keyword table lost its Directory Listings title');
+  assert.ok(/<h3 class="pt-sub-h[^"]*">(?:<svg[\s\S]*?<\/svg>)?Directory Listings<\/h3>\s*<div class="pt-list" id="pt-listings">/.test(listTab), 'the keyword table lost its Directory Listings title');
   assert.ok(/<b id="pt-getlisted-h">Choose Your Free Directory Keywords<\/b>/.test(listTab) && /Add Up to 10 Circuits-Keywords&trade;<\/p>/.test(listTab) && !/data-go-tab="upgrades"/.test(listTab) && !/Sponsor Banner and Trust Badge upgrades/.test(listTab) && /pt-kw-pack/.test(pj), 'the Choose Your Free Directory Keywords box or the Upgrades keyword package is wrong (Jacob, 2026-09-16)');
   assert.ok(!/pt-list-seeking|pt-jobs"/.test(seekTab + hireTab), 'a recruiting list is back on its old tab');
   assert.ok(/<h2>Post Free Resume<\/h2>/.test(seekTab) && /Post a Resume<\/h3>/.test(pj) && /href="\/talent"[^>]*>View Recruit Board</.test(pj) && /List Me on the Recruit Board</.test(pj), 'the Job Search tab is not Post Free Resume with its two buttons');
   assert.ok((fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8').match(/' data-box="1"'/g) || []).length === 2, 'Jobs Posted and Resumes Posted are not their own boxes on a profile');
-  assert.ok(/<h2>Post Free Job<\/h2>/.test(hireTab) && /<h3 id="job-form-h">Post Job<\/h3>/.test(hireTab) && /id="job-post">List this Job on the Job Board</.test(hireTab) && /href="\/jobs"[^>]*>View Job Board</.test(hireTab) && /id="job-live-note"/.test(hireTab), 'the Find Recruits tab is not Post Free Job with its two buttons and the live note');
+  assert.ok(/<h2>Post Free Job<\/h2>/.test(hireTab) && /<span id="job-form-h">Post Job<\/span>/.test(hireTab) && /id="job-post">List this Job on the Job Board</.test(hireTab) && /href="\/jobs"[^>]*>View Job Board</.test(hireTab) && /id="job-live-note"/.test(hireTab), 'the Find Recruits tab is not Post Free Job with its two buttons and the live note');
   /* two board buttons top right of each Recruiting tab (Jacob, 2026-09-15) */
   assert.ok((hireTab.match(/class="pt-head-btns"/g) || []).length === 1 && (seekTab.match(/class="pt-head-btns"/g) || []).length === 1 && /View Job Board &#8599;/.test(hireTab) && /View Recruit Board &#8599;/.test(seekTab), 'a Recruiting tab lost its two board buttons top right');
   /* Save Resume lives in the form, List Me in box B; both cards have Delete */

@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=a4a4e39ce1">
+<link rel="stylesheet" href="/styles.css?v=4d7a3c45f7">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -130,7 +130,7 @@
     <div class="pf-form" id="pt-experience"></div>
     <div id="pt-recruit"></div>
     <form class="pf-form pt-market" id="pt-market-jobs" autocomplete="off">
-      <h3 style="margin-top:0">Search the Job Board</h3>
+      <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Search the Job Board</h3>
       <div class="pt-market-row">
         <input type="text" id="pt-market-jobs-q" maxlength="80" placeholder="Search open jobs by Circuits-Keyword&trade;..." aria-label="Search open jobs by keyword" autocomplete="off">
         <button type="submit" class="btn btn-primary">Search Jobs</button>
@@ -144,8 +144,10 @@
 
   <!-- ===== profile details: one form for the person or the company behind the account ===== -->
   <section class="pt-panel active" id="tab-profile">
-    <div class="pf-form">
+    <div class="pf-form cb-plain">
       <div id="pt-fresh-note"></div>
+      <section class="cb-card">
+      <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Your details</h3>
       <div class="auth-field" style="max-width:520px">
         <label for="f-handle">Your Circuits.com address</label>
         <div class="handle-line">
@@ -186,13 +188,18 @@
 
       <!-- Logo, About and Social profiles used to be an "About & Branding" tab
            (merged here 2026-09-02, Jacob: fewer tabs). One form, one Save. -->
-      <h3 style="margin-top:22px">About &amp; Branding</h3>
+      </section>
+      <section class="cb-card">
+      <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20a8 8 0 1 1 0-16 7 7 0 0 1 7 7 3 3 0 0 1-3 3h-1.5a1.5 1.5 0 0 0-1 2.6A2 2 0 0 1 12 20z"/><circle cx="8" cy="10" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="16" cy="10" r="1" fill="currentColor" stroke="none"/></svg>About &amp; Branding</h3>
       <div class="pt-row">
         <div class="auth-field"><label for="pt-logo">Logo or profile picture</label>
-          <div style="display:flex;gap:10px;align-items:center">
-            <span class="logo-thumb" id="pt-logo-prev" style="width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center"></span>
-            <input id="pt-logo" type="file" accept="image/png,image/jpeg,image/webp">
-            <button type="button" class="mini-btn" id="pt-logo-rm" style="display:none">Remove</button>
+          <div class="cb-logo-row">
+            <div class="cb-logo-prev" id="pt-logo-prev"></div>
+            <div class="cb-logo-acts">
+              <label class="btn btn-outline cb-file">Choose logo<input id="pt-logo" type="file" accept="image/png,image/jpeg,image/webp"></label>
+              <button type="button" class="mini-btn" id="pt-logo-rm" style="display:none">Remove</button>
+              <p class="field-hint">Square, PNG or JPEG. You can crop it after choosing.</p>
+            </div>
           </div>
           <div class="crop" id="pt-crop" style="display:none">
             <canvas id="pt-crop-c" width="260" height="260"></canvas>
@@ -210,9 +217,9 @@
       <!-- The banner behind the logo on the profile (Jacob, 2026-09-03). No
            cropper: a wide picture is shown wide, as given. -->
       <div class="auth-field"><label for="pt-cover">Banner behind your logo <span class="cell-muted">(optional)</span></label>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div class="cb-cover-row">
           <span class="cover-thumb" id="pt-cover-prev" aria-hidden="true"></span>
-          <input id="pt-cover" type="file" accept="image/png,image/jpeg,image/webp">
+          <label class="btn btn-outline cb-file">Choose banner<input id="pt-cover" type="file" accept="image/png,image/jpeg,image/webp"></label>
           <button type="button" class="mini-btn" id="pt-cover-rm" style="display:none">Remove</button>
         </div>
         <p class="pf-note">Shown across the top of your profile with the logo standing on it. A wide picture, around 1200 by 300, looks best; up to 4 MB.</p>
@@ -223,8 +230,11 @@
         search results is written by Circuits.com and is not changed here.</p>
       </div>
 
-      <h3>Social Profiles</h3>
+      </section>
+      <section class="cb-card">
+      <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.5 1.5"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.5"/></svg>Social Profiles</h3>
       <div class="pt-row" id="f-socials"></div>
+      </section>
       <!-- the answer lands beside the button that was pressed, not only in the
            toast at the top of the page (Jacob, 2026-09-21) -->
       <div class="pt-save-row"><button class="btn btn-primary pt-save pt-save-big" type="button">Save profile</button><span class="pt-save-msg" id="pt-save-msg" role="status"></span></div>
@@ -248,7 +258,7 @@
         </div>
       </div>
     <div class="pf-form" id="pt-job-form">
-      <h3 id="job-form-h">Post Job</h3>
+      <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="18" height="12.5" rx="2"/><path d="M8.5 7.5V5.8A1.8 1.8 0 0 1 10.3 4h3.4a1.8 1.8 0 0 1 1.8 1.8v1.7"/><path d="M3 12.5h18"/></svg><span id="job-form-h">Post Job</span></h3>
       <input type="hidden" id="job-id" value="">
       <div class="grid2">
         <div class="auth-field"><label for="job-title">Job title</label><input id="job-title" type="text" maxlength="120" placeholder="RF Design Engineer" autocomplete="off"></div>
@@ -266,8 +276,7 @@
       </div>
       <!-- documents on the post (Jacob, 2026-09-09): the docs bucket, same as a listing's -->
       <div class="auth-field"><label for="job-docs">Add Docs</label>
-        <input id="job-docs" type="file" multiple accept="application/pdf,image/png,image/jpeg,image/webp">
-        <p class="field-hint">For example a Job Posting Flyer. PDF, PNG or JPEG, up to 10 MB each.</p>
+        <label class="cb-drop"><input id="job-docs" type="file" multiple accept="application/pdf,image/png,image/jpeg,image/webp"><span>Choose documents</span><small>For example a Job Posting Flyer. PDF, PNG or JPEG, up to 10 MB each.</small></label>
         <div class="kw-tags" id="job-docs-list"></div></div>
       <span class="pf-note" id="job-msg"></span>
     </div>
@@ -278,7 +287,7 @@
       <span id="job-live-note"></span>
     </div>
       <form class="pf-form pt-market" id="pt-market-recruits" autocomplete="off">
-        <h3 style="margin-top:0">Search the Recruit Board</h3>
+        <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Search the Recruit Board</h3>
         <div class="pt-market-row">
           <input type="text" id="pt-market-recruits-q" maxlength="80" placeholder="Search recruits by Circuits-Keyword&trade;..." aria-label="Search recruits by keyword" autocomplete="off">
           <button type="submit" class="btn btn-primary">Search Recruits</button>
@@ -301,7 +310,7 @@
       </div>
       <button type="button" class="btn btn-upgrade" id="pt-go-upgrades">Upgrade &rarr;</button>
     </div>
-    <h3 class="pt-sub-h">Directory Listings</h3>
+    <h3 class="pt-sub-h cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1.3" fill="currentColor" stroke="none"/></svg>Directory Listings</h3>
     <div class="pt-list" id="pt-listings"></div>
     <!-- with no keyword yet this one box carries the empty state too (Jacob, 2026-09-14) -->
     <div class="pt-empty pt-getlisted" id="pt-getlisted">
@@ -317,7 +326,7 @@
          company posted and the position a person wants, each at a glance.
          Edit leads to the tab that changes it. -->
     <div class="pt-list-rec" id="pt-list-hiring">
-      <h3 class="pt-sub-h">Jobs Posted</h3>
+      <h3 class="pt-sub-h cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="18" height="12.5" rx="2"/><path d="M8.5 7.5V5.8A1.8 1.8 0 0 1 10.3 4h3.4a1.8 1.8 0 0 1 1.8 1.8v1.7"/><path d="M3 12.5h18"/></svg>Jobs Posted</h3>
       <div class="pt-list" id="pt-jobs"></div>
     </div>
     <!-- Resumes Posted: the person's own listing, the same card as a job (Jacob, 2026-09-14) -->
@@ -404,7 +413,7 @@
         <div class="pt-project-list" id="pt-project-list"></div>
       </section>
       <section class="cb-card" id="pj-form">
-        <h3 class="cb-h" id="pj-form-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add a project</h3>
+        <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span id="pj-form-h">Add a project</span></h3>
         <input type="hidden" id="pj-id" value="">
         <div class="cb-form2">
           <div>
@@ -768,7 +777,7 @@
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
 <script src="/store.js?v=c0ffb7a4b3"></script>
 <script src="/app.js?v=2892a73191"></script>
-<script src="/portal.js?v=48ef3b0e6d"></script>
+<script src="/portal.js?v=0e7ddfcab7"></script>
 <script src="/admin.js?v=a280d00bb3"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));
