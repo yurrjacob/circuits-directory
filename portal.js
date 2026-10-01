@@ -1316,21 +1316,16 @@ function renderProgress(){
   if(pct >= 100 || until > Date.now()){ box.hidden = true; box.innerHTML = ''; return; }
   const todo = items.filter(i => !i.done);
   box.hidden = false;
-  const R = 19, C = 2 * Math.PI * R;
   box.innerHTML = `<div class="pg">
-      <div class="pg-ring" aria-hidden="true">
-        <svg viewBox="0 0 44 44"><circle class="pg-ring-bg" cx="22" cy="22" r="${R}"/><circle class="pg-ring-fg" cx="22" cy="22" r="${R}" stroke-dasharray="${C.toFixed(2)}" stroke-dashoffset="${(C * (1 - pct / 100)).toFixed(2)}"/></svg>
-        <b>${pct}%</b>
+      <div class="pg-head">
+        <div class="pg-text"><b>Your profile is ${pct}% complete</b>
+          <span>${todo.length} thing${todo.length === 1 ? '' : 's'} left. Complete profiles get found more and trusted faster.</span></div>
+        <button type="button" class="pg-x" id="pg-dismiss">Hide for 2 days</button>
       </div>
-      <div class="pg-main">
-        <div class="pg-head">
-          <div class="pg-text"><b>Your profile is ${pct}% complete</b>
-            <span>${todo.length} thing${todo.length === 1 ? '' : 's'} left. Complete profiles get found more and trusted faster.</span></div>
-          <button type="button" class="pg-x" id="pg-dismiss">Hide for 2 days</button>
-        </div>
-        <div class="pg-segs" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Profile ${pct}% complete">${items.map(i => `<span class="pg-seg${i.done ? ' on' : ''}" title="${escapeHtml(i.label)}"></span>`).join('')}</div>
-        <div class="pg-todo">${todo.map((t, i) => `<button type="button" class="pg-chip" data-pg="${i}">${escapeHtml(t.label)}</button>`).join('')}</div>
+      <div class="pg-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Profile ${pct}% complete">
+        <span class="pg-fill" style="width:${pct}%"><i>${pct}%</i></span>
       </div>
+      <div class="pg-todo">${todo.map((t, i) => `<button type="button" class="pg-chip" data-pg="${i}">${escapeHtml(t.label)}</button>`).join('')}</div>
     </div>`;
   el('pg-dismiss').onclick = () => {
     try{ localStorage.setItem(PROGRESS_KEY, String(Date.now() + PROGRESS_HIDE_MS)); }catch(e){}
