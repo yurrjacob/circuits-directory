@@ -296,7 +296,7 @@ async function initPortal(){
 /* ===== Projects (Jacob's hiring brief, 2026-09-29): the club's showcase =====
    One card per project on the club page; every team member with an address
    gets a Project badge on their own profile, linked back to the card. */
-const PJ = { list: [], pics: [], docs: [], wired: false };
+const PJ = { list: [], pics: [], docs: [], other: [], wired: false };
 async function renderProjects(){
   const list = el('pt-project-list'); if(!list) return;
   if(!PT.slug || !(PT.co && PT.co.kind === 'club')){ list.innerHTML = ''; return; }
@@ -306,7 +306,7 @@ async function renderProjects(){
     return `<div class="pt-project">
       ${cover ? `<img src="${escapeHtml(cover)}" alt="">` : ''}
       <div class="pt-project-b"><b>${escapeHtml(p.title)}${p.year ? ` <span class="pf-note">${escapeHtml(String(p.year))}</span>` : ''}</b>
-        <span class="pf-note">${(p.team || []).length} on the team &middot; ${(p.pics || []).length} pictures &middot; ${(p.docs || []).length} documents</span>
+        <span class="pf-note">${(p.team || []).length} on the team &middot; ${(p.pics || []).length} pictures &middot; ${(p.docs || []).length + (p.other_docs || []).length} documents &middot; ${(p.videos || []).length} videos</span>
         <div class="pt-project-acts">
           <button type="button" class="mini-btn" data-edit-pj="${escapeHtml(p.id)}">Edit</button>
           <button type="button" class="mini-btn danger" data-del-pj="${escapeHtml(p.id)}">Delete</button>
@@ -318,6 +318,8 @@ function pjDraw(){
   const pics = el('pj-pics-list'), docs = el('pj-docs-list');
   if(pics) pics.innerHTML = PJ.pics.map((p, i) => `<span class="kw-tag"><img src="${escapeHtml(p.url)}" alt="" style="width:22px;height:22px;object-fit:cover;border-radius:4px">${escapeHtml(p.caption || 'Picture')}${i === 0 ? ' <i class="pf-note">cover</i>' : ''}<button type="button" data-rmpjpic="${i}" aria-label="Remove">&times;</button></span>`).join('');
   if(docs) docs.innerHTML = PJ.docs.map((d, i) => `<span class="kw-tag">${escapeHtml(d.name || 'Document')}<button type="button" data-rmpjdoc="${i}" aria-label="Remove">&times;</button></span>`).join('');
+  const other = el('pj-other-list');
+  if(other) other.innerHTML = PJ.other.map((d, i) => `<span class="kw-tag">${escapeHtml(d.name || 'Document')}<button type="button" data-rmpjother="${i}" aria-label="Remove">&times;</button></span>`).join('');
 }
 function pjSetMode(p){
   el('pj-id').value = p ? p.id : '';
@@ -329,6 +331,8 @@ function pjSetMode(p){
   el('pj-summary').value = p ? p.summary || '' : '';
   PJ.pics = p && Array.isArray(p.pics) ? p.pics.slice() : [];
   PJ.docs = p && Array.isArray(p.docs) ? p.docs.slice() : [];
+  PJ.other = p && Array.isArray(p.other_docs) ? p.other_docs.slice() : [];
+  el('pj-videos').value = p && Array.isArray(p.videos) ? p.videos.join('\n') : '';
   pjDraw();
   renderRepeater('pjteam', p && Array.isArray(p.team) ? p.team : [], ['handle', 'name', 'role'], ['Circuits.com address', 'Name', 'Role']);
   el('pj-msg').textContent = '';
@@ -348,6 +352,8 @@ function wireProjects(){
   };
   el('pj-pics').addEventListener('change', () => uploadList(el('pj-pics'), PJ.pics, true));
   el('pj-docs').addEventListener('change', () => uploadList(el('pj-docs'), PJ.docs, false));
+  el('pj-other').addEventListener('change', () => uploadList(el('pj-other'), PJ.other, false));
+  el('pj-other-list').addEventListener('click', e => { const b = e.target.closest('[data-rmpjother]'); if(!b) return; PJ.other.splice(+b.dataset.rmpjother, 1); pjDraw(); });
   el('pj-pics-list').addEventListener('click', e => { const b = e.target.closest('[data-rmpjpic]'); if(!b) return; PJ.pics.splice(+b.dataset.rmpjpic, 1); pjDraw(); });
   el('pj-docs-list').addEventListener('click', e => { const b = e.target.closest('[data-rmpjdoc]'); if(!b) return; PJ.docs.splice(+b.dataset.rmpjdoc, 1); pjDraw(); });
   el('pj-cancel').addEventListener('click', () => pjSetMode(null));
@@ -367,9 +373,12 @@ function wireProjects(){
     if(!title){ say('A project needs a title.', true); el('pj-title').focus(); return; }
     const team = cleanTeam(el('f-pjteam') && el('f-pjteam').__list);
     const tp = teamProblem(team); if(tp){ say(tp, true); return; }
+    const videos = val('pj-videos').split(/\n+/).map(s => s.trim()).filter(Boolean).slice(0, 10);
+    const badVideo = videos.find(v => !/^https?:\/\/\S+$/i.test(v));
+    if(badVideo){ say('"' + badVideo + '" is not a web address. Paste the full link, starting with https://.', true); el('pj-videos').focus(); return; }
     el('pj-save').disabled = true; say('Saving…', false);
     const r = await saveProject({ id: el('pj-id').value || null, company_slug: PT.slug, title, year: val('pj-year'), summary: val('pj-summary'),
-      cover_url: PJ.pics[0] ? PJ.pics[0].url : null, pics: PJ.pics, docs: PJ.docs, team });
+      cover_url: PJ.pics[0] ? PJ.pics[0].url : null, pics: PJ.pics, docs: PJ.docs, videos, other_docs: PJ.other, team });
     el('pj-save').disabled = false;
     if(r.error){ say(r.error, true); return; }
     say(el('pj-id').value ? 'Saved.' : 'Added to the showcase.', false);
@@ -1329,6 +1338,7 @@ function wireClubFields(c){
   const promo = c.club_promo && typeof c.club_promo === 'object' ? c.club_promo : {};
   box.checked = c.kind === 'club';
   el('f-college').value = c.college_name || '';
+  el('f-join').value = c.club_join_url || '';
   el('f-promo-members').value = promo.members || '';
   el('f-promo-alumni').value = promo.alumni || '';
   el('f-promo-employers').value = promo.employers || '';
@@ -1520,6 +1530,9 @@ async function saveProfile(){
     fields.kind = clubOn() ? 'club' : 'company';
     if(clubOn()){
       fields.college_name = val('f-college') || null;
+      const join = val('f-join');
+      if(join && !isValidWebsite(join)){ btn.disabled = false; saveNote('Not saved: the Join Club link does not look like a web address.', false); return; }
+      fields.club_join_url = join ? (/^https?:\/\//i.test(join) ? join : 'https://' + join) : null;
       fields.club_promo = { members: val('f-promo-members') || '', alumni: val('f-promo-alumni') || '', employers: val('f-promo-employers') || '' };
       const officers = cleanTeam(el('f-officers') && el('f-officers').__list);
       const tp = teamProblem(officers);

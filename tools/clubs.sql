@@ -110,3 +110,14 @@ create trigger projects_touch_trg before update on public.projects
 -- ---- the resume page and the club words are pages, not handles ------------
 insert into public.reserved_handles (name) values ('resume'), ('resumes'), ('club'), ('clubs'), ('project'), ('projects')
   on conflict do nothing;
+
+-- 2026-10-01, Jacob's sketch of the club page: a project card also carries
+-- videos (links, embedded when they are YouTube or Vimeo) and other
+-- documents beside the build documents; the page has a Join Club button.
+alter table public.projects add column if not exists videos jsonb not null default '[]'::jsonb;
+alter table public.projects add column if not exists other_docs jsonb not null default '[]'::jsonb;
+alter table public.projects drop constraint if exists projects_media_len_ck;
+alter table public.projects add constraint projects_media_len_ck check (length(videos::text) <= 4000 and length(other_docs::text) <= 20000);
+alter table public.companies add column if not exists club_join_url text;
+alter table public.companies drop constraint if exists companies_join_len_ck;
+alter table public.companies add constraint companies_join_len_ck check (length(coalesce(club_join_url, '')) <= 500);

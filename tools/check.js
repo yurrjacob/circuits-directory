@@ -755,18 +755,24 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     assert.ok(/function personClubSections/.test(pf) && /fetchClubRoles\(person\.handle\)/.test(pf) && /fetchProjectsForHandle\(person\.handle\)/.test(pf),
       'the profile no longer derives Leadership and Project badges from club pages');
     assert.ok(/show_clubs === false/.test(pf), 'the profile ignores the show_clubs privacy switch');
-    assert.ok(/function promoHubHtml/.test(pf) && /function projectsShowcaseHtml/.test(pf) && /function officersHtml/.test(pf) && /function clubHeadHtml/.test(pf),
+    assert.ok(/function promoHubHtml/.test(pf) && /function projectsShowcaseHtml/.test(pf) && /function officersHtml/.test(pf) && /function clubHeroHtml/.test(pf),
       'the club page lost a section (promo hub, showcase, officers, college head)');
     assert.ok(/href="\/resume\?u=/.test(pf) && /href="\/resume\?u=/.test(pj), 'the Export resume link is gone from the profile or the dashboard');
     assert.ok(/<meta name="robots" content="noindex, nofollow">/.test(rs) && /window\.print\(\)/.test(rs) && /@media print/.test(rd('styles.css')),
       'resume.html must be noindex, print through the browser and carry a print stylesheet');
     assert.ok(/myProfile\(\)/.test(rs) && !/resume_path/.test(rs), 'the resume page must take contact details from my_profile only, never from a public read');
-    for (const id of ['f-club', 'f-college', 'pt-college-logo', 'f-promo-members', 'f-promo-alumni', 'f-promo-employers', 'f-officers',
-                      'pj-title', 'pj-pics', 'pj-docs', 'f-pjteam', 'pj-save', 'pt-project-list'])
+    for (const id of ['f-club', 'f-college', 'pt-college-logo', 'f-join', 'f-promo-members', 'f-promo-alumni', 'f-promo-employers', 'f-officers',
+                      'pj-title', 'pj-pics', 'pj-docs', 'pj-videos', 'pj-other', 'f-pjteam', 'pj-save', 'pt-project-list'])
       assert.ok(ph.includes(`id="${id}"`), `the dashboard lost ${id}`);
     assert.ok(/id="me-skills"/.test(pj) && /id="me-show-clubs"/.test(pj) && /skills,\s*\n?\s*show_clubs:/.test(pj), 'Post a Resume lost the skills field or the privacy switch');
     assert.ok(/function teamProblem/.test(pj) && /cleanHandle/.test(pj), 'team addresses are saved unvalidated');
     assert.ok(/data-del-pj/.test(pj) && /confirm\(/.test(pj.slice(pj.indexOf('function wireProjects'))), 'a project can be deleted without a confirmation');
+    /* the sketch of 2026-10-01: logos flank the name, Join Club, thumbnails that open a project card */
+    assert.ok(/function clubHeroHtml/.test(pf) && /Join Club/.test(pf) && /function openProjectCard/.test(pf) && /class="pf-tile"/.test(pf),
+      'the club page lost its hero, Join Club button, thumbnail grid or project card');
+    assert.ok(/youtube-nocookie\.com\/embed\//.test(pf) && /player\.vimeo\.com\/video\//.test(pf) && !/<iframe src="\$\{escapeHtml\(safeUrl\(/.test(pf),
+      'videos must embed only recognised YouTube or Vimeo ids, never an arbitrary URL in an iframe');
+    assert.ok(/videos, other_docs/.test(st) || /other_docs/.test(st.slice(st.indexOf('const PROJECT_COLS'), st.indexOf('const PROJECT_COLS') + 200)), 'store.js does not read a project\'s videos and other documents');
   }
   assert.ok(portalHtml.indexOf('id="f-contact"') < portalHtml.indexOf('id="f-website"')
          && portalHtml.indexOf('id="f-website"') < portalHtml.indexOf('id="f-phone"')
@@ -1088,7 +1094,7 @@ for (const f of ['index.html', 'join.html']) {
     && /class="pf-cover" style="background-image:url\('\$\{escapeHtml\(url\)\}'\)"/.test(pf) && /class="pf-cover pf-cover-default"/.test(pf),
     'the profile no longer draws the banner behind the logo, or has no default when none was uploaded');
   /* every logo stands on a banner: both page kinds call it, always covered */
-  assert.strictEqual((pf.match(/\$\{coverHtml\(/g) || []).length, 2, 'not every profile page draws a banner behind its logo');
+  assert.strictEqual((pf.match(/coverHtml\((cover, co\.name|'', name)\)/g) || []).length, 2, 'not every profile page draws a banner behind its logo');
   assert.ok(!/<div class="pf-head">/.test(pf), 'a profile head is drawn without its banner');
   /* The flat grey default (Jacob, 2026-09-03) was replaced on 2026-09-22 at
      Jacob's word ("Yes do it"): a dark sweep into the brand green with a faint

@@ -151,13 +151,31 @@ function linkBoxHtml(handle, co){
    a student's page are earned, not typed: Leadership comes from being an
    officer on a club page, Project from being on a project's team. */
 function handleLink(h){ return '/' + encodeURIComponent(String(h || '').toLowerCase()); }
-function clubHeadHtml(co){
+let CLUB_PROJECTS = [];   // the club page's projects, for the card a thumbnail opens
+/* The head from Jacob's sketch (2026-10-01): the college's logo on the left,
+   the club's on the right, the name between them with the college under it,
+   two lines of description and a Join Club button. */
+function clubHeroHtml(co){
   const college = (co.college_name || '').trim();
-  return `<div class="pf-college">
-      ${isLogoUrl(co.college_logo) ? `<img class="pf-college-logo" src="${escapeHtml(co.college_logo)}" alt="${escapeHtml(college || 'College')} logo">` : ''}
-      ${college ? `<span class="pf-college-name">${escapeHtml(college)}</span>` : ''}
+  const desc = (co.tagline || co.description || '').trim();
+  const join = safeUrl(co.club_join_url) || (looksEmail(co.email) ? `mailto:${co.email.trim()}?subject=${encodeURIComponent('Joining ' + co.name)}` : '');
+  const site = safeUrl(co.website);
+  const logoBox = (url, alt, fallback) => `<div class="pf-club-logo">${isLogoUrl(url) ? `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}">` : `<span class="pf-club-logo-ph">${escapeHtml(fallback)}</span>`}</div>`;
+  return `<div class="pf-club-head">
+    ${logoBox(co.college_logo, (college || 'College') + ' logo', (college || 'C').slice(0, 1).toUpperCase())}
+    <div class="pf-club-id">
+      <h1>${escapeHtml(co.name)}</h1>
+      ${college ? `<p class="pf-club-college">${escapeHtml(college)}</p>` : ''}
       <span class="pf-kind">College club</span>
-    </div>`;
+      ${desc ? `<p class="pf-club-desc">${escapeHtml(desc)}</p>` : ''}
+      <div class="pf-club-acts">
+        ${join ? `<a class="btn btn-primary" href="${escapeHtml(join)}"${/^https?:/i.test(join) ? ' target="_blank" rel="noopener nofollow"' : ''}>Join Club</a>` : ''}
+        ${site ? `<a class="btn btn-outline" href="${escapeHtml(site)}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
+      </div>
+      ${fitsLine(co.address, 60) ? `<div class="pf-meta"><span class="pf-chip">${iconHtml('Address')}${escapeHtml(co.address)}</span></div>` : ''}
+    </div>
+    ${logoBox(co.logo, co.name + ' logo', co.name.slice(0, 1).toUpperCase())}
+  </div>`;
 }
 const PROMO_KEYS = [['members', 'New members', 'Thinking of joining?'], ['alumni', 'Alumni', 'Stay connected.'], ['employers', 'Employers', 'Hire from the club.']];
 function promoHubHtml(co){
@@ -176,24 +194,75 @@ function teamTagsHtml(team){
       : `<span class="pf-tag">${label}</span>`;
   }).join('')}</div>`;
 }
-function projectCardHtml(p, co){
+/* A video link is embedded only when it is a YouTube or Vimeo id we can read
+   out of it; anything else stays a plain link, never an iframe. */
+function videoHtml(url){
+  const u = safeUrl(url); if(!u) return '';
+  const yt = u.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+  const vm = u.match(/vimeo\.com\/(?:video\/)?(\d{5,})/);
+  if(yt) return `<iframe class="pf-video" src="https://www.youtube-nocookie.com/embed/${yt[1]}" title="Video" loading="lazy" allow="encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  if(vm) return `<iframe class="pf-video" src="https://player.vimeo.com/video/${vm[1]}" title="Video" loading="lazy" allow="picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  return '';
+}
+/* a link that is not YouTube or Vimeo is listed under the players as a chip */
+function videoLinkHtml(url){
+  const u = safeUrl(url); if(!u || videoHtml(u)) return '';
+  return `<a class="doc-link" href="${escapeHtml(u)}" target="_blank" rel="noopener nofollow">${escapeHtml(u.replace(/^https?:\/\//, '').slice(0, 60))}</a>`;
+}
+function docChips(list){
+  const docs = (Array.isArray(list) ? list : []).filter(d => d && safeUrl(d.url));
+  return docs.length ? `<div class="pf-ldocs">${docs.map(d => `<a class="doc-link" href="${escapeHtml(safeUrl(d.url))}" target="_blank" rel="noopener nofollow">${escapeHtml(d.name || 'Document')}</a>`).join('')}</div>` : '';
+}
+/* the thumbnail: cover, title, year; the summary rises on hover */
+function projectTileHtml(p, i){
   const pics = (Array.isArray(p.pics) ? p.pics : []).filter(x => x && safeUrl(x.url));
-  const docs = (Array.isArray(p.docs) ? p.docs : []).filter(d => d && safeUrl(d.url));
   const cover = safeUrl(p.cover_url) || (pics[0] && safeUrl(pics[0].url)) || '';
-  return `<article class="pf-project" id="project-${escapeHtml(String(p.id))}">
-      ${cover ? `<button type="button" class="bd-shot pf-project-cover" data-full="${escapeHtml(cover)}" data-cap="${escapeHtml(p.title)}" aria-label="Open picture: ${escapeHtml(p.title)}"><img src="${escapeHtml(cover)}" alt="${escapeHtml(p.title)}" loading="lazy"></button>` : ''}
-      <div class="pf-project-body">
-        <h3 class="pf-project-t">${escapeHtml(p.title)}${p.year ? `<span class="pf-year">${escapeHtml(String(p.year))}</span>` : ''}</h3>
-        ${p.summary ? `<p class="pf-prose">${escapeHtml(p.summary).replace(/\n+/g, '<br>')}</p>` : ''}
-        ${docs.length ? `<div class="pf-ldocs">${docs.map(d => `<a class="doc-link" href="${escapeHtml(safeUrl(d.url))}" target="_blank" rel="noopener nofollow">${escapeHtml(d.name || 'Document')}</a>`).join('')}</div>` : ''}
-        ${pics.length > 1 ? galleryHtml(pics.slice(cover === safeUrl(pics[0].url) ? 1 : 0), p.title) : ''}
-        ${teamTagsHtml(p.team)}
-      </div>
-    </article>`;
+  const sum = String(p.summary || '').replace(/\s+/g, ' ').trim();
+  return `<button type="button" class="pf-tile" data-pj="${i}" id="project-${escapeHtml(String(p.id))}" aria-label="Open project: ${escapeHtml(p.title)}">
+      ${cover ? `<img src="${escapeHtml(cover)}" alt="" loading="lazy">` : `<span class="pf-tile-ph" aria-hidden="true">${escapeHtml(p.title.slice(0, 1).toUpperCase())}</span>`}
+      <span class="pf-tile-cap"><b>${escapeHtml(p.title)}</b>${p.year ? `<i>${escapeHtml(String(p.year))}</i>` : ''}${sum ? `<span class="pf-tile-sum">${escapeHtml(sum.length > 140 ? sum.slice(0, 140) + '…' : sum)}</span>` : ''}</span>
+    </button>`;
 }
 function projectsShowcaseHtml(projects, co){
   const list = (projects || []).filter(p => p && p.title && p.published !== false);
-  return list.length ? section('Project Showcase', `<div class="pf-showcase">${list.map(p => projectCardHtml(p, co)).join('')}</div>`) : '';
+  return list.length ? section('Project Showcase', `<div class="pf-grid">${list.map((p, i) => projectTileHtml(p, i)).join('')}</div>
+    <p class="pf-note">Open a project for the team, the build pictures, the documents and the videos.</p>`) : '';
+}
+/* the project card: everything the sketch lists, in one overlay */
+function projectCardHtml(p, co){
+  const pics = (Array.isArray(p.pics) ? p.pics : []).filter(x => x && safeUrl(x.url));
+  const cover = safeUrl(p.cover_url) || (pics[0] && safeUrl(pics[0].url)) || '';
+  const vids = Array.isArray(p.videos) ? p.videos : [];
+  const videos = vids.map(videoHtml).filter(Boolean), vlinks = vids.map(videoLinkHtml).filter(Boolean);
+  const sec = (title, inner) => inner ? `<div class="pf-modal-sec"><h3>${title}</h3>${inner}</div>` : '';
+  return `<div class="pf-modal-box" role="dialog" aria-modal="true" aria-label="${escapeHtml(p.title)}">
+      <button type="button" class="pf-modal-x" aria-label="Close">&times;</button>
+      ${cover ? `<img class="pf-modal-cover" src="${escapeHtml(cover)}" alt="${escapeHtml(p.title)}">` : ''}
+      <div class="pf-modal-body">
+        <h2>${escapeHtml(p.title)}${p.year ? `<span class="pf-year">${escapeHtml(String(p.year))}</span>` : ''}</h2>
+        ${co && co.name ? `<p class="pf-note" style="margin:-8px 0 0">${escapeHtml(co.name)}${co.college_name ? `, ${escapeHtml(co.college_name)}` : ''}</p>` : ''}
+        ${p.summary ? `<p class="pf-prose">${escapeHtml(p.summary).replace(/\n+/g, '<br>')}</p>` : ''}
+        ${sec('Team members', teamTagsHtml(p.team))}
+        ${sec('Pictures', pics.length ? galleryHtml(pics, p.title) : '')}
+        ${sec('Project build documents', docChips(p.docs))}
+        ${sec('Videos', (videos.length ? `<div class="pf-videos">${videos.join('')}</div>` : '') + (vlinks.length ? `<div class="pf-ldocs"${videos.length ? ' style="margin-top:10px"' : ''}>${vlinks.join('')}</div>` : ''))}
+        ${sec('Other documents', docChips(p.other_docs))}
+      </div>
+    </div>`;
+}
+function openProjectCard(p, co){
+  if(!p) return;
+  const box = document.createElement('div');
+  box.className = 'pf-modal';
+  box.innerHTML = projectCardHtml(p, co);
+  const close = () => { box.remove(); document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  const onKey = e => { if(e.key === 'Escape') close(); };
+  box.addEventListener('click', e => { if(e.target === box || e.target.closest('.pf-modal-x')) close(); });
+  box.querySelectorAll('.bd-shot').forEach(b => b.addEventListener('click', () => openLightbox(b.dataset.full, b.dataset.cap)));
+  document.addEventListener('keydown', onKey);
+  document.body.style.overflow = 'hidden';
+  document.body.appendChild(box);
+  box.querySelector('.pf-modal-x').focus();
 }
 function officersHtml(co){
   const team = (Array.isArray(co.team) ? co.team : []).filter(t => t && ((t.name || '').trim() || (t.handle || '').trim()));
@@ -340,15 +409,14 @@ async function initProfile(){
      picture if it uploaded one, otherwise the site's default drawn in CSS,
      with the head overlapping its bottom edge so the logo stands on it */
   const cover = isLogoUrl(co.cover_url) ? co.cover_url : '';
-  let html = `
-  ${coverHtml(cover, co.name)}
+  CLUB_PROJECTS = isClub ? (projects || []) : [];
+  let html = coverHtml(cover, co.name) + (isClub ? clubHeroHtml(co) : `
   <div class="pf-head pf-head-covered">
     <div class="pf-logo">${logo}</div>
     <div class="pf-id">
       <h1>${escapeHtml(co.name)}</h1>
       ${co.tagline ? `<p class="pf-tagline">${escapeHtml(co.tagline)}</p>`
         : person && person.title ? `<p class="pf-tagline">${escapeHtml(person.title)}</p>` : ''}
-      ${isClub ? clubHeadHtml(co) : ''}
       <div class="pf-meta">
         ${reviews.length ? `<span class="pf-rating">${stars(avg)} ${avg.toFixed(1)} <i>(${reviews.length})</i></span>` : ''}
         ${fitsLine(co.address, 60) ? `<span class="pf-chip">${iconHtml('Address')}${escapeHtml(co.address)}</span>` : ''}
@@ -356,7 +424,7 @@ async function initProfile(){
         ${fitsLine(co.employees, 20) ? `<span class="pf-chip">${iconHtml('Employees')}${escapeHtml(co.employees)} employees</span>` : ''}
       </div>
     </div>
-  </div>
+  </div>`) + `
   <div class="pf-layout"><div class="pf-main">`;
 
   /* ---- about ---- */
@@ -587,9 +655,11 @@ function jsonLd(co, avg, count, site){
 function wireProfile(slug, co){
   trackEvent(slug, 'view');
 
-  /* project pictures use the Job Board's gallery buttons and its lightbox */
-  document.querySelectorAll('.pf-showcase .bd-shot').forEach(b =>
-    b.addEventListener('click', () => openLightbox(b.dataset.full, b.dataset.cap)));
+  /* a thumbnail opens its project card; a badge's link (#project-<id>) opens it on arrival */
+  document.querySelectorAll('.pf-tile[data-pj]').forEach(t =>
+    t.addEventListener('click', () => openProjectCard(CLUB_PROJECTS[+t.dataset.pj], co)));
+  const want = (location.hash || '').match(/^#project-(.+)$/);
+  if(want){ const i = CLUB_PROJECTS.findIndex(p => String(p.id) === decodeURIComponent(want[1])); if(i >= 0) openProjectCard(CLUB_PROJECTS[i], co); }
 
   /* Gallery photos open full size, a 140px thumbnail of a warehouse tells a
      buyer nothing. */

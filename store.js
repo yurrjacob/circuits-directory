@@ -746,7 +746,7 @@ async function fetchCompanyJobs(slug){
 /* ---- college clubs and projects (Jacob's hiring brief, 2026-09-29) ----
    A club is a companies row with kind = 'club'; its projects are their own
    rows. Both are public reads under RLS, so the column lists are explicit. */
-const PROJECT_COLS = 'id, company_slug, title, year, summary, cover_url, pics, docs, team, published, created_at';
+const PROJECT_COLS = 'id, company_slug, title, year, summary, cover_url, pics, docs, videos, other_docs, team, published, created_at';
 /* every project on one club page, newest first (the owner also sees unpublished ones) */
 async function fetchProjects(slug){
   if(!sb || !slug) return [];
@@ -781,7 +781,8 @@ async function fetchClubRoles(handle){
 async function saveProject(p){
   if(!sb) return { error: 'No connection' };
   const row = { company_slug: p.company_slug, title: p.title, year: p.year || null, summary: p.summary || null,
-    cover_url: p.cover_url || null, pics: p.pics || [], docs: p.docs || [], team: p.team || [], published: p.published !== false };
+    cover_url: p.cover_url || null, pics: p.pics || [], docs: p.docs || [], videos: p.videos || [], other_docs: p.other_docs || [],
+    team: p.team || [], published: p.published !== false };
   const q = p.id ? sb.from('projects').update(row).eq('id', p.id) : sb.from('projects').insert(row);
   const { data, error } = await q.select('id');
   if(error) return { error: error.message };
