@@ -1427,8 +1427,15 @@ tr.row-warn td{background:#fff3cd}
    share this button's .pt-save class and painted it small and blue. */
 .pt-save-big{padding:14px 34px;font-size:1.05rem;border-radius:10px;background:var(--green);border-color:var(--green);color:#0f0f0f}
 .pt-save-big:hover{background:var(--green-dark);border-color:var(--green-dark);color:#fff}
-.pt-tabs,.adm-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0 6px;border-bottom:1px solid var(--line)}
+.pt-tabs,.adm-tabs{display:flex;gap:2px;flex-wrap:wrap;margin:18px 0 6px;border-bottom:1px solid var(--line)}
 .pt-tab,.adm-tab{border:0;background:none;font:inherit;font-weight:600;padding:9px 14px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent}
+.pt-tab{display:inline-flex;align-items:center;gap:6px;padding:9px 10px;font-size:.93rem;white-space:nowrap}
+.pt-tab-ico{width:16px;height:16px;flex:none;opacity:.7}
+.pt-tab:hover .pt-tab-ico,.pt-tab.active .pt-tab-ico{opacity:1}
+.pt-tab.active .pt-tab-ico{color:var(--green-dark)}
+.pt-tab.pt-tab-upgrades.active .pt-tab-ico{color:#1f5fbf}
+#pt-tab-admin .pt-tab-ico{color:var(--green)}
+#pt-tab-admin::before{display:none}
 .pt-tab.active,.adm-tab.active{color:var(--ink);border-bottom-color:var(--green)}
 .adm-tabs{margin:-8px 0 22px}
 /* Admin sits apart from the account tabs (Jacob, 2026-09-02): pushed to the

@@ -726,7 +726,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   /* 2026-09-11 (Jacob): the Promote tab is called Branding. Same panel, the
      printable artwork; logo, about and social still live under Profile Details. */
   assert.ok(!portalHtml.includes('data-tab="promote"') && !portalHtml.includes('id="tab-promote"'), 'the Promote tab is back, it was renamed Branding');
-  assert.ok(/<button class="pt-tab" data-tab="branding">Branding<\/button>/.test(portalHtml) && portalHtml.includes('id="tab-branding"'), 'the dashboard lost its Branding tab');
+  assert.ok(/<button class="pt-tab" data-tab="branding">(?:<svg[\s\S]*?<\/svg>)?Branding<\/button>/.test(portalHtml) && portalHtml.includes('id="tab-branding"'), 'the dashboard lost its Branding tab');
   assert.ok(portalHtml.includes('data-tab="profile"'), 'the dashboard lost its Profile Details tab');
   // every company-level field still present in the one tab
   for (const id of ['f-handle', 'f-name', 'f-contact', 'f-email', 'f-phone', 'f-website',
@@ -831,20 +831,22 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   const portalHtml2 = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
   const tabStrip = portalHtml2.match(/<div class="pt-tabs">[\s\S]*?<\/div>/)[0];
   const tabs = [...tabStrip.matchAll(/data-tab="([a-z]+)"/g)].map(m => m[1]);
+  /* every tab carries its icon (Jacob, 2026-10-01) */
+  assert.strictEqual((tabStrip.match(/class="pt-tab-ico"/g) || []).length, tabs.length, 'a dashboard tab has no icon');
   /* Upgrades sits immediately right of Your Listings (Jacob, 2026-09-03): the
      listings table says what each keyword has, the tab beside it is where the
      paid extras are switched on. */
   /* Projects (2026-09-29) sits after Branding and is shown only to a club page */
   assert.deepStrictEqual(tabs, ['profile', 'listings', 'upgrades', 'hiring', 'seeking', 'club', 'branding', 'account', 'admin'],
     'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Find Recruits / Job Search / College Club / Branding / Account Settings / Admin');
-  assert.ok(/data-tab="club">College Club</.test(portalHtml2) && portalHtml2.includes('id="tab-club"') && portalHtml2.includes('class="btn btn-primary pt-save-club"'),
+  assert.ok(/data-tab="club">(?:<svg[\s\S]*?<\/svg>)?College Club</.test(portalHtml2) && portalHtml2.includes('id="tab-club"') && portalHtml2.includes('class="btn btn-primary pt-save-club"'),
     'the College Club tab, or its own Save button, is missing');
   assert.ok(portalHtml2.indexOf('id="f-club"') > portalHtml2.indexOf('id="tab-club"') && portalHtml2.indexOf('id="pj-save"') > portalHtml2.indexOf('id="tab-club"')
          && portalHtml2.indexOf('id="pj-save"') < portalHtml2.indexOf('id="tab-branding"'), 'the club settings and the project editor must both live inside the College Club tab');
   /* the two Recruiting tabs are named for what they hold (Jacob, 2026-09-03,
      "respectively"): the jobs tab is Job Search, the recruit listing is Find
      Recruits; the ids stay hiring / seeking so nothing else moves */
-  assert.ok(/data-tab="hiring">Find Recruits</.test(portalHtml2) && /data-tab="seeking">Job Search</.test(portalHtml2), 'the Recruiting tabs are not named Find Recruits (jobs you post) and Job Search (your own listing)');
+  assert.ok(/data-tab="hiring">(?:<svg[\s\S]*?<\/svg>)?Find Recruits</.test(portalHtml2) && /data-tab="seeking">(?:<svg[\s\S]*?<\/svg>)?Job Search</.test(portalHtml2), 'the Recruiting tabs are not named Find Recruits (jobs you post) and Job Search (your own listing)');
   assert.ok(!/tab-co|tab-ind|acct-company|acct-individual/.test(portalHtml2 + portalSrc2 + fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
     'the two-dashboard split is back (tab-co / tab-ind / acct-*)');
   assert.ok(!/account_type|cx_account_type/.test(portalSrc2 + fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8') + fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')),
@@ -1334,7 +1336,7 @@ const navSrc = fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8');
 const portalListings = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
 /* Your Listings (Jacob, 2026-09-03): the listings with their upgrades, then a
    Get Listed call to action pointing at the page; no inline request form */
-assert.ok(/data-tab="listings">Your Listings</.test(portalListings), 'the Listings tab is not called Your Listings');
+assert.ok(/data-tab="listings">(?:<svg[\s\S]*?<\/svg>)?Your Listings</.test(portalListings), 'the Listings tab is not called Your Listings');
 assert.ok(/class="pt-empty pt-getlisted"[\s\S]*?href="\/join"/.test(portalListings), 'Your Listings lost the Get Listed call to action');
 assert.ok(!/id="al-input"|id="pt-addkw"/.test(portalListings) && !/function wireAddListing/.test(fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8')), 'the inline Get another listing form is back, Get Listed is the page for that');
 const portalJsSrc = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');

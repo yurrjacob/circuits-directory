@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=d17b00c288">
+<link rel="stylesheet" href="/styles.css?v=28c690f2dc">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -99,16 +99,16 @@
        everyone. Overview, Quote requests and Reviews stay off (2026-08-20,
        backups/dashboard-2026-08-20/). -->
   <div class="pt-tabs">
-    <button class="pt-tab active" data-tab="profile">Profile Details</button>
-    <button class="pt-tab" data-tab="listings">Your Listings</button>
-    <button class="pt-tab pt-tab-upgrades" data-tab="upgrades">Upgrades</button>
-    <button class="pt-tab" data-tab="hiring">Find Recruits</button>
-    <button class="pt-tab" data-tab="seeking">Job Search</button>
-    <button class="pt-tab" data-tab="club">College Club</button>
-    <button class="pt-tab" data-tab="branding">Branding</button>
-    <button class="pt-tab" data-tab="account" id="pt-tab-account">Account Settings</button>
+    <button class="pt-tab active" data-tab="profile"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profile Details</button>
+    <button class="pt-tab" data-tab="listings"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1.3" fill="currentColor" stroke="none"/></svg>Your Listings</button>
+    <button class="pt-tab pt-tab-upgrades" data-tab="upgrades"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>Upgrades</button>
+    <button class="pt-tab" data-tab="hiring"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="8" r="3.5"/><path d="M3 20a7 7 0 0 1 14 0"/><circle cx="18" cy="15" r="2.5"/><path d="m20 17 2.5 2.5"/></svg>Find Recruits</button>
+    <button class="pt-tab" data-tab="seeking"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="18" height="12.5" rx="2"/><path d="M8.5 7.5V5.8A1.8 1.8 0 0 1 10.3 4h3.4a1.8 1.8 0 0 1 1.8 1.8v1.7"/><path d="M3 12.5h18"/></svg>Job Search</button>
+    <button class="pt-tab" data-tab="club"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/><path d="M22 9v6"/></svg>College Club</button>
+    <button class="pt-tab" data-tab="branding"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20a8 8 0 1 1 0-16 7 7 0 0 1 7 7 3 3 0 0 1-3 3h-1.5a1.5 1.5 0 0 0-1 2.6A2 2 0 0 1 12 20z"/><circle cx="8" cy="10" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="16" cy="10" r="1" fill="currentColor" stroke="none"/></svg>Branding</button>
+    <button class="pt-tab" data-tab="account" id="pt-tab-account"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Account Settings</button>
     <!-- shown by portal.js only when the signed-in account is a Circuits.com admin -->
-    <button class="pt-tab" data-tab="admin" id="pt-tab-admin" style="display:none">Admin</button>
+    <button class="pt-tab" data-tab="admin" id="pt-tab-admin" style="display:none"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5 20 6v6c0 5-3.4 8.6-8 9.5C7.4 20.6 4 17 4 12V6z"/><path d="m9 12 2 2 4-4"/></svg>Admin</button>
   </div>
 
   <!-- ===== seeking employment: Post Free Resume (Jacob, 2026-09-14). Box A the
