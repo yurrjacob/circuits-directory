@@ -835,9 +835,12 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
      listings table says what each keyword has, the tab beside it is where the
      paid extras are switched on. */
   /* Projects (2026-09-29) sits after Branding and is shown only to a club page */
-  assert.deepStrictEqual(tabs, ['profile', 'listings', 'upgrades', 'hiring', 'seeking', 'branding', 'projects', 'account', 'admin'],
-    'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Find Recruits / Job Search / Branding / Projects / Account Settings / Admin');
-  assert.ok(/id="pt-tab-projects"[^>]*display:none/.test(portalHtml2), 'the Projects tab must start hidden; portal.js shows it for a club page');
+  assert.deepStrictEqual(tabs, ['profile', 'listings', 'upgrades', 'hiring', 'seeking', 'branding', 'club', 'account', 'admin'],
+    'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Find Recruits / Job Search / Branding / College Club / Account Settings / Admin');
+  assert.ok(/data-tab="club">College Club</.test(portalHtml2) && portalHtml2.includes('id="tab-club"') && portalHtml2.includes('class="btn btn-primary pt-save-club"'),
+    'the College Club tab, or its own Save button, is missing');
+  assert.ok(portalHtml2.indexOf('id="f-club"') > portalHtml2.indexOf('id="tab-club"') && portalHtml2.indexOf('id="pj-save"') > portalHtml2.indexOf('id="tab-club"')
+         && portalHtml2.indexOf('id="pj-save"') < portalHtml2.indexOf('id="tab-branding"'), 'the club settings and the project editor must both live inside the College Club tab');
   /* the two Recruiting tabs are named for what they hold (Jacob, 2026-09-03,
      "respectively"): the jobs tab is Job Search, the recruit listing is Find
      Recruits; the ids stay hiring / seeking so nothing else moves */

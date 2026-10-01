@@ -27,6 +27,8 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
     acknowledgement from the claims row, and the sender of a contact message
     only gets a copy when the check verifiably passed, so an address typed
     into the request is never mailed on the request's say-so alone.
+    v17 (2026-10-01): the welcome mail carries a fourth button, Set Up a
+    College Club, matching the welcome page.
     v14 (2026-09-16): the welcome mail carries three buttons.
     v13 (2026-09-15, site audit): the 'quote' kind is off. The in-page quote
     form has been off since 2026-08-21, but this kind still mailed whatever
@@ -217,7 +219,8 @@ Deno.serve(async (req: Request) => {
     const buttons = welcome
       ? `<p style="margin:14px 0 0">${button(`${SITE}/portal#listings`, "Free Directory Listing")}</p>` +
         `<p style="margin:10px 0 0">${button(`${SITE}/portal#hiring`, "Post Free Job")}</p>` +
-        `<p style="margin:10px 0 0">${button(`${SITE}/portal#seeking`, "Post Free Resume")}</p>`
+        `<p style="margin:10px 0 0">${button(`${SITE}/portal#seeking`, "Post Free Resume")}</p>` +
+        `<p style="margin:10px 0 0">${button(`${SITE}/portal#club`, "Set Up a College Club")}</p>`
       : `<p style="margin:14px 0 0">${button(href, "Open on Circuits.com")}</p>`;
     const sent = await send(to, subject, shell(
       kicker(field(n.sender_name, 60) || "Circuits.com") +

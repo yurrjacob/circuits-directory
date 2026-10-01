@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=360ea015e2">
+<link rel="stylesheet" href="/styles.css?v=32634e6ba4">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -105,8 +105,7 @@
     <button class="pt-tab" data-tab="hiring">Find Recruits</button>
     <button class="pt-tab" data-tab="seeking">Job Search</button>
     <button class="pt-tab" data-tab="branding">Branding</button>
-    <!-- shown by portal.js once Profile Details says this page is a college club -->
-    <button class="pt-tab" data-tab="projects" id="pt-tab-projects" style="display:none">Projects</button>
+    <button class="pt-tab" data-tab="club">College Club</button>
     <button class="pt-tab" data-tab="account" id="pt-tab-account">Account Settings</button>
     <!-- shown by portal.js only when the signed-in account is a Circuits.com admin -->
     <button class="pt-tab" data-tab="admin" id="pt-tab-admin" style="display:none">Admin</button>
@@ -182,36 +181,6 @@
         <div class="auth-field"><label for="f-founded">Founded</label><input id="f-founded" type="text" placeholder="1998" autocomplete="off"></div>
         <div class="auth-field"><label for="f-employees">Employees</label><input id="f-employees" type="text" placeholder="50 to 200" autocomplete="off"></div>
       </div>
-      <!-- College club (Jacob's hiring brief, 2026-09-29): the same page, with
-           the college beside the club, three promo texts and the officers.
-           Officers tagged with a handle earn a Leadership badge on their page. -->
-      <details class="pt-fold" id="pt-club-fold"><summary>College club <span class="pf-note" id="pt-club-state">· off</span></summary>
-        <div class="pt-list">
-          <label class="pt-check"><input type="checkbox" id="f-club" autocomplete="off"> This page is a college club</label>
-          <div class="pt-club-fields">
-            <div class="pt-row">
-              <div class="auth-field"><label for="f-college">College or university</label><input id="f-college" type="text" maxlength="160" placeholder="University of Texas at Austin" autocomplete="off"></div>
-              <div class="auth-field"><label for="pt-college-logo">College logo</label>
-                <div class="rp-img"><span id="pt-college-prev"><span class="rp-img-ph">None</span></span>
-                  <input id="pt-college-logo" type="file" accept="image/png,image/jpeg,image/webp">
-                  <button type="button" class="mini-btn" id="pt-college-rm" style="display:none">Clear</button></div>
-                <p class="field-hint">Shown beside your club's logo at the top of the page.</p></div>
-            </div>
-            <div class="auth-field"><label for="f-join">Join Club link</label><input id="f-join" type="text" maxlength="500" placeholder="https://forms.example/join or a sign-up page" autocomplete="off">
-              <p class="field-hint">The Join Club button on your page opens this. Leave it blank and the button emails the club instead.</p></div>
-            <h4 class="pt-sub-h" style="margin:8px 0">Promo hub</h4>
-            <p class="pf-note" style="margin:0 0 8px">Three short pitches on your page, one for each audience. Leave one blank to leave it off.</p>
-            <div class="pt-row">
-              <div class="auth-field"><label for="f-promo-members">New members</label><textarea id="f-promo-members" rows="4" maxlength="600" placeholder="Who should join, when you meet, how to sign up." autocomplete="off"></textarea></div>
-              <div class="auth-field"><label for="f-promo-alumni">Alumni</label><textarea id="f-promo-alumni" rows="4" maxlength="600" placeholder="How past members stay involved." autocomplete="off"></textarea></div>
-              <div class="auth-field"><label for="f-promo-employers">Employers</label><textarea id="f-promo-employers" rows="4" maxlength="600" placeholder="Why hire from this club, how to sponsor or recruit." autocomplete="off"></textarea></div>
-            </div>
-            <details class="pt-fold" open><summary>Officers <span class="pf-note" id="fold-officers-n"></span></summary>
-              <p class="pf-note" style="margin:0 16px 8px">An officer with a Circuits.com address gets a Leadership badge on their own profile, linked to this page.</p>
-              <div class="pt-list" id="f-officers"></div></details>
-          </div>
-        </div>
-      </details>
       <p class="pf-note">Everything here is public. Contact person, phone, email, website and picture update everywhere:
       your profile, every keyword listing and your sponsor banner.</p>
 
@@ -370,19 +339,51 @@
   </section>
 
   <!-- branding: the printable artwork (was the Promote tab until 2026-09-11) -->
-  <!-- Projects (Jacob's hiring brief, 2026-09-29): a club's showcase. Each
-       project is a card on the club page; every team member with a handle
-       gets a Project badge on their own profile. -->
-  <section class="pt-panel" id="tab-projects">
+
+  <!-- College Club (Jacob, 2026-10-01: its own tab). The switch, the college
+       beside the club, the Join link, three promo texts, the officers, then
+       the Project Showcase editor. Officers and team members tagged with a
+       handle earn Leadership and Project badges on their own profiles. -->
+  <section class="pt-panel" id="tab-club">
     <div class="pt-tab-head">
       <div>
-        <h2>Project Showcase</h2>
-        <p class="kit-intro">The projects your club has built, each with pictures, build documents and the team behind it.
-          Tag members by their Circuits.com address and the project appears on their profile as a badge.</p>
+        <h2>College Club</h2>
+        <p class="kit-intro">Turn this page into your club's page: your college's logo beside the club's, a Join Club button,
+          a pitch for new members, alumni and employers, your officers, and a showcase of what the club has built.
+          Members you tag get badges on their own profiles.</p>
       </div>
       <div class="pt-head-btns"><a class="btn btn-outline" id="pt-projects-view" href="#" target="_blank" rel="noopener">View club page &#8599;</a></div>
     </div>
-    <div class="pt-project-list" id="pt-project-list"></div>
+    <div class="pf-form" id="pt-club-fold">
+
+          <label class="pt-check"><input type="checkbox" id="f-club" autocomplete="off"> This page is a college club <span class="pf-note" id="pt-club-state" style="margin:0 0 0 6px">· off</span></label>
+          <div class="pt-club-fields">
+            <div class="pt-row">
+              <div class="auth-field"><label for="f-college">College or university</label><input id="f-college" type="text" maxlength="160" placeholder="University of Texas at Austin" autocomplete="off"></div>
+              <div class="auth-field"><label for="pt-college-logo">College logo</label>
+                <div class="rp-img"><span id="pt-college-prev"><span class="rp-img-ph">None</span></span>
+                  <input id="pt-college-logo" type="file" accept="image/png,image/jpeg,image/webp">
+                  <button type="button" class="mini-btn" id="pt-college-rm" style="display:none">Clear</button></div>
+                <p class="field-hint">Shown beside your club's logo at the top of the page.</p></div>
+            </div>
+            <div class="auth-field"><label for="f-join">Join Club link</label><input id="f-join" type="text" maxlength="500" placeholder="https://forms.example/join or a sign-up page" autocomplete="off">
+              <p class="field-hint">The Join Club button on your page opens this. Leave it blank and the button emails the club instead.</p></div>
+            <h4 class="pt-sub-h" style="margin:8px 0">Promo hub</h4>
+            <p class="pf-note" style="margin:0 0 8px">Three short pitches on your page, one for each audience. Leave one blank to leave it off.</p>
+            <div class="pt-row">
+              <div class="auth-field"><label for="f-promo-members">New members</label><textarea id="f-promo-members" rows="4" maxlength="600" placeholder="Who should join, when you meet, how to sign up." autocomplete="off"></textarea></div>
+              <div class="auth-field"><label for="f-promo-alumni">Alumni</label><textarea id="f-promo-alumni" rows="4" maxlength="600" placeholder="How past members stay involved." autocomplete="off"></textarea></div>
+              <div class="auth-field"><label for="f-promo-employers">Employers</label><textarea id="f-promo-employers" rows="4" maxlength="600" placeholder="Why hire from this club, how to sponsor or recruit." autocomplete="off"></textarea></div>
+            </div>
+            <details class="pt-fold" open><summary>Officers <span class="pf-note" id="fold-officers-n"></span></summary>
+              <p class="pf-note" style="margin:0 16px 8px">An officer with a Circuits.com address gets a Leadership badge on their own profile, linked to this page.</p>
+              <div class="pt-list" id="f-officers"></div></details>
+          </div>
+      <div class="pt-save-row" style="margin-top:14px"><button class="btn btn-primary pt-save-club" type="button">Save club</button><span class="pt-save-msg" id="pt-club-msg" role="status"></span></div>
+    </div>
+    <div class="pt-club-fields" id="pt-club-showcase">
+      <h3 class="pt-sub-h" style="margin:22px 0 10px">Project Showcase</h3>
+      <div class="pt-project-list" id="pt-project-list"></div>
     <div class="pf-form">
       <h3 id="pj-form-h" style="margin-top:0">Add a project</h3>
       <input type="hidden" id="pj-id" value="">
@@ -415,6 +416,7 @@
         <button class="mini-btn" type="button" id="pj-cancel" style="display:none">Cancel</button>
         <span class="pf-note" id="pj-msg" style="margin:0"></span>
       </div>
+    </div>
     </div>
   </section>
 
@@ -744,7 +746,7 @@
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
 <script src="/store.js?v=c0ffb7a4b3"></script>
 <script src="/app.js?v=2892a73191"></script>
-<script src="/portal.js?v=1f6129575b"></script>
+<script src="/portal.js?v=f19715661f"></script>
 <script src="/admin.js?v=a280d00bb3"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));

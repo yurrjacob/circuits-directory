@@ -290,7 +290,7 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 
 /* logo upload preview (Join form) */
 .logo-preview{display:flex;align-items:center;gap:10px;margin-top:10px}
-.logo-preview img{width:46px;height:46px;object-fit:cover;border:1px solid var(--line);border-radius:8px;background:#fff}
+.logo-preview img{width:46px;height:46px;object-fit:contain;border:1px solid var(--line);border-radius:8px;background:#fff}
 .logo-preview span{font-size:.85rem;color:var(--muted)}
 
 /* premium sponsored banner opt-in (Join form) */
@@ -324,7 +324,7 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 .promo-gold:hover{box-shadow:0 0 0 3px rgba(154,164,174,.28)}
 .promo-gold input{accent-color:#7d8894}
 /* uploaded logo inside preview boxes */
-.premium-logo img,.co-logo img{width:100%;height:100%;object-fit:cover;border-radius:inherit;background:#fff;display:block}
+.premium-logo img,.co-logo img{width:100%;height:100%;object-fit:contain;border-radius:inherit;background:#fff;display:block}
 /* gated trust-badge builder (Join form) */
 .badge-gated{opacity:.45;pointer-events:none;transition:opacity .15s}
 .badge-gated.on{opacity:1;pointer-events:auto}
@@ -546,7 +546,7 @@ tr.row-warn td{background:#fff3cd}
 .co-sub{font-size:.7rem;color:var(--muted);margin-top:2px}
 .badge-cell .badge-color{width:26px;height:20px;border:1px solid var(--line);border-radius:4px;background:none;padding:0;vertical-align:middle;cursor:pointer}
 /* uploaded logo thumbnail in the applications sheet */
-.logo-thumb{width:30px;height:30px;object-fit:cover;border:1px solid var(--line);border-radius:6px;background:#fff;vertical-align:middle}
+.logo-thumb{width:30px;height:30px;object-fit:contain;padding:2px;box-sizing:border-box;border:1px solid var(--line);border-radius:6px;background:#fff;vertical-align:middle}
 /* An admin who runs no listing of their own gets the console on its own, the company picker and the supplier tabs would have nothing to point at. */
 .pt-admin-only .pt-tab:not(#pt-tab-admin):not(#pt-tab-me){display:none}
 /* the profile card, when it lives in the Your Profile tab, sits like content
@@ -830,7 +830,8 @@ tr.row-warn td{background:#fff3cd}
 .cover-thumb{display:inline-block;width:96px;height:32px;border-radius:6px;background:#e9ecef center/cover no-repeat;border:1px solid var(--line)}
 .pf-logo{width:96px;height:96px;border-radius:22px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;color:#c2c6cb;
   box-shadow:0 1px 2px rgba(15,15,15,.06),0 8px 24px rgba(15,15,15,.10)}
-.pf-logo img{width:100%;height:100%;object-fit:cover;display:block}
+.pf-logo img{width:100%;height:100%;object-fit:contain;display:block;padding:8px;box-sizing:border-box;background:#fff}
+.pf-logo.pf-photo img{object-fit:cover;padding:0}
 .pf-photo,.me-photo-prev{border-radius:50%}
 .auth-field #me-photo{width:auto;flex:1;min-width:180px}
 .me-photo-prev{width:64px;height:64px;flex:none;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--line);background:#fff;color:#c2c6cb}
@@ -1188,47 +1189,51 @@ tr.row-warn td{background:#fff3cd}
 /* ---- welcome: the page an email confirmation opens (Jacob, 2026-09-17) ----
    A quiet band at the top says the address is theirs, then three cards, one per
    thing a new account can do. The same three the welcome email carries. */
-.wc-hero{background:linear-gradient(180deg,#f3f8e8 0%,var(--card) 100%);border-bottom:1px solid var(--line)}
-.wc-wrap{max-width:940px;margin:0 auto;padding:0 24px}
-.wc-hero .wc-wrap{padding-top:46px;padding-bottom:40px;text-align:center}
-.wc-pill{display:inline-flex;align-items:center;gap:7px;margin:0 0 16px;padding:5px 14px 5px 11px;
-  border-radius:999px;background:var(--green);color:#fff;font-size:.78rem;font-weight:800;
-  letter-spacing:.04em;text-transform:uppercase}
-.wc-h1{margin:0 0 12px;font-size:2.3rem;line-height:1.15;letter-spacing:-.02em}
-.wc-sub{margin:0 auto 10px;font-size:1.05rem;color:var(--ink)}
-.wc-addr{display:inline-flex;align-items:center;gap:8px;vertical-align:middle;
-  background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 5px 4px 14px;margin-left:4px}
-.wc-addr a{color:var(--green-dark);text-decoration:none;font-weight:700}
+.wc-hero{position:relative;color:#fff;background:#0f0f0f;overflow:hidden;
+  background-image:linear-gradient(100deg,#0f0f0f 0%,#1a2a00 48%,#4f8a00 100%)}
+.wc-hero::before{content:"";position:absolute;inset:0;opacity:.55;pointer-events:none;
+  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160' fill='none' stroke='%2376c000' stroke-width='1.2' stroke-linecap='round'><path d='M10 40h50l20 20h40M40 10v30M120 60v50h30M60 120H20v-30M100 150v-30l-20-20' opacity='.38'/><circle cx='10' cy='40' r='2.5' fill='%2376c000' stroke='none' opacity='.6'/><circle cx='150' cy='110' r='2.5' fill='%2376c000' stroke='none' opacity='.6'/><circle cx='40' cy='10' r='2' fill='%2376c000' stroke='none' opacity='.45'/><circle cx='100' cy='150' r='2' fill='%2376c000' stroke='none' opacity='.45'/><circle cx='20' cy='120' r='2' fill='%2376c000' stroke='none' opacity='.45'/></svg>") 0 0/160px 160px repeat}
+.wc-hero .wc-wrap{position:relative;padding-top:52px;padding-bottom:50px;text-align:center}
+.wc-wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+.wc-pill{display:inline-flex;align-items:center;gap:7px;margin:0 0 18px;padding:6px 14px 6px 11px;
+  border-radius:999px;background:var(--green);color:#0f2a00;font-size:.78rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.wc-h1{margin:0 0 12px;font-size:2.5rem;line-height:1.1;letter-spacing:-.02em;color:#fff}
+.wc-sub{margin:0 auto 10px;font-size:1.05rem;color:#fff}
+.wc-addr{display:inline-flex;align-items:center;gap:8px;vertical-align:middle;margin-left:6px;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:4px 6px 4px 12px}
+.wc-addr a{color:var(--green);text-decoration:none;font-weight:700}
 .wc-addr a:hover{text-decoration:underline}
-.wc-copy{border:0;border-radius:999px;background:var(--bg-soft);color:var(--muted);cursor:pointer;
-  font:inherit;font-size:.78rem;font-weight:700;padding:5px 12px}
-.wc-copy:hover{background:var(--dark);color:#fff}
-.wc-lede{margin:0 auto;font-size:.97rem;color:var(--muted);max-width:56ch;line-height:1.6}
-.wc-wrap-cards{padding-top:34px;padding-bottom:72px}
-.wc-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.wc-card{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:24px 22px 20px;
-  border-radius:16px;background:var(--green);color:#fff;text-decoration:none;
-  box-shadow:0 2px 10px rgba(32,33,36,.14);transition:transform .14s,box-shadow .14s,background .14s}
-.wc-card:hover{background:var(--green-dark);color:#fff;transform:translateY(-3px);box-shadow:0 10px 22px rgba(32,33,36,.20)}
-.wc-card:focus-visible{outline:3px solid var(--dark);outline-offset:3px}
-.wc-card-ico{display:flex;align-items:center;justify-content:center;width:42px;height:42px;
-  border-radius:12px;background:rgba(255,255,255,.22);margin-bottom:4px}
-.wc-card-b{font-size:1.12rem;font-weight:800;line-height:1.25}
-.wc-card-t{font-size:.88rem;line-height:1.55;color:rgba(255,255,255,.93);flex:1 1 auto}
-.wc-card-go{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding-top:12px;
-  border-top:1px solid rgba(255,255,255,.28);width:100%;font-size:.85rem;font-weight:800}
+.wc-copy{border:0;border-radius:999px;background:#fff;color:#1a1a1a;cursor:pointer;font:inherit;font-size:.78rem;font-weight:700;padding:4px 11px}
+.wc-copy:hover{background:var(--green);color:#0f2a00}
+.wc-lede{margin:0 auto;font-size:1rem;color:rgba(255,255,255,.8);max-width:56ch;line-height:1.6}
+.wc-wrap-cards{padding-top:36px;padding-bottom:72px}
+.wc-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.wc-card{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:22px 20px 18px;
+  border-radius:18px;background:var(--card);color:var(--ink);text-decoration:none;border:1px solid var(--line);
+  box-shadow:0 1px 2px rgba(15,15,15,.04),0 10px 30px rgba(15,15,15,.06);transition:transform .14s,box-shadow .14s,border-color .14s}
+.wc-card:hover{transform:translateY(-3px);border-color:var(--green);box-shadow:0 14px 34px rgba(15,15,15,.12);color:var(--ink)}
+.wc-card:focus-visible{outline:3px solid var(--green-dark);outline-offset:3px}
+.wc-card-ico{display:flex;align-items:center;justify-content:center;width:44px;height:44px;
+  border-radius:12px;background:var(--green);color:#0f2a00;margin-bottom:6px}
+.wc-card-b{font-size:1.1rem;font-weight:800;line-height:1.25}
+.wc-card-t{font-size:.88rem;line-height:1.55;color:#4a4f55;flex:1 1 auto}
+.wc-card-go{display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:9px 16px;border-radius:10px;
+  background:var(--green);color:#0f2a00;font-weight:800;font-size:.9rem}
+.wc-card:hover .wc-card-go{background:#6ab000}
 .wc-card:hover .wc-card-go svg{transform:translateX(3px)}
 .wc-card-go svg{transition:transform .14s}
 .wc-foot{margin:28px 0 0;font-size:.9rem;color:var(--muted);text-align:center}
 .wc-foot a{color:var(--green-dark)}
 @media(prefers-reduced-motion:reduce){.wc-card,.wc-card-go svg{transition:none}.wc-card:hover{transform:none}}
 @media(max-width:860px){.wc-cards{grid-template-columns:1fr}
+  .wc-cards{grid-template-columns:1fr 1fr}
   .wc-card{flex-direction:row;flex-wrap:wrap;align-items:center;padding:18px 20px}
   .wc-card-ico{margin:0}
   .wc-card-b{flex:1 1 auto}
   .wc-card-t{flex:1 1 100%}
   .wc-card-go{margin-top:6px;padding-top:10px}}
 @media(max-width:600px){
+  .wc-cards{grid-template-columns:1fr}
   .wc-hero .wc-wrap{padding:32px 16px 30px}
   .wc-wrap{padding:0 16px}
   .wc-h1{font-size:1.75rem}
@@ -1664,7 +1669,7 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 .kit-art{--ink:#0f0f0f;--paper:#fff;--soft:#5a5f65;--accent:#76c000;--accentink:#3f6300;
   background:var(--paper);color:var(--ink);font-family:Arial,Helvetica,sans-serif;position:relative;overflow:hidden}
 .kit-dark .kit-art{--ink:#fff;--paper:#0f0f0f;--soft:#a9b0b6;--accentink:#76c000}
-.kit-logo{width:.46in;height:.46in;object-fit:cover;display:block;border-radius:.06in;background:var(--card)}
+.kit-logo{width:.46in;height:.46in;object-fit:contain;display:block;border-radius:.06in;background:var(--card)}
 .kit-logo-text{display:flex;align-items:center;justify-content:center;background:var(--accent);
   color:#000;font-weight:700;font-size:.24in;border-radius:.08in}
 .kit-accent{position:absolute;left:0;top:0;bottom:0;width:.09in;background:var(--accent)}
@@ -2073,7 +2078,7 @@ a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
 .pf-cta-2{display:block;width:100%;text-align:center;margin:0 0 14px;font-weight:700}
 /* dashboard: the club fold and the project editor */
 .pt-club-fields{display:none}
-.pt-club-on .pt-club-fields{display:block}
+.pt-club-on .pt-club-fields,.pt-club-fields.pt-club-on{display:block}
 .pt-project-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:18px}
 .pt-project{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card)}
 .pt-project img{width:100%;height:120px;object-fit:cover;display:block;background:var(--bg-soft)}
@@ -2160,3 +2165,14 @@ a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
   .pf-modal-box{border-radius:0;min-height:100%}
   .pf-modal-cover{height:200px}
 }
+
+/* club page polish (2026-10-01) */
+.pf-chip-link{text-decoration:none}
+.pf-chip-link:hover{border-color:var(--green);color:var(--green-dark)}
+.pf-promo{position:relative;padding-top:16px}
+.pf-promo-ico{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:#fff;border:1px solid var(--line);color:var(--green-dark);margin-bottom:10px}
+.pf-tile-open{position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.92);color:#1a1a1a;display:flex;align-items:center;justify-content:center;opacity:0;transform:translateY(-4px);transition:opacity .2s,transform .2s;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.pf-tile:hover .pf-tile-open,.pf-tile:focus-visible .pf-tile-open{opacity:1;transform:none}
+.pf-club-head h1{font-size:2.4rem}
+.pf-club-college{letter-spacing:.01em}
+#showcase,#officers{scroll-margin-top:80px}

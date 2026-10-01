@@ -82,6 +82,7 @@ const ICON_PATHS = {
   Website:  '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
   Address:  '<path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',
   Founded:  '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  Projects: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 11v5M9.5 13.5h5"/>',
   Employees:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2"/>',
   linkedin: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7"/>',
   x:        '<path d="M4 4l16 16M20 4L4 20"/>',
@@ -172,16 +173,28 @@ function clubHeroHtml(co){
         ${join ? `<a class="btn btn-primary" href="${escapeHtml(join)}"${/^https?:/i.test(join) ? ' target="_blank" rel="noopener nofollow"' : ''}>Join Club</a>` : ''}
         ${site ? `<a class="btn btn-outline" href="${escapeHtml(site)}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
       </div>
-      ${fitsLine(co.address, 60) ? `<div class="pf-meta"><span class="pf-chip">${iconHtml('Address')}${escapeHtml(co.address)}</span></div>` : ''}
+      ${(() => {
+        const n = CLUB_PROJECTS.filter(p => p && p.title && p.published !== false).length;
+        const officers = (Array.isArray(co.team) ? co.team : []).filter(t => t && ((t.name || '').trim() || (t.handle || '').trim())).length;
+        const chips = [
+          n ? `<a class="pf-chip pf-chip-link" href="#showcase">${iconHtml('Projects')}${n} project${n === 1 ? '' : 's'}</a>` : '',
+          officers ? `<a class="pf-chip pf-chip-link" href="#officers">${iconHtml('Employees')}${officers} officer${officers === 1 ? '' : 's'}</a>` : '',
+          /^\d{4}$/.test((co.founded || '').trim()) ? `<span class="pf-chip">${iconHtml('Founded')}Est. ${escapeHtml(co.founded.trim())}</span>` : '',
+          fitsLine(co.address, 60) ? `<span class="pf-chip">${iconHtml('Address')}${escapeHtml(co.address)}</span>` : ''].filter(Boolean);
+        return chips.length ? `<div class="pf-meta">${chips.join('')}</div>` : '';
+      })()}
     </div>
     ${logoBox(co.logo, co.name + ' logo', co.name.slice(0, 1).toUpperCase())}
   </div>`;
 }
-const PROMO_KEYS = [['members', 'New members', 'Thinking of joining?'], ['alumni', 'Alumni', 'Stay connected.'], ['employers', 'Employers', 'Hire from the club.']];
+const PROMO_KEYS = [
+  ['members', 'New members', 'Thinking of joining?', '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M19 8h4M21 6v4"/>'],
+  ['alumni', 'Alumni', 'Stay connected.', '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/><path d="M22 9v6"/>'],
+  ['employers', 'Employers', 'Hire from the club.', '<rect x="3" y="7.5" width="18" height="12.5" rx="2"/><path d="M8.5 7.5V5.8A1.8 1.8 0 0 1 10.3 4h3.4a1.8 1.8 0 0 1 1.8 1.8v1.7"/><path d="M3 12.5h18"/>']];
 function promoHubHtml(co){
   const promo = co.club_promo && typeof co.club_promo === 'object' ? co.club_promo : {};
-  const cards = PROMO_KEYS.filter(([k]) => (promo[k] || '').trim()).map(([k, title, kicker]) =>
-    `<div class="pf-promo"><span class="pf-promo-k">${kicker}</span><h3>${title}</h3><p>${escapeHtml(promo[k].trim())}</p></div>`);
+  const cards = PROMO_KEYS.filter(([k]) => (promo[k] || '').trim()).map(([k, title, kicker, icon]) =>
+    `<div class="pf-promo"><span class="pf-promo-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon}</svg></span><span class="pf-promo-k">${kicker}</span><h3>${title}</h3><p>${escapeHtml(promo[k].trim())}</p></div>`);
   return cards.length ? section('Promo Hub', `<div class="pf-promos">${cards.join('')}</div>`) : '';
 }
 function teamTagsHtml(team){
@@ -220,13 +233,14 @@ function projectTileHtml(p, i){
   const sum = String(p.summary || '').replace(/\s+/g, ' ').trim();
   return `<button type="button" class="pf-tile" data-pj="${i}" id="project-${escapeHtml(String(p.id))}" aria-label="Open project: ${escapeHtml(p.title)}">
       ${cover ? `<img src="${escapeHtml(cover)}" alt="" loading="lazy">` : `<span class="pf-tile-ph" aria-hidden="true">${escapeHtml(p.title.slice(0, 1).toUpperCase())}</span>`}
+      <span class="pf-tile-open" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
       <span class="pf-tile-cap"><b>${escapeHtml(p.title)}</b>${p.year ? `<i>${escapeHtml(String(p.year))}</i>` : ''}${sum ? `<span class="pf-tile-sum">${escapeHtml(sum.length > 140 ? sum.slice(0, 140) + '…' : sum)}</span>` : ''}</span>
     </button>`;
 }
 function projectsShowcaseHtml(projects, co){
   const list = (projects || []).filter(p => p && p.title && p.published !== false);
-  return list.length ? section('Project Showcase', `<div class="pf-grid">${list.map((p, i) => projectTileHtml(p, i)).join('')}</div>
-    <p class="pf-note">Open a project for the team, the build pictures, the documents and the videos.</p>`) : '';
+  return list.length ? section(`Project Showcase · ${list.length}`, `<div class="pf-grid">${list.map((p, i) => projectTileHtml(p, i)).join('')}</div>
+    <p class="pf-note">Open a project for the team, the build pictures, the documents and the videos.</p>`, ' id="showcase"') : '';
 }
 /* the project card: everything the sketch lists, in one overlay */
 function projectCardHtml(p, co){
@@ -272,7 +286,7 @@ function officersHtml(co){
         <div class="founder-avatar">${escapeHtml(((t.name || t.handle || '?').trim()).slice(0, 1).toUpperCase())}</div>
         <div><div class="founder-name">${(t.handle || '').trim() ? `<a href="${handleLink(t.handle)}">${escapeHtml((t.name || t.handle).trim())}</a>` : escapeHtml((t.name || '').trim())}</div>
         <div class="founder-role">${escapeHtml(t.role || 'Officer')}</div></div>
-      </div>`).join('')}</div>`);
+      </div>`).join('')}</div>`, ' id="officers"');
 }
 /* the student's side: skills they typed, badges they earned, projects they are on */
 function badgeIcon(kind){
@@ -543,7 +557,7 @@ async function initProfile(){
   /* ---- sidebar: one place for everything a buyer needs to act ---- */
   html += `</div><aside class="pf-side">
     <div class="pf-side-card">
-      <h2 class="pf-sec-h">Get in touch</h2>
+      <h2 class="pf-sec-h">${isClub ? 'Contact the club' : 'Get in touch'}</h2>
       ${looksEmail(co.email)
         ? `<a class="btn btn-primary pf-cta" id="pf-email-cta"
              href="mailto:${escapeHtml(co.email.trim())}?subject=${encodeURIComponent('Enquiry via Circuits.com: ' + co.name)}">Email ${escapeHtml(co.name)}</a>`

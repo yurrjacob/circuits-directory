@@ -299,7 +299,11 @@ async function initPortal(){
 const PJ = { list: [], pics: [], docs: [], other: [], wired: false };
 async function renderProjects(){
   const list = el('pt-project-list'); if(!list) return;
-  if(!PT.slug || !(PT.co && PT.co.kind === 'club')){ list.innerHTML = ''; return; }
+  if(!PT.slug || !(PT.co && PT.co.kind === 'club')){
+    list.innerHTML = '<p class="pf-note">Save the club settings above first. Projects go on the page once it is a club.</p>';
+    if(!PJ.wired){ PJ.wired = true; wireProjects(); pjSetMode(null); }
+    return;
+  }
   PJ.list = await fetchProjects(PT.slug);
   list.innerHTML = PJ.list.length ? PJ.list.map(p => {
     const cover = isLogoUrl(p.cover_url) ? p.cover_url : '';
@@ -1261,9 +1265,9 @@ function markMissing(){
    toast at the top: the button is at the bottom of a long form. */
 function saveNote(text, ok){
   toast(text, ok);
-  const m = el('pt-save-msg'); if(!m) return;
-  m.textContent = text; m.classList.toggle('bad', !ok);
-  clearTimeout(PT.saveMsgT); PT.saveMsgT = setTimeout(() => { m.textContent = ''; }, 6000);
+  const ms = [el('pt-save-msg'), el('pt-club-msg')].filter(Boolean);
+  ms.forEach(m => { m.textContent = text; m.classList.toggle('bad', !ok); });
+  clearTimeout(PT.saveMsgT); PT.saveMsgT = setTimeout(() => { ms.forEach(m => { m.textContent = ''; }); }, 6000);
 }
 function renderProfileForm(){
   const c = PT.co;
@@ -1329,8 +1333,6 @@ function renderProfileForm(){
    badge on their own profile, so the list is the source of that badge. */
 function clubOn(){ return !!(el('f-club') && el('f-club').checked); }
 function syncClubTab(){
-  const on = !!(PT.co && PT.co.kind === 'club');
-  const t = el('pt-tab-projects'); if(t) t.style.display = on ? '' : 'none';
   const v = el('pt-projects-view'); if(v) v.href = profileUrl(PT.co && PT.co.handle) || '#';
 }
 function wireClubFields(c){
@@ -1344,8 +1346,8 @@ function wireClubFields(c){
   el('f-promo-employers').value = promo.employers || '';
   const paint = () => {
     fold.classList.toggle('pt-club-on', box.checked);
-    el('pt-club-state').textContent = box.checked ? '· on' : '· off';
-    if(box.checked) fold.open = true;
+    const sc = el('pt-club-showcase'); if(sc) sc.classList.toggle('pt-club-on', box.checked);
+    const st = el('pt-club-state'); if(st) st.textContent = box.checked ? '· on' : '· off';
   };
   paint();
   box.onchange = () => { paint(); markDirty(); };
@@ -1475,7 +1477,7 @@ function showcaseProblem(certs, team){
 }
 
 async function saveProfile(){
-  const btns = [...document.querySelectorAll('.pt-save')];
+  const btns = [...document.querySelectorAll('.pt-save, .pt-save-club')];
   const btn = { set disabled(v){ btns.forEach(b => b.disabled = v); } }; // every tab's Save moves together
   btn.disabled = true;
   /* The address is optional on save. It used to abort the whole save when the
