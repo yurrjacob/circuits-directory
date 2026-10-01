@@ -290,7 +290,7 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 
 /* logo upload preview (Join form) */
 .logo-preview{display:flex;align-items:center;gap:10px;margin-top:10px}
-.logo-preview img{width:46px;height:46px;object-fit:contain;border:1px solid var(--line);border-radius:8px;background:#fff}
+.logo-preview img{width:46px;height:46px;object-fit:cover;border:1px solid var(--line);border-radius:8px;background:#fff}
 .logo-preview span{font-size:.85rem;color:var(--muted)}
 
 /* premium sponsored banner opt-in (Join form) */
@@ -324,7 +324,7 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 .promo-gold:hover{box-shadow:0 0 0 3px rgba(154,164,174,.28)}
 .promo-gold input{accent-color:#7d8894}
 /* uploaded logo inside preview boxes */
-.premium-logo img,.co-logo img{width:100%;height:100%;object-fit:contain;border-radius:inherit;background:#fff;display:block}
+.premium-logo img,.co-logo img{width:100%;height:100%;object-fit:cover;border-radius:inherit;background:#fff;display:block}
 /* gated trust-badge builder (Join form) */
 .badge-gated{opacity:.45;pointer-events:none;transition:opacity .15s}
 .badge-gated.on{opacity:1;pointer-events:auto}
@@ -546,7 +546,7 @@ tr.row-warn td{background:#fff3cd}
 .co-sub{font-size:.7rem;color:var(--muted);margin-top:2px}
 .badge-cell .badge-color{width:26px;height:20px;border:1px solid var(--line);border-radius:4px;background:none;padding:0;vertical-align:middle;cursor:pointer}
 /* uploaded logo thumbnail in the applications sheet */
-.logo-thumb{width:30px;height:30px;object-fit:contain;padding:2px;box-sizing:border-box;border:1px solid var(--line);border-radius:6px;background:#fff;vertical-align:middle}
+.logo-thumb{width:30px;height:30px;object-fit:cover;border:1px solid var(--line);border-radius:6px;background:#fff;vertical-align:middle}
 /* An admin who runs no listing of their own gets the console on its own, the company picker and the supplier tabs would have nothing to point at. */
 .pt-admin-only .pt-tab:not(#pt-tab-admin):not(#pt-tab-me){display:none}
 /* the profile card, when it lives in the Your Profile tab, sits like content
@@ -830,8 +830,7 @@ tr.row-warn td{background:#fff3cd}
 .cover-thumb{display:inline-block;width:96px;height:32px;border-radius:6px;background:#e9ecef center/cover no-repeat;border:1px solid var(--line)}
 .pf-logo{width:96px;height:96px;border-radius:22px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;color:#c2c6cb;
   box-shadow:0 1px 2px rgba(15,15,15,.06),0 8px 24px rgba(15,15,15,.10)}
-.pf-logo img{width:100%;height:100%;object-fit:contain;display:block;padding:8px;box-sizing:border-box;background:#fff}
-.pf-logo.pf-photo img{object-fit:cover;padding:0}
+.pf-logo img{width:100%;height:100%;object-fit:cover;display:block}
 .pf-photo,.me-photo-prev{border-radius:50%}
 .auth-field #me-photo{width:auto;flex:1;min-width:180px}
 .me-photo-prev{width:64px;height:64px;flex:none;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--line);background:#fff;color:#c2c6cb}
@@ -1669,7 +1668,7 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 .kit-art{--ink:#0f0f0f;--paper:#fff;--soft:#5a5f65;--accent:#76c000;--accentink:#3f6300;
   background:var(--paper);color:var(--ink);font-family:Arial,Helvetica,sans-serif;position:relative;overflow:hidden}
 .kit-dark .kit-art{--ink:#fff;--paper:#0f0f0f;--soft:#a9b0b6;--accentink:#76c000}
-.kit-logo{width:.46in;height:.46in;object-fit:contain;display:block;border-radius:.06in;background:var(--card)}
+.kit-logo{width:.46in;height:.46in;object-fit:cover;display:block;border-radius:.06in;background:var(--card)}
 .kit-logo-text{display:flex;align-items:center;justify-content:center;background:var(--accent);
   color:#000;font-weight:700;font-size:.24in;border-radius:.08in}
 .kit-accent{position:absolute;left:0;top:0;bottom:0;width:.09in;background:var(--accent)}
@@ -2023,7 +2022,7 @@ tr.hl-flash td{animation:hl-pulse 2s ease-in-out both}
 
 /* ===== college clubs, student badges, projects and the resume page (2026-09-29) ===== */
 .pf-college{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
-.pf-college-logo{width:34px;height:34px;object-fit:contain;border-radius:8px;border:1px solid var(--line);background:#fff;padding:2px}
+.pf-college-logo{width:34px;height:34px;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:#fff}
 .pf-college-name{font-weight:700;color:#3c4046}
 .pf-kind{font-size:.66rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--green-dark);background:#f1fae0;border:1px solid var(--green);border-radius:999px;padding:3px 9px}
 .pf-promos{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
@@ -2120,7 +2119,7 @@ a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
 /* college logo left, club logo right, the name between them */
 .pf-club-head{display:grid;grid-template-columns:128px minmax(0,1fr) 128px;gap:22px;align-items:start;margin:-44px 0 24px;padding:0 6px}
 .pf-club-logo{width:128px;height:128px;border-radius:24px;background:#fff;border:1px solid var(--line);box-shadow:0 10px 30px rgba(15,15,15,.12);display:flex;align-items:center;justify-content:center;overflow:hidden}
-.pf-club-logo img{width:100%;height:100%;object-fit:contain;padding:12px}
+.pf-club-logo img{width:100%;height:100%;object-fit:cover;display:block}
 .pf-club-logo-ph{font-size:2.6rem;font-weight:800;color:var(--green-dark)}
 .pf-club-id{text-align:center;padding-top:54px}
 .pf-club-id h1{margin:0 0 4px;font-size:2.2rem;line-height:1.15;letter-spacing:-.02em}

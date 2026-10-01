@@ -835,8 +835,8 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
      listings table says what each keyword has, the tab beside it is where the
      paid extras are switched on. */
   /* Projects (2026-09-29) sits after Branding and is shown only to a club page */
-  assert.deepStrictEqual(tabs, ['profile', 'listings', 'upgrades', 'hiring', 'seeking', 'branding', 'club', 'account', 'admin'],
-    'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Find Recruits / Job Search / Branding / College Club / Account Settings / Admin');
+  assert.deepStrictEqual(tabs, ['profile', 'listings', 'upgrades', 'hiring', 'seeking', 'club', 'branding', 'account', 'admin'],
+    'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Find Recruits / Job Search / College Club / Branding / Account Settings / Admin');
   assert.ok(/data-tab="club">College Club</.test(portalHtml2) && portalHtml2.includes('id="tab-club"') && portalHtml2.includes('class="btn btn-primary pt-save-club"'),
     'the College Club tab, or its own Save button, is missing');
   assert.ok(portalHtml2.indexOf('id="f-club"') > portalHtml2.indexOf('id="tab-club"') && portalHtml2.indexOf('id="pj-save"') > portalHtml2.indexOf('id="tab-club"')
