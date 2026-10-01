@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=4d7a3c45f7">
+<link rel="stylesheet" href="/styles.css?v=b61850a7a0">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -403,7 +403,7 @@
             <div class="pt-list cb-rows" id="f-officers"></div>
           </section>
         </div>
-        <div class="pt-save-row cb-save"><button class="btn btn-primary pt-save-club" type="button">Save club</button><span class="pt-save-msg" id="pt-club-msg" role="status"></span></div>
+        <div class="pt-save-row cb-save"><button class="btn btn-primary pt-save-club cb-cta" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Save club</span></button><span class="pt-save-msg" id="pt-club-msg" role="status"></span></div>
       </div>
     </div>
     <div class="pt-club-fields" id="pt-club-showcase">
@@ -443,7 +443,7 @@
         <p class="pf-note" style="margin:0 0 10px">Address is the member's circuits.com/<b>address</b>. Members without one are named only. Tagged members get a Project badge on their profile.</p>
         <div class="pt-list cb-rows" id="f-pjteam"></div>
         <div class="pt-save-row cb-save">
-          <button class="btn btn-primary" type="button" id="pj-save">Add to showcase</button>
+          <button class="btn btn-primary cb-cta" type="button" id="pj-save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Add to showcase</span></button>
           <button class="mini-btn" type="button" id="pj-cancel" style="display:none">Cancel</button>
           <span class="pf-note" id="pj-msg" style="margin:0"></span>
         </div>
@@ -777,7 +777,7 @@
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
 <script src="/store.js?v=c0ffb7a4b3"></script>
 <script src="/app.js?v=2892a73191"></script>
-<script src="/portal.js?v=0e7ddfcab7"></script>
+<script src="/portal.js?v=c2b5fbf506"></script>
 <script src="/admin.js?v=a280d00bb3"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));

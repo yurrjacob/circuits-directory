@@ -839,7 +839,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   /* Projects (2026-09-29) sits after Branding and is shown only to a club page */
   assert.deepStrictEqual(tabs, ['profile', 'listings', 'upgrades', 'hiring', 'seeking', 'club', 'branding', 'account', 'admin'],
     'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Find Recruits / Job Search / College Club / Branding / Account Settings / Admin');
-  assert.ok(/data-tab="club">(?:<svg[\s\S]*?<\/svg>)?College Club</.test(portalHtml2) && portalHtml2.includes('id="tab-club"') && portalHtml2.includes('class="btn btn-primary pt-save-club"'),
+  assert.ok(/data-tab="club">(?:<svg[\s\S]*?<\/svg>)?College Club</.test(portalHtml2) && portalHtml2.includes('id="tab-club"') && portalHtml2.includes('class="btn btn-primary pt-save-club cb-cta"'),
     'the College Club tab, or its own Save button, is missing');
   assert.ok(portalHtml2.indexOf('id="f-club"') > portalHtml2.indexOf('id="tab-club"') && portalHtml2.indexOf('id="pj-save"') > portalHtml2.indexOf('id="tab-club"')
          && portalHtml2.indexOf('id="pj-save"') < portalHtml2.indexOf('id="tab-branding"'), 'the club settings and the project editor must both live inside the College Club tab');

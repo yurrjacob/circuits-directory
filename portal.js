@@ -328,7 +328,7 @@ function pjDraw(){
 function pjSetMode(p){
   el('pj-id').value = p ? p.id : '';
   el('pj-form-h').textContent = p ? 'Edit project' : 'Add a project';
-  el('pj-save').textContent = p ? 'Save changes' : 'Add to showcase';
+  const lab = el('pj-save').querySelector('span'); if(lab) lab.textContent = p ? 'Save changes' : 'Add to showcase'; else el('pj-save').textContent = p ? 'Save changes' : 'Add to showcase';
   el('pj-cancel').style.display = p ? '' : 'none';
   el('pj-title').value = p ? p.title || '' : '';
   el('pj-year').value = p ? p.year || '' : '';
@@ -639,10 +639,14 @@ async function renderAccount(user, hostId, canDelete){
   host.innerHTML = `
     <div class="pt-account">
       <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Your Account</h3>
-      <p class="pf-note">Signed in as <b>${escapeHtml(user.email || '')}</b>
+      <div class="ac-id">
+        <div class="ac-avatar" aria-hidden="true">${escapeHtml(String(user.email || '?').slice(0, 1).toUpperCase())}</div>
+        <div class="ac-who"><b>${escapeHtml(user.email || '')}</b><span>Your sign-in email</span></div>
         ${confirmed
-          ? '<span class="ac-ok">email confirmed</span>'
-          : '<span class="ac-warn">email not confirmed yet. Check your inbox for the link</span>'}</p>
+          ? '<span class="ac-pill ac-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Email confirmed</span>'
+          : '<span class="ac-pill ac-warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/></svg>Not confirmed yet</span>'}
+      </div>
+      ${confirmed ? '' : '<p class="pf-note ac-warn-note">Check your inbox for the confirmation link. Until it is clicked, listings and posts stay on hold.</p>'}
 
       <div class="auth-field"><label for="ac-email">Change sign-in email</label>
         <input id="ac-email" type="email" autocomplete="email" placeholder="new@address.com"></div>

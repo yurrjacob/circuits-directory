@@ -1015,7 +1015,7 @@ tr.row-warn td{background:#fff3cd}
 .lb-cx-mark{width:13px;height:13px;border-radius:3px;display:block}
 
 /* account panel */
-.pt-account{border:1px solid var(--line);border-radius:12px;padding:20px;margin-top:22px;text-align:left}
+.pt-account{border:1px solid var(--line);border-radius:16px;padding:20px;margin-top:0;text-align:left;background:var(--card);box-shadow:0 1px 2px rgba(15,15,15,.04)}
 .pt-account h3{margin:0 0 6px;font-size:1rem}
 .ac-rule{border:0;border-top:1px solid var(--line);margin:20px 0 16px}
 .ac-ok{color:#3b6d11;font-weight:700}
@@ -2287,3 +2287,28 @@ a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
 .pt-panel .pt-actions{margin-top:16px}
 .pt-panel .pt-market{margin-top:16px}
 .pt-panel .pt-market-row input{padding:11px 13px}
+
+/* the two club actions stand apart from every other button on the site:
+   dark, tall, with a green mark that lights the whole button on hover */
+.btn.cb-cta{display:inline-flex;align-items:center;gap:10px;background:#0f0f0f;color:#fff;border:2px solid #0f0f0f;border-radius:14px;padding:14px 26px;font-size:1.02rem;font-weight:800;letter-spacing:.01em;box-shadow:0 8px 22px rgba(15,15,15,.22),0 0 0 4px rgba(118,192,0,.18);transition:background .15s,color .15s,transform .15s,box-shadow .15s}
+.btn.cb-cta svg{width:20px;height:20px;flex:none;color:var(--green);transition:color .15s}
+.btn.cb-cta:hover{background:var(--green);border-color:var(--green);color:#0f2a00;transform:translateY(-1px);box-shadow:0 12px 26px rgba(118,192,0,.35)}
+.btn.cb-cta:hover svg{color:#0f2a00}
+.btn.cb-cta:focus-visible{outline:3px solid var(--green-dark);outline-offset:3px}
+.btn.cb-cta:disabled{opacity:.6;transform:none}
+.cb-save{padding-top:4px}
+@media(max-width:600px){.btn.cb-cta{width:100%;justify-content:center}}
+
+/* Account Settings: who you are signed in as, and whether the email is confirmed */
+.ac-id{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--bg-soft);margin:0 0 18px}
+.ac-avatar{width:46px;height:46px;border-radius:50%;background:#0f0f0f;color:var(--green);font-weight:800;font-size:1.15rem;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 0 0 3px rgba(118,192,0,.25)}
+.ac-who{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+.ac-who b{font-size:1rem;overflow-wrap:anywhere}
+.ac-who span{font-size:.78rem;color:var(--muted)}
+.ac-pill{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:7px 12px 7px 9px;border:1px solid transparent;flex:none}
+.ac-pill svg{width:16px;height:16px;flex:none;border-radius:50%;padding:2px}
+.ac-pill.ac-ok{background:#f1fae0;color:var(--green-dark);border-color:var(--green)}
+.ac-pill.ac-ok svg{background:var(--green);color:#0f2a00}
+.ac-pill.ac-warn{background:#fff6e0;color:#8a5a00;border-color:#e8c267}
+.ac-pill.ac-warn svg{color:#8a5a00;padding:0}
+.ac-warn-note{margin:-8px 0 16px}
