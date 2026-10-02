@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=a6d33e981a">
+<link rel="stylesheet" href="/styles.css?v=a6f61d461c">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -85,10 +85,10 @@
       <h1 id="pt-title">Dashboard</h1>
       <p id="pt-sub">Everything on Circuits.com: Your Profile, Your Business Listings, Your Work Listings.<b id="pt-name" hidden></b></p>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <select id="pt-company" style="height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px"></select>
-      <a class="mini-btn" id="pt-view" href="#" target="_blank" rel="noopener">View public profile ↗</a>
-      <button type="button" class="mini-btn" id="pt-signout">Sign out</button>
+    <div class="console-acts">
+      <select id="pt-company" class="console-pick"></select>
+      <a class="btn btn-outline console-view" id="pt-view" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></svg>View public profile</a>
+      <button type="button" class="console-signout" id="pt-signout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></svg>Sign out</button>
     </div>
   </div>
 

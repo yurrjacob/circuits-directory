@@ -2382,3 +2382,14 @@ a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
 .form-wrap .form-foot .submit{padding:14px 30px;font-size:1.02rem;font-weight:800;border-radius:14px;box-shadow:0 8px 22px rgba(118,192,0,.3)}
 .form-wrap .form-foot .submit:hover{transform:translateY(-1px)}
 @media(max-width:600px){.form-wrap .form-foot .submit{width:100%}}
+
+/* the dashboard head's actions (2026-10-02) */
+.console-acts{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.console-pick{height:40px;border:1px solid var(--line);border-radius:10px;padding:0 34px 0 12px;font:inherit;font-weight:600;background:var(--card) no-repeat right 12px center/12px url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b6256' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");appearance:none}
+.console-view{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:10px;font-weight:700;font-size:.9rem}
+.console-view svg{width:17px;height:17px}
+.console-signout{display:inline-flex;align-items:center;gap:7px;border:0;background:none;font:inherit;font-size:.9rem;font-weight:600;color:var(--muted);cursor:pointer;padding:9px 10px;border-radius:10px}
+.console-signout svg{width:16px;height:16px}
+.console-signout:hover{color:#b3261e;background:#fcebeb}
+/* cards side by side in a grid start on the same line */
+.cb-grid > .cb-card{margin-top:0}
