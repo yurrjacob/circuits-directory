@@ -216,6 +216,13 @@ async function initPortal(){
 
   /* An applicant who has not clicked the confirmation link yet: ownership is
      keyed on the CONFIRMED email, so say what is happening and hand them the fix. */
+  /* an invite remembered from the register page, accepted now that the
+     account is signed in (the welcome page usually does this first) */
+  if(pendingInvite()){
+    const r = await acceptClubInvite(pendingInvite());
+    if(!r.error){ forgetInvite(); toast('You are now part of the club you were invited to. The badge is on your profile.', true); }
+    else if(!/Finish creating/.test(r.error)) forgetInvite();
+  }
   const confirmed = !!(user.email_confirmed_at || user.confirmed_at);
   const pend = el('pt-pending');
   if(pend && !confirmed){
@@ -1458,6 +1465,38 @@ function wireClubFields(c){
   rm.onclick = () => { PT.clearCollege = true; PT.collegeFile = null; inp.value = ''; show(''); markDirty(); };
   renderRepeater('officers', Array.isArray(c.team) ? c.team : [], ['handle', 'name', 'role'], ['Circuits.com address', 'Name', 'Role']);
   renderRepeater('members', Array.isArray(c.members) ? c.members : [], ['handle', 'name'], ['Circuits.com address', 'Name']);
+  renderInvites(c);
+}
+/* Invite links (2026-10-05): one for members, one for officers. Whoever signs
+   up through one is added to the club when their email is confirmed. Reset
+   makes a fresh link and the old one stops working. */
+async function renderInvites(c){
+  const host = el('pt-club-invites'); if(!host) return;
+  host.innerHTML = '<p class="pf-note">Preparing your invite links…</p>';
+  const rows = [];
+  for(const [role, label, what] of [['member', 'Members', 'added to the Members list, with a Member badge'], ['officer', 'Officers', 'added to the Officers list, with a Leadership badge']]){
+    const r = await clubInviteLink(c.slug, role);
+    rows.push(`<div class="inv-row" data-role="${role}">
+        <div class="inv-text"><b>${label}</b><span>Whoever signs up through this link is ${what}.</span></div>
+        <div class="inv-link"><input type="text" readonly value="${r.error ? '' : escapeHtml(r.url)}" aria-label="${label} invite link" ${r.error ? `placeholder="${escapeHtml(r.error)}"` : ''}>
+          <button type="button" class="btn btn-primary inv-copy" ${r.error ? 'disabled' : ''}>Copy link</button>
+          <button type="button" class="mini-btn inv-reset" ${r.error ? 'disabled' : ''}>Reset</button></div>
+      </div>`);
+  }
+  host.innerHTML = rows.join('');
+  host.querySelectorAll('.inv-copy').forEach(b => b.addEventListener('click', async () => {
+    const inp = b.parentElement.querySelector('input');
+    try{ await navigator.clipboard.writeText(inp.value); b.textContent = 'Copied'; }
+    catch(e){ inp.select(); b.textContent = 'Press Ctrl C'; }
+    setTimeout(() => { b.textContent = 'Copy link'; }, 2000);
+  }));
+  host.querySelectorAll('.inv-reset').forEach(b => b.addEventListener('click', async () => {
+    const row = b.closest('.inv-row');
+    if(!confirm('Reset this link? The old one stops working and anyone you already sent it to will need the new one.')) return;
+    const err = await revokeClubInvite(c.slug, row.dataset.role);
+    if(err){ toast(err, false); return; }
+    renderInvites(c);
+  }));
 }
 /* Create club page: a second page for this account (Jacob, 2026-10-05). The
    database makes the row and the ownership; the picker then carries both. */

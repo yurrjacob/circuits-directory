@@ -160,3 +160,27 @@ begin
 end $$;
 revoke execute on function public.create_club_page(text, text, text) from public, anon;
 grant execute on function public.create_club_page(text, text, text) to authenticated;
+
+-- 2026-10-05, invite links (Jacob): a president sends club members a link;
+-- signing up through it adds them to the club automatically. One token per
+-- club and role (member or officer), made and reset by the owner, read by
+-- anyone holding it (club_invite_info), accepted by the signed-in account
+-- it belongs to (accept_club_invite appends their handle to members or team).
+-- The table has no direct grants: everything goes through these functions.
+create table if not exists public.club_invites (
+  token text primary key,
+  company_slug text not null references public.companies(slug) on delete cascade,
+  role text not null default 'member' check (role in ('member','officer')),
+  created_by uuid not null,
+  created_at timestamptz not null default now(),
+  uses int not null default 0,
+  revoked_at timestamptz
+);
+create index if not exists club_invites_slug_idx on public.club_invites (company_slug, role);
+alter table public.club_invites enable row level security;
+revoke all on public.club_invites from public, anon, authenticated;
+-- club_invite_link(p_slug, p_role) -> token         (owner; creates on first call)
+-- revoke_club_invite(p_slug, p_role)                (owner; the next link call makes a fresh token)
+-- club_invite_info(p_token) -> name, handle, college_name, logo, role   (anon, for the register page)
+-- accept_club_invite(p_token) -> club handle        (authenticated; idempotent per person)
+-- Full bodies as applied: see the project; they mirror the description above.

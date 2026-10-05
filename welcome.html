@@ -8,7 +8,7 @@
 <meta name="description" content="Your Circuits.com account is confirmed. Choose what to do first.">
 <link rel="icon" href="assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="styles.css?v=40bd04d5e9">
+<link rel="stylesheet" href="styles.css?v=6510ee7356">
 <script src="/nav.js?v=b5adcdecca"></script>
 </head>
 <body>
@@ -37,6 +37,7 @@
     <p class="wc-pill"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Email confirmed</p>
     <h1 class="wc-h1">Welcome to Circuits.com</h1>
     <p class="wc-sub" id="wc-sub">You are signed in and ready to go.</p>
+    <p class="wc-club" id="wc-club" hidden></p>
     <p class="wc-lede">Everything below is free. Pick what you want to do first. The rest is
       waiting in your dashboard whenever you want it.</p>
   </div>
@@ -92,25 +93,44 @@
 </footer>
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
-<script src="store.js?v=1065fb0e34"></script>
-<script src="app.js?v=fa2d54d97b"></script>
+<script src="store.js?v=67b0badd1a"></script>
+<script src="app.js?v=17c3877cc6"></script>
 <script>
 /* The landing page a confirmation link opens. supabase-js reads the session out
    of the URL when the client is created in store.js, so by the time this runs
    the account is signed in and the tokens are off the address bar. The page
    works signed out as well: the three doors go to the dashboard, which asks
    whoever follows them to sign in. */
+/* a club invite (?club=token, or one remembered from the register page):
+   the signed-in account is added to the club and told so (2026-10-05) */
+async function acceptPendingInvite(user){
+  const t = new URLSearchParams(location.search).get('club') || pendingInvite();
+  if(!t || !user) return;
+  const host = document.getElementById('wc-club'); if(!host) return;
+  const r = await acceptClubInvite(t);
+  host.hidden = false;
+  if(r.error){ host.className = 'wc-club wc-club-bad'; host.innerHTML = '<b>Club invite:</b> ' + escapeHtml(r.error); return; }
+  forgetInvite();
+  let info = null; try{ info = await clubInviteInfo(t); }catch(e){ info = null; }
+  const name = info && info.name ? info.name : 'the club';
+  host.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+    <span>You are now ${info && info.role === 'officer' ? 'an officer' : 'a member'} of <b>${escapeHtml(name)}</b>. The badge is on your profile.</span>
+    <a class="wc-club-go" href="/${encodeURIComponent(r.handle || '')}">View the club page</a>`;
+}
 (async function initWelcome(){
   const sub = document.getElementById('wc-sub');
   let user = null;
   try { user = await currentUser(); } catch(e){ user = null; }
   if(!user){
-    sub.textContent = 'Your account is confirmed. Sign in to pick up where you left off.';
+    const t = new URLSearchParams(location.search).get('club') || '';
+    if(t) rememberInvite(t);
+    sub.textContent = t ? 'Sign in to join the club you were invited to.' : 'Your account is confirmed. Sign in to pick up where you left off.';
     return;
   }
   /* the address is the thing they just claimed, so name it and let them take it */
   let handle = '';
   try { const me = await myProfile(); handle = (me && me.handle) || ''; } catch(e){ handle = ''; }
+  await acceptPendingInvite(user);
   if(!handle){ sub.textContent = 'You are signed in and ready to go.'; return; }
   const url = 'circuits.com/' + handle;
   sub.innerHTML = 'Your address is live at <span class="wc-addr">'

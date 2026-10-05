@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=40bd04d5e9">
+<link rel="stylesheet" href="/styles.css?v=6510ee7356">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -415,6 +415,11 @@
             <p class="pf-note" style="margin:0 0 12px">An officer with a Circuits.com address gets a Leadership badge on their own profile, linked to this page.</p>
             <div class="pt-list cb-rows" id="f-officers"></div>
           </section>
+          <section class="cb-card cb-span">
+            <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.5 1.5"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.5"/></svg>Invite links</h3>
+            <p class="pf-note" style="margin:0 0 12px">Send members a link. Whoever creates an account through it is added to this club the moment their email is confirmed, badge and all. No typing names in by hand.</p>
+            <div id="pt-club-invites"></div>
+          </section>
           <section class="cb-card">
             <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2"/></svg>Members <span class="pf-note" id="fold-members-n"></span></h3>
             <p class="pf-note" style="margin:0 0 12px">A member with a Circuits.com address gets a Member badge on their own profile. Members without one are named only.</p>
@@ -793,9 +798,9 @@
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
-<script src="/store.js?v=1065fb0e34"></script>
-<script src="/app.js?v=fa2d54d97b"></script>
-<script src="/portal.js?v=3969a5aafb"></script>
+<script src="/store.js?v=67b0badd1a"></script>
+<script src="/app.js?v=17c3877cc6"></script>
+<script src="/portal.js?v=5311fc3aca"></script>
 <script src="/admin.js?v=a280d00bb3"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));

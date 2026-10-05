@@ -749,6 +749,11 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
       'clubs.sql must create club pages as their own rows (create_club_page) with a members list');
     assert.ok(/async function createClubPage\(/.test(st) && /async function fetchClubs\(/.test(st) && /kind: 'member'/.test(st), 'store.js lost createClubPage, fetchClubs or the Member badge');
     assert.ok(/id="pt-club-create"/.test(ph) && /id="nc-handle"/.test(ph) && /id="f-members"/.test(ph), 'the College Club tab lost the create card or the members list');
+    /* invite links (2026-10-05): the table has no grants, everything goes through the four functions; the token is validated before any call */
+    assert.ok(/create table if not exists public\.club_invites/.test(sql) && /revoke all on public\.club_invites from public, anon, authenticated/.test(sql), 'club_invites must exist with no direct grants');
+    assert.ok(/const INVITE_OK = t => \/\^\[a-f0-9\]\{32,64\}\$\//.test(st) && /async function acceptClubInvite/.test(st) && /async function clubInviteInfo/.test(st), 'store.js lost the invite functions or their token check');
+    assert.ok(/id="pt-club-invites"/.test(ph) && /function renderInvites/.test(pj), 'the invite card is gone from the College Club tab');
+    assert.ok(/id="r-invite"/.test(rd('register.html')) && /function initRegisterInvite/.test(rd('app.js')) && /acceptPendingInvite/.test(rd('welcome.html')), 'the invite flow lost the register banner or the welcome acceptance');
     assert.ok(/kind in \('company','club'\)/.test(sql) && /show_clubs boolean/.test(sql) && /grant select \(skills, show_clubs\)/.test(sql),
       'clubs.sql must flag club pages, add the privacy switch and grant the new profile columns');
     assert.ok(/skills, show_clubs'/.test(st), 'PROFILE_PUBLIC_COLS must carry skills and show_clubs, or every person page goes blank');
@@ -1248,7 +1253,7 @@ assert.ok(storeReg.includes('handle_taken'),
   const appSrc = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8'), storeSrc = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8'), portalSrc = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
   const reg = appSrc.slice(appSrc.indexOf('function initRegister'), appSrc.indexOf('async function initBrowse'));
   assert.ok(/armSpamTrap\(form\);\s*mountTurnstile\(form\);/.test(reg) && /if\(looksLikeSpam\(form\)\)\{ showCreated\(\); return; \}/.test(reg), 'the register form lost its honeypot and timing trap');
-  assert.ok(/registerProfile\(email, passEl\.value, handle, v\('r-name'\), turnstileToken\(form\)\)/.test(reg), 'the register form does not send the CAPTCHA token');
+  assert.ok(/registerProfile\(email, passEl\.value, handle, v\('r-name'\), turnstileToken\(form\), REG_INVITE\)/.test(reg), 'the register form does not send the CAPTCHA token');
   assert.ok(/^const TURNSTILE_SITE_KEY = '[^']*';$/m.test(storeSrc), 'store.js lost TURNSTILE_SITE_KEY');
   assert.ok(/captchaToken: captchaToken \|\| undefined/.test(storeSrc.slice(storeSrc.indexOf('async function registerProfile'))), 'registerProfile() drops the CAPTCHA token');
   assert.ok(/signInWithPassword\(\{ email: id, password, options: \{ captchaToken: captchaToken \|\| undefined \} \}\)/.test(storeSrc) && (storeSrc.match(/captchaToken: captchaToken \|\| undefined/g) || []).length >= 4,
@@ -1333,7 +1338,7 @@ assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'join-2026-09-03', 'join.html
 {
   const storeAll = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
   const reg = storeAll.slice(storeAll.indexOf('async function registerProfile'));
-  assert.ok(/emailRedirectTo: location\.origin \+ '\/welcome'/.test(reg.slice(0, reg.indexOf('\n}'))),
+  assert.ok(/const back = location\.origin \+ '\/welcome'/.test(reg.slice(0, reg.indexOf('\n}'))) && /emailRedirectTo: back,/.test(reg.slice(0, reg.indexOf('\n}'))),
     'confirming a new profile no longer lands on the on-boarding page');
   const rs = storeAll.slice(storeAll.indexOf('async function resendConfirmation'));
   assert.ok(/emailRedirectTo: location\.origin \+ '\/welcome'/.test(rs.slice(0, rs.indexOf('\n}'))),
@@ -1942,7 +1947,7 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
       'the welcome page lost its confirmed badge or its three cards');
     assert.ok(/id="wc-copy"/.test(wc) && /clipboard\.writeText\('https:\/\/' \+ url\)/.test(wc),
       'the welcome page no longer offers the new address to copy');
-    assert.ok((storeSrc2.match(/emailRedirectTo: location\.origin \+ '\/welcome'/g) || []).length >= 2 && !/emailRedirectTo: location\.origin \+ '\/join'/.test(storeSrc2),
+    assert.ok((storeSrc2.match(/location\.origin \+ '\/welcome'/g) || []).length >= 2 && /emailRedirectTo: back,/.test(storeSrc2) && !/emailRedirectTo: location\.origin \+ '\/join'/.test(storeSrc2),
       'a confirmation link no longer lands on the on-boarding page (both signUp and registerProfile must send it to /welcome)');
     assert.ok(/type=signup[\s\S]{0,80}location\.replace\('\/welcome'/.test(portalSrc3),
       'the dashboard no longer forwards a confirmation link to /welcome');

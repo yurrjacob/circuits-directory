@@ -801,6 +801,39 @@ async function createClubPage(handle, name, college){
   }
   return { slug: data };
 }
+/* ---- club invite links (2026-10-05) ----
+   The owner gets one link per role; anyone holding a link can read which
+   club it is for; a signed-in account accepts it and is added to the club. */
+const INVITE_OK = t => /^[a-f0-9]{32,64}$/.test(String(t || ''));
+async function clubInviteLink(slug, role){
+  if(!sb) return { error: 'No connection' };
+  const { data, error } = await sb.rpc('club_invite_link', { p_slug: slug, p_role: role || 'member' });
+  if(error) return { error: /not_a_club/.test(error.message) ? 'Only a club page has invite links.' : error.message };
+  return { token: data, url: 'https://circuits.com/register?club=' + data };
+}
+async function revokeClubInvite(slug, role){
+  if(!sb) return 'No connection';
+  const { error } = await sb.rpc('revoke_club_invite', { p_slug: slug, p_role: role || 'member' });
+  return error ? error.message : '';
+}
+async function clubInviteInfo(token){
+  if(!sb || !INVITE_OK(token)) return null;
+  const { data, error } = await sb.rpc('club_invite_info', { p_token: token });
+  if(error){ console.warn('club_invite_info', error.message); return null; }
+  return (data && data[0]) || null;
+}
+async function acceptClubInvite(token){
+  if(!sb) return { error: 'No connection' };
+  if(!INVITE_OK(token)) return { error: 'That invite link is not valid.' };
+  const { data, error } = await sb.rpc('accept_club_invite', { p_token: token });
+  if(error) return { error: /bad_invite/.test(error.message) ? 'That invite link has expired or was reset.' : /no_profile/.test(error.message) ? 'Finish creating your account first.' : error.message };
+  return { handle: data };
+}
+/* the invite a visitor arrived with, kept until an account accepts it */
+const INVITE_KEY = 'cx_club_invite';
+function rememberInvite(t){ try{ if(INVITE_OK(t)) localStorage.setItem(INVITE_KEY, t); }catch(e){} }
+function pendingInvite(){ try{ const t = localStorage.getItem(INVITE_KEY) || ''; return INVITE_OK(t) ? t : ''; }catch(e){ return ''; } }
+function forgetInvite(){ try{ localStorage.removeItem(INVITE_KEY); }catch(e){} }
 /* every club page, for circuits.com/clubs */
 async function fetchClubs(){
   if(!sb) return [];
@@ -924,13 +957,16 @@ async function hasTalentAccess(){
    The handle rides along as signup metadata because email confirmation means
    there is no session yet, a trigger turns it into the profile row, so the
    address is held from the moment the account exists. */
-async function registerProfile(email, password, handle, displayName, captchaToken){
+async function registerProfile(email, password, handle, displayName, captchaToken, inviteToken){
   if(!sb) return 'No connection';
+  /* a club invite rides along to the welcome page, which enrols the new
+     account once the email is confirmed (Jacob, 2026-10-05) */
+  const back = location.origin + '/welcome' + (inviteToken && /^[a-f0-9]{32,64}$/.test(inviteToken) ? '?club=' + inviteToken : '');
   const { error } = await sb.auth.signUp({
     email, password,
     options: {
       data: { handle: (handle||'').toLowerCase().trim(), display_name: displayName || '' },
-      emailRedirectTo: location.origin + '/welcome',   // confirming lands on the on-boarding page (Jacob, 2026-09-20; was Get Listed from 2026-09-03)
+      emailRedirectTo: back,   // confirming lands on the on-boarding page (Jacob, 2026-09-20; was Get Listed from 2026-09-03)
       captchaToken: captchaToken || undefined
     }
   });

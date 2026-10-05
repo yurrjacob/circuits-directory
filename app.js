@@ -450,7 +450,7 @@ async function initInbox(){
     if(!storedSession()) return;
     const add = (src, integrity) => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; if(integrity) t.integrity = integrity; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
     /* the same vendored file, and the same hash, every page carries (audit item 3, 2026-09-21) */
-    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=1065fb0e34'); }catch(e){ return; }
+    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=67b0badd1a'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;
@@ -1590,7 +1590,25 @@ async function initJoinAccount(){
    Register, anyone may create a profile. This is not Get Listed:
    no company, no approval, no fee. The username IS the address.
    =================================================================== */
+/* the club invite this visitor arrived with, if any (2026-10-05) */
+let REG_INVITE = '';
+async function initRegisterInvite(){
+  const box = document.getElementById('r-invite'); if(!box) return;
+  const t = new URLSearchParams(location.search).get('club') || '';
+  if(!/^[a-f0-9]{32,64}$/.test(t)) return;
+  REG_INVITE = t; rememberInvite(t);
+  /* already signed in: no new account needed, go and accept */
+  try{ const u = await currentUser(); if(u){ location.replace('/welcome?club=' + t); return; } }catch(e){}
+  const info = await clubInviteInfo(t);
+  if(!info){ box.hidden = false; box.className = 'r-invite r-invite-bad'; box.innerHTML = '<b>That invite link has expired or was reset.</b> You can still create an account; ask the club for a fresh link to be added as a member.'; return; }
+  const role = info.role === 'officer' ? 'an officer' : 'a member';
+  box.hidden = false; box.className = 'r-invite';
+  box.innerHTML = `<span class="r-invite-logo">${isLogoUrl(info.logo) ? `<img src="${escapeHtml(info.logo)}" alt="">` : escapeHtml(String(info.name || 'C').slice(0, 1).toUpperCase())}</span>
+    <div><b>You are invited to join ${escapeHtml(info.name)}</b>${info.college_name ? ` <span class="r-invite-college">${escapeHtml(info.college_name)}</span>` : ''}
+    <p>Create your free account below. Once you confirm your email you are added to the club as ${role}, with the badge on your profile.</p></div>`;
+}
 function initRegister(){
+  initRegisterInvite();
   const form = document.getElementById('reg-form');
   if(!form) return;
   const el = id => document.getElementById(id);
@@ -1675,7 +1693,7 @@ function initRegister(){
       return fail('That address just became unavailable.');
     }
 
-    const err = await registerProfile(email, passEl.value, handle, v('r-name'), turnstileToken(form));
+    const err = await registerProfile(email, passEl.value, handle, v('r-name'), turnstileToken(form), REG_INVITE);
     if(err){
       submitBtn.disabled = false; submitBtn.textContent = 'Create Profile';
       resetTurnstile(form);
