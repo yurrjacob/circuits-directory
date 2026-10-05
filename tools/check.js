@@ -745,6 +745,10 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     const sql = rd('tools/clubs.sql'), st = rd('store.js'), pf = rd('profile.js'), pj = rd('portal.js'), ph = rd('portal.html'), rs = rd('resume.html');
     assert.ok(/create table if not exists public\.projects/.test(sql) && /enable row level security/.test(sql) && /owns_company\(company_slug\)/.test(sql),
       'tools/clubs.sql must create the projects table under row level security keyed on owns_company');
+    assert.ok(/create function public\.create_club_page|create or replace function public\.create_club_page/.test(sql) && /members jsonb/.test(sql),
+      'clubs.sql must create club pages as their own rows (create_club_page) with a members list');
+    assert.ok(/async function createClubPage\(/.test(st) && /async function fetchClubs\(/.test(st) && /kind: 'member'/.test(st), 'store.js lost createClubPage, fetchClubs or the Member badge');
+    assert.ok(/id="pt-club-create"/.test(ph) && /id="nc-handle"/.test(ph) && /id="f-members"/.test(ph), 'the College Club tab lost the create card or the members list');
     assert.ok(/kind in \('company','club'\)/.test(sql) && /show_clubs boolean/.test(sql) && /grant select \(skills, show_clubs\)/.test(sql),
       'clubs.sql must flag club pages, add the privacy switch and grant the new profile columns');
     assert.ok(/skills, show_clubs'/.test(st), 'PROFILE_PUBLIC_COLS must carry skills and show_clubs, or every person page goes blank');

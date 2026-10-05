@@ -121,3 +121,42 @@ alter table public.projects add constraint projects_media_len_ck check (length(v
 alter table public.companies add column if not exists club_join_url text;
 alter table public.companies drop constraint if exists companies_join_len_ck;
 alter table public.companies add constraint companies_join_len_ck check (length(coalesce(club_join_url, '')) <= 500);
+
+-- 2026-10-05, the model corrected (Jacob): a club is NOT the student's own
+-- page switched into club mode. The president keeps circuits.com/<their
+-- handle> for the job market; the club is a SECOND page the account owns,
+-- with its own address, made here. Officers (team) earn Leadership badges,
+-- members (members) earn Member badges, project teams earn Project badges.
+alter table public.companies add column if not exists members jsonb not null default '[]'::jsonb;
+alter table public.companies drop constraint if exists companies_members_len_ck;
+alter table public.companies add constraint companies_members_len_ck check (length(members::text) <= 40000);
+
+create or replace function public.create_club_page(p_handle text, p_name text, p_college text default null)
+returns text
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+declare h text; n text; p profiles%rowtype; s text; k int := 0;
+begin
+  select * into p from profiles where user_id = auth.uid();
+  if p.user_id is null then raise exception 'sign in first' using errcode = 'no_data_found'; end if;
+  h := lower(trim(coalesce(p_handle, '')));
+  n := trim(coalesce(p_name, ''));
+  if n = '' or length(n) > 200 then raise exception 'club_name' using errcode = 'check_violation'; end if;
+  if not handle_ok(h) then raise exception 'handle_format' using errcode = 'check_violation'; end if;
+  if exists (select 1 from companies c where c.handle = h) or exists (select 1 from profiles q where q.handle = h) then
+    raise exception 'handle_taken' using errcode = 'unique_violation';
+  end if;
+  if (select count(*) from company_users cu join companies c on c.slug = cu.company_slug where cu.user_id = p.user_id and c.kind = 'club') >= 5 then
+    raise exception 'club_limit' using errcode = 'check_violation';
+  end if;
+  s := h;
+  while exists (select 1 from companies c where c.slug = s) loop k := k + 1; s := h || '-' || k; end loop;
+  insert into companies (slug, name, handle, kind, college_name, email, published)
+  values (s, n, h, 'club', nullif(trim(coalesce(p_college, '')), ''), p.email, true);
+  insert into company_users (user_id, company_slug, role) values (p.user_id, s, 'owner');
+  return s;
+end $$;
+revoke execute on function public.create_club_page(text, text, text) from public, anon;
+grant execute on function public.create_club_page(text, text, text) to authenticated;

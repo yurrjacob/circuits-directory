@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=a6f61d461c">
+<link rel="stylesheet" href="/styles.css?v=40bd04d5e9">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -362,20 +362,29 @@
     <div class="pt-tab-head">
       <div>
         <h2>College Club</h2>
-        <p class="kit-intro">Turn this page into your club's page: your college's logo beside the club's, a Join Club button,
-          a pitch for new members, alumni and employers, your officers, and a showcase of what the club has built.
-          Members you tag get badges on their own profiles.</p>
+        <p class="kit-intro">A club gets a public page of its own: your college's logo beside the club's, a Join Club button,
+          a pitch for new members, alumni and employers, your officers and members, and a showcase of what the club has built.
+          Officers get a Leadership badge, members a Member badge, project teams a Project badge, each on their own profile.</p>
       </div>
       <div class="pt-head-btns"><a class="btn btn-outline" id="pt-projects-view" href="#" target="_blank" rel="noopener">View club page &#8599;</a></div>
     </div>
     <div id="pt-club-fold">
-      <div class="cb-switch-card">
-        <label class="cb-switch"><input type="checkbox" id="f-club" autocomplete="off"><span class="cb-knob" aria-hidden="true"></span></label>
-        <div class="cb-switch-text">
-          <b>College club page <span class="cb-state" id="pt-club-state">off</span></b>
-          <p>Switch it on and this page becomes your club's page. Everything below appears on it once you save.</p>
+      <input type="checkbox" id="f-club" hidden autocomplete="off">
+      <!-- a page that is not a club: make the club its own page here. The
+           president keeps their own profile; the club gets its own address. -->
+      <section class="cb-card cb-create" id="pt-club-create">
+        <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/><path d="M22 9v6"/></svg>Create your club's page</h3>
+        <p class="pf-note" style="margin:0 0 14px">Your own profile stays as it is. The club gets a page of its own at circuits.com/<b>its-address</b>, owned by this account. You switch between your pages with the picker at the top of the dashboard.</p>
+        <div class="pt-row">
+          <div class="auth-field"><label for="nc-name">Club name</label><input id="nc-name" type="text" maxlength="200" placeholder="IEEE Student Branch" autocomplete="off"></div>
+          <div class="auth-field"><label for="nc-college">College or university</label><input id="nc-college" type="text" maxlength="160" placeholder="University of Texas at Austin" autocomplete="off"></div>
         </div>
-      </div>
+        <div class="auth-field" style="max-width:520px"><label for="nc-handle">The club's Circuits.com address</label>
+          <div class="handle-row"><span class="handle-prefix">circuits.com/</span><input id="nc-handle" type="text" maxlength="32" spellcheck="false" placeholder="ieee-ut" autocomplete="off"></div>
+          <div id="nc-handle-msg" class="pf-note"></div></div>
+        <div class="pt-save-row"><button type="button" class="btn btn-primary cb-cta" id="nc-create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Create club page</span></button><span class="pt-save-msg" id="nc-msg" role="status"></span></div>
+      </section>
+      <div class="cb-club-note pt-club-fields" id="pt-club-which"></div>
       <div class="pt-club-fields">
         <div class="cb-grid">
           <section class="cb-card">
@@ -401,10 +410,15 @@
               <div class="auth-field"><label for="f-promo-employers"><span class="cb-k">Hire from the club.</span>Employers</label><textarea id="f-promo-employers" rows="4" maxlength="600" placeholder="Why hire from this club, how to sponsor or recruit." autocomplete="off"></textarea></div>
             </div>
           </section>
-          <section class="cb-card cb-span">
+          <section class="cb-card">
             <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2"/></svg>Officers <span class="pf-note" id="fold-officers-n"></span></h3>
             <p class="pf-note" style="margin:0 0 12px">An officer with a Circuits.com address gets a Leadership badge on their own profile, linked to this page.</p>
             <div class="pt-list cb-rows" id="f-officers"></div>
+          </section>
+          <section class="cb-card">
+            <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2"/></svg>Members <span class="pf-note" id="fold-members-n"></span></h3>
+            <p class="pf-note" style="margin:0 0 12px">A member with a Circuits.com address gets a Member badge on their own profile. Members without one are named only.</p>
+            <div class="pt-list cb-rows" id="f-members"></div>
           </section>
         </div>
         <div class="pt-save-row cb-save"><button class="btn btn-primary pt-save-club cb-cta" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Save club</span></button><span class="pt-save-msg" id="pt-club-msg" role="status"></span></div>
@@ -779,9 +793,9 @@
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
-<script src="/store.js?v=c0ffb7a4b3"></script>
-<script src="/app.js?v=2892a73191"></script>
-<script src="/portal.js?v=5669b2f2c7"></script>
+<script src="/store.js?v=1065fb0e34"></script>
+<script src="/app.js?v=fa2d54d97b"></script>
+<script src="/portal.js?v=3969a5aafb"></script>
 <script src="/admin.js?v=a280d00bb3"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));

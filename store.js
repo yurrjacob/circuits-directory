@@ -766,16 +766,48 @@ async function fetchProjectsForHandle(handle){
   if(error){ console.warn('fetchProjectsForHandle', error.message); return []; }
   return data || [];
 }
-/* the club pages that list this person as an officer: the Leadership badges */
+/* the club pages that list this person: officers (team) earn a Leadership
+   badge, members (members) a Member badge. Two reads, merged, one entry per
+   club with the higher of the two. */
 async function fetchClubRoles(handle){
   if(!sb || !handle) return [];
-  const { data, error } = await sb.from('companies').select('name, handle, logo, college_name, team')
-    .eq('kind', 'club').eq('published', true).contains('team', [{ handle: handle.toLowerCase() }]);
-  if(error){ console.warn('fetchClubRoles', error.message); return []; }
-  return (data || []).map(c => {
-    const me = (Array.isArray(c.team) ? c.team : []).find(t => t && String(t.handle || '').toLowerCase() === handle.toLowerCase()) || {};
-    return { name: c.name, handle: c.handle, logo: c.logo, college_name: c.college_name, role: me.role || 'Officer' };
-  });
+  const h = handle.toLowerCase();
+  const cols = 'name, handle, logo, college_name, team, members';
+  const [a, b] = await Promise.all([
+    sb.from('companies').select(cols).eq('kind', 'club').eq('published', true).contains('team', [{ handle: h }]),
+    sb.from('companies').select(cols).eq('kind', 'club').eq('published', true).contains('members', [{ handle: h }])]);
+  if(a.error) console.warn('fetchClubRoles', a.error.message);
+  if(b.error) console.warn('fetchClubRoles', b.error.message);
+  const out = new Map();
+  for(const c of (a.data || [])){
+    const me = (Array.isArray(c.team) ? c.team : []).find(t => t && String(t.handle || '').toLowerCase() === h) || {};
+    out.set(c.handle, { name: c.name, handle: c.handle, logo: c.logo, college_name: c.college_name, kind: 'lead', role: me.role || 'Officer' });
+  }
+  for(const c of (b.data || [])){
+    if(out.has(c.handle)) continue;
+    out.set(c.handle, { name: c.name, handle: c.handle, logo: c.logo, college_name: c.college_name, kind: 'member', role: 'Member' });
+  }
+  return [...out.values()];
+}
+/* a second page for the club, owned by the signed-in account; the database
+   checks the address and the name and refuses a sixth club */
+async function createClubPage(handle, name, college){
+  if(!sb) return { error: 'No connection' };
+  const { data, error } = await sb.rpc('create_club_page', { p_handle: handle, p_name: name, p_college: college || null });
+  if(error){
+    const m = error.message || '';
+    return { error: /handle_taken/.test(m) ? 'That address is taken.' : /handle_format/.test(m) ? 'That address is not allowed. Use 3 to 32 letters, numbers, dashes or underscores.'
+      : /club_limit/.test(m) ? 'Five club pages is the limit for one account.' : /club_name/.test(m) ? 'The club needs a name.' : m };
+  }
+  return { slug: data };
+}
+/* every club page, for circuits.com/clubs */
+async function fetchClubs(){
+  if(!sb) return [];
+  const { data, error } = await sb.from('companies').select('slug, name, handle, logo, college_name, college_logo, tagline, team, members')
+    .eq('kind', 'club').eq('published', true).is('suspended_at', null).order('name');
+  if(error){ console.warn('fetchClubs', error.message); return []; }
+  return data || [];
 }
 /* owner writes; RLS refuses anyone who does not own the club page */
 async function saveProject(p){

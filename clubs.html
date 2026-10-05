@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Browse Circuits-Keywords™ | Circuits.com</title>
-<meta name="description" content="Browse every claimed Circuits-Keyword™ A to Z and find suppliers across the circuits and electronics industry, or claim an open keyword for your company.">
+<title>College Clubs | Circuits.com</title>
+<meta name="description" content="Every college club on Circuits.com: the clubs, their colleges and what they have built.">
 <link rel="canonical" href="https://circuits.com/browse">
-<meta name="robots" content="noindex, follow">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Circuits.com">
 <meta property="og:title" content="Browse Circuits-Keywords™ | Circuits.com">
@@ -48,11 +47,18 @@
   </div>
 </header>
 
-<main class="browse-wrap">
-  <h1>Browse Circuits-Keywords&trade;</h1>
-  <p class="browse-sub">Every keyword a company is listed under, A to Z, with how many suppliers
-  hold each one. Know what you need? <a href="/">Search it</a> instead.</p>
-  <div id="browse-body"></div>
+<main id="content">
+<div class="page">
+  <div class="pt-tab-head" style="margin-bottom:18px">
+    <div>
+      <h1 style="margin:0 0 6px">College Clubs</h1>
+      <p class="kit-intro">Student clubs across the circuits industry, each with a page of its own: the college, the officers,
+        the members and the projects they have built. Run a club? Create its page from your dashboard.</p>
+    </div>
+    <div class="pt-head-btns"><a class="btn btn-primary" href="/portal#club">Create a club page</a></div>
+  </div>
+  <div id="clubs" class="clubs-grid"><div class="clubs-empty">Loading clubs…</div></div>
+</div>
 </main>
 
 <footer class="footer">
@@ -63,14 +69,32 @@
     </div>
     <div style="display:flex;align-items:center;gap:14px">
       <span>© 2026 Circuits.com</span>
-      <span class="footer-brand"><img class="footer-mark" src="/assets/favicon.png" alt="Circuits.com"></span>
+      <span class="footer-brand"><img class="footer-mark" src="assets/favicon.png" alt="" width="64" height="64"></span>
     </div>
   </div>
 </footer>
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
-<script src="/store.js?v=1065fb0e34"></script>
-<script src="/app.js?v=fa2d54d97b"></script>
-<script>initBrowse();</script>
+<script src="store.js?v=1065fb0e34"></script>
+<script src="app.js?v=fa2d54d97b"></script>
+<script>
+(async function initClubs(){
+  const host = document.getElementById('clubs');
+  let list = [];
+  try{ list = await fetchClubs(); }catch(e){ list = []; }
+  if(!list.length){ host.innerHTML = '<div class="clubs-empty">No club pages yet. The first club to set one up appears here.</div>'; return; }
+  const n = a => (Array.isArray(a) ? a : []).filter(x => x && ((x.name || '').trim() || (x.handle || '').trim())).length;
+  host.innerHTML = list.map(c => `<a class="club-card" href="/${encodeURIComponent(String(c.handle || c.slug).toLowerCase())}">
+      <div class="club-card-logos">
+        <span class="pf-logo">${isLogoUrl(c.logo) ? `<img src="${escapeHtml(c.logo)}" alt="">` : '<span class="pf-club-logo-ph">' + escapeHtml(String(c.name || 'C').slice(0, 1).toUpperCase()) + '</span>'}</span>
+        ${isLogoUrl(c.college_logo) ? `<span class="pf-logo-sm"><img src="${escapeHtml(c.college_logo)}" alt=""></span>` : ''}
+      </div>
+      <h2>${escapeHtml(c.name)}</h2>
+      ${c.college_name ? `<p class="club-college">${escapeHtml(c.college_name)}</p>` : ''}
+      ${c.tagline ? `<p class="club-tag">${escapeHtml(c.tagline)}</p>` : ''}
+      <div class="club-facts">${n(c.team) ? `<span class="pf-chip">${n(c.team)} officer${n(c.team) === 1 ? '' : 's'}</span>` : ''}${n(c.members) ? `<span class="pf-chip">${n(c.members)} member${n(c.members) === 1 ? '' : 's'}</span>` : ''}</div>
+    </a>`).join('');
+})();
+</script>
 </body>
 </html>

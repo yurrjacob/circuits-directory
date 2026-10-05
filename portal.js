@@ -1426,23 +1426,26 @@ function syncClubTab(){
 }
 function wireClubFields(c){
   const fold = el('pt-club-fold'), box = el('f-club'); if(!fold || !box) return;
+  const isClub = c.kind === 'club';
+  box.checked = isClub;
+  fold.classList.toggle('pt-club-on', isClub);
+  const sc = el('pt-club-showcase'); if(sc) sc.classList.toggle('pt-club-on', isClub);
+  const create = el('pt-club-create'); if(create) create.hidden = isClub;
+  const which = el('pt-club-which');
+  if(which) which.innerHTML = isClub
+    ? `<b>${escapeHtml(c.name || 'This club')}</b> lives at <a href="${escapeHtml(profileUrl(c.handle) || '#')}" target="_blank" rel="noopener">circuits.com/${escapeHtml(c.handle || '')}</a>. Your own profile is a separate page; switch between them with the picker at the top.`
+    : '';
+  wireClubCreate();
+  if(!isClub) return;
   const promo = c.club_promo && typeof c.club_promo === 'object' ? c.club_promo : {};
-  box.checked = c.kind === 'club';
   el('f-college').value = c.college_name || '';
   el('f-join').value = c.club_join_url || '';
   el('f-promo-members').value = promo.members || '';
   el('f-promo-alumni').value = promo.alumni || '';
   el('f-promo-employers').value = promo.employers || '';
-  const paint = () => {
-    fold.classList.toggle('pt-club-on', box.checked);
-    const sc = el('pt-club-showcase'); if(sc) sc.classList.toggle('pt-club-on', box.checked);
-    const st = el('pt-club-state'); if(st){ st.textContent = box.checked ? 'on' : 'off'; st.classList.toggle('on', box.checked); }
-  };
-  paint();
-  box.onchange = () => { paint(); markDirty(); };
   /* the college logo: no crop, shown as given */
   const prev = el('pt-college-prev'), inp = el('pt-college-logo'), rm = el('pt-college-rm');
-  const show = url => { prev.innerHTML = url ? `<img src="${escapeHtml(url)}" alt="">` : '<span class="rp-img-ph">None</span>'; rm.style.display = url ? '' : 'none'; };
+  const show = url => { prev.innerHTML = url ? `<img src="${escapeHtml(url)}" alt="">` : '<span class="rp-img-ph">Logo</span>'; rm.style.display = url ? '' : 'none'; };
   PT.collegeFile = null; PT.clearCollege = false;
   show(isLogoUrl(c.college_logo) ? c.college_logo : '');
   inp.value = '';
@@ -1454,6 +1457,59 @@ function wireClubFields(c){
   };
   rm.onclick = () => { PT.clearCollege = true; PT.collegeFile = null; inp.value = ''; show(''); markDirty(); };
   renderRepeater('officers', Array.isArray(c.team) ? c.team : [], ['handle', 'name', 'role'], ['Circuits.com address', 'Name', 'Role']);
+  renderRepeater('members', Array.isArray(c.members) ? c.members : [], ['handle', 'name'], ['Circuits.com address', 'Name']);
+}
+/* Create club page: a second page for this account (Jacob, 2026-10-05). The
+   database makes the row and the ownership; the picker then carries both. */
+let ncTimer = null;
+function wireClubCreate(){
+  const btn = el('nc-create'); if(!btn || btn.__wired) return; btn.__wired = true;
+  const hIn = el('nc-handle'), msg = el('nc-handle-msg');
+  hIn.addEventListener('input', () => {
+    hIn.value = hIn.value.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    clearTimeout(ncTimer); msg.textContent = hIn.value ? 'Checking…' : ''; msg.style.color = '';
+    if(!hIn.value) return;
+    ncTimer = setTimeout(async () => {
+      const asked = hIn.value;
+      const why = await handleAvailable(asked, null, null);
+      if(hIn.value !== asked) return;
+      msg.textContent = why || ('circuits.com/' + asked + ' is available.');
+      msg.style.color = why ? '#b3261e' : '#3f6300';
+    }, 400);
+  });
+  /* a name suggests an address */
+  el('nc-name').addEventListener('input', () => {
+    if(hIn.dataset.touched) return;
+    hIn.value = el('nc-name').value.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32);
+    hIn.dispatchEvent(new Event('input'));
+  });
+  hIn.addEventListener('keydown', () => { hIn.dataset.touched = '1'; });
+  btn.addEventListener('click', async () => {
+    const say = (t, bad) => { const m = el('nc-msg'); m.textContent = t; m.classList.toggle('bad', !!bad); };
+    const name = val('nc-name'), handle = val('nc-handle'), college = val('nc-college');
+    if(!name){ say('The club needs a name.', true); el('nc-name').focus(); return; }
+    if(!handle){ say('Pick the club\'s address.', true); hIn.focus(); return; }
+    btn.disabled = true; say('Creating…', false);
+    const r = await createClubPage(handle, name, college);
+    btn.disabled = false;
+    if(r.error){ say(r.error, true); return; }
+    say('Created. Opening the club\'s page settings…', false);
+    await refreshPages(r.slug);
+    activateTab('club');
+    toast('Club page created at circuits.com/' + handle + '. Fill in the rest and press Save club.', true);
+  });
+}
+/* the picker learns a new page and the dashboard opens it */
+async function refreshPages(openSlug){
+  let cos = [];
+  try{ cos = await myCompanies(); }catch(e){ cos = []; }
+  const picker = el('pt-company');
+  if(picker){
+    picker.innerHTML = cos.map(c => `<option value="${escapeHtml(c.slug)}">${escapeHtml(c.name)}</option>`).join('');
+    picker.style.display = cos.length > 1 ? '' : 'none';
+    if(openSlug) picker.value = openSlug;
+  }
+  if(openSlug) await loadCompany(openSlug);
 }
 /* an address as typed: with or without @ or circuits.com/, any case */
 function cleanHandle(h){
@@ -1618,7 +1674,6 @@ async function saveProfile(){
   /* College club: only saved as one when the box is ticked; the officers list
      is validated because a bad address would tag nobody */
   if(el('f-club')){
-    fields.kind = clubOn() ? 'club' : 'company';
     if(clubOn()){
       fields.college_name = val('f-college') || null;
       const join = val('f-join');
@@ -1629,6 +1684,10 @@ async function saveProfile(){
       const tp = teamProblem(officers);
       if(tp){ btn.disabled = false; saveNote('Not saved: ' + tp, false); return; }
       fields.team = officers;
+      const members = cleanTeam(el('f-members') && el('f-members').__list).map(m => ({ handle: m.handle, name: m.name }));
+      const mp = teamProblem(members);
+      if(mp){ btn.disabled = false; saveNote('Not saved: ' + mp, false); return; }
+      fields.members = members;
       if(PT.collegeFile){
         const url = await uploadLogo(PT.collegeFile);
         if(url) fields.college_logo = url;

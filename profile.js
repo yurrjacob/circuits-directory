@@ -179,6 +179,8 @@ function clubHeroHtml(co){
         const chips = [
           n ? `<a class="pf-chip pf-chip-link" href="#showcase">${iconHtml('Projects')}${n} project${n === 1 ? '' : 's'}</a>` : '',
           officers ? `<a class="pf-chip pf-chip-link" href="#officers">${iconHtml('Employees')}${officers} officer${officers === 1 ? '' : 's'}</a>` : '',
+          (() => { const m = (Array.isArray(co.members) ? co.members : []).filter(x => x && ((x.name || '').trim() || (x.handle || '').trim())).length;
+            return m ? `<a class="pf-chip pf-chip-link" href="#members">${iconHtml('Contact')}${m} member${m === 1 ? '' : 's'}</a>` : ''; })(),
           /^\d{4}$/.test((co.founded || '').trim()) ? `<span class="pf-chip">${iconHtml('Founded')}Est. ${escapeHtml(co.founded.trim())}</span>` : '',
           fitsLine(co.address, 60) ? `<span class="pf-chip">${iconHtml('Address')}${escapeHtml(co.address)}</span>` : ''].filter(Boolean);
         return chips.length ? `<div class="pf-meta">${chips.join('')}</div>` : '';
@@ -288,8 +290,16 @@ function officersHtml(co){
         <div class="founder-role">${escapeHtml(t.role || 'Officer')}</div></div>
       </div>`).join('')}</div>`, ' id="officers"');
 }
+function membersHtml(co){
+  const list = (Array.isArray(co.members) ? co.members : []).filter(m => m && ((m.name || '').trim() || (m.handle || '').trim()));
+  if(!list.length) return '';
+  return section(`Members · ${list.length}`, `<div class="pf-tags pf-members">${list.map(m => (m.handle || '').trim()
+    ? `<a class="pf-tag" href="${handleLink(m.handle)}">${escapeHtml((m.name || m.handle).trim())}</a>`
+    : `<span class="pf-tag">${escapeHtml(m.name.trim())}</span>`).join('')}</div>`, ' id="members"');
+}
 /* the student's side: skills they typed, badges they earned, projects they are on */
 function badgeIcon(kind){
+  if(kind === 'member') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>';
   return kind === 'lead'
     ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.85 6.1 6.65.8-4.9 4.6 1.25 6.6L12 17.4l-5.85 3.3 1.25-6.6-4.9-4.6 6.65-.8z" fill="currentColor"/></svg>'
     : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4.5 19.5 9.5 9 20H4v-5z"/><path d="m12.5 6.5 5 5"/></svg>';
@@ -301,7 +311,9 @@ function personClubSections(p){
   if(p.show_clubs === false) return html;
   const roles = Array.isArray(p.club_roles) ? p.club_roles : [];
   const projects = (Array.isArray(p.club_projects) ? p.club_projects : []).filter(x => x && x.title);
-  const pills = roles.map(r => `<a class="pf-badge pf-badge-lead" href="${handleLink(r.handle)}"><span class="pf-badge-k">${badgeIcon('lead')}Leadership</span><b>${escapeHtml(r.role || 'Officer')}</b><span>${escapeHtml(r.name || '')}${r.college_name ? `, ${escapeHtml(r.college_name)}` : ''}</span></a>`)
+  const pills = roles.map(r => r.kind === 'member'
+      ? `<a class="pf-badge pf-badge-member" href="${handleLink(r.handle)}"><span class="pf-badge-k">${badgeIcon('member')}Member</span><b>${escapeHtml(r.name || '')}</b><span>${escapeHtml(r.college_name || '')}</span></a>`
+      : `<a class="pf-badge pf-badge-lead" href="${handleLink(r.handle)}"><span class="pf-badge-k">${badgeIcon('lead')}Leadership</span><b>${escapeHtml(r.role || 'Officer')}</b><span>${escapeHtml(r.name || '')}${r.college_name ? `, ${escapeHtml(r.college_name)}` : ''}</span></a>`)
     .concat(projects.map(x => {
       const c = x.companies || {};
       const me = (Array.isArray(x.team) ? x.team : []).find(t => t && String(t.handle || '').toLowerCase() === String(p.handle || '').toLowerCase()) || {};
@@ -447,7 +459,7 @@ async function initProfile(){
 
   /* ---- a club page (Jacob's hiring brief, 2026-09-29): who it is for, what
      it has built, who runs it. Each section draws only when it has content. */
-  if(isClub) html += promoHubHtml(co) + projectsShowcaseHtml(projects, co) + officersHtml(co);
+  if(isClub) html += promoHubHtml(co) + projectsShowcaseHtml(projects, co) + officersHtml(co) + membersHtml(co);
 
   /* ---- keywords ----
      The badge belongs against the keyword it applies to, "PCB Design
