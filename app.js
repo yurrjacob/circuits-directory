@@ -32,12 +32,8 @@ function initHome(){
     const t = homeTarget(form);
     input.placeholder = HOME_PLACEHOLDER[t];
     if(hint){ hint.textContent = HOME_HINT[t] || ''; hint.hidden = !HOME_HINT[t]; }
-    /* the Popular line for this index, and the door that belongs to it */
+    /* the Popular line for this index */
     document.querySelectorAll('.popular[data-for]').forEach(p => { p.hidden = p.dataset.for !== t; });
-    document.querySelectorAll('.claim-cta-row .btn[data-for]').forEach(b => {
-      const mine = b.dataset.for === t;
-      b.classList.toggle('btn-primary', mine); b.classList.toggle('btn-outline', !mine);
-    });
   }
   form.addEventListener('submit', e => {
     e.preventDefault();

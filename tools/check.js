@@ -981,16 +981,15 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     assert.ok(new RegExp(`class="search-mode"[\\s\\S]*?data-target="${t}"[^>]*role="tab"`).test(home), `the homepage search toggle lost ${t}`);
   }
   assert.ok(!/search-group|search-side|data-mode=|data-target="hiring"|data-target="seeking"/.test(home), 'an old homepage toggle layout is back');
-  /* the three doors under it, each tied to its index so the chosen search
-     lights the door that goes with it: Find Recruits with Post Free Job, Job
-     Search with Post Free Resume (Jacob, 2026-09-13), Directory with the free listing */
-  assert.ok(/data-for="recruits" href="\/portal#hiring">Post Free Job</.test(home) && /data-for="jobs" href="\/portal#seeking">Post Free Resume</.test(home)
-    && /class="btn btn-primary" data-for="directory" href="\/join">Get Listed for Free</.test(home), 'the homepage lost its three doors, or they are no longer tied to their index');
-  /* left to right in the order of the searches above them (Jacob, 2026-09-09) */
-  const doorOrder = [...home.matchAll(/class="claim-cta claim-cta-row">[\s\S]*?<\/div>/g)][0][0].match(/data-for="([a-z]+)"/g).map(m => m.slice(10, -1));
-  assert.deepStrictEqual(doorOrder, ['directory', 'recruits', 'jobs'], 'the three doors are not in the order Get Listed, Post Free Job, Post Free Resume');
-  assert.ok(/b\.classList\.toggle\('btn-primary', mine\); b\.classList\.toggle\('btn-outline', !mine\)/.test(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')),
-    'choosing a search no longer lights the door that goes with it');
+  /* the four doors under it are the welcome page's cards, word for word
+     (Jacob, 2026-10-07): the two blocks must stay identical */
+  {
+    const pick = src => { const m = src.match(/<div class="wc-cards">[\s\S]*?<p class="wc-foot">[\s\S]*?<\/p>/); return m ? m[0].replace(/\s+/g, ' ') : ''; };
+    const onHome = pick(home), onWelcome = pick(fs.readFileSync(path.join(ROOT, 'welcome.html'), 'utf8'));
+    assert.ok(onHome && onHome === onWelcome, 'the homepage cards differ from the welcome page cards');
+    assert.ok(!/claim-cta-row/.test(home) && !/claim-cta-row/.test(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')), 'the old three-door row is back on the homepage');
+    assert.ok(/\.home-main \.wc-home\{width:100%/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the homepage cards lost their full-width rule');
+  }
   /* every mode says in one line what it searches, Directory included (Jacob,
      2026-09-03); the static page carries the Directory line, since that is
      the mode a reader with no JavaScript gets */

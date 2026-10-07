@@ -2438,3 +2438,8 @@ a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
 .wc-club-go{color:var(--green);font-weight:700;text-decoration:none}
 .wc-club-go:hover{text-decoration:underline}
 .wc-club-bad{background:rgba(255,196,0,.16);border-color:rgba(255,196,0,.5)}
+
+/* the welcome cards on the homepage (2026-10-07): the column centres its
+   children, so the wrap must take the full width to spread four across */
+.home-main .wc-home{width:100%;padding:44px 0 0}
+.home-main .wc-home .wc-foot{margin-top:22px}
