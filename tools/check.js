@@ -990,7 +990,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     /* the foot line: the email sentence is true only on the welcome page (Jacob, 2026-10-07) */
     assert.ok(/<p class="wc-foot">Not sure yet\? <a href="\/portal">Open your dashboard<\/a>\.<\/p>/.test(home) && !/on its way by email/.test(home), 'the homepage foot line should not mention the email');
     /* the search keeps the first screen to itself, centred, cards under the fold */
-    assert.ok(/<div class="home-top">/.test(home) && /\.home-top\{width:100%;min-height:calc\(100svh - 68px\)[^}]*justify-content:center/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the homepage search is no longer centred in the first screen');
+    assert.ok(/<div class="home-top">/.test(home) && /\.home-top\{width:100%;display:flex;flex-direction:column;align-items:center;padding:clamp\(40px,15vh,150px\) 0 48px/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the homepage search lost its place near the middle of the first screen');
     assert.ok(!/claim-cta-row/.test(home) && !/claim-cta-row/.test(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')), 'the old three-door row is back on the homepage');
     assert.ok(/\.home-main \.wc-home\{width:100%/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the homepage cards lost their full-width rule');
   }

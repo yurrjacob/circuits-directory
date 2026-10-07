@@ -2442,6 +2442,6 @@ a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
 /* the welcome cards on the homepage (2026-10-07): the column centres its
    children, so the wrap must take the full width to spread four across */
 .home-main{justify-content:flex-start}
-.home-top{width:100%;min-height:calc(100svh - 68px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:9vh;box-sizing:border-box}
+.home-top{width:100%;display:flex;flex-direction:column;align-items:center;padding:clamp(40px,15vh,150px) 0 48px;box-sizing:border-box}
 .home-main .wc-home{width:100%;padding:0 0 10px}
 .home-main .wc-home .wc-foot{margin-top:22px}
