@@ -129,7 +129,7 @@ function personExperience(p){
       `<li><b>${escapeHtml(c.name.trim())}</b>${c.issuer ? `, ${escapeHtml(c.issuer)}` : ''}${c.year ? ` (${escapeHtml(String(c.year))})` : ''}</li>`).join('')}</ul>`;
   if((p.keywords || []).length) inner += `<div class="kw-tags">${p.keywords.map(k => `<span class="kw-tag">${escapeHtml(k)}</span>`).join('')}</div>`;
   /* their own posting, on the board it sits on (Jacob, 2026-09-15) */
-  inner += `<p class="pf-job-act"><a class="mini-btn" href="/talent">View on Recruit Board</a></p>`;   // the whole board (Jacob, 2026-09-16)
+  inner += `<p class="pf-job-act"><a class="mini-btn" href="/talent">View on Talent Board</a></p>`;   // the whole board (Jacob, 2026-09-16)
   return section('Resumes Posted', inner, ' data-box="1"');   // its own box (Jacob, 2026-09-14)
 }
 

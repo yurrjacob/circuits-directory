@@ -1,7 +1,7 @@
 # Circuits.com
 
 The free directory for the circuits and electronics trade, with a Job Board
-and a Recruit Board. Buyers search a Circuits-Keyword; the companies listed
+and a Talent Board. Buyers search a Circuits-Keyword; the companies listed
 under it appear in the order they claimed it, rotated at random within that
 order on each load. Companies list for free at `circuits.com/their-name`, post
 jobs for free, and people post resumes for free. Paid extras (a Trust Badge, an
@@ -39,12 +39,12 @@ let the caller choose who gets mail: every address is looked up from a row.
 | `store.js` | Every call to Supabase and to the edge functions. The only file that talks to the backend. |
 | `app.js` | Shared helpers: search, sign-in, register, anti-spam, Turnstile, the notifications bell, pictures. |
 | `profile.js` | Renders a public company or person profile. |
-| `portal.js` | The dashboard: profile, listings, upgrades, Find Recruits, Job Search, branding, account. |
+| `portal.js` | The dashboard: profile, listings, upgrades, Hire Talent, Search Jobs, branding, account. |
 | `admin.js` | The staff Admin tab inside the dashboard. Every onclick name is exported to `window` at the bottom. |
 | `nav.js` | Header behaviour before first paint: signed-in relabel, the bell, phone menu. |
 | `analytics.js` | Cookie consent gate. Google Analytics loads only after acceptance. |
-| `index.html` | Homepage: one search box that routes to the Directory, the Recruit Board or the Job Board. |
-| `jobs.html`, `talent.html` | The Job Board and the Recruit Board. |
+| `index.html` | Homepage: one search box that routes to the Directory, the Talent Board or the Job Board. |
+| `jobs.html`, `talent.html` | The Job Board and the Talent Board. |
 | `welcome.html` | Where an email confirmation lands: three choices, one per thing a new account can do. |
 | `company.html` | Template the profile generator fills in. |
 | `vendor/` | The Supabase client and the QR library, pinned, with the hash every page checks. |
@@ -62,8 +62,8 @@ Postgres, in the Supabase project `ghpruernzhjwsgsezdyn`.
 |---|---|
 | `applications` | One row per company plus keyword. This is a *listing*: Pending, Approved or Denied. Order of claim decides ranking. Carries the per-listing description, documents and gallery. |
 | `companies` | One row per company. The thing at `circuits.com/<handle>`. |
-| `profiles` | A person's account and handle, and their resume: title, location, years, statement, credentials, contact email, phone, resume path, and whether they are on the Recruit Board. Shares the handle namespace with `companies`. |
-| `talent_keywords` | A person's Circuits-Keywords for the Recruit Board. |
+| `profiles` | A person's account and handle, and their resume: title, location, years, statement, credentials, contact email, phone, resume path, and whether they are on the Talent Board. Shares the handle namespace with `companies`. |
+| `talent_keywords` | A person's Circuits-Keywords for the Talent Board. |
 | `jobs`, `job_keywords`, `job_applications` | Job posts (live while `paid_until` is ahead, thirty days per staff approval, free), their keywords, and who applied. |
 | `company_users` | Who may manage which company. |
 | `claims` | Requests to take over an existing listing. Reviewed by hand; acknowledged by email once. |

@@ -8,8 +8,8 @@ function gotoSearch(term){
 }
 
 /* Home page search wiring (Jacob, 2026-09-03). Three indexes: Directory
-   searches the supplier directory; Find Recruits is the people seeking
-   employment on /talent, for employers; Job Search is the open roles on
+   searches the supplier directory; Hire Talent is the people seeking
+   employment on /talent, for employers; Search Jobs is the open roles on
    /jobs, for people. Choosing one also picks the Popular line and the door
    below that go with it. */
 const HOME_PLACEHOLDER = {
@@ -19,8 +19,8 @@ const HOME_PLACEHOLDER = {
 };
 const HOME_HINT = {
   directory: 'Directory: companies, products and services, listed by their Circuits-Keywords\u2122.',
-  recruits:  'Find Recruits: people seeking employment, listed by their Circuits-Keywords\u2122.',
-  jobs:      'Job Search: open roles posted by companies on Circuits.com.'
+  recruits:  'Hire Talent: people seeking employment, listed by their Circuits-Keywords\u2122.',
+  jobs:      'Search Jobs: open roles posted by companies on Circuits.com.'
 };
 function homeTarget(form){ return form.dataset.target || 'directory'; }
 function initHome(){
@@ -76,7 +76,7 @@ function talentCardHtml(r, o){
       </div>
     </article>`;
 }
-/* The panel a signed-in visitor sees beside a Recruit Board row: who this is,
+/* The panel a signed-in visitor sees beside a Talent Board row: who this is,
    how to reach them, and what to do with the PDF. It used to be four bare links
    in a column, which read as a list of URLs rather than a person (Jacob,
    2026-09-17). The resume itself is drawn by resumeReaderHtml below. */
@@ -446,7 +446,7 @@ async function initInbox(){
     if(!storedSession()) return;
     const add = (src, integrity) => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; if(integrity) t.integrity = integrity; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
     /* the same vendored file, and the same hash, every page carries (audit item 3, 2026-09-21) */
-    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=67b0badd1a'); }catch(e){ return; }
+    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=8d73f50811'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;

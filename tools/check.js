@@ -198,7 +198,7 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
 {
   const home = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   /* one Popular line per index (Jacob, 2026-09-03): Directory shows by
-     default, Find Recruits and Job Search are hidden until chosen. Every item
+     default, Hire Talent and Search Jobs are hidden until chosen. Every item
      runs a search on the matching page, never opens a page. */
   const pops = [...home.matchAll(/<div class="popular" data-for="([a-z]+)"( hidden)?>([\s\S]*?)<\/div>/g)];
   assert.deepStrictEqual(pops.map(m => m[1]), ['directory', 'recruits', 'jobs'], 'the homepage should carry Popular lines for directory, recruits and jobs, in that order');
@@ -646,7 +646,7 @@ assert.ok(vid.includes("removeItem('cx_v')"),
 
 /* --- the privacy policy has to say what the site actually does --- */
 const priv = fs.readFileSync(path.join(ROOT, 'privacy.html'), 'utf8');
-for (const must of ['Supabase', 'Google Analytics', 'GitHub Pages', 'Resend', 'Cloudflare Turnstile', 'Recruit Board', 'resume', 'thirteen months']) {
+for (const must of ['Supabase', 'Google Analytics', 'GitHub Pages', 'Resend', 'Cloudflare Turnstile', 'Talent Board', 'resume', 'thirteen months']) {
   assert.ok(priv.includes(must), `privacy policy does not disclose ${must}`);
 }
 assert.ok(!priv.includes('jsDelivr'), 'privacy policy still names jsDelivr, nothing loads from it since 2026-09-21');
@@ -841,7 +841,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     'the Circuits.com mark is back on a profile heading (removed 2026-09-14)');
   /* 2026-09-03 (Jacob): ONE account type, called a profile. One dashboard
      with every tab for everyone: Profile Details / Listings / Hiring /
-     Job Search / Branding / Account Settings (+ Admin for staff).
+     Search Jobs / Branding / Account Settings (+ Admin for staff).
      No account kind anywhere: not on /register, not in signup metadata, not
      as a body class, not in the header label. */
   const portalHtml2 = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
@@ -854,15 +854,15 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
      paid extras are switched on. */
   /* Projects (2026-09-29) sits after Branding and is shown only to a club page */
   assert.deepStrictEqual(tabs, ['profile', 'listings', 'upgrades', 'hiring', 'seeking', 'club', 'branding', 'account', 'admin'],
-    'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Find Recruits / Job Search / College Club / Branding / Account Settings / Admin');
+    'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Hire Talent / Search Jobs / College Club / Branding / Account Settings / Admin');
   assert.ok(/data-tab="club">(?:<svg[\s\S]*?<\/svg>)?College Club</.test(portalHtml2) && portalHtml2.includes('id="tab-club"') && portalHtml2.includes('class="btn btn-primary pt-save-club cb-cta"'),
     'the College Club tab, or its own Save button, is missing');
   assert.ok(portalHtml2.indexOf('id="f-club"') > portalHtml2.indexOf('id="tab-club"') && portalHtml2.indexOf('id="pj-save"') > portalHtml2.indexOf('id="tab-club"')
          && portalHtml2.indexOf('id="pj-save"') < portalHtml2.indexOf('id="tab-branding"'), 'the club settings and the project editor must both live inside the College Club tab');
   /* the two Recruiting tabs are named for what they hold (Jacob, 2026-09-03,
-     "respectively"): the jobs tab is Job Search, the recruit listing is Find
+     "respectively"): the jobs tab is Search Jobs, the recruit listing is Find
      Recruits; the ids stay hiring / seeking so nothing else moves */
-  assert.ok(/data-tab="hiring">(?:<svg[\s\S]*?<\/svg>)?Find Recruits</.test(portalHtml2) && /data-tab="seeking">(?:<svg[\s\S]*?<\/svg>)?Job Search</.test(portalHtml2), 'the Recruiting tabs are not named Find Recruits (jobs you post) and Job Search (your own listing)');
+  assert.ok(/data-tab="hiring">(?:<svg[\s\S]*?<\/svg>)?Hire Talent</.test(portalHtml2) && /data-tab="seeking">(?:<svg[\s\S]*?<\/svg>)?Search Jobs</.test(portalHtml2), 'the Recruiting tabs are not named Hire Talent (jobs you post) and Search Jobs (your own listing)');
   assert.ok(!/tab-co|tab-ind|acct-company|acct-individual/.test(portalHtml2 + portalSrc2 + fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
     'the two-dashboard split is back (tab-co / tab-ind / acct-*)');
   assert.ok(!/account_type|cx_account_type/.test(portalSrc2 + fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8') + fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')),
@@ -886,11 +886,11 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   /* the person and the page share name, picture and address */
   assert.ok(/const mine = \{ display_name: fields\.name \};[\s\S]*mine\.photo_url = fields\.logo;[\s\S]*mine\.handle = fields\.handle;/.test(portalSrc2),
     'Profile Details no longer mirrors name, picture and address onto the person');
-  /* the Job Search tab holds experience, keywords, the private phone and the listing switch */
+  /* the Search Jobs tab holds experience, keywords, the private phone and the listing switch */
   for (const id of ['id="me-title"', 'id="me-location"', 'id="me-keywords"', 'id="me-years"', 'id="me-email"', 'id="me-bio"', 'id="f-creds"', 'id="me-resume"', 'id="me-phone"']) {
-    assert.ok(portalSrc2.includes(id), `the Job Search tab lost ${id}`);
+    assert.ok(portalSrc2.includes(id), `the Search Jobs tab lost ${id}`);
   }
-  assert.ok(!/id="me-handle"|id="me-name"|id="me-photo"/.test(portalSrc2), 'Job Search still asks for address, name or picture, those live on Profile Details now');
+  assert.ok(!/id="me-handle"|id="me-name"|id="me-photo"/.test(portalSrc2), 'Search Jobs still asks for address, name or picture, those live on Profile Details now');
   /* the Hiring tab: post a job, search people, the board */
   for (const id of ['id="pt-jobs"', 'id="job-post"']) {
     assert.ok(portalHtml2.includes(id), `the Hiring tab lost ${id}`);
@@ -972,10 +972,10 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
      the same way and the toggle can come back when Recruiting does. */
   /* Recruiting is open from the homepage again (Jacob, 2026-09-03, "so that
      users can choose between searching for jobs and for workers"): Directory,
-     Find Recruits and Job Search, three plain choices in one pill. */
+     Hire Talent and Search Jobs, three plain choices in one pill. */
   assert.ok(/id="home-form"[^>]*data-target="directory"/.test(home), 'the homepage form no longer says which index it searches');
   assert.ok(!/Coming Soon/i.test(home), 'Coming Soon is back on the homepage');
-  /* Directory, Find Recruits (people on /talent, for employers), Job Search
+  /* Directory, Hire Talent (people on /talent, for employers), Search Jobs
      (roles on /jobs, for people): three plain choices in one pill */
   for (const t of ['directory', 'recruits', 'jobs']) {
     assert.ok(new RegExp(`class="search-mode"[\\s\\S]*?data-target="${t}"[^>]*role="tab"`).test(home), `the homepage search toggle lost ${t}`);
@@ -1012,9 +1012,9 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     assert.ok(/<h2 class="section-title">Global Student Network/.test(ab) && /href="\/portal#club">Post Free Student Club</.test(ab), 'the Global Student Network section is missing from About'); }
   const appHome = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
   assert.ok(/t === 'recruits' \? '\/talent' : '\/jobs'/.test(appHome) && /if\(t === 'directory'\)\{ gotoSearch\(q\); return; \}/.test(appHome),
-    'the homepage search does not route Directory to /results, Find Recruits to /talent and Job Search to /jobs');
+    'the homepage search does not route Directory to /results, Hire Talent to /talent and Search Jobs to /jobs');
   assert.ok(/<title>Job Board \| Circuits\.com<\/title>/.test(fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8')) && /class="board-sub">Free to Post Job</.test(fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8')), '/jobs is not titled Job Board, Free to Post Job');
-  assert.ok(/<title>Recruit Board \| Circuits\.com<\/title>/.test(fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8')) && /class="board-sub">Free to Post Resume</.test(fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8')), '/talent is not titled Recruit Board, Free to Post Resume');
+  assert.ok(/<title>Talent Board \| Circuits\.com<\/title>/.test(fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8')) && /class="board-sub">Free to Post Resume</.test(fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8')), '/talent is not titled Talent Board, Free to Post Resume');
   for (const f of ['jobs.html', 'talent.html']) {
     const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
     assert.ok(!/Company Dashboard|Individual Dashboard|Recruits Directory|Employment Board/.test(src), `${f} still uses the old names`);
@@ -1830,15 +1830,15 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   assert.ok(/<h3 class="pt-sub-h[^"]*">(?:<svg[\s\S]*?<\/svg>)?Directory Listings<\/h3>\s*<div class="pt-list" id="pt-listings">/.test(listTab), 'the keyword table lost its Directory Listings title');
   assert.ok(/<b id="pt-getlisted-h">Choose Your Free Directory Keywords<\/b>/.test(listTab) && /Add Up to 10 Circuits-Keywords&trade;<\/p>/.test(listTab) && !/data-go-tab="upgrades"/.test(listTab) && !/Sponsor Banner and Trust Badge upgrades/.test(listTab) && /pt-kw-pack/.test(pj), 'the Choose Your Free Directory Keywords box or the Upgrades keyword package is wrong (Jacob, 2026-09-16)');
   assert.ok(!/pt-list-seeking|pt-jobs"/.test(seekTab + hireTab), 'a recruiting list is back on its old tab');
-  assert.ok(/<h2>Post Free Resume<\/h2>/.test(seekTab) && /Post a Resume<\/h3>/.test(pj) && /href="\/talent"[^>]*>View Recruit Board</.test(pj) && /List Me on the Recruit Board</.test(pj), 'the Job Search tab is not Post Free Resume with its two buttons');
+  assert.ok(/<h2>Post Free Resume<\/h2>/.test(seekTab) && /Post a Resume<\/h3>/.test(pj) && /href="\/talent"[^>]*>View Talent Board</.test(pj) && /List Me on the Talent Board</.test(pj), 'the Search Jobs tab is not Post Free Resume with its two buttons');
   assert.ok((fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8').match(/' data-box="1"'/g) || []).length === 2, 'Jobs Posted and Resumes Posted are not their own boxes on a profile');
-  assert.ok(/<h2>Post Free Job<\/h2>/.test(hireTab) && /<span id="job-form-h">Post Job<\/span>/.test(hireTab) && /id="job-post">List this Job on the Job Board</.test(hireTab) && /href="\/jobs"[^>]*>View Job Board</.test(hireTab) && /id="job-live-note"/.test(hireTab), 'the Find Recruits tab is not Post Free Job with its two buttons and the live note');
+  assert.ok(/<h2>Post Free Job<\/h2>/.test(hireTab) && /<span id="job-form-h">Post Job<\/span>/.test(hireTab) && /id="job-post">List this Job on the Job Board</.test(hireTab) && /href="\/jobs"[^>]*>View Job Board</.test(hireTab) && /id="job-live-note"/.test(hireTab), 'the Hire Talent tab is not Post Free Job with its two buttons and the live note');
   /* two board buttons top right of each Recruiting tab (Jacob, 2026-09-15) */
-  assert.ok((hireTab.match(/class="pt-head-btns"/g) || []).length === 1 && (seekTab.match(/class="pt-head-btns"/g) || []).length === 1 && /View Job Board &#8599;/.test(hireTab) && /View Recruit Board &#8599;/.test(seekTab), 'a Recruiting tab lost its two board buttons top right');
+  assert.ok((hireTab.match(/class="pt-head-btns"/g) || []).length === 1 && (seekTab.match(/class="pt-head-btns"/g) || []).length === 1 && /View Job Board &#8599;/.test(hireTab) && /View Talent Board &#8599;/.test(seekTab), 'a Recruiting tab lost its two board buttons top right');
   /* Save Resume lives in the form, List Me in box B; both cards have Delete */
-  assert.ok(/data-list="keep">Save All</.test(pj) && /data-list="on"[^>]*>List Me on the Recruit Board</.test(pj), 'Save All is not in the form, or List Me is not in box B');
+  assert.ok(/data-list="keep">Save All</.test(pj) && /data-list="on"[^>]*>List Me on the Talent Board</.test(pj), 'Save All is not in the form, or List Me is not in box B');
   assert.ok(/data-del-job=/.test(pj) && /data-del-resume="1"/.test(pj) && /async function deleteJob/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')), 'Jobs Posted or Resumes Posted lost its Delete button');
-  assert.ok(/href="\/jobs">View on Job Board<\/a>/.test(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8')) && /href="\/talent">View on Recruit Board<\/a><\/p>`/.test(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8')), 'the profile boxes must open the whole boards (Jacob, 2026-09-16)');
+  assert.ok(/href="\/jobs">View on Job Board<\/a>/.test(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8')) && /href="\/talent">View on Talent Board<\/a><\/p>`/.test(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8')), 'the profile boxes must open the whole boards (Jacob, 2026-09-16)');
   /* no browser autofill on any form (Jacob, 2026-09-16) */
   for (const f of fs.readdirSync(ROOT).filter(n => n.endsWith('.html'))) {
     const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
@@ -1854,10 +1854,10 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   assert.ok(/id="job-docs"/.test(hireTab) && /Job Posting Flyer/.test(hireTab), 'Post a Job lost Add Docs');
   assert.ok(/id="job-years"/.test(hireTab) && /years_experience: years/.test(pj), 'Post a Job lost Years of experience');
   assert.ok(!/\$99|btn-upgrade|pt-rec-upgrades|Talent Access/.test(hireTab + seekTab), 'Recruiting is free: an upgrade or a fee is back on a Recruiting tab');
-  assert.ok(!/Preview How Companies See You|pt-recruit-preview/.test(ph) && !/renderRecruitPreview|data-preview=/.test(pj), 'the paid preview is back on Job Search');
-  assert.ok(/id="pt-market-jobs"/.test(seekTab) && /id="pt-market-recruits"/.test(hireTab) && />Search Jobs<\/button>/.test(seekTab) && />Search Recruits<\/button>/.test(hireTab) && /function wireMarketSearch/.test(pj),
+  assert.ok(!/Preview How Companies See You|pt-recruit-preview/.test(ph) && !/renderRecruitPreview|data-preview=/.test(pj), 'the paid preview is back on Search Jobs');
+  assert.ok(/id="pt-market-jobs"/.test(seekTab) && /id="pt-market-recruits"/.test(hireTab) && />Search Jobs<\/button>/.test(seekTab) && />Search Talent<\/button>/.test(hireTab) && /function wireMarketSearch/.test(pj),
     'each Recruiting tab needs its own board search box, named after the board it searches');
-  assert.ok(!/Search Job Market|Position Desired|Positions Desired/.test(ph + pj), 'an old name is back: the boxes are Search the Job Board and Search the Recruit Board, the field is Seeking Job As');
+  assert.ok(!/Search Job Market|Position Desired|Positions Desired/.test(ph + pj), 'an old name is back: the boxes are Search the Job Board and Search the Talent Board, the field is Seeking Job As');
   /* the Supabase library is pinned with an integrity hash on every page (audit item 3, 2026-09-21) */
   for (const f of fs.readdirSync(ROOT).filter(x => x.endsWith('.html'))) {
     const h = fs.readFileSync(path.join(ROOT, f), 'utf8');
@@ -1882,8 +1882,8 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   }
   assert.ok(/if\(!p\.title && p\.years == null && !p\.bio && !creds\.length && !\(p\.keywords \|\| \[\]\)\.length\) return '';/.test(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8')),
     'an empty Resumes Posted box is back on every person page');
-  assert.ok(/renderExperience\(\); renderRecruit\(\); renderRecruitingListings\(\);/.test(pj) && /data-go-form="pt-experience"/.test(pj) && /activateTab\('seeking'\); const f = el\(b\.dataset\.goForm\)/.test(pj), 'Positions Desired is not drawn, or Edit does not open the Job Search tab');
-  assert.ok(/setMode\(j\); activateTab\('hiring'\)/.test(pj), 'Edit on a posted job does not open the Find Recruits form');
+  assert.ok(/renderExperience\(\); renderRecruit\(\); renderRecruitingListings\(\);/.test(pj) && /data-go-form="pt-experience"/.test(pj) && /activateTab\('seeking'\); const f = el\(b\.dataset\.goForm\)/.test(pj), 'Positions Desired is not drawn, or Edit does not open the Search Jobs tab');
+  assert.ok(/setMode\(j\); activateTab\('hiring'\)/.test(pj), 'Edit on a posted job does not open the Hire Talent form');
   /* a reload stays on the tab you were on (Jacob, 2026-09-15) */
   assert.ok(/history\.replaceState\(null, '', '#' \+ hash\)/.test(pj) && /localStorage\.setItem\('cx_pt_tab', b\.dataset\.tab\)/.test(pj) && /localStorage\.getItem\('cx_pt_tab'\)/.test(pj), 'the dashboard forgets its tab on reload');
   assert.ok(/window\.showAdminGroup = showAdminGroup/.test(fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8')) && /'#admin:' \+ g/.test(fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8')) && /tab\.startsWith\('admin:'\)/.test(pj), 'the admin panel forgets its sub-tab on reload');
@@ -1898,7 +1898,7 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   /* the boards are tables with one blue action button top right (Jacob, 2026-09-13) */
   const talentHtml = fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8'), jobsHtml = fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8');
   assert.ok(/<th>Seeking Job As<\/th><th>Location<\/th><th>Years Experience<\/th><th>Circuits-Keywords&trade;<\/th>/.test(talentHtml),
-    'the Recruit Board is not the table of Seeking Job As, Location, Years Experience and keywords');
+    'the Talent Board is not the table of Seeking Job As, Location, Years Experience and keywords');
   assert.ok(/<th>Job Title<\/th><th>Location<\/th><th>Company<\/th><th>Years Experience<\/th><th>Circuits-Keywords&trade;<\/th>/.test(jobsHtml),
     'the Job Board is not the table of Job Title, Location, Company, Years Experience and keywords');
   /* Every row carries its own blue View button, and the single button that
@@ -1913,13 +1913,13 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     assert.ok(!/data-board-go/.test(src),
       `${f} still carries a lede link to a table that is already on the page`);
   }
-  /* The Recruit Board reads the resume in the page (Jacob, 2026-09-17). The
+  /* The Talent Board reads the resume in the page (Jacob, 2026-09-17). The
      lede link that only scrolled to a table already on screen is gone, a row
      says whether there is a PDF, and the reader has real buttons. */
   assert.ok(/r\.has_resume \? '<span class="res-chip"/.test(talentHtml),
-    'a Recruit Board row no longer marks the people who attached a resume');
+    'a Talent Board row no longer marks the people who attached a resume');
   assert.ok(/resumeReaderHtml\(resume, c\.display_name \|\| c\.handle, small\)/.test(talentHtml) && /id="bd-resume"/.test(talentHtml),
-    'the Recruit Board stopped drawing the resume in the page');
+    'the Talent Board stopped drawing the resume in the page');
   {
     const appSrc = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
     assert.ok(/function resumeReaderHtml\(url, who, collapsed\)/.test(appSrc) && /navpanes=0&amp;view=FitH/.test(appSrc),
@@ -1929,7 +1929,7 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     assert.ok(/Open in a new tab</.test(appSrc) && />Download</.test(appSrc) && /bd-doc-fall/.test(appSrc),
       'the resume panel lost Open in a new tab, Download, or the fallback line');
     assert.ok(/class="tal-doc"/.test(appSrc) && /tal-row-k/.test(appSrc),
-      'the Recruit Board contact panel is a bare list of links again');
+      'the Talent Board contact panel is a bare list of links again');
     const storeSrc = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
     assert.ok(/createSignedUrl\(path, 900\)/.test(storeSrc) && /function resumeDownloadLink/.test(storeSrc),
       'a resume link is short lived again, or the Download button lost its link');

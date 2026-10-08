@@ -36,7 +36,7 @@ const MUST_LOAD = [
   ['/portal',            ['id="pt-auth-form"', 'id="pt-tab-admin"', 'id="tab-admin"', '/admin.js']],
   ['/register',          ['id="r-submit"']],
   ['/jobs',              ['Job Board']],
-  ['/talent',            ['Recruit Board']],
+  ['/talent',            ['Talent Board']],
   ['/reset',             ['id="rq-form"']],
   ['/claim',             ['<nav class="nav">']],
   ['/terms',             ['<nav class="nav">']],

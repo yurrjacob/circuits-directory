@@ -89,7 +89,7 @@ function renderExperience(){
 function resumeFoldHtml(){
   return `<summary>Resume <span class="pf-note">${ME.resume_path ? '· on file' : '· none yet'}</span></summary>
       <div class="pt-list"><div class="pt-item" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <span id="me-resume-state" class="pf-note" style="margin:0;flex:1">${ME.resume_path ? 'Resume on file. PDF. Signed-in companies can view it from the Recruit Board.' : 'No resume yet. PDF, up to 10 MB. Signed-in companies can view it from the Recruit Board.'}</span>
+        <span id="me-resume-state" class="pf-note" style="margin:0;flex:1">${ME.resume_path ? 'Resume on file. PDF. Signed-in companies can view it from the Talent Board.' : 'No resume yet. PDF, up to 10 MB. Signed-in companies can view it from the Talent Board.'}</span>
         ${ME.resume_path ? '<a class="mini-btn rp-add" href="#" id="me-resume-view">View</a><button class="mini-btn rp-add danger" type="button" id="me-resume-remove">Remove</button>' : ''}
         <label class="mini-btn green rp-add" style="cursor:pointer">${ME.resume_path ? 'Replace' : '+ Upload'}<input id="me-resume" type="file" accept="application/pdf" style="display:none"></label>
       </div></div>`;
@@ -128,12 +128,12 @@ function renderRecruit(){
   if(ME_FRESH){ box.innerHTML = ''; return; }
   const listed = !!ME.talent_listed;
   const status = !listed ? ''
-    : ME.talent_status === 'Approved' ? '<span class="badge live">Live on the Recruit Board</span>'
+    : ME.talent_status === 'Approved' ? '<span class="badge live">Live on the Talent Board</span>'
     : ME.talent_status === 'Denied'   ? '<span class="badge">Not approved</span>'
     : '<span class="badge pending">Awaiting approval by Circuits.com</span>';
   box.innerHTML = `<div class="pf-form pt-actions">
-      <button type="button" class="btn btn-primary me-save" data-list="on" ${listed ? 'disabled title="Already listed. Pause it under Your Listings, Resumes Posted."' : ''}>List Me on the Recruit Board</button>
-      <a class="btn btn-outline" href="/talent" target="_blank" rel="noopener">View Recruit Board</a>
+      <button type="button" class="btn btn-primary me-save" data-list="on" ${listed ? 'disabled title="Already listed. Pause it under Your Listings, Resumes Posted."' : ''}>List Me on the Talent Board</button>
+      <a class="btn btn-outline" href="/talent" target="_blank" rel="noopener">View Talent Board</a>
       <a class="btn btn-outline" href="/resume?u=${encodeURIComponent(ME.handle || '')}" target="_blank" rel="noopener">Export resume (PDF)</a>
       ${status}
       <span class="pf-note me-msg" style="margin:0"></span>
@@ -1894,7 +1894,7 @@ function renderRecruitingListings(){
        the account itself stays */
     seek.addEventListener('click', async e => {
       const b = e.target.closest('[data-del-resume]'); if(!b) return;
-      if(!confirm('Delete your resume posting? It comes off the Recruit Board and the Post A Resume form is cleared. Your account stays.')) return;
+      if(!confirm('Delete your resume posting? It comes off the Talent Board and the Post A Resume form is cleared. Your account stays.')) return;
       b.disabled = true;
       const err = await updateMyProfile({ talent_listed: false, title: null, location: null, years: null, bio: null, credentials: [], contact_email: null });
       if(!err) await setTalentKeywords([], []);
@@ -2502,7 +2502,7 @@ function wireJobs(){
     const ed = e.target.closest('[data-edit-job]');
     if(ed){
       const j = (PT.jobs || []).find(x => x.id === ed.dataset.editJob);
-      /* the list sits on Your Listings, the form on Find Recruits (2026-09-13) */
+      /* the list sits on Your Listings, the form on Hire Talent (2026-09-13) */
       if(j){ setMode(j); activateTab('hiring'); gentleScroll(el('pt-job-form'), 'start'); el('job-title').focus({ preventScroll: true }); }
       return;
     }
@@ -2588,8 +2588,8 @@ function wireJobs(){
 }
 
 /* Board search (Jacob, 2026-09-13; named after its board 2026-09-21): one box on each Recruiting tab, a
-   keyword search of the board that tab feeds. Find Recruits searches the
-   Recruit Board, Job Search searches the Job Board, each in a new tab like
+   keyword search of the board that tab feeds. Hire Talent searches the
+   Talent Board, Search Jobs searches the Job Board, each in a new tab like
    the View buttons beside them. */
 function wireMarketSearch(){
   [['pt-market-recruits', 'pt-market-recruits-q', '/talent'], ['pt-market-jobs', 'pt-market-jobs-q', '/jobs']].forEach(([formId, qId, page]) => {

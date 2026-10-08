@@ -590,7 +590,7 @@ async function updateMyProfile(fields){
   return '';
 }
 
-/* ---- talent marketplace (MVP2): a profile that opts in to the Recruit Board ---- */
+/* ---- talent marketplace (MVP2): a profile that opts in to the Talent Board ---- */
 /* the keywords the owner wants to be found under; the database normalises,
    de-duplicates and caps them at ten */
 /* keywords with their on/off switches, same order; the RPC dedupes and caps at 10 */
@@ -617,8 +617,8 @@ async function removeResume(){
   return updateMyProfile({ resume_path: null });
 }
 /* A short-lived link to a resume: the owner, a company that got an application,
-   and any signed-in account on the Recruit Board (free since 2026-09-13).
-   Fifteen minutes rather than five, because the Recruit Board now reads the PDF
+   and any signed-in account on the Talent Board (free since 2026-09-13).
+   Fifteen minutes rather than five, because the Talent Board now reads the PDF
    in the page and a five minute link died mid-read (Jacob, 2026-09-17). */
 async function resumeLink(path){
   if(!sb || !path) return '';
@@ -916,7 +916,7 @@ async function fetchRecruits(){
   rows.forEach(r => { r.keywords = byUser[r.user_id] || []; });
   return rows;
 }
-/* Staff decide who appears on the Recruit Board: Pending, Approved or
+/* Staff decide who appears on the Talent Board: Pending, Approved or
    Denied. The guard trigger silently reverts anyone else's change. */
 async function setTalentStatus(userId, status){
   if(!sb) return 'No connection';

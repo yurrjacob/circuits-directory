@@ -454,7 +454,7 @@ async function sendNotificationUI(){
   document.querySelectorAll('#nt-users .nt-user').forEach((r, i) => { if(i) r.remove(); else r.querySelector('input').value = ''; });
 }
 
-/* ---- recruits (MVP2): people listed on the Recruit Board ---- */
+/* ---- recruits (MVP2): people listed on the Talent Board ---- */
 let allRecruits = [];
 async function reloadRecruits(){
   const body = $('recruits-body'); if(!body) return;
@@ -480,7 +480,7 @@ async function reloadRecruits(){
 async function setRecruitStatus(userId, status){
   const r = allRecruits.find(x => x.user_id === userId);
   const who = r ? (r.display_name || r.handle) : 'this person';
-  if(status === 'Denied' && !confirm('Deny ' + who + '? They leave the Recruit Board and get a message saying so. Their profile stays as it is.')) return;
+  if(status === 'Denied' && !confirm('Deny ' + who + '? They leave the Talent Board and get a message saying so. Their profile stays as it is.')) return;
   const err = await setTalentStatus(userId, status);
   if(err){ alert('Could not do that: ' + err); return; }
   await reloadRecruits();
