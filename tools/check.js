@@ -1005,8 +1005,11 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   assert.ok(home.indexOf('id="search-hint"') < home.indexOf('class="search-pill"') && home.indexOf('id="search-hint"') > home.indexOf('id="home-form"'),
     'the Directory line is no longer above the search pill');
   assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'recruiting-2026-09-03', 'about-recruiting-section.html')), 'the archived About recruiting section is missing');
-  /* Recruiting is live and free: the section is back on About (Jacob, 2026-09-14) */
-  assert.ok(/<h2 class="section-title">Recruiting on Circuits\.com/.test(fs.readFileSync(path.join(ROOT, 'about.html'), 'utf8')) && /Post a Free Resume:<\/b>/.test(fs.readFileSync(path.join(ROOT, 'about.html'), 'utf8')), 'the Recruiting section is missing from About');
+  /* Recruiting is live and free: the section is back on About (Jacob, 2026-09-14),
+     renamed The Workplace, with the Global Student Network under it (2026-10-08) */
+  { const ab = fs.readFileSync(path.join(ROOT, 'about.html'), 'utf8');
+    assert.ok(/<h2 class="section-title">The Workplace on Circuits\.com/.test(ab) && /Post a Free Resume:<\/b>/.test(ab), 'the Workplace section is missing from About');
+    assert.ok(/<h2 class="section-title">Global Student Network/.test(ab) && /href="\/portal#club">Post Free Student Club</.test(ab), 'the Global Student Network section is missing from About'); }
   const appHome = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
   assert.ok(/t === 'recruits' \? '\/talent' : '\/jobs'/.test(appHome) && /if\(t === 'directory'\)\{ gotoSearch\(q\); return; \}/.test(appHome),
     'the homepage search does not route Directory to /results, Find Recruits to /talent and Job Search to /jobs');
