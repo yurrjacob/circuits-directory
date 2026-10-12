@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=27361a6d59">
+<link rel="stylesheet" href="/styles.css?v=2786045a7c">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -148,6 +148,7 @@
 
   <!-- ===== profile details: one form for the person or the company behind the account ===== -->
   <section class="pt-panel active" id="tab-profile">
+    <div class="pf-modal pv-modal" id="pv-modal" hidden role="dialog" aria-modal="true" aria-labelledby="pv-title"></div>
     <div class="pf-form cb-plain">
       <div id="pt-fresh-note"></div>
       <section class="cb-card">
@@ -159,8 +160,10 @@
             <span class="handle-prefix">circuits.com/</span>
             <input id="f-handle" type="text" maxlength="32" spellcheck="false" placeholder="aaa_electronics" autocomplete="off">
           </div>
-          <!-- the live page, beside the address it lives at (Jacob, 2026-09-21) -->
-          <a class="btn btn-outline" id="f-preview" href="#" target="_blank" rel="noopener" hidden>Preview profile &#8599;</a>
+          <!-- Preview Profile beside the address (Jacob, 2026-10-12): opens the
+               profile as it stands in the form, with every field still to fill
+               in marked red. The live page link sits inside the preview. -->
+          <button type="button" class="btn btn-outline" id="f-preview">Preview Profile</button>
         </div>
         <div id="handle-msg" class="pf-note"></div>
         <p class="pf-note">Short and memorable. This is the link you put on adverts, business cards and
@@ -168,7 +171,7 @@
       </div>
 
       <div class="pt-row">
-        <div class="auth-field"><label for="f-name">Name <span class="req">*</span></label><input id="f-name" type="text" maxlength="120" required autocomplete="off">
+        <div class="auth-field"><label for="f-name">Name (Company, Club or Org) <span class="req">*</span></label><input id="f-name" type="text" maxlength="120" required autocomplete="off">
           <p class="pf-note">Your name, or your company's. The heading on your profile and the name people see in search results.</p></div>
         <div class="auth-field"><label for="f-contact">Contact person <span class="req">*</span></label><input id="f-contact" type="text" required autocomplete="off">
           <p class="pf-note">For a company: the person a buyer asks for.</p></div>
@@ -178,7 +181,7 @@
       <div class="pt-row">
         <div class="auth-field"><label for="f-website">Website</label><input id="f-website" type="text" placeholder="https://…" autocomplete="off"></div>
         <div class="auth-field"><label for="f-phone">Public phone</label><input id="f-phone" type="text" autocomplete="off"></div>
-        <div class="auth-field"><label for="f-address">Address</label><input id="f-address" type="text" autocomplete="off"></div>
+        <div class="auth-field"><label for="f-address">Address (City, Country)</label><input id="f-address" type="text" placeholder="Austin, USA" autocomplete="off"></div>
       </div>
       <div class="pt-row">
         <div class="auth-field"><label for="f-tagline">Tagline</label><input id="f-tagline" type="text" maxlength="160" placeholder="Authorised distributor of analog and power ICs" autocomplete="off"></div>
@@ -212,7 +215,7 @@
             </label>
             <p class="pf-note">Drag the image to move it. It is saved as a square.</p>
             <div class="crop-btns">
-              <button type="button" class="mini-btn" id="pt-crop-ok">Use this</button>
+              <button type="button" class="mini-btn green" id="pt-crop-ok">Use this</button>
               <button type="button" class="mini-btn" id="pt-crop-no">Cancel</button>
             </div>
           </div>
@@ -817,7 +820,7 @@
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
 <script src="/store.js?v=6ecacd285d"></script>
 <script src="/app.js?v=657028a52f"></script>
-<script src="/portal.js?v=27a1a69a73"></script>
+<script src="/portal.js?v=2af5bbe49a"></script>
 <script src="/admin.js?v=95ce1687e7"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));

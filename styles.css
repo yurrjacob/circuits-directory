@@ -2464,3 +2464,32 @@ a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
 .pf-linkact{color:#8fc2ff;text-decoration:underline;text-underline-offset:2px;border:0;border-radius:0;padding:0;background:transparent}
 .pf-linkact:hover{color:#c4defd;background:transparent;text-decoration:underline}
 .pf-linkact.is-saved{background:transparent;color:var(--green)}
+
+/* Preview Profile (Jacob, 2026-10-12): the profile as typed, missing fields red */
+body.pv-open{overflow:hidden}
+.pv-box{max-width:620px}
+.pv-head{display:flex;gap:16px;align-items:center;padding:26px 26px 18px;background:linear-gradient(180deg,#f4f9ea,#fff);border-bottom:1px solid var(--line)}
+.pv-logo{width:72px;height:72px;flex:none;border-radius:16px;border:1px solid var(--line);background:#fff;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.pv-logo img{width:100%;height:100%;object-fit:cover}
+.pv-head h2{margin:0;font-size:1.4rem;line-height:1.2}
+.pv-tag{margin:4px 0 0;color:#3c4046}
+.pv-url{margin:4px 0 0;color:var(--muted);font-size:.85rem}
+.pv-body{padding:18px 26px 26px;display:flex;flex-direction:column;gap:14px}
+.pv-sum{margin:0;padding:10px 14px;border-radius:10px;font-size:.92rem}
+.pv-sum.bad{background:#fdecea;color:#8a1c12;border:1px solid #f3b8b1}
+.pv-sum.ok{background:#f1fae0;color:#3f6300;border:1px solid #cfe9a0}
+.pv-rows{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.pv-row{display:grid;grid-template-columns:minmax(150px,38%) 1fr;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line);font-size:.92rem}
+.pv-row:last-child{border-bottom:0}
+.pv-l{color:var(--muted);font-weight:600}
+.pv-v{word-break:break-word}
+.pv-row-missing{background:#fdecea}
+.pv-row-missing .pv-l,.pv-row-missing .pv-v{color:#b3261e;font-weight:700}
+.pv-missing-text{color:#b3261e}
+.pv-acts{display:flex;gap:10px;flex-wrap:wrap}
+input.pv-missing,textarea.pv-missing{border-color:#d93025 !important;background:#fff5f4;box-shadow:0 0 0 3px rgba(217,48,37,.14)}
+.pt-save-msg.is-saved{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:999px;background:#f1fae0;border:1px solid var(--green);color:#3f6300}
+
+/* Upgrades: the free keyword card and the paid More Keywords package side by side */
+.pt-kw-packs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-bottom:14px}
+.pt-kw-packs .pt-upsell{margin:0}

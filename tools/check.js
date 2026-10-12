@@ -258,6 +258,10 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   assert.ok(/section\('Jobs Posted'[\s\S]*?>View on Job Board</.test(pj) && /View on Talent Board[\s\S]*?section\('Resumes Posted'/.test(pj), 'Jobs Posted or Resumes Posted lost its board button');
 }
 
+/* Upgrades: a paid More Keywords package beside the free keywords card (Jacob, 2026-10-12) */
+assert.ok(/<b>Buy More Keywords Package<\/b>/.test(fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8')) && /get\('topic'\)/.test(fs.readFileSync(path.join(ROOT, 'contact.html'), 'utf8')),
+  'the Upgrades tab lost the Buy More Keywords package, or the contact form no longer takes its message');
+
 /* How It Works was merged into About; the old URL must still point somewhere */
 const hiw = fs.readFileSync(path.join(ROOT, 'how-it-works.html'), 'utf8');
 assert.ok(hiw.includes('rel="canonical" href="https://circuits.com/about"'),
@@ -775,7 +779,15 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   /* Profile Details, the 2026-09-21 list: preview beside the address, the
      rows in order (contact, then website/phone/address, then tagline), the
      saved note beside the button, the three required fields marked when empty */
-  assert.ok(/id="f-preview"[^>]*target="_blank"/.test(portalHtml), 'the Preview profile link beside the address is gone');
+  /* since 2026-10-12 the Preview Profile button opens the profile as typed,
+     the six fields buyers look for red when empty; the live page is inside it */
+  assert.ok(/<button type="button" class="btn btn-outline" id="f-preview">Preview Profile<\/button>/.test(portalHtml), 'the Preview Profile button beside the address is gone');
+  { const pjs = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
+    assert.ok(/const PREVIEW_FIELDS = \[\s*\['f-name', 'Company or Organization Name', true\], \['f-contact', 'Contact Person', true\], \['f-email', 'Public Email', true\],\s*\['f-website', 'Website', false\], \['f-phone', 'Public Phone', false\], \['f-address', 'Address', false\]\];/.test(pjs)
+      && /i\.classList\.toggle\('pv-missing', !v\(id\)\)/.test(pjs), 'the preview does not mark the six fields red when empty');
+    assert.ok(/saveNote\(fresh \? 'Profile Saved\. Your page is at circuits\.com\/' \+ wantHandle : 'Profile Saved', true, true\)/.test(pjs), 'the bottom of Profile Details does not say Profile Saved after a save'); }
+  assert.ok(/<label for="f-name">Name \(Company, Club or Org\) <span class="req">\*<\/span><\/label>/.test(portalHtml) && /<label for="f-address">Address \(City, Country\)<\/label>/.test(portalHtml), 'the Name or Address label is not the 2026-10-12 wording');
+  assert.ok(/class="mini-btn green" id="pt-crop-ok">Use this</.test(portalHtml), 'the cropper Use this button is not green');
   /* ---- college clubs, student badges, projects and the resume (2026-09-29) ---- */
   {
     const rd = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
@@ -835,7 +847,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   {
     const pjs = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
     assert.ok(/const REQUIRED_FIELDS = \['f-name', 'f-contact', 'f-email'\]/.test(pjs) && /is-missing/.test(pjs), 'empty required fields are no longer marked');
-    assert.ok(/saveNote\(fresh \? 'Profile created/.test(pjs), 'a saved profile no longer says so beside the button');
+    assert.ok(/saveNote\(fresh \? 'Profile Saved/.test(pjs), 'a saved profile no longer says so beside the button');
     const css = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
     assert.ok(/\.auth-field\.is-missing input\{border-color:#d93025/.test(css), 'the missing-field mark is not red');
   }

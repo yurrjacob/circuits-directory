@@ -473,7 +473,11 @@ function wireAuth(){
 /* Unsaved-changes guard. Editing a profile is a lot of typing; closing the tab
    or signing out used to bin it silently. */
 let PT_DIRTY = false;
-function markDirty(){ PT_DIRTY = true; }
+function markDirty(){
+  PT_DIRTY = true;
+  /* a change after a save: the "Profile Saved" beside the button is no longer true */
+  [el('pt-save-msg'), el('pt-club-msg')].forEach(m => { if(m && m.classList.contains('is-saved')){ m.textContent = ''; m.classList.remove('is-saved'); } });
+}
 function markClean(){ PT_DIRTY = false; }
 function wireDirtyTracking(){
   /* the whole public profile is one tab (2026-09-02) */
@@ -544,7 +548,7 @@ async function loadCompany(slug){
   el('pt-name').textContent = PT.co.name;
   el('pt-view').href = profileUrl(PT.co.handle) || '#';
   el('pt-view').style.display = PT.co.handle ? '' : 'none';
-  if(el('f-preview')){ el('f-preview').href = profileUrl(PT.co.handle) || '#'; el('f-preview').hidden = !PT.co.handle; }
+  /* the Preview button is always there; the live page link lives inside it */
   el('pt-fresh-note').innerHTML = '';
   /* Overview, Quote requests and Reviews are off the dashboard for now
      (Jacob, 2026-08-20, full copies in backups/dashboard-2026-08-20/), so
@@ -1360,12 +1364,71 @@ function markMissing(){
 }
 /* Every word about the save goes beside the Save button as well as into the
    toast at the top: the button is at the bottom of a long form. */
-function saveNote(text, ok){
+/* A successful save stays said beside the button ("Profile Saved", Jacob
+   2026-10-12: you could not tell it saved without scrolling back up) until
+   the form is changed again; everything else fades after six seconds. */
+function saveNote(text, ok, stay){
   toast(text, ok);
   const ms = [el('pt-save-msg'), el('pt-club-msg')].filter(Boolean);
-  ms.forEach(m => { m.textContent = text; m.classList.toggle('bad', !ok); });
-  clearTimeout(PT.saveMsgT); PT.saveMsgT = setTimeout(() => { ms.forEach(m => { m.textContent = ''; }); }, 6000);
+  ms.forEach(m => { m.textContent = (ok && stay ? '\u2713 ' : '') + text; m.classList.toggle('bad', !ok); m.classList.toggle('is-saved', !!(ok && stay)); });
+  clearTimeout(PT.saveMsgT);
+  if(!(ok && stay)) PT.saveMsgT = setTimeout(() => { ms.forEach(m => { m.textContent = ''; m.classList.remove('is-saved'); }); }, 6000);
 }
+/* Preview Profile (Jacob, 2026-10-12): the profile as the form stands, with
+   the fields still to fill in marked red. The three starred ones are needed
+   to save; Website, Public Phone and Address are left red too because a
+   buyer looks for them. The form boxes go red as well, until filled. */
+const PREVIEW_FIELDS = [
+  ['f-name', 'Company or Organization Name', true], ['f-contact', 'Contact Person', true], ['f-email', 'Public Email', true],
+  ['f-website', 'Website', false], ['f-phone', 'Public Phone', false], ['f-address', 'Address', false]];
+function openProfilePreview(){
+  const box = el('pv-modal'); if(!box) return;
+  const v = id => (el(id) && el(id).value || '').trim();
+  const missing = PREVIEW_FIELDS.filter(([id]) => !v(id));
+  PREVIEW_FIELDS.forEach(([id]) => { const i = el(id); if(i) i.classList.toggle('pv-missing', !v(id)); });
+  const logo = (PT.co && PT.co.logo) || '';
+  const name = v('f-name'), handle = v('f-handle') || (PT.co && PT.co.handle) || '';
+  const line = ([id, label, req]) => {
+    const val = v(id);
+    return `<div class="pv-row${val ? '' : ' pv-row-missing'}"><span class="pv-l">${escapeHtml(label)}${req ? ' <span class="req">*</span>' : ''}</span>`
+      + `<span class="pv-v">${val ? escapeHtml(val) : 'Missing, please fill in'}</span></div>`;
+  };
+  box.innerHTML = `<div class="pf-modal-box pv-box">
+      <button type="button" class="pf-modal-x" data-pv-close aria-label="Close preview">&times;</button>
+      <div class="pv-head">
+        <div class="pv-logo">${isLogoUrl(logo) ? `<img src="${escapeHtml(logo)}" alt="">` : avatarSvg()}</div>
+        <div><h2 id="pv-title" class="${name ? '' : 'pv-missing-text'}">${name ? escapeHtml(name) : 'Company or Organization Name missing'}</h2>
+          ${v('f-tagline') ? `<p class="pv-tag">${escapeHtml(v('f-tagline'))}</p>` : ''}
+          ${handle ? `<p class="pv-url">circuits.com/${escapeHtml(handle)}</p>` : ''}</div>
+      </div>
+      <div class="pv-body">
+        <p class="pv-sum ${missing.length ? 'bad' : 'ok'}">${missing.length
+          ? `<b>${missing.length} field${missing.length === 1 ? '' : 's'} still to fill in</b>, marked red below and in the form.`
+          : '<b>Everything a buyer looks for is filled in.</b>'}</p>
+        <div class="pv-rows">${PREVIEW_FIELDS.map(line).join('')}</div>
+        <p class="pf-note">Fields with <span class="req">*</span> are required to save. This is a preview of what you have typed; press Save profile at the bottom to publish it.</p>
+        <div class="pv-acts">
+          <button type="button" class="btn btn-primary" data-pv-close>Back to editing</button>
+          ${PT.co && PT.co.handle ? `<a class="btn btn-outline" href="${escapeHtml(profileUrl(PT.co.handle))}" target="_blank" rel="noopener">Open the live page &#8599;</a>` : ''}
+        </div>
+      </div>
+    </div>`;
+  box.hidden = false;
+  document.body.classList.add('pv-open');
+  const close = () => { box.hidden = true; document.body.classList.remove('pv-open'); document.removeEventListener('keydown', onKey); const f = missing[0] && el(missing[0][0]); if(f) f.focus(); };
+  const onKey = e => { if(e.key === 'Escape') close(); };
+  box.onclick = e => { if(e.target === box || e.target.closest('[data-pv-close]')) close(); };
+  document.addEventListener('keydown', onKey);
+  const first = box.querySelector('[data-pv-close]'); if(first) first.focus();
+}
+function wireProfilePreview(){
+  const b = el('f-preview'); if(!b || b.__wired) return;
+  b.__wired = true;
+  b.addEventListener('click', openProfilePreview);
+  /* a red box turns back the moment it is filled in */
+  PREVIEW_FIELDS.forEach(([id]) => { const i = el(id); if(i) i.addEventListener('input', () => { if(i.value.trim()) i.classList.remove('pv-missing'); }); });
+}
+
 function renderProfileForm(){
   const c = PT.co;
   const set = (id, v) => { if(el(id)) el(id).value = v || ''; };
@@ -1377,6 +1440,7 @@ function renderProfileForm(){
   renderProgress();
   syncAccountUrl();
   markMissing();
+  wireProfilePreview();
   if(!PT.missingWired){ PT.missingWired = true; REQUIRED_FIELDS.forEach(id => el(id) && el(id).addEventListener('input', markMissing)); }
   wireHandleCheck();
   PT.clearLogo = false;
@@ -1778,7 +1842,7 @@ async function saveProfile(){
   if(fields.handle) mine.handle = fields.handle;
   const e2 = await updateMyProfile(mine);
   if(e2) console.warn('profile mirror', e2);
-  saveNote(fresh ? 'Profile created. Your page is at circuits.com/' + wantHandle : 'Profile saved.', true);
+  saveNote(fresh ? 'Profile Saved. Your page is at circuits.com/' + wantHandle : 'Profile Saved', true, true);
   markClean();
   if(fresh){
     renderSeeking(await myProfile());
@@ -2019,11 +2083,21 @@ function renderUpgrades(){
 
   /* more keywords is the first "upgrade" (Jacob, 2026-09-14): free, up to 10
      per request, with the banner and badge extras chosen at the same time */
-  const kwPack = `<div class="pt-upsell pt-kw-pack">
+  /* ...and the paid package beside it (Jacob, 2026-10-12: "Add buy more
+     keywords package"). No price is set yet, so Request opens the contact
+     form with the ask filled in and Circuits.com quotes by email. */
+  const kwPack = `<div class="pt-kw-packs">
+    <div class="pt-upsell pt-kw-pack">
       <div><b>Choose Your Free Directory Keywords</b>
         <p>Add up to 10 Circuits-Keywords&trade; per request, free.</p></div>
       <a class="btn btn-blue" href="/join">Add Keywords</a>
-    </div>`;
+    </div>
+    <div class="pt-upsell pt-kw-pack pt-kw-buy">
+      <div><b>Buy More Keywords Package</b>
+        <p>Need more than your free 10? Add a package of extra Circuits-Keywords&trade;. Circuits.com confirms the price by email before anything is billed.</p></div>
+      <a class="btn btn-upgrade" href="/contact?topic=${encodeURIComponent('I would like to buy a More Keywords package for ' + ((PT.co && PT.co.name) || 'my profile') + ' (circuits.com/' + ((PT.co && PT.co.handle) || '') + '). Please send the price.')}">Request</a>
+    </div>
+  </div>`;
   el('pt-upgrades').innerHTML = kwPack + (live.length ? `<div class="table-wrap"><table class="listings-table pt-uptable">
       <thead><tr>
         <th class="rank">#</th><th>Keyword</th>
