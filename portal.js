@@ -50,7 +50,7 @@ function renderExperience(){
   const box = el('pt-experience'); if(!box) return;
   if(ME_FRESH){ box.innerHTML = freshNote(); return; }
   box.innerHTML = `
-    <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"/><path d="M14 3.5V8h4.5"/><circle cx="12" cy="13" r="2"/><path d="M8.8 18a3.4 3.4 0 0 1 6.4 0"/></svg>Post a Resume</h3>
+    <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"/><path d="M14 3.5V8h4.5"/><circle cx="12" cy="13" r="2"/><path d="M8.8 18a3.4 3.4 0 0 1 6.4 0"/></svg>Post A Resume</h3>
     <div class="grid2">
       <div class="auth-field"><label for="me-title">Seeking Job As</label>
         <input id="me-title" type="text" maxlength="80" placeholder="RF Design Engineer" value="${escapeHtml(ME.title || '')}"></div>

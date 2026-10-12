@@ -9,8 +9,8 @@ function gotoSearch(term){
 
 /* Home page search wiring (Jacob, 2026-09-03). Three indexes: Directory
    searches the supplier directory; Hire Talent is the people seeking
-   employment on /talent, for employers; Search Jobs is the open roles on
-   /jobs, for people. Choosing one also picks the Popular line and the door
+   employment on /talent, for employers; Search Work is the open roles on
+   /jobs, for people; Search Clubs is the Global Club List on /clubs. Choosing one also picks the Popular line and the door
    below that go with it. */
 const HOME_PLACEHOLDER = {
   directory: 'Search products, services, companies, part numbers, or keywords...',

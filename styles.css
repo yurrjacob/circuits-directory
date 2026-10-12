@@ -2493,3 +2493,7 @@ input.pv-missing,textarea.pv-missing{border-color:#d93025 !important;background:
 /* Upgrades: the free keyword card and the paid More Keywords package side by side */
 .pt-kw-packs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-bottom:14px}
 .pt-kw-packs .pt-upsell{margin:0}
+
+/* Years of experience is a short dropdown (Jacob, 2026-10-12): the general
+   .auth-field and .pf-form select rules were stretching it full width */
+.auth-field select.pt-years,.pf-form select.pt-years,.pt-panel .pf-form select.pt-years{width:140px;max-width:100%}

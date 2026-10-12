@@ -262,6 +262,13 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
 assert.ok(/<b>Buy More Keywords Package<\/b>/.test(fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8')) && /get\('topic'\)/.test(fs.readFileSync(path.join(ROOT, 'contact.html'), 'utf8')),
   'the Upgrades tab lost the Buy More Keywords package, or the contact form no longer takes its message');
 
+/* the Years of experience dropdowns stay short (Jacob, 2026-10-12) */
+assert.ok(/\.auth-field select\.pt-years,\.pf-form select\.pt-years,\.pt-panel \.pf-form select\.pt-years\{width:140px/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the Years of experience dropdown is stretched full width again');
+
+/* the board ledes end in a link (Jacob, 2026-10-12): Apply, View Talent now */
+assert.ok(/view job details and <a class="web-link" href="#results-body">Apply<\/a>\./.test(fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8'))
+  && /best describe their qualifications\. <a class="web-link" href="#results-body">View Talent now<\/a>/.test(fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8')), 'a board lede lost its Apply or View Talent now link');
+
 /* How It Works was merged into About; the old URL must still point somewhere */
 const hiw = fs.readFileSync(path.join(ROOT, 'how-it-works.html'), 'utf8');
 assert.ok(hiw.includes('rel="canonical" href="https://circuits.com/about"'),
@@ -911,7 +918,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   /* the two Recruiting tabs are named for what they hold (Jacob, 2026-09-03,
      "respectively"): the jobs tab is Search Jobs, the recruit listing is Find
      Recruits; the ids stay hiring / seeking so nothing else moves */
-  assert.ok(/data-tab="hiring">(?:<svg[\s\S]*?<\/svg>)?Hire Talent</.test(portalHtml2) && /data-tab="seeking">(?:<svg[\s\S]*?<\/svg>)?Search Jobs</.test(portalHtml2), 'the Recruiting tabs are not named Hire Talent (jobs you post) and Search Jobs (your own listing)');
+  assert.ok(/data-tab="hiring">(?:<svg[\s\S]*?<\/svg>)?Hire Talent</.test(portalHtml2) && /data-tab="seeking">(?:<svg[\s\S]*?<\/svg>)?Search Work</.test(portalHtml2), 'the Recruiting tabs are not named Hire Talent (jobs you post) and Search Jobs (your own listing)');
   assert.ok(!/tab-co|tab-ind|acct-company|acct-individual/.test(portalHtml2 + portalSrc2 + fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
     'the two-dashboard split is back (tab-co / tab-ind / acct-*)');
   assert.ok(!/account_type|cx_account_type/.test(portalSrc2 + fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8') + fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')),
@@ -1888,7 +1895,7 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   assert.ok(/<h3 class="pt-sub-h[^"]*">(?:<svg[\s\S]*?<\/svg>)?Directory Listings<\/h3>\s*<div class="pt-list" id="pt-listings">/.test(listTab), 'the keyword table lost its Directory Listings title');
   assert.ok(/<b id="pt-getlisted-h">Choose Your Free Directory Keywords<\/b>/.test(listTab) && /Add Up to 10 Circuits-Keywords&trade;<\/p>/.test(listTab) && !/data-go-tab="upgrades"/.test(listTab) && !/Sponsor Banner and Trust Badge upgrades/.test(listTab) && /pt-kw-pack/.test(pj), 'the Choose Your Free Directory Keywords box or the Upgrades keyword package is wrong (Jacob, 2026-09-16)');
   assert.ok(!/pt-list-seeking|pt-jobs"/.test(seekTab + hireTab), 'a recruiting list is back on its old tab');
-  assert.ok(/<h2>Post Free Resume<\/h2>/.test(seekTab) && /Post a Resume<\/h3>/.test(pj) && /href="\/talent"[^>]*>View Talent Board</.test(pj) && /List Me on the Talent Board</.test(pj), 'the Search Jobs tab is not Post Free Resume with its two buttons');
+  assert.ok(/<h2>Post Free Resume<\/h2>/.test(seekTab) && /Post A Resume<\/h3>/.test(pj) && /href="\/talent"[^>]*>View Talent Board</.test(pj) && /List Me on the Talent Board</.test(pj), 'the Search Jobs tab is not Post Free Resume with its two buttons');
   assert.ok((fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8').match(/' data-box="1"'/g) || []).length === 2, 'Jobs Posted and Resumes Posted are not their own boxes on a profile');
   assert.ok(/<h2>Post Free Job<\/h2>/.test(hireTab) && /<span id="job-form-h">Post Job<\/span>/.test(hireTab) && /id="job-post">List this Job on the Job Board</.test(hireTab) && /href="\/jobs"[^>]*>View Job Board</.test(hireTab) && /id="job-live-note"/.test(hireTab), 'the Hire Talent tab is not Post Free Job with its two buttons and the live note');
   /* two board buttons top right of each Recruiting tab (Jacob, 2026-09-15) */
@@ -1915,7 +1922,12 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   assert.ok(!/Preview How Companies See You|pt-recruit-preview/.test(ph) && !/renderRecruitPreview|data-preview=/.test(pj), 'the paid preview is back on Search Jobs');
   assert.ok(/id="pt-market-jobs"/.test(seekTab) && /id="pt-market-recruits"/.test(hireTab) && />Search Jobs<\/button>/.test(seekTab) && />Search Talent<\/button>/.test(hireTab) && /function wireMarketSearch/.test(pj),
     'each Recruiting tab needs its own board search box, named after the board it searches');
-  assert.ok(!/Search Job Market|Position Desired|Positions Desired/.test(ph + pj), 'an old name is back: the boxes are Search the Job Board and Search the Talent Board, the field is Seeking Job As');
+  /* Jacob's list of 2026-10-12 names both search boxes Search Job Market again
+     (the 2026-09-21 audit had called them after their boards) */
+  assert.ok(!/Position Desired|Positions Desired/.test(ph + pj), 'an old name is back: the field is Seeking Job As');
+  assert.ok(/<\/svg>Search Job Market<\/h3>/.test(seekTab) && /<\/svg>Search Job Market<\/h3>/.test(hireTab), 'the Recruiting search boxes are not titled Search Job Market');
+  assert.ok(/<p class="pf-note">Posted by people seeking employment, listed by the Circuits-Keywords&trade; that best describe their qualifications\.<\/p>/.test(hireTab)
+    && /<p class="pf-note">Open jobs posted by companies on Circuits\.com, listed by the Circuits-Keywords&trade; they hire for\.<\/p>/.test(seekTab), 'the Search Job Market lines are not the 2026-10-12 wording');
   /* the Supabase library is pinned with an integrity hash on every page (audit item 3, 2026-09-21) */
   for (const f of fs.readdirSync(ROOT).filter(x => x.endsWith('.html'))) {
     const h = fs.readFileSync(path.join(ROOT, f), 'utf8');
