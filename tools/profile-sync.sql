@@ -74,3 +74,15 @@ from (select distinct on (company_slug) company_slug, company, contact, phone, w
         from applications where status = 'Approved' and company_slug = 'davernon'
        order by company_slug, created_at desc) a
 where c.slug = a.company_slug and c.contact is null;
+
+-- 2026-10-12, Jacob's list again ("details changed in Website Applications did
+-- not change in the customer's public profile"). The mirror above works: a
+-- rollback-only test moved one listing's contact onto the company row and all
+-- six of its listings. The one company still out of step (victor, contact
+-- "Victor Tran" on the listings, "Victor" on the profile) predates it and was
+-- corrected by hand:
+--   update companies set contact = 'Victor Tran' where slug = 'victor';
+-- A duplicate trigger added the same day (applications_sync_company_trg) is
+-- disabled; it can be dropped:
+--   drop trigger applications_sync_company_trg on public.applications;
+--   drop function public.applications_sync_company();

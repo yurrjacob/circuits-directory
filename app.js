@@ -15,12 +15,14 @@ function gotoSearch(term){
 const HOME_PLACEHOLDER = {
   directory: 'Search products, services, companies, part numbers, or keywords...',
   recruits:  'Search new recruits by job title, or keywords...',
-  jobs:      'Search open jobs by title or keyword...'
+  jobs:      'Search open jobs by title or keyword...',
+  clubs:     'Search student clubs by name, university or keyword...'
 };
 const HOME_HINT = {
   directory: 'Directory: companies, products and services, listed by their Circuits-Keywords\u2122.',
   recruits:  'Hire Talent: people seeking employment, listed by their Circuits-Keywords\u2122.',
-  jobs:      'Search Jobs: open roles posted by companies on Circuits.com.'
+  jobs:      'Search Work: open roles posted by companies on Circuits.com.',
+  clubs:     'Search Clubs: student clubs on the Global Club List, by name, university and Circuits-Keywords\u2122.'
 };
 function homeTarget(form){ return form.dataset.target || 'directory'; }
 function initHome(){
@@ -39,7 +41,7 @@ function initHome(){
     e.preventDefault();
     const t = homeTarget(form), q = (input.value || '').trim();
     if(t === 'directory'){ gotoSearch(q); return; }
-    location.href = (t === 'recruits' ? '/talent' : '/jobs') + (q ? '?q=' + encodeURIComponent(q) : '');
+    location.href = (t === 'recruits' ? '/talent' : t === 'clubs' ? '/clubs' : '/jobs') + (q ? '?q=' + encodeURIComponent(q) : '');
   });
   document.querySelectorAll('.search-mode [data-target]').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('.search-mode [data-target]').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b ? 'true' : 'false'); });
@@ -446,7 +448,7 @@ async function initInbox(){
     if(!storedSession()) return;
     const add = (src, integrity) => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; if(integrity) t.integrity = integrity; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
     /* the same vendored file, and the same hash, every page carries (audit item 3, 2026-09-21) */
-    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=8d73f50811'); }catch(e){ return; }
+    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=51916a3a3f'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;
@@ -767,7 +769,7 @@ async function initResults(forcedTerm){
       <div class="premium-body">
         <h3>Your Company</h3>
         <p>Own the Exclusive Sponsor Banner for &ldquo;<span class="tc">${term}</span>&rdquo;.<br>Own the First Listing Every Viewer Sees.</p>
-        <div class="premium-links"><span class="doc-link">Website</span></div>
+        <div class="premium-links"><span class="doc-link web-link">Website</span></div>
       </div>
       <div class="premium-contact">
         <div class="pc-lines">
@@ -810,7 +812,7 @@ async function initResults(forcedTerm){
               <span class="co-logo" style="background:var(--dark)">${avatarSvg()}</span>
               <a href="/join">Your Company</a>
               <span class="lb" style="background:#c9a227">Authorized</span>
-              <span class="doc-link">Website</span>
+              <span class="doc-link web-link">Website</span>
             </div></td>
             <td class="cell-muted" data-label="Contact">John Doe</td>
             <td class="cell-muted" data-label="Phone">+1 (123) 456-7890</td>
@@ -870,7 +872,7 @@ async function initResults(forcedTerm){
           : escapeHtml(featured.company)}${badgeHtml(featured.badge)}</h3>
         ${featured.description ? `<p>${escapeHtml(featured.description)}</p>` : ''}
         <div class="premium-links">
-          ${safeUrl(featured.website) ? `<a class="doc-link" href="${escapeHtml(safeUrl(featured.website))}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
+          ${safeUrl(featured.website) ? `<a class="doc-link web-link" href="${escapeHtml(safeUrl(featured.website))}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
         </div>
       </div>
       <div class="premium-contact">
@@ -897,7 +899,7 @@ async function initResults(forcedTerm){
             ? `<a href="${escapeHtml(profileUrl(c.company_handle))}">${escapeHtml(c.company)}</a>`
             : escapeHtml(c.company)}
           ${badgeHtml(c.badge)}
-          ${safeUrl(c.website) ? `<a class="doc-link" href="${escapeHtml(safeUrl(c.website))}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
+          ${safeUrl(c.website) ? `<a class="doc-link web-link" href="${escapeHtml(safeUrl(c.website))}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
         </div>
       </td>
       <td class="cell-muted" data-label="Contact">${escapeHtml(c.contact||'')}</td>

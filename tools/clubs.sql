@@ -184,3 +184,71 @@ revoke all on public.club_invites from public, anon, authenticated;
 -- club_invite_info(p_token) -> name, handle, college_name, logo, role   (anon, for the register page)
 -- accept_club_invite(p_token) -> club handle        (authenticated; idempotent per person)
 -- Full bodies as applied: see the project; they mirror the description above.
+
+-- 2026-10-12, club approval (Jacob: "Add Manage Clubs tab in the Admin so we
+-- can approve and manage club accounts"). Applied to the project; kept here as
+-- the record. A club page goes live at its address at once, but only an
+-- Approved club appears on the Global Club List and in Search Clubs.
+alter table public.companies add column if not exists club_status text not null default 'Approved';
+alter table public.companies add constraint companies_club_status_ck check (club_status in ('Pending','Approved','Denied'));
+-- the three clubs made on 2026-10-11 went into the queue; Jacob's own stayed Approved
+-- update companies set club_status = 'Pending' where kind = 'club' and slug <> 'jacob';
+
+-- owners cannot approve themselves or turn a page into a club: the existing
+-- guard (companies_talent_guard, BEFORE UPDATE) now also keeps club_status and kind
+create or replace function public.guard_talent_staff_fields()
+returns trigger language plpgsql security definer set search_path to 'public' as $fn$
+begin
+  if is_staff() then return new; end if;
+  if tg_table_name = 'profiles' then new.talent_hidden := old.talent_hidden; new.talent_status := old.talent_status; end if;
+  if tg_table_name = 'companies' then
+    new.talent_access_until := old.talent_access_until;
+    new.club_status := old.club_status;
+    new.kind := old.kind;
+  end if;
+  if tg_table_name = 'jobs' then new.paid_until := old.paid_until; end if;
+  return new;
+end $fn$;
+
+-- every club page a non-staff account creates starts Pending
+create or replace function public.guard_company_insert()
+returns trigger language plpgsql security definer set search_path to 'public' as $fn$
+begin
+  if not is_staff() and new.kind = 'club' then new.club_status := 'Pending'; end if;
+  return new;
+end $fn$;
+create trigger companies_insert_guard before insert on public.companies for each row execute function guard_company_insert();
+
+-- a new club page tells staff: inbox notice, which the notify function also
+-- emails to every staff address (both circuits.com inboxes included)
+create or replace function public.notify_new_club()
+returns trigger language plpgsql security definer set search_path to 'public' as $fn$
+declare who text;
+begin
+  if new.kind <> 'club' then return new; end if;
+  select coalesce(nullif(p.display_name, ''), p.handle) into who from profiles p where p.user_id = auth.uid();
+  perform notify_staff('New club page: ' || new.name,
+    new.name || coalesce(' at ' || nullif(new.college_name, ''), '') || ' was created' || coalesce(' by ' || who, '') ||
+    ' at circuits.com/' || coalesce(new.handle, new.slug) || '. Approve it under Admin, Manage Clubs to put it on the Global Club List.',
+    '/portal#admin');
+  return new;
+end $fn$;
+create trigger companies_new_club_trg after insert on public.companies for each row execute function notify_new_club();
+
+-- the staff decision tells the club's owner
+create or replace function public.notify_club_decision()
+returns trigger language plpgsql security definer set search_path to 'public' as $fn$
+declare u uuid;
+begin
+  if new.kind <> 'club' or new.club_status is not distinct from old.club_status or not is_staff() then return new; end if;
+  for u in select cu.user_id from company_users cu where cu.company_slug = new.slug loop
+    perform notify_user(u,
+      case new.club_status when 'Approved' then new.name || ' is on the Global Club List' when 'Denied' then new.name || ' was not approved' else new.name || ' is under review again' end,
+      case new.club_status when 'Approved' then 'Circuits.com approved your club page. Students searching clubs can now find it on the Global Club List.'
+           when 'Denied' then 'Circuits.com did not approve your club page for the Global Club List. Reply through the Contact page if you think this is a mistake.'
+           else 'Circuits.com is looking at your club page again. You get a message here when that is done.' end,
+      '/' || coalesce(new.handle, new.slug));
+  end loop;
+  return new;
+end $fn$;
+create trigger companies_club_decision_trg after update of club_status on public.companies for each row execute function notify_club_decision();

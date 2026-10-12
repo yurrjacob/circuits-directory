@@ -834,13 +834,22 @@ const INVITE_KEY = 'cx_club_invite';
 function rememberInvite(t){ try{ if(INVITE_OK(t)) localStorage.setItem(INVITE_KEY, t); }catch(e){} }
 function pendingInvite(){ try{ const t = localStorage.getItem(INVITE_KEY) || ''; return INVITE_OK(t) ? t : ''; }catch(e){ return ''; } }
 function forgetInvite(){ try{ localStorage.removeItem(INVITE_KEY); }catch(e){} }
-/* every club page, for circuits.com/clubs */
+/* every approved club page, for the Global Club List at circuits.com/clubs
+   (Jacob, 2026-10-12: Search Clubs is its own index, like the Directory).
+   Staff approve a club under Admin, Manage Clubs before it is listed. Each
+   club carries its approved Club Keywords so the list can be searched. */
 async function fetchClubs(){
   if(!sb) return [];
-  const { data, error } = await sb.from('companies').select('slug, name, handle, logo, college_name, college_logo, tagline, team, members')
-    .eq('kind', 'club').eq('published', true).is('suspended_at', null).order('name');
+  const { data, error } = await sb.from('companies').select('slug, name, handle, logo, email, college_name, college_logo, tagline, description, team, members')
+    .eq('kind', 'club').eq('club_status', 'Approved').eq('published', true).is('suspended_at', null).order('name');
   if(error){ console.warn('fetchClubs', error.message); return []; }
-  return data || [];
+  const rows = data || [];
+  const slugs = rows.map(r => r.slug);
+  const kw = slugs.length ? await sb.from('applications').select('company_slug, keyword').in('company_slug', slugs).eq('status', 'Approved') : { data: [] };
+  const by = {};
+  (kw.data || []).forEach(k => { if(k.keyword) (by[k.company_slug] = by[k.company_slug] || []).push(k.keyword); });
+  rows.forEach(r => { r.keywords = by[r.slug] || []; });
+  return rows;
 }
 /* owner writes; RLS refuses anyone who does not own the club page */
 async function saveProject(p){

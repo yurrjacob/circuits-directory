@@ -17,7 +17,7 @@
 <meta name="twitter:description" content="Search the circuits and electronics industry: suppliers, distributors, design engineers, semiconductors, PCB assembly and test. Claim your Circuits-Keyword™.">
 <meta name="twitter:image" content="https://circuits.com/assets/og-card.png">
 <link rel="icon" href="assets/favicon.png">
-<link rel="stylesheet" href="styles.css?v=158956ce7a">
+<link rel="stylesheet" href="styles.css?v=4b2d5434f7">
 <script src="/nav.js?v=b5adcdecca"></script>
 <script type="application/ld+json">
 {
@@ -84,15 +84,17 @@
     <h1 class="sr-only">Circuits.com: The Circuits Industry Directory for Suppliers, Parts and Engineers</h1>
     <a href="/" class="hero-link"><img class="logo-hero" src="assets/logo-home.png" alt="Circuits.com" width="1108" height="185" fetchpriority="high"><span class="beta-tag">BETA</span></a>
 
-    <!-- One search box, three indexes (Jacob, 2026-09-03). Directory is parts,
-         services and companies; Hire Talent is the people seeking employment
-         on /talent, for employers; Search Jobs is the open roles on /jobs, for
-         people. The buttons only change where the query goes, and each one
-         lights up the door below that belongs to it. -->
+    <!-- One search box, four indexes (Jacob, 2026-09-03; Search Clubs
+         2026-10-12). Directory is parts, services and companies; Hire Talent
+         is the people seeking employment on /talent, for employers; Search
+         Work is the open roles on /jobs, for people; Search Clubs is the
+         Global Club List on /clubs. The buttons only change where the query
+         goes. -->
     <div class="search-mode" role="tablist" aria-label="What to search">
       <button type="button" class="on" data-target="directory" role="tab" aria-selected="true">Directory</button>
       <button type="button" data-target="recruits" role="tab" aria-selected="false">Hire Talent</button>
-      <button type="button" data-target="jobs" role="tab" aria-selected="false">Search Jobs</button>
+      <button type="button" data-target="jobs" role="tab" aria-selected="false">Search Work</button>
+      <button type="button" data-target="clubs" role="tab" aria-selected="false">Search Clubs</button>
     </div>
     <form id="home-form" class="searchbox" autocomplete="off" data-target="directory">
       <p class="search-hint" id="search-hint">Directory: companies, products and services, listed by their Circuits-Keywords&trade;.</p>
@@ -114,11 +116,7 @@
       <a href="/results?q=pcb+design">PCB Design</a>&middot;
       <a href="/results?q=oscillators">Oscillators</a>&middot;
       <a href="/results?q=voltage+regulators">Voltage Regulators</a>&middot;
-      <a href="/results?q=rf+transceivers">RF Transceivers</a>&middot;
-      <a href="/results?q=test+equipment">Test Equipment</a>&middot;
-      <a href="/results?q=ic+packaging">IC Packaging</a>&middot;
-      <a href="/results?q=clock+generators">Clock Generators</a>&middot;
-      <a href="/results?q=motion+control+ics">Motion Control ICs</a>
+      <a href="/results?q=test+equipment">Test Equipment</a>
     </div>
     <div class="popular" data-for="recruits" hidden>
       Popular:
@@ -140,6 +138,16 @@
       <a href="/jobs?q=asic+design+engineer">ASIC Design Engineer</a>&middot;
       <a href="/jobs?q=analog+engineer">Analog Engineer</a>&middot;
       <a href="/jobs?q=hardware+test+engineer">Hardware Test Engineer</a>
+    </div>
+    <!-- Search Clubs (Jacob, 2026-10-12): the Global Club List sits in the
+         centre of its line -->
+    <div class="popular" data-for="clubs" hidden>
+      Popular:
+      <a href="/clubs?q=electronics">Electronics Clubs</a>&middot;
+      <a href="/clubs?q=robotics">Robotics Clubs</a>&middot;
+      <a href="/clubs">Global Club List</a>&middot;
+      <a href="/clubs?q=aerospace">Aerospace Clubs</a>&middot;
+      <a href="/clubs?q=ai">AI Clubs</a>
     </div>
     </div>
 
@@ -168,13 +176,13 @@
       </a>
       <a class="wc-card" href="/portal#club">
         <span class="wc-card-ico" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/><path d="M22 9v6"/></svg></span>
-        <span class="wc-card-b">Set Up a College Club</span>
+        <span class="wc-card-b">Set Up a Student Club</span>
         <span class="wc-card-t">Run a student club? Give it a page with your college&rsquo;s logo, a project showcase and badges for your members.</span>
         <span class="wc-card-go">Start<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5.5 18.5 12 12 18.5"/></svg></span>
       </a>
     </div>
 
-    <p class="wc-foot">Not sure yet? <a href="/portal">Open your dashboard</a>.</p>
+    <p class="wc-foot">Not sure yet? <a href="/register">Register Free &amp; Explore</a></p>
     </div>
   </main>
 
@@ -192,7 +200,7 @@
   </footer>
 
 </div>
-<script src="app.js?v=f1871a59e5"></script>
+<script src="app.js?v=439756655d"></script>
 <script>initHome();</script>
 </body>
 </html>

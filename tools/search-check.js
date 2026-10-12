@@ -91,7 +91,7 @@ assert.ok(from >= 0 && to > from, 'could not find initResults in app.js');
     'an old placeholder is back on the example listing');
   assert.ok(/Get Listed For <span class="tc">oscillators<\/span>/.test(captured),
     'the pitch lost its call to action (or the keyword is not wrapped for capitalising)');
-  assert.ok(/<span class="doc-link">Website<\/span>/.test(captured) && !/View Docs/.test(captured),
+  assert.ok(/<span class="doc-link web-link">Website<\/span>/.test(captured) && !/View Docs/.test(captured),
     'the example listing lost its Website placeholder, or View Docs is back');
   assert.ok(!/<a[^>]*>Website<\/a>/.test(captured),
     'a placeholder Website label is a real link, it must not go anywhere');
