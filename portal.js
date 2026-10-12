@@ -404,7 +404,10 @@ function renderFresh(){
   el('pt-name').textContent = PT.user.email || '';
   el('pt-view').style.display = 'none';
   el('pt-company').style.display = 'none';
-  el('pt-fresh-note').innerHTML = '<p class="pf-note" style="color:#3f6300;margin:0 0 12px">This account has no Circuits.com address yet. Pick one below, add your name and save to create your profile.</p>';
+  el('pt-fresh-note').innerHTML = '<p class="pf-note" style="color:#3f6300;margin:0 0 12px">This account has no Circuits.com address yet. Pick one below, add your company, club or organization name and save to create your profile.</p>';
+  /* the name typed on Create Your Account Profile is the person's own: it is
+     the Contact Person here, not the company name (Jacob, 2026-10-12) */
+  PT.co.contact = (ME && ME.display_name) || '';
   renderProfileForm();
   wireDirtyTracking();
   markClean();
@@ -1755,7 +1758,7 @@ async function saveProfile(){
   if(fresh){
     /* first save: the profiles row (the address), then the company row that
        shares it, then the rest of the form lands on that row below */
-    const e1 = await createMyProfile(wantHandle, fields.name);
+    const e1 = await createMyProfile(wantHandle, fields.contact || fields.name);
     if(e1){ btn.disabled = false; saveNote('Could not create your profile: ' + e1, false); return; }
     const r = await registerCompany();
     if(r.error){ btn.disabled = false; saveNote('Could not create your profile: ' + r.error, false); return; }
@@ -1766,9 +1769,11 @@ async function saveProfile(){
   const err = await updateCompany(PT.slug, fields);
   btn.disabled = false;
   if(err){ toast('Could not save: ' + err, false); return; }
-  /* the person behind the account shares the name, the picture and the
-     address, so recruiters and the public page agree */
-  const mine = { display_name: fields.name };
+  /* the person behind the account shares the picture and the address, so
+     recruiters and the public page agree. Their own name is the Contact
+     Person, never the company name (Jacob, 2026-10-12: the Get Listed Name
+     field pointed at Company). */
+  const mine = { display_name: fields.contact || (ME && ME.display_name) || fields.name };
   if('logo' in fields) mine.photo_url = fields.logo;
   if(fields.handle) mine.handle = fields.handle;
   const e2 = await updateMyProfile(mine);

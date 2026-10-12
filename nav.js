@@ -129,3 +129,54 @@
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
   else mount();
 })();
+/* ===== no browser autofill ==================================================
+   Jacob, 2026-10-12: "Is there a way to turn off all auto-fields? We want to
+   reduce mistakes filling out the forms." Browsers were pouring a saved name
+   or address into the wrong box (a person's name into Company, a home address
+   into a listing). Every form field on the site is set to autocomplete="off",
+   including the ones the dashboard draws after the page loads.
+   Two kinds are left alone on purpose: the sign-in email and password
+   (autocomplete="username" or "current-password"), so a password manager can
+   still sign people in, and new-password boxes, which stop the browser from
+   pasting a saved password into a sign-up form.
+   Why not just "off": most fields already said off, and Chrome ignores it for
+   anything that looks like a name, email, phone or address, which is exactly
+   where the mistakes came from. Chrome does skip a field whose autocomplete
+   value it does not recognise, so in Chrome the fields get "cx-no-autofill".
+   Firefox and Safari honour off, so they keep it, and every form is off too,
+   which is what Firefox falls back to for a value it does not know. */
+(function(){
+  'use strict';
+  var KEEP = /^(username|current-password|new-password|one-time-code)$/;
+  /* Chrome, Edge, Opera and Chrome on iOS all carry Chrome/ or CriOS/ */
+  var CHROME = /Chrome\/|CriOS\//.test(navigator.userAgent || '');
+  var FIELD_OFF = CHROME ? 'cx-no-autofill' : 'off';
+  function off(root){
+    if(!root || !root.querySelectorAll) return;
+    var els = root.querySelectorAll('form, input, textarea, select');
+    for(var i = 0; i < els.length; i++){
+      var el = els[i], ac = (el.getAttribute('autocomplete') || '').toLowerCase();
+      if(KEEP.test(ac)) continue;
+      if(el.tagName === 'FORM'){ if(ac !== 'off') el.setAttribute('autocomplete', 'off'); continue; }
+      if(el.type === 'password'){ if(!ac) el.setAttribute('autocomplete', 'new-password'); continue; }
+      if(/^(hidden|submit|button|checkbox|radio|file|range|color)$/.test(el.type)) continue;
+      if(ac !== FIELD_OFF) el.setAttribute('autocomplete', FIELD_OFF);
+    }
+  }
+  function start(){
+    off(document);
+    if(!window.MutationObserver) return;
+    new MutationObserver(function(list){
+      for(var i = 0; i < list.length; i++){
+        var added = list[i].addedNodes;
+        for(var j = 0; j < added.length; j++){
+          var n = added[j];
+          if(n.nodeType !== 1) continue;
+          if(/^(INPUT|TEXTAREA|SELECT|FORM)$/.test(n.tagName)) off(n.parentNode || n); else off(n);
+        }
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();

@@ -240,6 +240,14 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   assert.ok(/\.web-link,\.doc-link\.web-link\{color:#1a5fd0;text-decoration:underline/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the blue link style is gone');
 }
 
+/* No browser autofill on any form (Jacob, 2026-10-12): nav.js, on every page
+   with a header, switches it off, dashboard fields drawn later included */
+{
+  const nv = fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8');
+  assert.ok(/var FIELD_OFF = CHROME \? 'cx-no-autofill' : 'off';/.test(nv) && /new MutationObserver\(/.test(nv) && /KEEP = \/\^\(username\|current-password\|new-password\|one-time-code\)\$\//.test(nv),
+    'nav.js no longer turns browser autofill off on every field');
+}
+
 /* How It Works was merged into About; the old URL must still point somewhere */
 const hiw = fs.readFileSync(path.join(ROOT, 'how-it-works.html'), 'utf8');
 assert.ok(hiw.includes('rel="canonical" href="https://circuits.com/about"'),
@@ -900,11 +908,13 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
      rows for an account that has neither */
   assert.ok(/if\(!cos\.length && me\)\{\s*const r = await registerCompany\(\)/.test(portalSrc2),
     'an account with no companies row never gets one (register_company)');
-  assert.ok(/const e1 = await createMyProfile\(wantHandle, fields\.name\)/.test(portalSrc2) && /const r = await registerCompany\(\);\s*if\(r\.error\)/.test(portalSrc2),
+  assert.ok(/const e1 = await createMyProfile\(wantHandle, fields\.contact \|\| fields\.name\)/.test(portalSrc2) && /const r = await registerCompany\(\);\s*if\(r\.error\)/.test(portalSrc2),
     'the first Profile Details save does not create the profile and its company row');
-  /* the person and the page share name, picture and address */
-  assert.ok(/const mine = \{ display_name: fields\.name \};[\s\S]*mine\.photo_url = fields\.logo;[\s\S]*mine\.handle = fields\.handle;/.test(portalSrc2),
-    'Profile Details no longer mirrors name, picture and address onto the person');
+  /* the person and the page share picture and address; the person's own name
+     is the Contact Person, the register Name field fills it (Jacob, 2026-10-12) */
+  assert.ok(/const mine = \{ display_name: fields\.contact \|\| \(ME && ME\.display_name\) \|\| fields\.name \};[\s\S]*mine\.photo_url = fields\.logo;[\s\S]*mine\.handle = fields\.handle;/.test(portalSrc2),
+    'Profile Details no longer mirrors the contact person, picture and address onto the person');
+  assert.ok(/PT\.co\.contact = \(ME && ME\.display_name\) \|\| '';\s*renderProfileForm\(\);/.test(portalSrc2), 'a new account does not get its register name as the Contact Person');
   /* the Search Jobs tab holds experience, keywords, the private phone and the listing switch */
   for (const id of ['id="me-title"', 'id="me-location"', 'id="me-keywords"', 'id="me-years"', 'id="me-email"', 'id="me-bio"', 'id="f-creds"', 'id="me-resume"', 'id="me-phone"']) {
     assert.ok(portalSrc2.includes(id), `the Search Jobs tab lost ${id}`);
