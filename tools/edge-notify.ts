@@ -27,6 +27,9 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
     acknowledgement from the claims row, and the sender of a contact message
     only gets a copy when the check verifiably passed, so an address typed
     into the request is never mailed on the request's say-so alone.
+    v18 (2026-10-12): the welcome mail is back to three green buttons, Free
+    Directory Listing (Your Listings), Post Free Job (Hire Talent) and Post
+    Free Resume (Search Work), as Jacob's on-boarding list asks.
     v17 (2026-10-01): the welcome mail carries a fourth button, Set Up a
     College Club, matching the welcome page.
     v14 (2026-09-16): the welcome mail carries three buttons.
@@ -219,8 +222,7 @@ Deno.serve(async (req: Request) => {
     const buttons = welcome
       ? `<p style="margin:14px 0 0">${button(`${SITE}/portal#listings`, "Free Directory Listing")}</p>` +
         `<p style="margin:10px 0 0">${button(`${SITE}/portal#hiring`, "Post Free Job")}</p>` +
-        `<p style="margin:10px 0 0">${button(`${SITE}/portal#seeking`, "Post Free Resume")}</p>` +
-        `<p style="margin:10px 0 0">${button(`${SITE}/portal#club`, "Set Up a College Club")}</p>`
+        `<p style="margin:10px 0 0">${button(`${SITE}/portal#seeking`, "Post Free Resume")}</p>`
       : `<p style="margin:14px 0 0">${button(href, "Open on Circuits.com")}</p>`;
     const sent = await send(to, subject, shell(
       kicker(field(n.sender_name, 60) || "Circuits.com") +

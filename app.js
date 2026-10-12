@@ -448,7 +448,7 @@ async function initInbox(){
     if(!storedSession()) return;
     const add = (src, integrity) => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; if(integrity) t.integrity = integrity; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
     /* the same vendored file, and the same hash, every page carries (audit item 3, 2026-09-21) */
-    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=51916a3a3f'); }catch(e){ return; }
+    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=6ecacd285d'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;
@@ -515,7 +515,7 @@ async function initInbox(){
      copy; the company's own copy reads "Upgrade request received:" and must
      not be marked, which is why this anchors on the colon.
      ponytail: a staff_queue column on notifications would end the word test. */
-  const STAFF_QUEUE = /^(New listing request:|Upgrade request:|New job post:|Recruit waiting for approval:)/i;
+  const STAFF_QUEUE = /^(New listing request:|Upgrade request:|New job post:|Recruit waiting for approval:|New profile confirmed:|New club page:)/i;
   /* Belt and braces: even if a subject collided, a company is never told one of
      its own notices is admin work, because the badge needs a staff reader. */
   const adminBadge = n => (isStaff && STAFF_QUEUE.test(n.subject || ''))

@@ -348,6 +348,49 @@ async function reloadCompanies(){
       </td></tr>`).join('');
   $('companies-empty').style.display = allCompanies.length ? 'none' : 'block';
 }
+/* ---- Manage Clubs (Jacob, 2026-10-12): approve and manage club pages ----
+   New clubs arrive Pending (the database sets it) and sort first. Approve
+   puts the club on the Global Club List and tells its owner; Deny keeps it
+   off. Suspend and Delete work the same as on All Profiles. */
+let allClubs = [];
+async function reloadClubs(){
+  const body = $('clubs-body'); if(!body) return;
+  allClubs = await fetchAdminClubs();
+  const order = { Pending: 0, Approved: 1, Denied: 2 };
+  allClubs.sort((a, b) => (order[a.club_status] ?? 9) - (order[b.club_status] ?? 9));
+  const waiting = allClubs.filter(c => c.club_status === 'Pending').length;
+  $('clubs-hint').textContent = waiting
+    ? waiting + (waiting === 1 ? ' club waiting for approval' : ' clubs waiting for approval')
+    : 'Every Student Club Page. Approve To Put A Club On The Global Club List, Deny To Keep It Off';
+  const n = a => (Array.isArray(a) ? a : []).filter(x => x && ((x.name || '').trim() || (x.handle || '').trim())).length;
+  body.innerHTML = allClubs.map(c => `
+    <tr class="${c.club_status === 'Pending' ? 'row-waiting' : ''}">
+      <td><a href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener"><b>${esc(c.name)}</b></a><br><span class="cell-muted">circuits.com/${esc(c.handle || c.slug)}</span></td>
+      <td>${esc(c.college_name || 'none')}</td>
+      <td>${esc(c.contact || 'none')}${c.phone ? '<br><span class="cell-muted">' + esc(c.phone) + '</span>' : ''}</td>
+      <td class="cell-muted">${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : 'none'}</td>
+      <td class="cell-muted">${n(c.members)} members<br>${n(c.team)} officers</td>
+      <td>${(c.keywords || []).length ? c.keywords.map(k => `<span class="kw-tag${k.status === 'Approved' ? '' : ' kw-off'}" title="${esc(k.status)}">${esc(k.keyword)}</span>`).join(' ') : '<span class="cell-muted">none yet</span>'}</td>
+      <td class="cell-muted">${new Date(c.created_at).toLocaleDateString()}</td>
+      <td>${c.suspended_at ? '<b>Suspended</b>' : c.club_status === 'Pending' ? '<b>Pending</b>' : esc(c.club_status)}</td>
+      <td class="row-actions">
+        ${c.club_status !== 'Approved' ? `<button class="mini-btn green" onclick="setClubStatusUI('${esc(c.slug)}', 'Approved')">Approve</button>` : ''}
+        ${c.club_status !== 'Denied' ? `<button class="mini-btn" onclick="setClubStatusUI('${esc(c.slug)}', 'Denied')">Deny</button>` : ''}
+        ${c.suspended_at
+          ? `<button class="mini-btn green" onclick="setSuspended('${esc(c.slug)}', false)">Reinstate</button>`
+          : `<button class="mini-btn" onclick="setSuspended('${esc(c.slug)}', true)">Suspend</button>`}
+      </td></tr>`).join('');
+  $('clubs-adm-empty').style.display = allClubs.length ? 'none' : 'block';
+}
+async function setClubStatusUI(slug, status){
+  const c = allClubs.find(x => x.slug === slug);
+  const name = c ? c.name : 'this club';
+  if(status === 'Denied' && !confirm('Deny ' + name + '? It stays off the Global Club List and its owner gets a message saying so. The page itself stays as it is.')) return;
+  const err = await setClubStatus(slug, status);
+  if(err){ alert('Could not do that: ' + err); return; }
+  await reloadClubs();
+}
+
 /* Talent Access retired 2026-09-13: Recruiting is free, any signed-in account
    views a recruit's details. companies.talent_access_until stays, unused. */
 
@@ -541,7 +584,7 @@ async function deleteCompanyUI(slug){
 }
 
 async function setSuspended(slug, suspend){
-  const co = allCompanies.find(c => c.slug === slug);
+  const co = allCompanies.find(c => c.slug === slug) || allClubs.find(c => c.slug === slug);
   const name = co ? co.name : slug;
   /* A reason is required going in, because the audit entry is permanent and a
      bare "suspended" tells nobody anything six months later. */
@@ -555,6 +598,7 @@ async function setSuspended(slug, suspend){
   const err = await suspendCompany(slug, suspend, reason.trim());
   if(err){ alert('Could not do that: ' + err); return; }
   await reloadCompanies();
+  await reloadClubs();
   await reloadAudit();
 }
 
@@ -632,7 +676,7 @@ window.initAdmin = async function(){
   if(started) return;
   if(!(await checkStaff())) return;        // belt and braces; the database is the real gate
   started = true;
-  reloadCompanies(); reloadAudit(); reloadSearches(); reloadRecruits(); reloadJobs(); reloadUpgrades();
+  reloadCompanies(); reloadAudit(); reloadSearches(); reloadRecruits(); reloadJobs(); reloadUpgrades(); reloadClubs();
   const saved = await loadPrefs('admin');
   if(saved) for(const k in panels){
     if(saved[k] && saved[k].sort) panels[k].sort = saved[k].sort;
@@ -648,6 +692,6 @@ window.initAdmin = async function(){
    tools/check.js fails if a new onclick appears without being listed here. */
 Object.assign(window, {
   editListing, editBadge, removeListing, togglePause, lockListing,
-  approveApp, rejectApp, setSuspended, approveJob, closeJob, approveUpgrade, denyUpgrade, sendNotificationUI, notifyAudienceUI, setRecruitStatus, deleteCompanyUI
+  approveApp, rejectApp, setSuspended, approveJob, closeJob, approveUpgrade, denyUpgrade, sendNotificationUI, notifyAudienceUI, setRecruitStatus, deleteCompanyUI, setClubStatusUI
 });
 })();

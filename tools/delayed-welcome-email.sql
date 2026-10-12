@@ -66,3 +66,11 @@
 --
 -- To change the delay: edit the interval in welcome_notification().
 -- To stop the delay: set it to now() and the insert trigger sends at once.
+
+-- 2026-10-12 (Jacob's on-boarding list): the welcome email has three green
+-- buttons again (notify v18) and its text uses the current tab names. Applied:
+-- create or replace function public.welcome_notification(p_user uuid, p_name text) ... body lines:
+--   'Free Directory Listing: choose up to 10 free Circuits-Keywords™ under Your Listings and be found by everyone searching them.'
+--   'Post Free Job: post an open role under Hire Talent. It goes on the Job Board.'
+--   'Post Free Resume: add your resume and Circuits-Keywords™ under Search Work and list yourself on the Talent Board.'
+-- Everything else (subject, link, the ten minute email_after) is unchanged.

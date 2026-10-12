@@ -505,6 +505,7 @@
     <button type="button" class="adm-tab" data-adm="applications"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"/><path d="M14 3.5V8h4.5M8.5 13h7M8.5 16.5h5"/></svg>Website Applications</button>
     <button type="button" class="adm-tab" data-adm="upgrades"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>Upgrade Applications</button>
     <button type="button" class="adm-tab" data-adm="employment"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="18" height="12.5" rx="2"/><path d="M8.5 7.5V5.8A1.8 1.8 0 0 1 10.3 4h3.4a1.8 1.8 0 0 1 1.8 1.8v1.7"/><path d="M3 12.5h18"/></svg>Recruiting Applications</button>
+    <button type="button" class="adm-tab" data-adm="clubs"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/></svg>Manage Clubs</button>
     <button type="button" class="adm-tab" data-adm="messages"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>Notifications</button>
     <button type="button" class="adm-tab" data-adm="activity"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Activity</button>
   </div>
@@ -727,6 +728,22 @@
   </div>
 
   <!-- Companies: the only place suspension can be applied or lifted -->
+  <!-- Manage Clubs (Jacob, 2026-10-12): every club page, newest first, with
+       an Approve button on each new one. Approved clubs appear on the Global
+       Club List; the page itself is live at its address either way. -->
+  <div class="panel" data-adm="clubs">
+    <div class="panel-head"><h2>Manage Clubs</h2><span class="hint" id="clubs-hint">Every Student Club Page. Approve To Put A Club On The Global Club List, Deny To Keep It Off</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Club</th><th>University</th><th>Contact</th><th>Email</th><th>Members</th><th>Club Keywords</th><th>Created</th><th>State</th><th>Actions</th></tr></thead>
+          <tbody id="clubs-body"></tbody>
+        </table>
+      </div>
+      <div id="clubs-adm-empty" class="empty-line" style="display:none">No Club Pages Yet.</div>
+    </div>
+  </div>
+
   <div class="panel" data-adm="companies">
     <div class="panel-head"><h2>All Profiles</h2><span class="hint" id="companies-hint">Every Account On The Site. Suspend Hides Without Deleting. Delete Removes The Profile And Everything It Has</span></div>
     <div class="panel-body">
@@ -798,10 +815,10 @@
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
-<script src="/store.js?v=51916a3a3f"></script>
-<script src="/app.js?v=439756655d"></script>
+<script src="/store.js?v=6ecacd285d"></script>
+<script src="/app.js?v=657028a52f"></script>
 <script src="/portal.js?v=7da9571223"></script>
-<script src="/admin.js?v=a094b02edf"></script>
+<script src="/admin.js?v=95ce1687e7"></script>
 <script>
 document.querySelectorAll('.pt-save').forEach(b => b.addEventListener('click', saveProfile));
 initPortal();

@@ -966,7 +966,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
          its own notice. The company's copy of an upgrade request reads
          "Upgrade request received:", which is why the pattern anchors on the
          colon and must not be loosened to a bare "Upgrade request". */
-  assert.ok(/const STAFF_QUEUE = \/\^\(New listing request:\|Upgrade request:\|New job post:\|Recruit waiting for approval:\)\//.test(appSrc2),
+  assert.ok(/const STAFF_QUEUE = \/\^\(New listing request:\|Upgrade request:\|New job post:\|Recruit waiting for approval:\|New profile confirmed:\|New club page:\)\//.test(appSrc2),
     'the staff-queue subjects changed; check them against the notify_ triggers before editing');
   assert.ok(/isStaff && STAFF_QUEUE\.test\(n\.subject \|\| ''\)/.test(appSrc2),
     'the Admin badge no longer needs a staff reader, so a company could be told its own notice is admin work');
@@ -1801,13 +1801,17 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
   const tabs = [...ph.matchAll(/class="adm-tab[^"]*" data-adm="([a-z]+)">(?:<svg[\s\S]*?<\/svg>)?([^<]+)</g)].map(m => m[1] + ':' + m[2]);
   assert.deepStrictEqual(tabs, ['companies:All Profiles', 'listings:Listings', 'applications:Website Applications',
-    'upgrades:Upgrade Applications', 'employment:Recruiting Applications', 'messages:Notifications', 'activity:Activity'],
+    'upgrades:Upgrade Applications', 'employment:Recruiting Applications', 'clubs:Manage Clubs', 'messages:Notifications', 'activity:Activity'],
     'the admin sub-tabs are out of order or renamed: ' + tabs.join(', '));
   for (const h of ['Keywords With Banners', 'Keywords With Badges']) {
     const i = ph.indexOf('<!-- ' + h + ' -->');
     assert.ok(i > 0 && /data-adm="listings"/.test(ph.slice(i, i + 120)), h + ' must live under the Listings tab');
   }
   assert.ok(/#pt-tab-admin\{margin-left:auto/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the Admin tab no longer sits apart from the account tabs');
+  /* Manage Clubs (Jacob, 2026-10-12): every club page with an Approve button */
+  assert.ok(/data-adm="clubs"[\s\S]*?<th>Club<\/th><th>University<\/th><th>Contact<\/th><th>Email<\/th><th>Members<\/th><th>Club Keywords<\/th>/.test(ph), 'the Manage Clubs panel lost its columns');
+  { const ajc = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
+    assert.ok(/setClubStatusUI\('\$\{esc\(c\.slug\)\}', 'Approved'\)">Approve</.test(ajc) && /reloadClubs\(\);/.test(ajc), 'Manage Clubs rows have no Approve button, or the panel never loads'); }
   /* Recruiting Applications shows the Circuits-Keywords and who has not switched
      the listing on yet (Jacob, 2026-09-09: "I don't see them populating") */
   assert.ok(/<th>Circuits-Keywords&trade;<\/th><th>Listed<\/th>/.test(ph), 'the admin Recruits table lost its Circuits-Keywords or Listed column');
@@ -1985,6 +1989,10 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     const notifySrc = fs.readFileSync(path.join(ROOT, 'tools', 'edge-notify.ts'), 'utf8');
     assert.ok(/const welcome = subject === "Welcome to Circuits\.com"/.test(notifySrc) && /Free Directory Listing/.test(notifySrc),
       'the welcome email lost its three buttons, it is the second net behind the landing page');
+    /* exactly three green buttons (Jacob, 2026-10-12): Your Listings, Hire Talent, Search Work */
+    { const wb = (notifySrc.match(/const buttons = welcome\s*\?([\s\S]*?)\s*:\s*`<p style="margin:14px 0 0">\$\{button\(href/) || ['', ''])[1];
+      assert.deepStrictEqual([...wb.matchAll(/button\(`\$\{SITE\}\/portal#([a-z]+)`, "([^"]+)"\)/g)].map(m => m[1] + ':' + m[2]),
+        ['listings:Free Directory Listing', 'hiring:Post Free Job', 'seeking:Post Free Resume'], 'the welcome email is not the three buttons Free Directory Listing, Post Free Job, Post Free Resume'); }
   }
   /* The contact form and the access request go through the notify function
      behind Cloudflare Turnstile, not FormSubmit (audit item 7, 2026-09-21). */

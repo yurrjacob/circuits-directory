@@ -1334,6 +1334,32 @@ async function notifyFunction(kind, payload){
 
 /* Every company, including suspended ones, staff only, enforced by the
    companies_read policy rather than by asking nicely here. */
+/* staff: every club page with its owner's name and its Club Keywords, for
+   Admin, Manage Clubs (Jacob, 2026-10-12) */
+async function fetchAdminClubs(){
+  if(!sb) return [];
+  const { data, error } = await sb.from('companies')
+    .select('slug, name, handle, email, contact, phone, college_name, club_status, created_at, suspended_at, team, members')
+    .eq('kind', 'club').order('created_at', { ascending: false });
+  if(error){ console.error('fetchAdminClubs', error); return []; }
+  const rows = data || [];
+  const slugs = rows.map(r => r.slug);
+  if(slugs.length){
+    const kw = await sb.from('applications').select('company_slug, keyword, status').in('company_slug', slugs);
+    const by = {};
+    (kw.data || []).forEach(k => { if(k.keyword) (by[k.company_slug] = by[k.company_slug] || []).push(k); });
+    rows.forEach(r => { r.keywords = by[r.slug] || []; });
+  }
+  return rows;
+}
+/* staff only: the guard trigger keeps anyone else's change from landing */
+async function setClubStatus(slug, status){
+  if(!sb) return 'No connection';
+  const { data, error } = await sb.from('companies').update({ club_status: status }).eq('slug', slug).select('slug, club_status');
+  if(error) return error.message;
+  if(!data || !data.length || data[0].club_status !== status) return 'That change was refused.';
+  return '';
+}
 async function fetchAllCompanies(){
   if(!sb) return [];
   const { data, error } = await sb.from('companies')
