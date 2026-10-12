@@ -167,7 +167,6 @@ function clubHeroHtml(co){
     <div class="pf-club-id">
       <h1>${escapeHtml(co.name)}</h1>
       ${college ? `<p class="pf-club-college">${escapeHtml(college)}</p>` : ''}
-      <span class="pf-kind">College club</span>
       ${desc ? `<p class="pf-club-desc">${escapeHtml(desc)}</p>` : ''}
       <div class="pf-club-acts">
         ${join ? `<a class="btn btn-primary" href="${escapeHtml(join)}"${/^https?:/i.test(join) ? ' target="_blank" rel="noopener nofollow"' : ''}>Join Club</a>` : ''}
@@ -601,7 +600,7 @@ async function initProfile(){
 function socialLinks(socials){
   const s = socials && typeof socials === 'object' ? socials : {};
   const links = SOCIALS.filter(([k]) => safeUrl(s[k]))
-    .map(([k, label]) => `<a href="${escapeHtml(safeUrl(s[k]))}" target="_blank" rel="noopener nofollow">${iconHtml(k)}${label}</a>`);
+    .map(([k, label]) => `<a class="web-link" href="${escapeHtml(safeUrl(s[k]))}" target="_blank" rel="noopener nofollow">${iconHtml(k)}${label}</a>`);   // hyperlink blue (Jacob, 2026-10-12)
   return links.length ? `<div class="pf-socials">${links.join('')}</div>` : '';
 }
 

@@ -248,6 +248,16 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
     'nav.js no longer turns browser autofill off on every field');
 }
 
+/* Profile pages (Jacob, 2026-10-12): social links hyperlink blue, Save this
+   Profile and Copy this Profile as links, no kind pill repeating the name */
+{
+  const pj = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
+  assert.ok(/<a class="web-link" href="\$\{escapeHtml\(safeUrl\(s\[k\]\)\)\}"/.test(pj), 'profile social links are not hyperlink blue');
+  assert.ok(/>Save this Profile<\/a>/.test(pj) && />Copy this Profile<\/a>/.test(pj) && !/save this supplier/i.test(pj), 'the link box is not Save this Profile and Copy this Profile');
+  assert.ok(!/class="pf-kind"/.test(pj), 'the kind pill is back in the club page head');
+  assert.ok(/section\('Jobs Posted'[\s\S]*?>View on Job Board</.test(pj) && /View on Talent Board[\s\S]*?section\('Resumes Posted'/.test(pj), 'Jobs Posted or Resumes Posted lost its board button');
+}
+
 /* How It Works was merged into About; the old URL must still point somewhere */
 const hiw = fs.readFileSync(path.join(ROOT, 'how-it-works.html'), 'utf8');
 assert.ok(hiw.includes('rel="canonical" href="https://circuits.com/about"'),

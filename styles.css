@@ -2455,3 +2455,12 @@ a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
 .club-table .co-logo.club-logo-ph{display:inline-flex;align-items:center;justify-content:center;background:#111;color:#fff;font-weight:800}
 .listings .clubs-empty{padding:28px 16px;text-align:center;color:var(--muted)}
 .club-list-cta{margin:18px 0 0;text-align:center;color:var(--muted);font-size:.9rem}
+
+/* Profile pages (Jacob, 2026-10-12): social links are hyperlink blue, and
+   Save this Profile / Copy this Profile read as links, not buttons */
+.pf-socials a.web-link{color:#1a5fd0;text-decoration:underline;text-underline-offset:2px;background:transparent;border-color:transparent;padding-left:0}
+.pf-socials a.web-link:hover{color:#0f4aa8;border-color:transparent}
+.pf-linkacts{gap:16px}
+.pf-linkact{color:#8fc2ff;text-decoration:underline;text-underline-offset:2px;border:0;border-radius:0;padding:0;background:transparent}
+.pf-linkact:hover{color:#c4defd;background:transparent;text-decoration:underline}
+.pf-linkact.is-saved{background:transparent;color:var(--green)}
