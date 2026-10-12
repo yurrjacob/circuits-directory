@@ -200,7 +200,7 @@ async function initPortal(){
      Get Listed form, or older than profiles) picks its address on the Profile
      Details tab; saveProfile creates both rows then. */
   let cos, me;
-  try{ [cos, me] = await Promise.all([myCompanies(), myProfile()]); }
+  try{ [cos, me] = await Promise.all([myPages(), myProfile()]); }
   catch(e){
     /* the read failed: say so, never offer a fresh-account form to an
        existing owner (audit, 2026-09-15) */
@@ -210,7 +210,7 @@ async function initPortal(){
   }
   if(!cos.length && me){
     const r = await registerCompany();
-    if(!r.error) cos = await myCompanies();
+    if(!r.error) cos = await myPages();
   }
   show('pt-auth', false); show('pt-app', true);
 
@@ -279,7 +279,7 @@ async function initPortal(){
   }
 
   const picker = el('pt-company');
-  picker.innerHTML = cos.map(c => `<option value="${escapeHtml(c.slug)}">${escapeHtml(c.name)}</option>`).join('');
+  picker.innerHTML = pickerOptions(cos);
   picker.style.display = cos.length > 1 ? '' : 'none';
   picker.addEventListener('change', () => {
     if(PT_DIRTY && !confirm('You have unsaved profile changes. Switch company and lose them?')){
@@ -401,6 +401,7 @@ function wireProjects(){
    and a note above it. Everything else waits for the first save. */
 function renderFresh(){
   PT.slug = null; PT.co = { handle: '', name: '' }; PT.listings = []; PT.upgrades = [];
+  applyPageMode(PT.co);
   el('pt-name').textContent = PT.user.email || '';
   el('pt-view').style.display = 'none';
   el('pt-company').style.display = 'none';
@@ -414,6 +415,37 @@ function renderFresh(){
   renderListings();
   renderPromote();
   const jobs = el('pt-jobs'); if(jobs) jobs.innerHTML = freshNote();
+}
+
+/* ---- club mode (Jacob, 2026-10-12) ----
+   Choosing a club in the picker gives it its own set of tabs: Club Details,
+   Club Keywords, Members, Branding, Account Settings. Profile Details,
+   Upgrades, Hire Talent and Search Work belong to the person and are hidden.
+   The page's own details form (name, contact, logo, about, socials) moves
+   into Club Details, so one Save club saves everything the club page shows. */
+function tabLabel(tab, text){
+  const b = document.querySelector(`.pt-tab[data-tab="${tab}"]`); if(!b) return;
+  const t = [...b.childNodes].reverse().find(n => n.nodeType === 3 && n.textContent.trim());
+  if(t) t.textContent = text; else b.appendChild(document.createTextNode(text));
+}
+function applyPageMode(co){
+  const club = !!(co && co.kind === 'club');
+  document.body.classList.toggle('club-mode', club);
+  tabLabel('club', club ? 'Club Details' : 'Student Club');
+  tabLabel('listings', club ? 'Club Keywords' : 'Your Listings');
+  const h = el('pt-club-h'); if(h) h.textContent = club ? 'Club Details' : 'Student Club';
+  const intro = el('pt-club-intro');
+  if(intro) intro.textContent = club
+    ? 'Everything on your club\'s page: its name, contact, logo and about, the college, the Join Club link, the promo hub, the officers and the project showcase. Only you can edit it, and only you add officers.'
+    : 'Run a student club? Create its page here. It gets a public page of its own: your college\'s logo beside the club\'s, a Join Club button, a pitch for new members, alumni and employers, your officers and members, and a showcase of what the club has built. Officers get a Leadership badge, members a Member badge, each on their own profile.';
+  /* the details form lives on Profile Details for a person and on Club Details for a club */
+  const form = document.querySelector('#tab-profile > .pf-form, #pt-club-details-host > .pf-form');
+  const host = club ? el('pt-club-details-host') : el('tab-profile');
+  if(form && host && form.parentElement !== host) host.appendChild(form);
+  /* never leave the reader on a tab this page does not have */
+  const active = document.querySelector('.pt-tab.active');
+  const hidden = club ? ['profile', 'upgrades', 'hiring', 'seeking'] : ['members'];
+  if(active && hidden.includes(active.dataset.tab)) activateTab(club ? 'club' : 'profile');
 }
 
 function activateTab(name){
@@ -476,7 +508,7 @@ let PT_DIRTY = false;
 function markDirty(){
   PT_DIRTY = true;
   /* a change after a save: the "Profile Saved" beside the button is no longer true */
-  [el('pt-save-msg'), el('pt-club-msg')].forEach(m => { if(m && m.classList.contains('is-saved')){ m.textContent = ''; m.classList.remove('is-saved'); } });
+  [el('pt-save-msg'), el('pt-club-msg'), el('pt-members-msg')].forEach(m => { if(m && m.classList.contains('is-saved')){ m.textContent = ''; m.classList.remove('is-saved'); } });
 }
 function markClean(){ PT_DIRTY = false; }
 function wireDirtyTracking(){
@@ -510,7 +542,7 @@ function wireTabs(){
   });
   if(strip) strip.addEventListener('keydown', e => {
     if(e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-    const tabs = [...strip.querySelectorAll('.pt-tab')].filter(t => t.style.display !== 'none');
+    const tabs = [...strip.querySelectorAll('.pt-tab')].filter(t => t.style.display !== 'none' && t.offsetParent !== null);   // club mode hides tabs in CSS
     const i = tabs.indexOf(document.activeElement); if(i < 0) return;
     e.preventDefault();
     const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
@@ -554,6 +586,7 @@ async function loadCompany(slug){
      (Jacob, 2026-08-20, full copies in backups/dashboard-2026-08-20/), so
      their data is not fetched either. Their render functions stay below,
      dormant, for an easy restore. */
+  applyPageMode(PT.co);
   const [listings, upgrades] = await Promise.all([fetchMyListings(slug), myUpgradeRequests(slug)]);
   PT.listingsFailed = listings === null;   // an outage is not "no listings yet"
   PT.listings = listings || []; PT.upgrades = upgrades;
@@ -1369,7 +1402,7 @@ function markMissing(){
    the form is changed again; everything else fades after six seconds. */
 function saveNote(text, ok, stay){
   toast(text, ok);
-  const ms = [el('pt-save-msg'), el('pt-club-msg')].filter(Boolean);
+  const ms = [el('pt-save-msg'), el('pt-club-msg'), el('pt-members-msg')].filter(Boolean);
   ms.forEach(m => { m.textContent = (ok && stay ? '\u2713 ' : '') + text; m.classList.toggle('bad', !ok); m.classList.toggle('is-saved', !!(ok && stay)); });
   clearTimeout(PT.saveMsgT);
   if(!(ok && stay)) PT.saveMsgT = setTimeout(() => { ms.forEach(m => { m.textContent = ''; m.classList.remove('is-saved'); }); }, 6000);
@@ -1541,7 +1574,8 @@ async function renderInvites(c){
   const host = el('pt-club-invites'); if(!host) return;
   host.innerHTML = '<p class="pf-note">Preparing your invite links…</p>';
   const rows = [];
-  for(const [role, label, what] of [['member', 'Members', 'added to the Members list, with a Member badge'], ['officer', 'Officers', 'added to the Officers list, with a Leadership badge']]){
+  /* members only (Jacob, 2026-10-12): officers are added by the owner alone */
+  for(const [role, label, what] of [['member', 'Members', 'added to the Members list, with a Member badge']]){
     const r = await clubInviteLink(c.slug, role);
     rows.push(`<div class="inv-row" data-role="${role}">
         <div class="inv-text"><b>${label}</b><span>Whoever signs up through this link is ${what}.</span></div>
@@ -1594,6 +1628,7 @@ function wireClubCreate(){
     const say = (t, bad) => { const m = el('nc-msg'); m.textContent = t; m.classList.toggle('bad', !!bad); };
     const name = val('nc-name'), handle = val('nc-handle'), college = val('nc-college');
     if(!name){ say('The club needs a name.', true); el('nc-name').focus(); return; }
+    if(!college){ say('Which college or university is the club at?', true); el('nc-college').focus(); return; }
     if(!handle){ say('Pick the club\'s address.', true); hIn.focus(); return; }
     btn.disabled = true; say('Creating…', false);
     const r = await createClubPage(handle, name, college);
@@ -1606,12 +1641,20 @@ function wireClubCreate(){
   });
 }
 /* the picker learns a new page and the dashboard opens it */
+/* The picker (Jacob, 2026-10-12): the top entry is the person, named by the
+   Contact Name on their own profile; each club below it keeps the club name. */
+function pickerLabel(c){
+  return c.kind === 'club' ? (c.name || c.handle || c.slug) : (c.contact || (ME && ME.display_name) || c.name || c.slug);
+}
+function pickerOptions(cos){
+  return (cos || []).map(c => `<option value="${escapeHtml(c.slug)}">${escapeHtml(pickerLabel(c))}${c.kind === 'club' ? ' (club)' : ''}</option>`).join('');
+}
 async function refreshPages(openSlug){
   let cos = [];
-  try{ cos = await myCompanies(); }catch(e){ cos = []; }
+  try{ cos = await myPages(); }catch(e){ cos = []; }
   const picker = el('pt-company');
   if(picker){
-    picker.innerHTML = cos.map(c => `<option value="${escapeHtml(c.slug)}">${escapeHtml(c.name)}</option>`).join('');
+    picker.innerHTML = pickerOptions(cos);
     picker.style.display = cos.length > 1 ? '' : 'none';
     if(openSlug) picker.value = openSlug;
   }
@@ -1837,12 +1880,17 @@ async function saveProfile(){
      recruiters and the public page agree. Their own name is the Contact
      Person, never the company name (Jacob, 2026-10-12: the Get Listed Name
      field pointed at Company). */
-  const mine = { display_name: fields.contact || (ME && ME.display_name) || fields.name };
-  if('logo' in fields) mine.photo_url = fields.logo;
-  if(fields.handle) mine.handle = fields.handle;
-  const e2 = await updateMyProfile(mine);
-  if(e2) console.warn('profile mirror', e2);
-  saveNote(fresh ? 'Profile Saved. Your page is at circuits.com/' + wantHandle : 'Profile Saved', true, true);
+  /* a club page is the club's, not the person's: its name, contact, logo and
+     address never land on the owner's own profile (2026-10-12) */
+  const isClubPage = PT.co && PT.co.kind === 'club';
+  if(!isClubPage){
+    const mine = { display_name: fields.contact || (ME && ME.display_name) || fields.name };
+    if('logo' in fields) mine.photo_url = fields.logo;
+    if(fields.handle) mine.handle = fields.handle;
+    const e2 = await updateMyProfile(mine);
+    if(e2) console.warn('profile mirror', e2);
+  }
+  saveNote(isClubPage ? 'Saved' : fresh ? 'Profile Saved. Your page is at circuits.com/' + wantHandle : 'Profile Saved', true, true);
   markClean();
   if(fresh){
     renderSeeking(await myProfile());
@@ -1853,7 +1901,7 @@ async function saveProfile(){
   ME = (await myProfile()) || ME;
   el('pt-name').textContent = PT.co.name;
   const opt = el('pt-company') && el('pt-company').querySelector(`option[value="${PT.slug}"]`);
-  if(opt) opt.textContent = PT.co.name;
+  if(opt) opt.textContent = pickerLabel(PT.co) + (PT.co.kind === 'club' ? ' (club)' : '');
   renderProfileForm();
   renderPromote();
   renderRecruitingListings();   // Resumes Posted reads the refreshed profile

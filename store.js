@@ -797,7 +797,8 @@ async function createClubPage(handle, name, college){
   if(error){
     const m = error.message || '';
     return { error: /handle_taken/.test(m) ? 'That address is taken.' : /handle_format/.test(m) ? 'That address is not allowed. Use 3 to 32 letters, numbers, dashes or underscores.'
-      : /club_limit/.test(m) ? 'Five club pages is the limit for one account.' : /club_name/.test(m) ? 'The club needs a name.' : m };
+      : /club_limit/.test(m) ? 'Five club pages is the limit for one account.' : /club_name/.test(m) ? 'The club needs a name.'
+      : /club_college/.test(m) ? 'Which college or university is the club at?' : m };
   }
   return { slug: data };
 }
@@ -1119,6 +1120,15 @@ function trackEvent(slug, kind, keyword){
 }
 
 /* ---- owner reads/writes (RLS decides what is visible) ---- */
+/* The page picker (Jacob, 2026-10-12): the person's own page first, then the
+   clubs they run, each with its kind and contact. Falls back to
+   my_companies() if the newer function is missing. */
+async function myPages(){
+  if(!sb) return [];
+  const { data, error } = await sb.rpc('my_pages');
+  if(error){ console.warn('myPages', error.message); return myCompanies(); }
+  return data || [];
+}
 async function myCompanies(){
   if(!sb) return [];
   const { data, error } = await sb.rpc('my_companies');

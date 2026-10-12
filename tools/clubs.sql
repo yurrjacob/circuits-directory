@@ -252,3 +252,46 @@ begin
   return new;
 end $fn$;
 create trigger companies_club_decision_trg after update of club_status on public.companies for each row execute function notify_club_decision();
+
+-- 2026-10-12, Student Club (Jacob's list). Applied to the project.
+-- 1. The page picker: the person's own page first, labelled with its contact
+--    name, then the clubs. my_companies() keeps its old shape for older code.
+create or replace function public.my_pages()
+returns table(slug text, name text, kind text, contact text, handle text)
+language sql stable security definer set search_path to 'public' as $fn$
+  select c.slug, c.name, c.kind, c.contact, c.handle from companies c
+   where owns_company(c.slug)
+   order by (c.kind = 'club'), c.name
+$fn$;
+revoke execute on function public.my_pages() from public, anon;
+grant execute on function public.my_pages() to authenticated;
+
+-- 2. create_club_page: the college is required, and the club starts with the
+--    owner's own name as its Contact Person. Without one every Save club was
+--    refused ("a contact person is needed") by a field on a tab the club owner
+--    never sees, which is why nothing below the required fields ever saved.
+--    (Body as above, plus:)
+--      if nullif(trim(coalesce(p_college, '')), '') is null then raise exception 'club_college' ...
+--      insert ... contact = coalesce(nullif(p.display_name, ''), p.handle)
+-- Backfill, the one club without a contact (mike-s-club):
+--   update companies c set contact = coalesce(nullif(p.display_name, ''), p.handle)
+--     from company_users cu join profiles p on p.user_id = cu.user_id
+--    where cu.company_slug = c.slug and c.kind = 'club' and nullif(trim(coalesce(c.contact, '')), '') is null;
+
+-- 3. One owner per club: only the account that created it can edit it.
+create or replace function public.guard_club_single_owner()
+returns trigger language plpgsql security definer set search_path to 'public' as $fn$
+begin
+  if exists (select 1 from companies c where c.slug = new.company_slug and c.kind = 'club')
+     and exists (select 1 from company_users cu where cu.company_slug = new.company_slug and cu.user_id <> new.user_id) then
+    raise exception 'club_single_owner' using errcode = 'check_violation',
+      hint = 'A club page has one owner. Officers are added by the owner on the Club Details tab.';
+  end if;
+  return new;
+end $fn$;
+create trigger company_users_club_owner before insert on public.company_users for each row execute function guard_club_single_owner();
+
+-- 4. Officers are approved by the owner alone: no more officer invite links.
+--    club_invite_link() raises officers_by_owner for role 'officer' and only
+--    makes member links; the four live officer links were revoked:
+--   update club_invites set revoked_at = now() where role = 'officer' and revoked_at is null;

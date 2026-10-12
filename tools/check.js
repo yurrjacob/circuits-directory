@@ -792,7 +792,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   { const pjs = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
     assert.ok(/const PREVIEW_FIELDS = \[\s*\['f-name', 'Company or Organization Name', true\], \['f-contact', 'Contact Person', true\], \['f-email', 'Public Email', true\],\s*\['f-website', 'Website', false\], \['f-phone', 'Public Phone', false\], \['f-address', 'Address', false\]\];/.test(pjs)
       && /i\.classList\.toggle\('pv-missing', !v\(id\)\)/.test(pjs), 'the preview does not mark the six fields red when empty');
-    assert.ok(/saveNote\(fresh \? 'Profile Saved\. Your page is at circuits\.com\/' \+ wantHandle : 'Profile Saved', true, true\)/.test(pjs), 'the bottom of Profile Details does not say Profile Saved after a save'); }
+    assert.ok(/saveNote\(isClubPage \? 'Saved' : fresh \? 'Profile Saved\. Your page is at circuits\.com\/' \+ wantHandle : 'Profile Saved', true, true\)/.test(pjs), 'the bottom of Profile Details does not say Profile Saved after a save'); }
   assert.ok(/<label for="f-name">Name \(Company, Club or Org\) <span class="req">\*<\/span><\/label>/.test(portalHtml) && /<label for="f-address">Address \(City, Country\)<\/label>/.test(portalHtml), 'the Name or Address label is not the 2026-10-12 wording');
   assert.ok(/class="mini-btn green" id="pt-crop-ok">Use this</.test(portalHtml), 'the cropper Use this button is not green');
   /* ---- college clubs, student badges, projects and the resume (2026-09-29) ---- */
@@ -854,7 +854,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   {
     const pjs = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
     assert.ok(/const REQUIRED_FIELDS = \['f-name', 'f-contact', 'f-email'\]/.test(pjs) && /is-missing/.test(pjs), 'empty required fields are no longer marked');
-    assert.ok(/saveNote\(fresh \? 'Profile Saved/.test(pjs), 'a saved profile no longer says so beside the button');
+    assert.ok(/saveNote\(isClubPage \? 'Saved' : fresh \? 'Profile Saved/.test(pjs), 'a saved profile no longer says so beside the button');
     const css = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
     assert.ok(/\.auth-field\.is-missing input\{border-color:#d93025/.test(css), 'the missing-field mark is not red');
   }
@@ -909,10 +909,24 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
      listings table says what each keyword has, the tab beside it is where the
      paid extras are switched on. */
   /* Projects (2026-09-29) sits after Branding and is shown only to a club page */
-  assert.deepStrictEqual(tabs, ['profile', 'listings', 'upgrades', 'hiring', 'seeking', 'club', 'branding', 'account', 'admin'],
-    'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Hire Talent / Search Jobs / College Club / Branding / Account Settings / Admin');
-  assert.ok(/data-tab="club">(?:<svg[\s\S]*?<\/svg>)?College Club</.test(portalHtml2) && portalHtml2.includes('id="tab-club"') && portalHtml2.includes('class="btn btn-primary pt-save-club cb-cta"'),
-    'the College Club tab, or its own Save button, is missing');
+  assert.deepStrictEqual(tabs, ['profile', 'listings', 'upgrades', 'hiring', 'seeking', 'club', 'members', 'branding', 'account', 'admin'],
+    'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Hire Talent / Search Work / Student Club / Members / Branding / Account Settings / Admin');
+  assert.ok(/data-tab="club">(?:<svg[\s\S]*?<\/svg>)?Student Club</.test(portalHtml2) && portalHtml2.includes('id="tab-club"') && portalHtml2.includes('class="btn btn-primary pt-save-club cb-cta"'),
+    'the Student Club tab, or its own Save button, is missing');
+  /* club mode (Jacob, 2026-10-12): a club page's tabs are Club Details, Club
+     Keywords, Members, Branding, Account Settings, in that order; the person's
+     own tabs are hidden; one owner adds officers, so only member invite links */
+  { const css = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
+    const order = ['club', 'listings', 'members', 'branding', 'account'].map(t => (css.match(new RegExp(`body\\.club-mode \\.pt-tab\\[data-tab="${t}"\\]\\{order:(\\d)\\}`)) || [])[1]);
+    assert.deepStrictEqual(order, ['1', '2', '3', '4', '5'], 'club mode tabs are not in the order Club Details, Club Keywords, Members, Branding, Account Settings');
+    assert.ok(/body\.club-mode \.pt-tab\[data-tab="profile"\],body\.club-mode \.pt-tab\[data-tab="upgrades"\],\s*body\.club-mode \.pt-tab\[data-tab="hiring"\],body\.club-mode \.pt-tab\[data-tab="seeking"\]\{display:none\}/.test(css), 'club mode still shows Profile Details, Upgrades, Hire Talent or Search Work');
+    assert.ok(/tabLabel\('club', club \? 'Club Details' : 'Student Club'\);/.test(portalSrc2) && /tabLabel\('listings', club \? 'Club Keywords' : 'Your Listings'\);/.test(portalSrc2), 'club mode does not rename Club Details and Club Keywords');
+    assert.ok(/for\(const \[role, label, what\] of \[\['member', 'Members',[^\]]*\]\]\)/.test(portalSrc2) && !/\['officer', 'Officers'/.test(portalSrc2), 'officer invite links are back');
+    assert.ok(portalHtml2.indexOf('id="f-members"') > portalHtml2.indexOf('id="tab-members"') && portalHtml2.indexOf('id="pt-club-invites"') > portalHtml2.indexOf('id="tab-members"'), 'the members list and its invite link are not on the Members tab');
+    assert.ok(/<label for="nc-name">Club Name <span class="req">\*<\/span><\/label>/.test(portalHtml2) && /<label for="nc-college">College or University <span class="req">\*<\/span><\/label>/.test(portalHtml2) && /The Club's Circuits\.com address <span class="req">\*<\/span>/.test(portalHtml2), 'the create-club fields are not marked required');
+    assert.ok(/if\(!isClubPage\)\{\s*const mine = /.test(portalSrc2), 'saving a club page writes the club onto the owner\'s own profile');
+    assert.ok(/document\.querySelectorAll\('\.pt-save, \.pt-save-club'\)\.forEach\(b => b\.addEventListener\('click', saveProfile\)\);/.test(portalHtml2), 'Save club and Save members are not wired to the save');
+    assert.ok(/function pickerLabel\(c\)\{\s*return c\.kind === 'club' \? \(c\.name/.test(portalSrc2), 'the picker no longer names the person by their contact name and each club by its name'); }
   assert.ok(portalHtml2.indexOf('id="f-club"') > portalHtml2.indexOf('id="tab-club"') && portalHtml2.indexOf('id="pj-save"') > portalHtml2.indexOf('id="tab-club"')
          && portalHtml2.indexOf('id="pj-save"') < portalHtml2.indexOf('id="tab-branding"'), 'the club settings and the project editor must both live inside the College Club tab');
   /* the two Recruiting tabs are named for what they hold (Jacob, 2026-09-03,

@@ -2497,3 +2497,19 @@ input.pv-missing,textarea.pv-missing{border-color:#d93025 !important;background:
 /* Years of experience is a short dropdown (Jacob, 2026-10-12): the general
    .auth-field and .pf-form select rules were stretching it full width */
 .auth-field select.pt-years,.pf-form select.pt-years,.pt-panel .pf-form select.pt-years{width:140px;max-width:100%}
+
+/* Club mode (Jacob, 2026-10-12): a club page has its own tabs, in this order:
+   Club Details, Club Keywords, Members, Branding, Account Settings */
+body:not(.club-mode) .pt-tab-clubonly{display:none}
+body.club-mode .pt-tab[data-tab="profile"],body.club-mode .pt-tab[data-tab="upgrades"],
+body.club-mode .pt-tab[data-tab="hiring"],body.club-mode .pt-tab[data-tab="seeking"]{display:none}
+body.club-mode .pt-tab[data-tab="club"]{order:1}
+body.club-mode .pt-tab[data-tab="listings"]{order:2}
+body.club-mode .pt-tab[data-tab="members"]{order:3}
+body.club-mode .pt-tab[data-tab="branding"]{order:4}
+body.club-mode .pt-tab[data-tab="account"]{order:5}
+body.club-mode .pt-tab[data-tab="admin"]{order:6}
+/* in Club Details the details form is saved by Save club, so its own Save profile row goes */
+#pt-club-details-host .pt-save-row{display:none}
+#pt-club-details-host > .pf-form{margin-bottom:16px}
+#tab-members .cb-grid{margin-top:4px}
