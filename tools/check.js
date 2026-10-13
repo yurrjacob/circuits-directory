@@ -269,6 +269,11 @@ assert.ok(/\.auth-field select\.pt-years,\.pf-form select\.pt-years,\.pt-panel \
 assert.ok(/view job details and <a class="web-link" href="#results-body">Apply<\/a>\./.test(fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8'))
   && /best describe their qualifications\. <a class="web-link" href="#results-body">View Talent now<\/a>/.test(fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8')), 'a board lede lost its Apply or View Talent now link');
 
+/* the homepage fits one screen with no scrolling on a desktop window (Jacob, 2026-10-13) */
+assert.ok(/<body class="home-page">/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'))
+  && /@media \(min-width:861px\) and \(min-height:520px\)\{\s*html:has\(body\.home-page\),body\.home-page\{height:100%;overflow:hidden\}/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
+  'the homepage scrolls again on a desktop window');
+
 /* How It Works was merged into About; the old URL must still point somewhere */
 const hiw = fs.readFileSync(path.join(ROOT, 'how-it-works.html'), 'utf8');
 assert.ok(hiw.includes('rel="canonical" href="https://circuits.com/about"'),

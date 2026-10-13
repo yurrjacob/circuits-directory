@@ -2513,3 +2513,46 @@ body.club-mode .pt-tab[data-tab="admin"]{order:6}
 #pt-club-details-host .pt-save-row{display:none}
 #pt-club-details-host > .pf-form{margin-bottom:16px}
 #tab-members .cb-grid{margin-top:4px}
+
+/* The homepage fits one screen with no scrolling (Jacob, 2026-10-13). The page
+   is locked to the window height and the logo, gaps and cards scale with that
+   height so the search, the four cards and the footer all show at once. Phones
+   and very short windows keep scrolling: four stacked cards cannot fit there,
+   and locking it would cut them off. Only body is clipped, never .home, so the
+   inbox panel and anything else that pops out of the page is not cut. */
+@media (min-width:861px) and (min-height:520px){
+  html:has(body.home-page),body.home-page{height:100%;overflow:hidden}
+  .home-page .home{height:100vh;height:100dvh;min-height:0}
+  .home-page .home-main{flex:1 1 auto;min-height:0;justify-content:space-evenly;padding:0 20px}
+  .home-page .home-top{padding:0}
+  .home-page .logo-hero{height:clamp(48px,9vh,84px);margin-bottom:clamp(14px,3.2vh,36px)}
+  .home-page .wc-wrap-cards{padding-top:0;padding-bottom:0}
+  .home-page .wc-card{padding:clamp(12px,2.2vh,22px) 18px clamp(10px,1.8vh,18px);gap:6px}
+  .home-page .wc-card-ico{width:clamp(32px,4.6vh,44px);height:clamp(32px,4.6vh,44px);margin-bottom:2px}
+  .home-page .wc-card-b{font-size:clamp(.98rem,1.9vh,1.1rem)}
+  .home-page .wc-card-t{font-size:.84rem;line-height:1.45}
+  .home-page .wc-card-go{margin-top:clamp(4px,1vh,12px);padding:clamp(6px,1vh,9px) 14px}
+  .home-page .home-main .wc-home .wc-foot{margin-top:clamp(8px,2vh,22px)}
+  .home-page .popular{margin-top:clamp(10px,3.4vh,34px)}
+  .home-page .search-mode{margin-bottom:clamp(8px,1.6vh,14px)}
+}
+/* a laptop window (about 650 to 760 tall): each card puts its icon beside its title */
+@media (min-width:861px) and (min-height:520px) and (max-height:760px){
+  .home-page .wc-card{flex-direction:row;flex-wrap:wrap;align-items:center;column-gap:10px}
+  .home-page .wc-card-ico{margin:0}
+  .home-page .wc-card-b{flex:1 1 0;min-width:0}
+  .home-page .wc-card-t{flex:1 1 100%;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
+  .home-page .search-pill{padding:9px 18px}
+  .home-page .logo-hero{height:clamp(44px,8vh,72px)}
+}
+/* a very short window: the four doors keep their titles and buttons */
+@media (min-width:861px) and (min-height:520px) and (max-height:620px){
+  .home-page .wc-card-t{display:none}
+  .home-page .search-hint{margin-bottom:6px}
+}
+/* narrow and short at once (under about 1100 by 600): the cards wrap too much
+   to fit, so the homepage scrolls again rather than cut anything off */
+@media (min-width:861px) and (max-width:1100px) and (max-height:599px){
+  html:has(body.home-page),body.home-page{height:auto;overflow:visible}
+  .home-page .home{height:auto;min-height:100vh}
+}
