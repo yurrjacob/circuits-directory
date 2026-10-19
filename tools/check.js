@@ -1859,8 +1859,18 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
   const tabs = [...ph.matchAll(/class="adm-tab[^"]*" data-adm="([a-z]+)">(?:<svg[\s\S]*?<\/svg>)?([^<]+)</g)].map(m => m[1] + ':' + m[2]);
   assert.deepStrictEqual(tabs, ['companies:All Profiles', 'listings:Listings', 'applications:Website Applications',
-    'upgrades:Upgrade Applications', 'employment:Recruiting Applications', 'clubs:Manage Clubs', 'messages:Notifications', 'activity:Activity'],
+    'upgrades:Upgrade Applications', 'employment:Recruiting Applications', 'clubs:Club Pages', 'clubkw:Club Keywords', 'clubup:Badges &amp; Upgrades',
+    'clubppl:Members &amp; Officers', 'clubproj:Projects', 'messages:Notifications', 'activity:Activity'],
     'the admin sub-tabs are out of order or renamed: ' + tabs.join(', '));
+  /* Profiles Admin / Club Admin (Jacob, 2026-10-19): a switch, and the five
+     club sub-tabs marked adm-club so they show only under Club Admin */
+  assert.ok(/data-mode="profiles"[^>]*>Profiles Admin<\/button>/.test(ph) && /data-mode="clubs"[^>]*>Club Admin<\/button>/.test(ph), 'the Profiles Admin / Club Admin switch is gone');
+  assert.deepStrictEqual([...ph.matchAll(/class="adm-tab adm-club" data-adm="([a-z]+)"/g)].map(m => m[1]), ['clubs', 'clubkw', 'clubup', 'clubppl', 'clubproj'], 'Club Admin is not Club Pages, Club Keywords, Badges & Upgrades, Members & Officers, Projects');
+  { const aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
+    assert.ok(/const approved = \(\) => allApps\.filter\(a=>a\.status==='Approved' && !isClubApp\(a\)\);/.test(aj) && /const clubApproved = /.test(aj), 'club listings are not split from Profiles Admin');
+    assert.ok(/lb\.innerHTML = live\.map\(extrasRow\)\.join\(''\);/.test(aj) && /const extrasRow = l => [\s\S]*?\$\{actionsCell\(l\)\}/.test(aj), 'Club Keywords lost the Edit, Badge, Lock, Pause and Remove actions');
+    assert.ok(/await reloadClubs\(\);\s*\/\/ the club set first/.test(aj), 'Profiles Admin can render before the club set is known'); }
+  assert.ok(/#tab-admin:not\(\.adm-clubs\) \.adm-tab\.adm-club,#tab-admin\.adm-clubs \.adm-tab:not\(\.adm-club\)\{display:none\}/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the admin switch no longer hides the other side\'s sub-tabs');
   for (const h of ['Keywords With Banners', 'Keywords With Badges']) {
     const i = ph.indexOf('<!-- ' + h + ' -->');
     assert.ok(i > 0 && /data-adm="listings"/.test(ph.slice(i, i + 120)), h + ' must live under the Listings tab');

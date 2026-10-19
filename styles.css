@@ -2556,3 +2556,12 @@ body.club-mode .pt-tab[data-tab="admin"]{order:6}
   html:has(body.home-page),body.home-page{height:auto;overflow:visible}
   .home-page .home{height:auto;min-height:100vh}
 }
+
+/* Profiles Admin / Club Admin switch (Jacob, 2026-10-19) */
+.adm-mode{display:inline-flex;gap:2px;padding:3px;margin:0 0 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg-soft)}
+.adm-mode-btn{border:0;background:transparent;font:inherit;font-weight:700;font-size:.9rem;padding:8px 16px;border-radius:9px;color:var(--muted);cursor:pointer}
+.adm-mode-btn.on{background:var(--dark);color:#fff}
+.adm-mode-btn:focus-visible{outline:3px solid var(--green);outline-offset:2px}
+#tab-admin:not(.adm-clubs) .adm-tab.adm-club,#tab-admin.adm-clubs .adm-tab:not(.adm-club){display:none}
+.adm-sub{margin:4px 0 10px;font-size:.92rem;font-weight:800}
+.adm-sub:not(:first-child){margin-top:22px}

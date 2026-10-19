@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=a189cd60c8">
+<link rel="stylesheet" href="/styles.css?v=20c4befe6e">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -513,21 +513,32 @@
   </div>
 
   <div class="stat-grid">
-    <div class="stat"><div class="num" id="s-listings">0</div><div class="lbl">Keyword Listings</div></div>
-    <div class="stat"><div class="num" id="s-companies">0</div><div class="lbl">Companies</div></div>
-    <div class="stat"><div class="num" id="s-sponsored">0</div><div class="lbl">Sponsored Banners</div></div>
-    <div class="stat"><div class="num" id="s-pending">0</div><div class="lbl">Pending Applications</div></div>
+    <div class="stat"><div class="num" id="s-listings">0</div><div class="lbl" id="s-listings-l">Keyword Listings</div></div>
+    <div class="stat"><div class="num" id="s-companies">0</div><div class="lbl" id="s-companies-l">Companies</div></div>
+    <div class="stat"><div class="num" id="s-sponsored">0</div><div class="lbl" id="s-sponsored-l">Sponsored Banners</div></div>
+    <div class="stat"><div class="num" id="s-pending">0</div><div class="lbl" id="s-pending-l">Pending Applications</div></div>
   </div>
 
   <!-- One console, six rooms. Every panel below carries data-adm="<room>";
        admin.js shows one room at a time and remembers the last one opened. -->
+  <!-- Profiles Admin and Club Admin (Jacob, 2026-10-19): one switch, two sets
+       of sub-tabs. Club Admin holds everything about student club pages, their
+       keywords and the extras on them, so it can all be tested on its own. -->
+  <div class="adm-mode" role="tablist" aria-label="Admin area">
+    <button type="button" class="adm-mode-btn on" data-mode="profiles" role="tab" aria-selected="true">Profiles Admin</button>
+    <button type="button" class="adm-mode-btn" data-mode="clubs" role="tab" aria-selected="false">Club Admin</button>
+  </div>
   <div class="adm-tabs" role="tablist">
     <button type="button" class="adm-tab active" data-adm="companies"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2.2"/><path d="M5.5 17a3.5 3.5 0 0 1 7 0M14 9h4M14 13h4"/></svg>All Profiles</button>
     <button type="button" class="adm-tab" data-adm="listings"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1.3" fill="currentColor" stroke="none"/></svg>Listings</button>
     <button type="button" class="adm-tab" data-adm="applications"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"/><path d="M14 3.5V8h4.5M8.5 13h7M8.5 16.5h5"/></svg>Website Applications</button>
     <button type="button" class="adm-tab" data-adm="upgrades"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>Upgrade Applications</button>
     <button type="button" class="adm-tab" data-adm="employment"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="18" height="12.5" rx="2"/><path d="M8.5 7.5V5.8A1.8 1.8 0 0 1 10.3 4h3.4a1.8 1.8 0 0 1 1.8 1.8v1.7"/><path d="M3 12.5h18"/></svg>Recruiting Applications</button>
-    <button type="button" class="adm-tab" data-adm="clubs"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/></svg>Manage Clubs</button>
+    <button type="button" class="adm-tab adm-club" data-adm="clubs"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/></svg>Club Pages</button>
+    <button type="button" class="adm-tab adm-club" data-adm="clubkw"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Club Keywords</button>
+    <button type="button" class="adm-tab adm-club" data-adm="clubup"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 15 8.5 22 9.3 16.8 14 18.2 21 12 17.6 5.8 21 7.2 14 2 9.3 9 8.5z"/></svg>Badges &amp; Upgrades</button>
+    <button type="button" class="adm-tab adm-club" data-adm="clubppl"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18.5 20a6.5 6.5 0 0 0-3-5.5"/></svg>Members &amp; Officers</button>
+    <button type="button" class="adm-tab adm-club" data-adm="clubproj"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Projects</button>
     <button type="button" class="adm-tab" data-adm="messages"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>Notifications</button>
     <button type="button" class="adm-tab" data-adm="activity"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Activity</button>
   </div>
@@ -754,7 +765,7 @@
        an Approve button on each new one. Approved clubs appear on the Global
        Club List; the page itself is live at its address either way. -->
   <div class="panel" data-adm="clubs">
-    <div class="panel-head"><h2>Manage Clubs</h2><span class="hint" id="clubs-hint">Every Student Club Page. Approve To Put A Club On The Global Club List, Deny To Keep It Off</span></div>
+    <div class="panel-head"><h2>Club Pages</h2><span class="hint" id="clubs-hint">Every Student Club Page. Approve To Put A Club On The Global Club List, Deny To Keep It Off</span></div>
     <div class="panel-body">
       <div class="table-scroll">
         <table class="dash-table">
@@ -763,6 +774,82 @@
         </table>
       </div>
       <div id="clubs-adm-empty" class="empty-line" style="display:none">No Club Pages Yet.</div>
+    </div>
+  </div>
+
+  <!-- Club Admin: Club Keywords. The same Approve, Edit, Badge, Lock, Pause
+       and Remove the Listings tab has, for club pages only. -->
+  <div class="panel" data-adm="clubkw">
+    <div class="panel-head"><h2>Club Keywords</h2><span class="hint" id="ck-hint">Every Circuits-Keyword&trade; A Club Page Is Listed Under. Approve New Ones, Then Edit, Badge, Lock Or Pause</span></div>
+    <div class="panel-body">
+      <h3 class="adm-sub">Waiting For Approval</h3>
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Club</th><th>Keyword</th><th>Email</th><th>Asked</th><th>Actions</th></tr></thead>
+          <tbody id="ck-pending-body"></tbody>
+        </table>
+      </div>
+      <div id="ck-pending-empty" class="empty-line" style="display:none">No Club Keyword Requests Waiting.</div>
+      <h3 class="adm-sub">Live Club Keywords</h3>
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Club</th><th>Keyword</th><th>Banner</th><th>Badge</th><th>Lock</th><th>Actions</th></tr></thead>
+          <tbody id="ck-live-body"></tbody>
+        </table>
+      </div>
+      <div id="ck-live-empty" class="empty-line" style="display:none">No Club Is Listed Under A Keyword Yet.</div>
+    </div>
+  </div>
+
+  <!-- Club Admin: Badges & Upgrades. Requests a club sends, and every club
+       keyword carrying a Trust Badge, a Sponsor Banner or a Locked Position. -->
+  <div class="panel" data-adm="clubup">
+    <div class="panel-head"><h2>Badges &amp; Upgrades</h2><span class="hint">Upgrade Requests From Clubs, And Every Club Keyword With A Badge, Banner Or Locked Position. Badge, Lock And Edit Apply One Directly</span></div>
+    <div class="panel-body">
+      <h3 class="adm-sub">Requests</h3>
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Club</th><th>Keyword</th><th>Upgrade</th><th>Details</th><th>Asked</th><th>Actions</th></tr></thead>
+          <tbody id="cu-req-body"></tbody>
+        </table>
+      </div>
+      <div id="cu-req-empty" class="empty-line" style="display:none">No Upgrade Requests From Clubs.</div>
+      <h3 class="adm-sub">Club Keywords With Extras</h3>
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Club</th><th>Keyword</th><th>Banner</th><th>Badge</th><th>Lock</th><th>Actions</th></tr></thead>
+          <tbody id="cu-live-body"></tbody>
+        </table>
+      </div>
+      <div id="cu-live-empty" class="empty-line" style="display:none">No Club Keyword Carries A Badge, Banner Or Locked Position Yet.</div>
+    </div>
+  </div>
+
+  <!-- Club Admin: Members & Officers, across every club page -->
+  <div class="panel" data-adm="clubppl">
+    <div class="panel-head"><h2>Members &amp; Officers</h2><span class="hint" id="cp-hint">Everyone Listed On A Club Page. An Address Means They Carry A Member Or Leadership Badge On Their Own Profile</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Club</th><th>Name</th><th>Circuits.com address</th><th>Role</th></tr></thead>
+          <tbody id="cp-body"></tbody>
+        </table>
+      </div>
+      <div id="cp-empty" class="empty-line" style="display:none">No Members Or Officers Listed On Any Club Yet.</div>
+    </div>
+  </div>
+
+  <!-- Club Admin: Projects, every club's showcase -->
+  <div class="panel" data-adm="clubproj">
+    <div class="panel-head"><h2>Projects</h2><span class="hint" id="cj-hint">Every Project In A Club Showcase. Hide Takes One Off The Club Page Without Deleting It</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Project</th><th>Club</th><th>Year</th><th>Team</th><th>Shown</th><th>Actions</th></tr></thead>
+          <tbody id="cj-body"></tbody>
+        </table>
+      </div>
+      <div id="cj-empty" class="empty-line" style="display:none">No Club Projects Yet.</div>
     </div>
   </div>
 
@@ -837,10 +924,10 @@
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
-<script src="/store.js?v=00b4c9de54"></script>
-<script src="/app.js?v=51f33282f4"></script>
+<script src="/store.js?v=190fd6ab57"></script>
+<script src="/app.js?v=7516b09db6"></script>
 <script src="/portal.js?v=23a200fbc7"></script>
-<script src="/admin.js?v=95ce1687e7"></script>
+<script src="/admin.js?v=b28eaf8977"></script>
 <script>
 /* Save profile, Save club and Save members all run the one save. Save club
    was never wired, so pressing it did nothing (Jacob, 2026-10-12: "Save

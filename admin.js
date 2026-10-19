@@ -18,8 +18,14 @@ const panels = {
 };
 
 
-const approved = () => allApps.filter(a=>a.status==='Approved');
-const pending  = () => allApps.filter(a=>a.status==='Pending');
+/* Profiles Admin and Club Admin (Jacob, 2026-10-19) split the rows: a
+   listing whose page is a club shows only under Club Admin. */
+let clubSlugs = new Set();
+const isClubApp = a => !!a && clubSlugs.has(a.company_slug);
+const approved = () => allApps.filter(a=>a.status==='Approved' && !isClubApp(a));
+const pending  = () => allApps.filter(a=>a.status==='Pending' && !isClubApp(a));
+const clubApproved = () => allApps.filter(a=>a.status==='Approved' && isClubApp(a));
+const clubPending  = () => allApps.filter(a=>a.status==='Pending' && isClubApp(a));
 /* Renders the same way the public site does: our own mark is distinct from a
    paid Trust Badge chosen for that one keyword, and there is no other kind:
    our own team mark is not a badge and never sits on a listing. */
@@ -118,12 +124,20 @@ async function editBadge(id){
   await reload();
 }
 
+/* the four numbers follow the side the switch is on (2026-10-19) */
+let adminMode = 'profiles';
 function renderStats(){
-  const ap = approved();
+  const club = adminMode === 'clubs';
+  const ap = club ? clubApproved() : approved();
   $('s-listings').textContent  = ap.length;
-  $('s-companies').textContent = new Set(ap.map(a=>a.company)).size;
+  $('s-companies').textContent = club ? allClubs.length : new Set(ap.map(a=>a.company)).size;
   $('s-sponsored').textContent = ap.filter(a=>a.banner).length;
-  $('s-pending').textContent   = pending().length;
+  $('s-pending').textContent   = club ? clubPending().length + allClubs.filter(c => c.club_status === 'Pending').length : pending().length;
+  const lbl = (id, t) => { const e = $(id); if(e) e.textContent = t; };
+  lbl('s-listings-l', club ? 'Club Keywords' : 'Keyword Listings');
+  lbl('s-companies-l', club ? 'Club Pages' : 'Companies');
+  lbl('s-sponsored-l', 'Sponsored Banners');
+  lbl('s-pending-l', club ? 'Waiting For Approval' : 'Pending Applications');
 }
 
 function renderListings(){
@@ -193,7 +207,7 @@ function renderPending(){
 const ideaText = m => String(m || '').replace(/^\s*(\[[^\]]*\]\s*)+/, '').trim();
 function renderIdeas(){
   const seen = new Set();
-  const rows = allApps.map(a => Object.assign({}, a, { idea: ideaText(a.message) }))
+  const rows = allApps.filter(a => !isClubApp(a)).map(a => Object.assign({}, a, { idea: ideaText(a.message) }))
     .filter(a => a.idea)
     .sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''))
     .filter(a => {
@@ -211,7 +225,83 @@ function renderIdeas(){
   $('ideas-empty').style.display = rows.length ? 'none' : 'block';
 }
 
-function renderAll(){ renderStats(); renderListings(); renderBanners(); renderBadges(); renderPending(); renderIdeas(); }
+function renderAll(){ renderStats(); renderListings(); renderBanners(); renderBadges(); renderPending(); renderIdeas(); renderClubKeywords(); renderClubUpgrades(); }
+
+/* ---- Club Admin (Jacob, 2026-10-19: "a separate club admin ... so we can
+   test everything including club keywords, badges, upgrades") ---- */
+const clubName = slug => (allClubs.find(c => c.slug === slug) || {}).name || slug;
+const clubHandle = slug => (allClubs.find(c => c.slug === slug) || {}).handle || '';
+const clubCell = l => coCell(clubName(l.company_slug), clubHandle(l.company_slug) || l.company_handle);
+const lockCell = l => `<td>${l.locked_position ? '<span class="badge sponsored">#' + l.locked_position + '</span>' : 'no'}</td>`;
+const extrasRow = l => `<tr class="${l.paused ? 'row-paused' : ''}">${clubCell(l)}<td class="kw">${esc(l.keyword) || 'none'}</td>
+      <td>${l.banner ? '<span class="badge sponsored">Yes</span>' : 'No'}</td><td>${badgeTag(l.badge)}</td>${lockCell(l)}${actionsCell(l)}</tr>`;
+function renderClubKeywords(){
+  const pb = $('ck-pending-body'), lb = $('ck-live-body'); if(!pb || !lb) return;
+  const pend = clubPending(), live = sortRows(clubApproved(), 'company');
+  pb.innerHTML = pend.map(p => `<tr class="row-waiting">${clubCell(p)}<td class="kw">${esc(p.keyword) || 'none'}</td>
+      <td class="cell-muted">${esc(p.email) || 'none'}</td><td class="cell-muted">${p.created_at ? new Date(p.created_at).toLocaleDateString() : ''}</td>
+      <td class="row-actions"><button class="mini-btn green" onclick="approveApp('${p.id}')">Approve</button>
+        <button class="mini-btn danger" onclick="rejectApp('${p.id}')">Reject</button></td></tr>`).join('');
+  $('ck-pending-empty').style.display = pend.length ? 'none' : 'block';
+  lb.innerHTML = live.map(extrasRow).join('');
+  $('ck-live-empty').style.display = live.length ? 'none' : 'block';
+  $('ck-hint').textContent = pend.length ? pend.length + (pend.length === 1 ? ' club keyword waiting for approval' : ' club keywords waiting for approval')
+    : live.length + (live.length === 1 ? ' live club keyword' : ' live club keywords');
+}
+function renderClubUpgrades(){
+  const rb = $('cu-req-body'), lb = $('cu-live-body'); if(!rb || !lb) return;
+  const reqs = openUpgrades.filter(r => clubSlugs.has(r.company_slug));
+  rb.innerHTML = reqs.map(upgradeRow).join('');
+  $('cu-req-empty').style.display = reqs.length ? 'none' : 'block';
+  const live = sortRows(clubApproved().filter(l => l.banner || l.badge || l.locked_position), 'company');
+  lb.innerHTML = live.map(extrasRow).join('');
+  $('cu-live-empty').style.display = live.length ? 'none' : 'block';
+}
+function renderClubPeople(){
+  const body = $('cp-body'); if(!body) return;
+  const rows = [];
+  for(const c of allClubs){
+    for(const t of (Array.isArray(c.team) ? c.team : [])) if(t && (t.name || t.handle)) rows.push({ c, name: t.name, handle: t.handle, role: t.role || 'Officer', lead: true });
+    for(const m of (Array.isArray(c.members) ? c.members : [])) if(m && (m.name || m.handle)) rows.push({ c, name: m.name, handle: m.handle, role: 'Member', lead: false });
+  }
+  body.innerHTML = rows.map(r => `<tr>
+      <td><a href="/${esc(r.c.handle || r.c.slug)}" target="_blank" rel="noopener">${esc(r.c.name)}</a></td>
+      <td>${esc(r.name || r.handle)}</td>
+      <td>${r.handle ? `<a href="/${esc(r.handle)}" target="_blank" rel="noopener">circuits.com/${esc(r.handle)}</a>` : '<span class="cell-muted">none, named only</span>'}</td>
+      <td>${r.lead ? '<b>' + esc(r.role) + '</b> <span class="cell-muted">(Leadership badge)</span>' : 'Member' + (r.handle ? ' <span class="cell-muted">(Member badge)</span>' : '')}</td></tr>`).join('');
+  $('cp-empty').style.display = rows.length ? 'none' : 'block';
+  const lead = rows.filter(r => r.lead).length;
+  $('cp-hint').textContent = rows.length ? `${lead} officer${lead === 1 ? '' : 's'} and ${rows.length - lead} member${rows.length - lead === 1 ? '' : 's'} across ${allClubs.length} club page${allClubs.length === 1 ? '' : 's'}`
+    : 'Everyone Listed On A Club Page. An Address Means They Carry A Member Or Leadership Badge On Their Own Profile';
+}
+let allProjects = [];
+async function reloadClubProjects(){
+  const body = $('cj-body'); if(!body) return;
+  allProjects = await fetchAllProjects(allClubs.map(c => c.slug));
+  body.innerHTML = allProjects.map(p => {
+    const team = (Array.isArray(p.team) ? p.team : []).filter(t => t && (t.name || t.handle)).length;
+    return `<tr class="${p.published === false ? 'row-paused' : ''}">
+      <td><a href="/${esc(clubHandle(p.company_slug) || p.company_slug)}#project-${esc(String(p.id))}" target="_blank" rel="noopener"><b>${esc(p.title)}</b></a></td>
+      <td>${esc(clubName(p.company_slug))}</td><td class="cell-muted">${esc(p.year || '')}</td>
+      <td class="cell-muted">${team} ${team === 1 ? 'person' : 'people'}</td>
+      <td>${p.published === false ? 'Hidden' : 'Shown'}</td>
+      <td class="row-actions"><button class="mini-btn" onclick="toggleProjectUI('${esc(String(p.id))}')">${p.published === false ? 'Show' : 'Hide'}</button>
+        <button class="mini-btn danger" onclick="deleteProjectUI('${esc(String(p.id))}')">Delete</button></td></tr>`; }).join('');
+  $('cj-empty').style.display = allProjects.length ? 'none' : 'block';
+}
+async function toggleProjectUI(id){
+  const p = allProjects.find(x => String(x.id) === id); if(!p) return;
+  const err = await setProjectPublished(p.id, p.published === false);
+  if(err){ alert('Could not do that: ' + err); return; }
+  await reloadClubProjects();
+}
+async function deleteProjectUI(id){
+  const p = allProjects.find(x => String(x.id) === id); if(!p) return;
+  if(!confirm('Delete "' + p.title + '" from ' + clubName(p.company_slug) + ' for good? It comes off the club page and off every team member\'s profile.')) return;
+  const err = await deleteProject(p.id);
+  if(err){ alert('Could not delete: ' + err); return; }
+  await reloadClubProjects();
+}
 function renderPanel(panel){ ({listings:renderListings,banners:renderBanners,badges:renderBadges,pending:renderPending}[panel])(); }
 async function reload(){ allApps = await fetchApplications(); renderAll(); }
 
@@ -249,6 +339,9 @@ function editListing(id){
   badgeSel.value = bText;
   $('e-color').value = l.badge ? l.badge.color : '#c9a227';
   $('e-banner').checked = !!l.banner;
+  /* the form opens in whichever panel the Edit was pressed in, Club Keywords included */
+  const host = document.querySelector('#tab-admin .panel.adm-on .panel-body');
+  if(host && !host.contains($('edit-form'))) host.prepend($('edit-form'));
   $('edit-form').style.display = 'block';
   $('edit-form').scrollIntoView({behavior:'smooth', block:'center'});
 }
@@ -328,7 +421,8 @@ async function rejectApp(id){
    and keeps every row it had, so this is fully reversible. */
 let allCompanies = [];
 async function reloadCompanies(){
-  allCompanies = await fetchAllCompanies();
+  /* club pages live under Club Admin, Club Pages (2026-10-19) */
+  allCompanies = (await fetchAllCompanies()).filter(c => c.kind !== 'club');
   const susp = allCompanies.filter(c => c.suspended_at).length;
   $('companies-hint').textContent = susp
     ? susp + (susp === 1 ? ' profile suspended' : ' profiles suspended')
@@ -356,6 +450,7 @@ let allClubs = [];
 async function reloadClubs(){
   const body = $('clubs-body'); if(!body) return;
   allClubs = await fetchAdminClubs();
+  clubSlugs = new Set(allClubs.map(c => c.slug));
   const order = { Pending: 0, Approved: 1, Denied: 2 };
   allClubs.sort((a, b) => (order[a.club_status] ?? 9) - (order[b.club_status] ?? 9));
   const waiting = allClubs.filter(c => c.club_status === 'Pending').length;
@@ -379,8 +474,12 @@ async function reloadClubs(){
         ${c.suspended_at
           ? `<button class="mini-btn green" onclick="setSuspended('${esc(c.slug)}', false)">Reinstate</button>`
           : `<button class="mini-btn" onclick="setSuspended('${esc(c.slug)}', true)">Suspend</button>`}
+        <button class="mini-btn danger" onclick="deleteCompanyUI('${esc(c.slug)}')">Delete</button>
       </td></tr>`).join('');
   $('clubs-adm-empty').style.display = allClubs.length ? 'none' : 'block';
+  renderClubPeople();
+  reloadClubProjects();
+  if(allApps.length) renderAll();
 }
 async function setClubStatusUI(slug, status){
   const c = allClubs.find(x => x.slug === slug);
@@ -403,7 +502,13 @@ let openUpgrades = [];
 async function reloadUpgrades(){
   const body = $('upgrades-body'); if(!body) return;
   openUpgrades = await fetchUpgradeRequests();
-  body.innerHTML = openUpgrades.map(r => `
+  const mine = openUpgrades.filter(r => !clubSlugs.has(r.company_slug));
+  body.innerHTML = mine.map(upgradeRow).join('');
+  $('upgrades-empty').style.display = mine.length ? 'none' : 'block';
+  renderClubUpgrades();
+}
+function upgradeRow(r){
+  return `
     <tr class="row-waiting">
       ${coCell(r.company || r.company_slug, r.company_handle)}
       <td>${esc(r.keyword || 'none')}</td>
@@ -413,8 +518,7 @@ async function reloadUpgrades(){
       <td class="row-actions">
         <button class="mini-btn green" onclick="approveUpgrade('${esc(r.id)}')">Approve</button>
         <button class="mini-btn danger" onclick="denyUpgrade('${esc(r.id)}')">Deny</button>
-      </td></tr>`).join('');
-  $('upgrades-empty').style.display = openUpgrades.length ? 'none' : 'block';
+      </td></tr>`;
 }
 async function approveUpgrade(id){
   const r = openUpgrades.find(u => u.id === id); if(!r) return;
@@ -571,7 +675,7 @@ async function closeJob(id){
 /* Deletion is final: the company row, its listings, jobs, reviews and requests
    all go. Typing the exact name is the confirmation; a reason goes in the log. */
 async function deleteCompanyUI(slug){
-  const co = allCompanies.find(c => c.slug === slug);
+  const co = allCompanies.find(c => c.slug === slug) || allClubs.find(c => c.slug === slug);
   const name = co ? co.name : slug;
   const typed = prompt('Delete ' + name + ' for good? This removes the company page, every keyword listing, job post, review and request it has. The owner keeps their sign-in.\n\nType the company name exactly to confirm:');
   if(typed === null) return;
@@ -580,7 +684,7 @@ async function deleteCompanyUI(slug){
   if(reason === null) return;
   const err = await deleteCompany(slug, reason);
   if(err){ alert('Could not delete: ' + err); return; }
-  await reloadCompanies(); reload();
+  await reloadCompanies(); await reloadClubs(); reload();
 }
 
 async function setSuspended(slug, suspend){
@@ -654,7 +758,23 @@ function syncControls(){ document.querySelectorAll('.list-controls').forEach(bar
    who is not staff never runs any of this, and never fetches any of it. */
 /* Sub-tabs: one room at a time (Listings / Upgrades / Companies / Employment /
    Messages / Activity). Data still loads for every panel; only what is on screen changes. */
+/* Profiles Admin / Club Admin (2026-10-19): a sub-tab belongs to one side,
+   marked adm-club for the club side. Showing a sub-tab shows its side too. */
+const sideOf = g => { const b = document.querySelector(`.adm-tab[data-adm="${g}"]`); return b && b.classList.contains('adm-club') ? 'clubs' : 'profiles'; };
+function showAdminMode(mode){
+  document.querySelectorAll('.adm-mode-btn').forEach(b => { const on = b.dataset.mode === mode; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+  const tab = document.getElementById('tab-admin'); if(tab) tab.classList.toggle('adm-clubs', mode === 'clubs');
+  if(adminMode !== mode){ adminMode = mode; renderStats(); }
+}
+document.querySelectorAll('.adm-mode-btn').forEach(b => b.addEventListener('click', () => {
+  const mode = b.dataset.mode;
+  let last = ''; try{ last = localStorage.getItem('cx_admin_group_' + mode) || ''; }catch(e){}
+  const first = document.querySelector(mode === 'clubs' ? '.adm-tab.adm-club' : '.adm-tab:not(.adm-club)');
+  showAdminGroup(last && sideOf(last) === mode && document.querySelector(`.adm-tab[data-adm="${last}"]`) ? last : first.dataset.adm, true);
+}));
 function showAdminGroup(g, fromClick){
+  showAdminMode(sideOf(g));
+  try{ localStorage.setItem('cx_admin_group_' + sideOf(g), g); }catch(e){}
   document.querySelectorAll('.adm-tab').forEach(b => b.classList.toggle('active', b.dataset.adm === g));
   document.querySelectorAll('#tab-admin .panel[data-adm]').forEach(p => p.classList.toggle('adm-on', p.dataset.adm === g));
   /* the Website Applications sheet is its own page, framed in; it loads on first open */
@@ -676,7 +796,8 @@ window.initAdmin = async function(){
   if(started) return;
   if(!(await checkStaff())) return;        // belt and braces; the database is the real gate
   started = true;
-  reloadCompanies(); reloadAudit(); reloadSearches(); reloadRecruits(); reloadJobs(); reloadUpgrades(); reloadClubs();
+  await reloadClubs();   // the club set first, so Profiles Admin never shows a club row
+  reloadCompanies(); reloadAudit(); reloadSearches(); reloadRecruits(); reloadJobs(); reloadUpgrades();
   const saved = await loadPrefs('admin');
   if(saved) for(const k in panels){
     if(saved[k] && saved[k].sort) panels[k].sort = saved[k].sort;
@@ -692,6 +813,6 @@ window.initAdmin = async function(){
    tools/check.js fails if a new onclick appears without being listed here. */
 Object.assign(window, {
   editListing, editBadge, removeListing, togglePause, lockListing,
-  approveApp, rejectApp, setSuspended, approveJob, closeJob, approveUpgrade, denyUpgrade, sendNotificationUI, notifyAudienceUI, setRecruitStatus, deleteCompanyUI, setClubStatusUI
+  approveApp, rejectApp, setSuspended, approveJob, closeJob, approveUpgrade, denyUpgrade, sendNotificationUI, notifyAudienceUI, setRecruitStatus, deleteCompanyUI, setClubStatusUI, toggleProjectUI, deleteProjectUI
 });
 })();

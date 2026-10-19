@@ -864,6 +864,22 @@ async function saveProject(p){
   if(!data || !data.length) return { error: 'That change was refused.' };
   return { id: data[0].id };
 }
+/* staff: every project in every club showcase, for Club Admin, Projects */
+async function fetchAllProjects(slugs){
+  if(!sb || !slugs || !slugs.length) return [];
+  const { data, error } = await sb.from('projects').select(PROJECT_COLS)
+    .in('company_slug', slugs).order('created_at', { ascending: false });
+  if(error){ console.warn('fetchAllProjects', error.message); return []; }
+  return data || [];
+}
+/* staff (or the club's owner): show or hide one project on the club page */
+async function setProjectPublished(id, published){
+  if(!sb) return 'No connection';
+  const { data, error } = await sb.from('projects').update({ published }).eq('id', id).select('id');
+  if(error) return error.message;
+  if(!data || !data.length) return 'That change was refused.';
+  return '';
+}
 async function deleteProject(id){
   if(!sb) return 'No connection';
   const { error } = await sb.from('projects').delete().eq('id', id);
@@ -1373,7 +1389,7 @@ async function setClubStatus(slug, status){
 async function fetchAllCompanies(){
   if(!sb) return [];
   const { data, error } = await sb.from('companies')
-    .select('slug, name, handle, email, published, suspended_at, created_at, talent_access_until')
+    .select('slug, name, handle, email, kind, published, suspended_at, created_at, talent_access_until')
     .order('name');
   if(error){ console.error('fetchAllCompanies', error); return []; }
   return data || [];
