@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Global Directory List | Circuits.com</title>
+<meta name="description" content="The Global Directory List: every company listed on Circuits.com under every Circuits-Keyword, with its logo and Circuits URL.">
+<link rel="canonical" href="https://circuits.com/global">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Circuits.com">
+<meta property="og:title" content="Global Directory List | Circuits.com">
+<meta property="og:description" content="Every company listed on Circuits.com under every Circuits-Keyword, with its logo and Circuits URL.">
+<meta property="og:url" content="https://circuits.com/global">
+<meta property="og:image" content="https://circuits.com/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Global Directory List | Circuits.com">
+<meta name="twitter:description" content="Every company listed on Circuits.com under every Circuits-Keyword, with its logo and Circuits URL.">
+<meta name="twitter:image" content="https://circuits.com/assets/og-card.png">
+<link rel="icon" href="/assets/favicon.png">
+<link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
+<link rel="stylesheet" href="/styles.css?v=d4dee5b3ba">
+<script src="/nav.js?v=89aa4289a6"></script>
+<script async src="/analytics.js?v=70049a2947"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="inner">
+    <div class="brand"><a href="/"><img class="logo-nav" src="/assets/logo-bar.png" alt="Circuits.com"></a><span class="brand-slogan">Free Circuits Directory Marketplace</span></div>
+    <nav class="nav">
+      <a href="/">Home</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+      <a class="nav-auth nav-signin" href="/portal">Sign In</a>
+      <a class="nav-auth nav-dash" href="/portal">Dashboard</a>
+      <a class="cta" href="/join">Get Listed</a>
+    </nav>
+      <!-- The bell ships in the markup and starts hidden; nav.js shows it in
+           <head> when somebody is signed in, and app.js only fills it in. It
+           used to be built and inserted at DOMContentLoaded, after an async
+           currentUser() call, so it landed well after first paint and shoved
+           the whole header sideways on every load (Jacob, 2026-09-03). -->
+      <button type="button" class="inbox-btn" aria-label="Notifications" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span class="inbox-n" hidden></span>
+      </button>
+  </div>
+</header>
+
+<main id="content">
+<!-- The Global Directory List (Jacob, 2026-10-28): every live Directory
+     listing, one row per company and Circuits-Keyword, in the Global Club
+     List's format and revolving the same way. Columns left to right: #, the
+     logo (no heading), Company Name, Keyword, Circuits URL. Club keywords are
+     not in it: they belong to Search Clubs. -->
+<h1 class="sr-only">Global Directory List</h1>
+<div class="subbar">
+  <div class="inner subbar-inner">
+    <form id="dir-form" class="mini-search" autocomplete="off">
+      <input id="dir-search" type="text" placeholder="Search companies or keywords" aria-label="Search the Global Directory List" autocomplete="off">
+      <button type="submit" class="search-go mini" aria-label="Search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+    </form>
+    <div class="subbar-meta">
+      <span class="kw-line"><b>Global Directory List</b></span>
+      <span class="count-line" id="dir-count">Loading the directory&hellip;</span>
+      <button type="button" class="mini-btn rv-btn" id="dir-rv" aria-pressed="false">Pause</button>
+    </div>
+  </div>
+</div>
+<div class="listings">
+  <div class="table-wrap">
+    <table class="listings-table club-table dir-table">
+      <thead><tr><th class="rank">#</th><th class="logo-col"><span class="sr-only">Logo</span></th><th>Company Name</th><th>Keyword</th><th>Circuits URL</th></tr></thead>
+      <tbody id="dir-rows"></tbody>
+    </table>
+  </div>
+  <div class="clubs-empty" id="dir-empty" hidden></div>
+  <p class="club-list-cta">Want your company here? <a href="/join">Get Listed for Free</a> under up to 10 Circuits-Keywords&trade;.</p>
+</div>
+</main>
+
+<footer class="footer">
+  <div class="inner">
+    <div class="flinks">
+      <a href="/terms">Terms</a>
+      <a href="/privacy">Privacy</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span>© 2026 Circuits.com</span>
+      <span class="footer-brand"><img class="footer-mark" src="assets/favicon.png" alt="" width="64" height="64"></span>
+    </div>
+  </div>
+</footer>
+
+<script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
+<script src="store.js?v=1a06bbfd91"></script>
+<script src="app.js?v=847d31607c"></script>
+<script>
+(async function initGlobalDirectory(){
+  const body = document.getElementById('dir-rows'), empty = document.getElementById('dir-empty');
+  const count = document.getElementById('dir-count'), input = document.getElementById('dir-search');
+  let q = (new URLSearchParams(location.search).get('q') || '').trim();
+  input.value = q;
+  let list = [];
+  try{ list = await fetchGlobalDirectory(); }
+  catch(e){ count.textContent = 'Could not load the directory just now.'; empty.hidden = false; empty.textContent = 'The connection to Circuits.com dropped. Reload to try again.'; return; }
+  /* shuffled once per visit, then it revolves */
+  for(let i = list.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
+  const words = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').split(' ').filter(Boolean);
+  const hay = r => ' ' + [r.company, r.keyword].join(' ').toLowerCase().replace(/[^a-z0-9]+/g, ' ') + ' ';
+  function draw(){
+    const ws = words(q);
+    const rows = ws.length ? list.filter(r => { const h = hay(r); return ws.every(w => h.includes(' ' + w)); }) : list;
+    const companies = new Set(rows.map(r => r.company_slug || r.company)).size;
+    count.innerHTML = 'Showing <b>' + rows.length + '</b> ' + (rows.length === 1 ? 'listing' : 'listings') + ' from <b>' + companies + '</b> ' + (companies === 1 ? 'company' : 'companies') + (q ? ' for <b>' + escapeHtml(q) + '</b>' : '');
+    body.innerHTML = rows.map((r, i) => {
+      const h = String(r.company_handle || '').toLowerCase();
+      const logo = isLogoUrl(r.logo) ? `<span class="co-logo"><img src="${escapeHtml(r.logo)}" alt="${escapeHtml(r.company)} logo"></span>`
+        : `<span class="co-logo club-logo-ph">${escapeHtml(String(r.company || 'C').slice(0, 1).toUpperCase())}</span>`;
+      const name = h ? `<a href="/${encodeURIComponent(h)}">${escapeHtml(r.company)}</a>` : escapeHtml(r.company);
+      return `<tr>
+        <td class="rank" data-label="#">${i + 1}</td>
+        <td class="logo-col">${h ? `<a class="co-logo-link" href="/${encodeURIComponent(h)}" aria-label="${escapeHtml(r.company)} profile">${logo}</a>` : logo}</td>
+        <td data-label="Company Name"><b>${name}</b></td>
+        <td data-label="Keyword"><a class="kw-tag kw-mini" href="/results?q=${encodeURIComponent(r.keyword)}${r.company_slug ? '&hl=' + encodeURIComponent(r.company_slug) : ''}">${escapeHtml(r.keyword)}</a></td>
+        <td data-label="Circuits URL">${h ? `<a class="web-link" href="/${encodeURIComponent(h)}">circuits.com/${escapeHtml(h)}</a>` : '<span class="cell-muted">none yet</span>'}</td>
+      </tr>`;
+    }).join('');
+    empty.hidden = !!rows.length;
+    empty.textContent = list.length ? 'Nothing matches that search. Clear it to see the whole Global Directory List.' : 'No live listings yet.';
+  }
+  draw();
+  revolveRows(body, { button: document.getElementById('dir-rv') });
+  document.getElementById('dir-form').addEventListener('submit', e => {
+    e.preventDefault();
+    q = input.value.trim();
+    history.replaceState(null, '', q ? '?q=' + encodeURIComponent(q) : location.pathname);
+    draw();
+  });
+})();
+</script>
+</body>
+</html>

@@ -836,6 +836,16 @@ const INVITE_KEY = 'cx_club_invite';
 function rememberInvite(t){ try{ if(INVITE_OK(t)) localStorage.setItem(INVITE_KEY, t); }catch(e){} }
 function pendingInvite(){ try{ const t = localStorage.getItem(INVITE_KEY) || ''; return INVITE_OK(t) ? t : ''; }catch(e){ return ''; } }
 function forgetInvite(){ try{ localStorage.removeItem(INVITE_KEY); }catch(e){} }
+/* every live Directory keyword with its company, for the Global Directory
+   List at circuits.com/global (Jacob, 2026-10-28). Public columns only, no
+   club keywords. */
+async function fetchGlobalDirectory(){
+  if(!sb) throw new Error('no connection');
+  const { data, error } = await sb.from('applications').select('company, company_slug, company_handle, logo, keyword')
+    .eq('status', 'Approved').eq('paused', false).eq('is_club', false).limit(3000);
+  if(error) throw error;
+  return (data || []).filter(r => r.keyword);
+}
 /* every approved club page, for the Global Club List at circuits.com/clubs
    (Jacob, 2026-10-12: Search Clubs is its own index, like the Directory).
    Staff approve a club under Admin, Manage Clubs before it is listed. Each

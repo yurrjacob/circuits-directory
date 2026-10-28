@@ -2587,3 +2587,11 @@ body.club-mode #tab-listings > :not(#pt-club-kw){display:none}
 
 /* a profile made this week stands out in All Profiles and New Profiles */
 .dash-table tr.row-new td{background:#f6fbe9}
+
+/* the revolving lists (Global Directory List, Global Club List, 2026-10-28):
+   the top row fades up and out, then rejoins at the bottom */
+.listings-table tbody tr.rv-out{opacity:0;transform:translateY(-8px);transition:opacity .25s ease,transform .25s ease}
+.rv-btn{margin-top:2px;padding:4px 12px;font-size:.78rem}
+.dir-table .logo-col{width:56px;padding-right:0}
+.dir-table td.logo-col .co-logo{margin:0}
+@media(prefers-reduced-motion:reduce){.listings-table tbody tr.rv-out{transition:none}}

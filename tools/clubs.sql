@@ -332,3 +332,7 @@ create trigger companies_is_club_trg after update of kind on public.companies
 -- Admin, Club Keywords. That subject is not one the notify function skips, so
 -- the inbox notice is also emailed to every staff address. Directory requests
 -- keep "New listing request:" unchanged. (Full body as applied: see the project.)
+
+-- The Global Directory List (2026-10-28) lives at /global, so the name is
+-- reserved like every other root page.
+insert into public.reserved_handles (name) values ('global') on conflict do nothing;

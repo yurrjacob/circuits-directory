@@ -131,7 +131,7 @@ for (const bad of ['ab', '-lead', 'trail-', '_lead', 'trail_', 'Upper', 'has spa
 const RESERVED_IN_DB = ['about','admin','applications','browse','claim','companies','company','contact',
   'dashboard','data','directory','how-it-works','index','join','login','portal','profile',
   'privacy','register','reset','results','robots','search','server','sitemap','store','styles','talent','jobs','terms','thread','tools','welcome',
-  'resume','resumes','club','clubs','project','projects'];
+  'resume','resumes','club','clubs','project','projects','global'];
 /* build-profiles.js writes one root page per live handle, so those files are
    named after handles on purpose, that company already owns the name. Only
    hand-written pages need reserving.
@@ -212,7 +212,7 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   for (const [, index, , strip] of pops) {
     const links = strip.match(/href="([^"]+)"/g) || [];
     assert.ok(links.length >= minFor[index], `the ${index} Popular line lost some of its suggestions (${links.length})`);
-    for (const l of links) assert.ok(new RegExp(`href="/${pagesFor[index]}\\?q=`).test(l) || (index === 'clubs' && l === 'href="/clubs"'), `the ${index} Popular line links to ${l}, every item must search /${pagesFor[index]}`);
+    for (const l of links) assert.ok(new RegExp(`href="/${pagesFor[index]}\\?q=`).test(l) || (index === 'clubs' && l === 'href="/clubs"') || (index === 'directory' && l === 'href="/global"'), `the ${index} Popular line links to ${l}, every item must search /${pagesFor[index]}`);
     assert.ok(!/All Categories/.test(strip), 'a Popular line still offers All Categories, and there is no category page');
   }
   for (const f of fs.readdirSync(ROOT).filter(x => x.endsWith('.html'))) {
@@ -230,7 +230,14 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
 {
   const cl = fs.readFileSync(path.join(ROOT, 'clubs.html'), 'utf8');
   assert.ok(/<title>Global Club List \| Circuits\.com<\/title>/.test(cl), '/clubs is not titled Global Club List');
-  assert.deepStrictEqual([...cl.matchAll(/<th[^>]*>([^<]+)<\/th>/g)].map(m => m[1]), ['#', 'Club Name', 'University Name', 'Circuits Website Address', 'Club Email Address'], 'the Global Club List columns are not #, Club Name, University Name, Circuits Website Address, Club Email Address');
+  assert.deepStrictEqual([...cl.matchAll(/<th[^>]*>([^<]+)<\/th>/g)].map(m => m[1]), ['#', 'Club Name', 'University Name', 'Circuits URL', 'Club Email Address'], 'the Global Club List columns are not #, Club Name, University Name, Circuits URL, Club Email Address');
+  /* the Global Directory List (Jacob, 2026-10-28): the club list's format for every live Directory keyword, revolving */
+  const gl = fs.readFileSync(path.join(ROOT, 'global.html'), 'utf8');
+  assert.ok(/<title>Global Directory List \| Circuits\.com<\/title>/.test(gl), '/global is not titled Global Directory List');
+  assert.deepStrictEqual([...gl.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map(m => m[1].replace(/<[^>]+>/g, '').replace('Logo', '')), ['#', '', 'Company Name', 'Keyword', 'Circuits URL'], 'the Global Directory List columns are not #, logo, Company Name, Keyword, Circuits URL');
+  assert.ok(/revolveRows\(body, \{ button: document\.getElementById\('dir-rv'\) \}\)/.test(gl) && /revolveRows\(body, \{ button: document\.getElementById\('club-rv'\) \}\)/.test(cl), 'a Global list no longer revolves');
+  assert.ok(/async function fetchGlobalDirectory\(\)[\s\S]*?\.eq\('is_club', false\)/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')) && !/async function fetchGlobalDirectory\(\)\{[^}]*select\('\*'\)/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')), 'the Global Directory List reads club keywords or uses select(*)');
+  assert.ok(/<a href="\/global">Global Directory List<\/a>/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')), 'the Directory Popular line lost its Global Directory List link');
   assert.ok(/id="club-search"/.test(cl) && /get\('q'\)/.test(cl), 'the Global Club List lost its search');
   const st = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
   assert.ok(/\.eq\('kind', 'club'\)\.eq\('club_status', 'Approved'\)/.test(st), 'fetchClubs lists clubs staff have not approved');

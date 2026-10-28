@@ -18,7 +18,7 @@
 <meta name="twitter:image" content="https://circuits.com/assets/og-card.png">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=ea5add9649">
+<link rel="stylesheet" href="/styles.css?v=d4dee5b3ba">
 <script src="/nav.js?v=89aa4289a6"></script>
 <script async src="/analytics.js?v=70049a2947"></script>
 </head>
@@ -63,13 +63,14 @@
     <div class="subbar-meta">
       <span class="kw-line"><b>Global Club List</b></span>
       <span class="count-line" id="club-count">Loading clubs&hellip;</span>
+      <button type="button" class="mini-btn rv-btn" id="club-rv" aria-pressed="false">Pause</button>
     </div>
   </div>
 </div>
 <div class="listings">
   <div class="table-wrap">
     <table class="listings-table club-table">
-      <thead><tr><th class="rank">#</th><th>Club Name</th><th>University Name</th><th>Circuits Website Address</th><th>Club Email Address</th></tr></thead>
+      <thead><tr><th class="rank">#</th><th>Club Name</th><th>University Name</th><th>Circuits URL</th><th>Club Email Address</th></tr></thead>
       <tbody id="clubs"></tbody>
     </table>
   </div>
@@ -92,8 +93,8 @@
 </footer>
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
-<script src="store.js?v=40dff53cd7"></script>
-<script src="app.js?v=595b3e5460"></script>
+<script src="store.js?v=1a06bbfd91"></script>
+<script src="app.js?v=847d31607c"></script>
 <script>
 (async function initClubs(){
   const body = document.getElementById('clubs'), empty = document.getElementById('clubs-empty');
@@ -120,7 +121,7 @@
         <td class="rank" data-label="#">${i + 1}</td>
         <td data-label="Club Name"><div class="co"><a class="co-logo-link" href="/${encodeURIComponent(h)}" aria-label="${escapeHtml(c.name)} page">${logo}</a><a href="/${encodeURIComponent(h)}">${escapeHtml(c.name)}</a></div></td>
         <td class="cell-muted" data-label="University Name">${escapeHtml(c.college_name || '')}</td>
-        <td data-label="Circuits Website Address"><a class="web-link" href="/${encodeURIComponent(h)}">circuits.com/${escapeHtml(h)}</a></td>
+        <td data-label="Circuits URL"><a class="web-link" href="/${encodeURIComponent(h)}">circuits.com/${escapeHtml(h)}</a></td>
         <td class="cell-muted" data-label="Club Email Address">${c.email ? `<a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>` : ''}</td>
       </tr>`;
     }).join('');
@@ -128,6 +129,7 @@
     empty.textContent = list.length ? 'No club matches that search yet. Clear it to see the whole Global Club List.' : 'No clubs on the Global Club List yet. The first approved club appears here.';
   }
   draw();
+  revolveRows(body, { button: document.getElementById('club-rv') });
   document.getElementById('club-form').addEventListener('submit', e => {
     e.preventDefault();
     q = input.value.trim();

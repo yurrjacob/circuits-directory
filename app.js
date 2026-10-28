@@ -51,6 +51,35 @@ function initHome(){
   refresh();
 }
 
+/* ---- a revolving list (Jacob, 2026-10-28: "a fast paced revolving list",
+   the Global Directory List and the Global Club List). Every few seconds the
+   top row slides to the bottom and the numbers follow. It stops while the
+   pointer or keyboard focus is in the table, when the Pause button is
+   pressed, and for anyone who asked their system for less motion. ---- */
+function revolveRows(tbody, opts){
+  const o = opts || {};
+  if(!tbody) return;
+  const every = o.every || 2600;
+  const btn = o.button || null;
+  const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let paused = still, hover = false, timer = null;
+  const renumber = () => [...tbody.rows].forEach((tr, i) => { const c = tr.querySelector('td.rank'); if(c) c.textContent = i + 1; });
+  const step = () => {
+    if(paused || hover || document.hidden || tbody.rows.length < 2) return;
+    const first = tbody.rows[0];
+    first.classList.add('rv-out');
+    setTimeout(() => { first.classList.remove('rv-out'); tbody.appendChild(first); renumber(); }, 260);
+  };
+  const sync = () => { if(btn){ btn.textContent = paused ? 'Play' : 'Pause'; btn.setAttribute('aria-pressed', paused ? 'true' : 'false'); } };
+  tbody.addEventListener('mouseenter', () => { hover = true; });
+  tbody.addEventListener('mouseleave', () => { hover = false; });
+  tbody.addEventListener('focusin', () => { hover = true; });
+  tbody.addEventListener('focusout', () => { hover = false; });
+  if(btn){ btn.hidden = still; btn.addEventListener('click', () => { paused = !paused; sync(); }); }
+  sync();
+  clearInterval(tbody.__rv); timer = setInterval(step, every); tbody.__rv = timer;
+}
+
 /* ---- Seeking Employment card (shared by /talent, the Hiring tab and the
    person's own preview). Public bits open; the private block is a
    blur until a signed-in company opens it (free since 2026-09-13). ---- */
@@ -448,7 +477,7 @@ async function initInbox(){
     if(!storedSession()) return;
     const add = (src, integrity) => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; if(integrity) t.integrity = integrity; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
     /* the same vendored file, and the same hash, every page carries (audit item 3, 2026-09-21) */
-    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=40dff53cd7'); }catch(e){ return; }
+    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=1a06bbfd91'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;
