@@ -20,3 +20,30 @@ begin
 end $fn$;
 create trigger on_email_confirmed_trg after update of email_confirmed_at on auth.users
   for each row execute function notify_profile_confirmed();
+
+-- 2026-10-28, All Profiles (Jacob: "When new individual profile URL has been
+-- created it should populate into the All Profiles tab ... Currently we do
+-- not know when a Profile URL is created"). All Profiles listed company pages
+-- only, so 23 people with a profile and no page never appeared. Staff only.
+create or replace function public.admin_profiles()
+returns table(handle text, display_name text, email text, created_at timestamptz, confirmed boolean,
+              company_slug text, company_name text, company_kind text, suspended_at timestamptz, source text)
+language plpgsql stable security definer set search_path to 'public', 'auth' as $fn$
+begin
+  if not is_staff() then raise exception 'staff only' using errcode = 'insufficient_privilege'; end if;
+  return query
+    select p.handle, p.display_name, coalesce(p.email, u.email::text), p.created_at, (u.email_confirmed_at is not null),
+           c.slug, c.name, c.kind, coalesce(c.suspended_at, p.suspended_at), 'profile'::text
+      from profiles p
+      left join auth.users u on u.id = p.user_id
+      left join lateral (select c2.slug, c2.name, c2.kind, c2.suspended_at from company_users cu join companies c2 on c2.slug = cu.company_slug
+                          where cu.user_id = p.user_id and c2.kind <> 'club' order by cu.created_at limit 1) c on true
+    union all
+    select c.handle, c.name, c.email, c.created_at, null::boolean, c.slug, c.name, c.kind, c.suspended_at, 'page'::text
+      from companies c
+     where c.kind <> 'club'
+       and not exists (select 1 from company_users cu join profiles p on p.user_id = cu.user_id where cu.company_slug = c.slug)
+    order by 4 desc;
+end $fn$;
+revoke execute on function public.admin_profiles() from public, anon;
+grant execute on function public.admin_profiles() to authenticated;

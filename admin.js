@@ -58,7 +58,7 @@ const panels = {
 };
 
 
-/* Profiles Admin and Club Admin (Jacob, 2026-10-19) split the rows: a
+/* Directory Admin (named Profiles Admin until 2026-10-28) and Club Admin split the rows: a
    listing whose page is a club shows only under Club Admin. */
 let clubSlugs = new Set();
 const isClubApp = a => !!a && clubSlugs.has(a.company_slug);
@@ -460,27 +460,57 @@ async function rejectApp(id){
    from the directory and from keyword results, cannot be edited by its owner,
    and keeps every row it had, so this is fully reversible. */
 let allCompanies = [];
+/* All Profiles (Jacob, 2026-10-28): every profile URL on the site, newest
+   first, with when it was made and whether its email is confirmed. It used to
+   list company pages only, so a person who made a profile and no page never
+   showed up anywhere. Club pages live under Club Admin. */
+let allProfiles = [];
+const NEW_DAYS = 7;
+const isNew = d => d && (Date.now() - new Date(d).getTime()) < NEW_DAYS * 864e5;
+const dateCell = d => d ? new Date(d).toLocaleDateString() + (isNew(d) ? ' <span class="badge pending">New</span>' : '') : '';
+const confirmedCell = r => r.source === 'page' ? '<span class="cell-muted">no sign-in</span>' : r.confirmed ? 'Yes' : '<b>Not yet</b>';
 async function reloadCompanies(){
-  /* club pages live under Club Admin, Club Pages (2026-10-19) */
-  allCompanies = (await fetchAllCompanies()).filter(c => c.kind !== 'club');
-  const susp = allCompanies.filter(c => c.suspended_at).length;
-  $('companies-hint').textContent = susp
-    ? susp + (susp === 1 ? ' profile suspended' : ' profiles suspended')
-    : 'Every Account On The Site. Suspend Hides Without Deleting. Delete Removes The Profile And Everything It Has';
-  $('companies-body').innerHTML = allCompanies.map(c => `
-    <tr class="${c.suspended_at ? 'row-waiting' : ''}">
-      <td><a href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener">${esc(c.name)}</a><br><span class="cell-muted">${c.handle ? 'circuits.com/' + esc(c.handle) : 'no username yet'}</span></td>
-      <td class="cell-muted">${esc(c.email || 'none')}</td>
-      <td>${c.suspended_at
-            ? '<b>Suspended</b><br><span class="cell-muted">' + new Date(c.suspended_at).toLocaleDateString() + '</span>'
-            : 'Active'}</td>
-      <td class="row-actions">
-        ${c.suspended_at
-          ? `<button class="mini-btn green" onclick="setSuspended('${esc(c.slug)}', false)">Reinstate</button>`
-          : `<button class="mini-btn" onclick="setSuspended('${esc(c.slug)}', true)">Suspend</button>`}
-        <button class="mini-btn danger" onclick="deleteCompanyUI('${esc(c.slug)}')">Delete</button>
-      </td></tr>`).join('');
-  $('companies-empty').style.display = allCompanies.length ? 'none' : 'block';
+  allProfiles = await fetchAdminProfiles();
+  allCompanies = allProfiles.filter(r => r.company_slug).map(r => ({ slug: r.company_slug, name: r.company_name || r.display_name, handle: r.handle, suspended_at: r.suspended_at }));
+  const susp = allProfiles.filter(r => r.suspended_at).length, fresh = allProfiles.filter(r => isNew(r.created_at)).length;
+  $('companies-hint').textContent = allProfiles.length + ' profiles' + (fresh ? ', ' + fresh + ' new this week' : '') + (susp ? ', ' + susp + ' suspended' : '')
+    + '. Suspend hides without deleting. Delete removes the page and everything it has';
+  $('companies-body').innerHTML = allProfiles.map(r => {
+    const url = r.handle ? `<a href="/${esc(r.handle)}" target="_blank" rel="noopener">circuits.com/${esc(r.handle)}</a>` : '<span class="cell-muted">no username yet</span>';
+    const act = r.company_slug
+      ? (r.suspended_at ? `<button class="mini-btn green" onclick="setSuspended('${esc(r.company_slug)}', false)">Reinstate</button>`
+                        : `<button class="mini-btn" onclick="setSuspended('${esc(r.company_slug)}', true)">Suspend</button>`)
+        + `<button class="mini-btn danger" onclick="deleteCompanyUI('${esc(r.company_slug)}')">Delete</button>`
+      : (r.handle ? (r.suspended_at ? `<button class="mini-btn green" onclick="setProfileSuspendedUI('${esc(r.handle)}', false)">Reinstate</button>`
+                                    : `<button class="mini-btn" onclick="setProfileSuspendedUI('${esc(r.handle)}', true)">Suspend</button>`) : '');
+    return `<tr class="${r.suspended_at ? 'row-waiting' : isNew(r.created_at) ? 'row-new' : ''}">
+      <td><b>${esc(r.display_name || r.company_name || r.handle || 'none')}</b><br>${url}</td>
+      <td class="cell-muted">${esc(r.email || 'none')}</td>
+      <td class="cell-muted nowrap">${dateCell(r.created_at)}</td>
+      <td>${confirmedCell(r)}</td>
+      <td>${r.company_slug ? esc(r.company_name || r.company_slug) : '<span class="cell-muted">profile only</span>'}</td>
+      <td>${r.suspended_at ? '<b>Suspended</b><br><span class="cell-muted">' + new Date(r.suspended_at).toLocaleDateString() + '</span>' : 'Active'}</td>
+      <td class="row-actions">${act}</td></tr>`; }).join('');
+  $('companies-empty').style.display = allProfiles.length ? 'none' : 'block';
+  /* the same rows, the last 30 days, above Website Applications */
+  const recent = allProfiles.filter(r => r.source === 'profile' && r.created_at && (Date.now() - new Date(r.created_at).getTime()) < 30 * 864e5);
+  if($('newprof-body')){
+    $('newprof-body').innerHTML = recent.map(r => `<tr class="${isNew(r.created_at) ? 'row-new' : ''}">
+      <td>${r.handle ? `<a href="/${esc(r.handle)}" target="_blank" rel="noopener">circuits.com/${esc(r.handle)}</a>` : '<span class="cell-muted">none</span>'}</td>
+      <td>${esc(r.display_name || '')}</td><td class="cell-muted">${esc(r.email || '')}</td>
+      <td class="cell-muted nowrap">${dateCell(r.created_at)}</td><td>${confirmedCell(r)}</td></tr>`).join('');
+    $('newprof-empty').style.display = recent.length ? 'none' : 'block';
+    $('newprof-hint').textContent = recent.length + ' profile URL' + (recent.length === 1 ? '' : 's') + ' created in the last 30 days, newest first';
+  }
+}
+async function setProfileSuspendedUI(handle, suspend){
+  const reason = await askText((suspend ? 'Suspend circuits.com/' : 'Reinstate circuits.com/') + handle + '.\n\nWhy? (goes in the permanent audit log)');
+  if(reason === null) return;
+  if(!reason.trim()){ tell('Please give a reason. It goes in the permanent audit log.'); return; }
+  const err = await suspendProfile(handle, suspend, reason.trim());
+  if(err){ tell('Could not do that: ' + err); return; }
+  if(typeof toast === 'function') toast('circuits.com/' + handle + (suspend ? ' is suspended.' : ' is reinstated.'), true);
+  await reloadCompanies();
 }
 /* ---- Manage Clubs (Jacob, 2026-10-12): approve and manage club pages ----
    New clubs arrive Pending (the database sets it) and sort first. Approve
@@ -839,7 +869,7 @@ window.initAdmin = async function(){
   if(started) return;
   if(!(await checkStaff())) return;        // belt and braces; the database is the real gate
   started = true;
-  await reloadClubs();   // the club set first, so Profiles Admin never shows a club row
+  await reloadClubs();   // the club set first, so Directory Admin never shows a club row
   reloadCompanies(); reloadAudit(); reloadSearches(); reloadRecruits(); reloadJobs(); reloadUpgrades();
   const saved = await loadPrefs('admin');
   if(saved) for(const k in panels){
@@ -856,6 +886,6 @@ window.initAdmin = async function(){
    tools/check.js fails if a new onclick appears without being listed here. */
 Object.assign(window, {
   editListing, editBadge, removeListing, togglePause, lockListing,
-  approveApp, rejectApp, setSuspended, approveJob, closeJob, approveUpgrade, denyUpgrade, sendNotificationUI, notifyAudienceUI, setRecruitStatus, deleteCompanyUI, setClubStatusUI, toggleProjectUI, deleteProjectUI
+  approveApp, rejectApp, setSuspended, approveJob, closeJob, approveUpgrade, denyUpgrade, sendNotificationUI, notifyAudienceUI, setRecruitStatus, deleteCompanyUI, setClubStatusUI, toggleProjectUI, deleteProjectUI, setProfileSuspendedUI
 });
 })();

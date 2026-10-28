@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=b726373254">
+<link rel="stylesheet" href="/styles.css?v=ea5add9649">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -530,7 +530,7 @@
        of sub-tabs. Club Admin holds everything about student club pages, their
        keywords and the extras on them, so it can all be tested on its own. -->
   <div class="adm-mode" role="tablist" aria-label="Admin area">
-    <button type="button" class="adm-mode-btn on" data-mode="profiles" role="tab" aria-selected="true">Profiles Admin</button>
+    <button type="button" class="adm-mode-btn on" data-mode="profiles" role="tab" aria-selected="true">Directory Admin</button>
     <button type="button" class="adm-mode-btn" data-mode="clubs" role="tab" aria-selected="false">Club Admin</button>
   </div>
   <div class="adm-tabs" role="tablist">
@@ -760,6 +760,21 @@
 
   <!-- Website Applications: the Get Listed sheet (applications.html) framed in,
        loaded the first time the tab opens. Same sign-in, same database. -->
+  <!-- New Profiles (Jacob, 2026-10-28: "we do not know when a Profile URL is
+       created"): every profile address made in the last 30 days, newest
+       first, above the Get Listed sheet -->
+  <div class="panel" data-adm="applications">
+    <div class="panel-head"><h2>New Profiles</h2><span class="hint" id="newprof-hint">Every Profile URL Created In The Last 30 Days, Newest First</span></div>
+    <div class="panel-body">
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Profile URL</th><th>Name</th><th>Email</th><th>Created</th><th>Email Confirmed</th></tr></thead>
+          <tbody id="newprof-body"></tbody>
+        </table>
+      </div>
+      <div id="newprof-empty" class="empty-line" style="display:none">No New Profiles In The Last 30 Days.</div>
+    </div>
+  </div>
   <div class="panel" data-adm="applications">
     <div class="panel-head"><h2>Website Applications</h2><span class="hint">Every Get Listed Submission. Click A Cell To Edit It</span></div>
     <iframe id="apps-frame" class="adm-frame" title="Website Applications"></iframe>
@@ -863,7 +878,7 @@
     <div class="panel-body">
       <div class="table-scroll">
         <table class="dash-table">
-          <thead><tr><th>Company</th><th>Email</th><th>State</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Profile</th><th>Email</th><th>Created</th><th>Email Confirmed</th><th>Page</th><th>State</th><th>Actions</th></tr></thead>
           <tbody id="companies-body"></tbody>
         </table>
       </div>
@@ -929,10 +944,10 @@
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
-<script src="/store.js?v=d94b565423"></script>
-<script src="/app.js?v=66cab936c4"></script>
+<script src="/store.js?v=40dff53cd7"></script>
+<script src="/app.js?v=595b3e5460"></script>
 <script src="/portal.js?v=2d0805c1ab"></script>
-<script src="/admin.js?v=7a9d2539ac"></script>
+<script src="/admin.js?v=cbbf8feabb"></script>
 <script>
 /* Save profile, Save club and Save members all run the one save. Save club
    was never wired, so pressing it did nothing (Jacob, 2026-10-12: "Save

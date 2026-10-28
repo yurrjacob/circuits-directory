@@ -2584,3 +2584,6 @@ body.club-mode #tab-listings > :not(#pt-club-kw){display:none}
 .pt-club-kw .pt-getlisted{margin-bottom:16px}
 .pt-ckw-box{margin-top:16px}
 .pt-ckw-empty{margin:4px 0 0}
+
+/* a profile made this week stands out in All Profiles and New Profiles */
+.dash-table tr.row-new td{background:#f6fbe9}

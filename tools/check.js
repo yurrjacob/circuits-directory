@@ -1891,12 +1891,15 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     'the admin sub-tabs are out of order or renamed: ' + tabs.join(', '));
   /* Profiles Admin / Club Admin (Jacob, 2026-10-19): a switch, and the five
      club sub-tabs marked adm-club so they show only under Club Admin */
-  assert.ok(/data-mode="profiles"[^>]*>Profiles Admin<\/button>/.test(ph) && /data-mode="clubs"[^>]*>Club Admin<\/button>/.test(ph), 'the Profiles Admin / Club Admin switch is gone');
+  assert.ok(/data-mode="profiles"[^>]*>Directory Admin<\/button>/.test(ph) && /data-mode="clubs"[^>]*>Club Admin<\/button>/.test(ph), 'the Directory Admin / Club Admin switch is gone');
   assert.deepStrictEqual([...ph.matchAll(/class="adm-tab adm-club" data-adm="([a-z]+)"/g)].map(m => m[1]), ['clubs', 'clubkw', 'clubup', 'clubppl', 'clubproj'], 'Club Admin is not Club Pages, Club Keywords, Badges & Upgrades, Members & Officers, Projects');
   { const aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
     assert.ok(/const approved = \(\) => allApps\.filter\(a=>a\.status==='Approved' && !isClubApp\(a\)\);/.test(aj) && /const clubApproved = /.test(aj), 'club listings are not split from Profiles Admin');
     assert.ok(/lb\.innerHTML = live\.map\(extrasRow\)\.join\(''\);/.test(aj) && /const extrasRow = l => [\s\S]*?\$\{actionsCell\(l\)\}/.test(aj), 'Club Keywords lost the Edit, Badge, Lock, Pause and Remove actions');
-    assert.ok(/await reloadClubs\(\);\s*\/\/ the club set first/.test(aj), 'Profiles Admin can render before the club set is known'); }
+    assert.ok(/await reloadClubs\(\);\s*\/\/ the club set first/.test(aj), 'Directory Admin can render before the club set is known');
+    /* All Profiles lists every profile URL with its created date (Jacob, 2026-10-28) */
+    assert.ok(/allProfiles = await fetchAdminProfiles\(\);/.test(aj) && /\$\('newprof-body'\)\.innerHTML = /.test(aj), 'All Profiles or New Profiles no longer lists every profile URL'); }
+  assert.ok(/<th>Profile<\/th><th>Email<\/th><th>Created<\/th><th>Email Confirmed<\/th>/.test(ph) && /<h2>New Profiles<\/h2>/.test(ph), 'All Profiles lost its Created column, or New Profiles is gone from Website Applications');
   assert.ok(/#tab-admin:not\(\.adm-clubs\) \.adm-tab\.adm-club,#tab-admin\.adm-clubs \.adm-tab:not\(\.adm-club\)\{display:none\}/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the admin switch no longer hides the other side\'s sub-tabs');
   for (const h of ['Keywords With Banners', 'Keywords With Badges']) {
     const i = ph.indexOf('<!-- ' + h + ' -->');

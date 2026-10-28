@@ -1387,6 +1387,14 @@ async function setClubStatus(slug, status){
   if(!data || !data.length || data[0].club_status !== status) return 'That change was refused.';
   return '';
 }
+/* staff: every profile URL with when it was made and whether its email is
+   confirmed, plus company pages no profile owns (Jacob, 2026-10-28) */
+async function fetchAdminProfiles(){
+  if(!sb) return [];
+  const { data, error } = await sb.rpc('admin_profiles');
+  if(error){ console.error('fetchAdminProfiles', error); return []; }
+  return data || [];
+}
 async function fetchAllCompanies(){
   if(!sb) return [];
   const { data, error } = await sb.from('companies')
