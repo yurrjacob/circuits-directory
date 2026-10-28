@@ -7,6 +7,46 @@
 (function(){
 'use strict';
 const $ = id => document.getElementById(id);
+
+/* In-page dialogs (2026-10-28). The admin used the browser's confirm() and
+   prompt(). Once Chrome's "prevent this page from creating additional
+   dialogs" box is ticked (it is offered after a few dialogs in a row), every
+   later confirm() returns false and every prompt() returns null on the spot,
+   so Deny, Suspend and Delete did nothing at all: no question, no request, no
+   error (Jacob, 2026-10-28: "Deny and Suspend and Delete buttons not
+   working"). These draw in the page, so nothing can switch them off.
+   askConfirm resolves true or false, askText the typed text or null, and tell
+   shows a message without waiting. */
+function adminDialog(message, opts){
+  const o = opts || {};
+  return new Promise(resolve => { try{
+    const wrap = document.createElement('div');
+    wrap.className = 'pf-modal adm-dialog';
+    wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-modal', 'true');
+    wrap.innerHTML = `<div class="pf-modal-box adm-dialog-box">
+        <p class="adm-dialog-msg"></p>
+        ${o.input ? '<input type="text" class="adm-dialog-in" autocomplete="off">' : ''}
+        <div class="adm-dialog-acts">
+          ${o.alertOnly ? '' : '<button type="button" class="btn btn-outline" data-v="no">Cancel</button>'}
+          <button type="button" class="btn ${o.danger ? 'btn-danger' : 'btn-primary'}" data-v="yes"></button>
+        </div></div>`;
+    wrap.querySelector('.adm-dialog-msg').textContent = message;
+    wrap.querySelector('[data-v="yes"]').textContent = o.okText || (o.alertOnly ? 'OK' : o.danger ? 'Yes, do it' : 'OK');
+    const inp = wrap.querySelector('.adm-dialog-in');
+    if(inp){ inp.value = o.value == null ? '' : String(o.value); if(o.placeholder) inp.placeholder = o.placeholder; }
+    const done = v => { document.removeEventListener('keydown', onKey, true); wrap.remove(); resolve(v); };
+    const yes = () => done(o.input ? (inp.value) : true);
+    const no = () => done(o.input ? null : false);
+    const onKey = e => { if(e.key === 'Escape'){ e.preventDefault(); no(); } else if(e.key === 'Enter' && (o.input || document.activeElement === wrap.querySelector('[data-v="yes"]'))){ e.preventDefault(); yes(); } };
+    wrap.addEventListener('click', e => { const b = e.target.closest('[data-v]'); if(b) (b.dataset.v === 'yes' ? yes : no)(); else if(e.target === wrap) no(); });
+    document.addEventListener('keydown', onKey, true);
+    document.body.appendChild(wrap);
+    (inp || wrap.querySelector('[data-v="yes"]')).focus();
+  }catch(e){ resolve(o.input ? null : false); } });   // no page to draw on: cancel, never act
+}
+const askConfirm = (message, opts) => adminDialog(message, Object.assign({ danger: /delete|deny|remove|suspend|reject/i.test(message) }, opts));
+const askText = (message, value) => adminDialog(message, { input: true, value });
+const tell = message => { adminDialog(String(message), { alertOnly: true }); };
 const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let allApps = [];
 let editId = null;
@@ -73,14 +113,14 @@ function actionsCell(l){
    keyword (a unique index), so a taken spot comes back as an error here. */
 async function lockListing(id){
   const l = allApps.find(a=>a.id===id); if(!l) return;
-  const raw = prompt('Lock ' + l.company + ' to which spot on \u201c' + (l.keyword||'') + '\u201d?\n\nEnter a number (1 = top of the list). Leave it blank to unlock.',
+  const raw = await askText('Lock ' + l.company + ' to which spot on \u201c' + (l.keyword||'') + '\u201d?\n\nEnter a number (1 = top of the list). Leave it blank to unlock.',
     l.locked_position ? String(l.locked_position) : '');
   if(raw === null) return;
   const n = raw.trim() === '' ? null : parseInt(raw, 10);
-  if(raw.trim() !== '' && !(n >= 1 && n <= 99)){ alert('Please enter a number from 1 to 99, or leave it blank to unlock.'); return; }
+  if(raw.trim() !== '' && !(n >= 1 && n <= 99)){ tell('Please enter a number from 1 to 99, or leave it blank to unlock.'); return; }
   const err = await updateApplication(id, { locked_position: n });
   if(err){
-    alert(/duplicate|unique|23505/i.test((err.message||'') + (err.code||''))
+    tell(/duplicate|unique|23505/i.test((err.message||'') + (err.code||''))
       ? 'Spot #' + n + ' on \u201c' + (l.keyword||'') + '\u201d is already locked by another company. Unlock theirs first, or pick another spot.'
       : 'Could not save that: ' + (err.message || 'unknown error'));
     return;
@@ -99,7 +139,7 @@ async function editBadge(id){
   const l = allApps.find(a => a.id === id);
   if(!l) return;
   const cur = l.badge && l.badge.text ? l.badge.text : '';
-  const answer = prompt(
+  const answer = await askText(
     'Badge for ' + l.company + (l.keyword ? ' / ' + l.keyword : '') + '\n\n'
     + 'Type a label, or leave it blank to remove the badge.\n\n'
     + 'A Trust Badge is a paid label for this one keyword. Anything claiming a\n'
@@ -111,14 +151,14 @@ async function editBadge(id){
   const text = answer.trim();
   let badge = null;
   if(text){
-    const color = prompt('Badge color (hex)', (l.badge && l.badge.color) || '#c9a227');
+    const color = await askText('Badge color (hex)', (l.badge && l.badge.color) || '#c9a227');
     if(color === null) return;
     badge = { text: text.slice(0, 18), color: /^#[0-9a-f]{6}$/i.test(color.trim()) ? color.trim() : '#c9a227' };
   }
   const err = await updateApplication(id, { badge });
   if(err){
     // the database refuses misleading badges even from staff-facing code paths
-    alert('Could not set that badge:\n\n' + (err.message || err));
+    tell('Could not set that badge:\n\n' + (err.message || err));
     return;
   }
   await reload();
@@ -292,14 +332,14 @@ async function reloadClubProjects(){
 async function toggleProjectUI(id){
   const p = allProjects.find(x => String(x.id) === id); if(!p) return;
   const err = await setProjectPublished(p.id, p.published === false);
-  if(err){ alert('Could not do that: ' + err); return; }
+  if(err){ tell('Could not do that: ' + err); return; }
   await reloadClubProjects();
 }
 async function deleteProjectUI(id){
   const p = allProjects.find(x => String(x.id) === id); if(!p) return;
-  if(!confirm('Delete "' + p.title + '" from ' + clubName(p.company_slug) + ' for good? It comes off the club page and off every team member\'s profile.')) return;
+  if(!await askConfirm('Delete "' + p.title + '" from ' + clubName(p.company_slug) + ' for good? It comes off the club page and off every team member\'s profile.')) return;
   const err = await deleteProject(p.id);
-  if(err){ alert('Could not delete: ' + err); return; }
+  if(err){ tell('Could not delete: ' + err); return; }
   await reloadClubProjects();
 }
 function renderPanel(panel){ ({listings:renderListings,banners:renderBanners,badges:renderBadges,pending:renderPending}[panel])(); }
@@ -357,17 +397,17 @@ $('e-save').addEventListener('click', async ()=>{
     banner: $('e-banner').checked,
     badge: badgeText ? { text: badgeText, color: $('e-color').value } : null
   };
-  if(!patch.keyword){ alert('The listing needs a keyword. That is what buyers search for.'); return; }
-  if(patch.fee && !/\d/.test(patch.fee)){ alert('The fee needs an amount, e.g. $49/mo.'); return; }
+  if(!patch.keyword){ tell('The listing needs a keyword. That is what buyers search for.'); return; }
+  if(patch.fee && !/\d/.test(patch.fee)){ tell('The fee needs an amount, e.g. $49/mo.'); return; }
   if(patch.banner && patch.status==='Approved'
      && bannerConflict({ id: editId, banner: true, keyword: patch.keyword })){
-    alert('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword. Remove the existing banner first.');
+    tell('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword. Remove the existing banner first.');
     return;
   }
   $('e-save').disabled = true;
   const err = await updateApplication(editId, patch);
   $('e-save').disabled = false;
-  if(err){ alert(bannerError(err)); return; }
+  if(err){ tell(bannerError(err)); return; }
   closeEdit(); await reload();
 });
 
@@ -377,8 +417,8 @@ function bannerError(err){
   return 'Could not save. Make sure you are signed in as staff.';
 }
 
-async function removeListing(id){ if(!confirm('Remove this keyword listing?')) return; const err = await deleteApplication(id); if(err){ alert('Could not remove it: ' + (err.message || err)); return; } await reload(); }
-async function togglePause(id){ const l = allApps.find(a=>a.id===id); if(!l) return; const err = await setPaused(id, !l.paused); if(err){ alert('Could not change that: ' + (err.message || err)); return; } await reload(); }
+async function removeListing(id){ if(!await askConfirm('Remove this keyword listing?')) return; const err = await deleteApplication(id); if(err){ tell('Could not remove it: ' + (err.message || err)); return; } await reload(); }
+async function togglePause(id){ const l = allApps.find(a=>a.id===id); if(!l) return; const err = await setPaused(id, !l.paused); if(err){ tell('Could not change that: ' + (err.message || err)); return; } await reload(); }
 /* one decision at a time: a double click must not send two emails (audit, 2026-09-15) */
 let deciding = false;
 async function approveApp(id){
@@ -388,10 +428,10 @@ async function approveApp(id){
 async function approveAppNow(id){
   const app = allApps.find(a=>a.id===id);
   if(app && bannerConflict(app)){
-    alert('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword. Remove the existing banner first.');
+    tell('That keyword already has a live Exclusive Sponsor banner. Only one banner is allowed per keyword. Remove the existing banner first.');
     return;
   }
-  const err = await updateAppStatus(id,'Approved'); if(err){ alert(bannerError(err)); return; }
+  const err = await updateAppStatus(id,'Approved'); if(err){ tell(bannerError(err)); return; }
   /* Tell them. Until now a supplier applied and then refreshed the portal
      hoping, the notifier only knew how to send quote requests. */
   notifyDecision(id, '');
@@ -401,7 +441,7 @@ async function rejectApp(id){
   /* A denial with no reason reads as a shrug, and the supplier has no idea
      whether to fix something and come back. Optional, but asked for every time
      so it is the default rather than an afterthought. */
-  const reason = prompt(
+  const reason = await askText(
     'Why is this being denied?\n\n'
     + 'This is sent to the supplier. Leave it blank to send the plain notice with no reason.',
     '');
@@ -409,7 +449,7 @@ async function rejectApp(id){
   if(deciding) return; deciding = true;
   try{
     const err = await updateAppStatus(id,'Denied');
-    if(err){ alert('Could not deny it: ' + (err.message || err)); return; }   // no email for a change that did not happen
+    if(err){ tell('Could not deny it: ' + (err.message || err)); return; }   // no email for a change that did not happen
     notifyDecision(id, reason.trim());
     await reload();
   } finally { deciding = false; }
@@ -484,9 +524,10 @@ async function reloadClubs(){
 async function setClubStatusUI(slug, status){
   const c = allClubs.find(x => x.slug === slug);
   const name = c ? c.name : 'this club';
-  if(status === 'Denied' && !confirm('Deny ' + name + '? It stays off the Global Club List and its owner gets a message saying so. The page itself stays as it is.')) return;
+  if(status === 'Denied' && !await askConfirm('Deny ' + name + '? It stays off the Global Club List and its owner gets a message saying so. The page itself stays as it is.')) return;
   const err = await setClubStatus(slug, status);
-  if(err){ alert('Could not do that: ' + err); return; }
+  if(err){ tell('Could not do that: ' + err); return; }
+  if(typeof toast === 'function') toast(name + (status === 'Approved' ? ' is approved and on the Global Club List.' : status === 'Denied' ? ' was denied.' : ' is back under review.'), true);
   await reloadClubs();
 }
 
@@ -523,42 +564,42 @@ function upgradeRow(r){
 async function approveUpgrade(id){
   const r = openUpgrades.find(u => u.id === id); if(!r) return;
   const l = allApps.find(a => a.id === r.application_id);
-  if(!l){ alert('That listing is gone.'); return; }
+  if(!l){ tell('That listing is gone.'); return; }
   let fields;
   if(r.kind === 'badge'){
     fields = { badge: { text: (r.badge_text || '').slice(0, 18), color: hexColor(r.badge_color) } };
-    if(!fields.badge.text){ alert('This request has no badge label. Deny it and ask the company to request again.'); return; }
+    if(!fields.badge.text){ tell('This request has no badge label. Deny it and ask the company to request again.'); return; }
   }else if(r.kind === 'banner'){
-    if(bannerConflict({ ...l, banner: true })){ alert('Blocked: "' + (l.keyword || '') + '" already has a live Exclusive Sponsor banner. Remove that one first.'); return; }
+    if(bannerConflict({ ...l, banner: true })){ tell('Blocked: "' + (l.keyword || '') + '" already has a live Exclusive Sponsor banner. Remove that one first.'); return; }
     fields = { banner: true };
   }else{
-    const raw = prompt('Lock ' + l.company + ' to which spot on “' + (l.keyword || '') + '”? (1 = top)', '1');
+    const raw = await askText('Lock ' + l.company + ' to which spot on “' + (l.keyword || '') + '”? (1 = top)', '1');
     if(raw === null) return;
     const n = parseInt(raw, 10);
-    if(!(n >= 1 && n <= 99)){ alert('Please enter a number from 1 to 99.'); return; }
+    if(!(n >= 1 && n <= 99)){ tell('Please enter a number from 1 to 99.'); return; }
     fields = { locked_position: n };
   }
-  if(!confirm('Approve this ' + UPGRADE_NAMES[r.kind] + ' for ' + l.company + '? Only do this once payment is taken. It goes live now.')) return;
+  if(!await askConfirm('Approve this ' + UPGRADE_NAMES[r.kind] + ' for ' + l.company + '? Only do this once payment is taken. It goes live now.')) return;
   if(deciding) return; deciding = true;
   try{ await approveUpgradeNow(id, r, l, fields); } finally { deciding = false; }
 }
 async function approveUpgradeNow(id, r, l, fields){
   const err = await updateApplication(l.id, fields);
   if(err){
-    alert(/duplicate|unique|23505/i.test((err.message || '') + (err.code || ''))
+    tell(/duplicate|unique|23505/i.test((err.message || '') + (err.code || ''))
       ? 'That spot on “' + (l.keyword || '') + '” is already locked by another company.'
       : 'Could not apply that: ' + (err.message || err));
     return;
   }
   const derr = await handleUpgradeRequest(id, 'Approved');
-  if(derr) alert('Applied, but the request could not be closed: ' + derr);
+  if(derr) tell('Applied, but the request could not be closed: ' + derr);
   await reload(); await reloadUpgrades();
 }
 async function denyUpgrade(id){
   const r = openUpgrades.find(u => u.id === id); if(!r) return;
-  if(!confirm('Deny this ' + UPGRADE_NAMES[r.kind] + ' request? The company is told it was not approved.')) return;
+  if(!await askConfirm('Deny this ' + UPGRADE_NAMES[r.kind] + ' request? The company is told it was not approved.')) return;
   const err = await handleUpgradeRequest(id, 'Denied');
-  if(err){ alert('Could not do that: ' + err); return; }
+  if(err){ tell('Could not do that: ' + err); return; }
   await reloadUpgrades();
 }
 
@@ -589,7 +630,7 @@ async function sendNotificationUI(){
   const to = aud === 'users' ? ntUserList().join(', ') : aud === 'keyword' ? 'keyword:' + v('nt-kw') : aud;
   const label = { users: 'those users', keyword: 'everyone listed under "' + v('nt-kw') + '"', companies: 'every account', individuals: 'every individual account', everyone: 'every user on the site' }[aud];
   if(!subject || !body || to === 'keyword:' || !to){ msg.textContent = 'Recipient, subject and message are all needed.'; return; }
-  if(aud !== 'users' && !confirm(`Send "${subject}" to ${label}? This cannot be recalled.`)) return;
+  if(aud !== 'users' && !await askConfirm(`Send "${subject}" to ${label}? This cannot be recalled.`)) return;
   $('nt-send').disabled = true; msg.textContent = 'Sending…';
   const r = await sendNotification(to, subject, body, link);
   $('nt-send').disabled = false;
@@ -627,9 +668,9 @@ async function reloadRecruits(){
 async function setRecruitStatus(userId, status){
   const r = allRecruits.find(x => x.user_id === userId);
   const who = r ? (r.display_name || r.handle) : 'this person';
-  if(status === 'Denied' && !confirm('Deny ' + who + '? They leave the Talent Board and get a message saying so. Their profile stays as it is.')) return;
+  if(status === 'Denied' && !await askConfirm('Deny ' + who + '? They leave the Talent Board and get a message saying so. Their profile stays as it is.')) return;
   const err = await setTalentStatus(userId, status);
-  if(err){ alert('Could not do that: ' + err); return; }
+  if(err){ tell('Could not do that: ' + err); return; }
   await reloadRecruits();
 }
 
@@ -661,14 +702,14 @@ async function approveJob(id){
   const j = allJobs.find(x => x.id === id);
   const from = Math.max(Date.now(), j && j.paid_until ? new Date(j.paid_until).getTime() : 0);
   const err = await updateJob(id, { paid_until: new Date(from + 30 * 864e5).toISOString() });
-  if(err){ alert('Could not do that: ' + err); return; }
+  if(err){ tell('Could not do that: ' + err); return; }
   await reloadJobs();
 }
 async function closeJob(id){
   const j = allJobs.find(x => x.id === id);
-  if(!confirm('Deny ' + (j ? '"' + j.title + '"' : 'this job') + '? It is paused, comes off the Job Board, and the company gets a message. They can switch it back to Live from their dashboard.')) return;
+  if(!await askConfirm('Deny ' + (j ? '"' + j.title + '"' : 'this job') + '? It is paused, comes off the Job Board, and the company gets a message. They can switch it back to Live from their dashboard.')) return;
   const err = await updateJob(id, { closed_at: new Date().toISOString() });
-  if(err){ alert('Could not do that: ' + err); return; }
+  if(err){ tell('Could not do that: ' + err); return; }
   await reloadJobs();
 }
 
@@ -677,13 +718,14 @@ async function closeJob(id){
 async function deleteCompanyUI(slug){
   const co = allCompanies.find(c => c.slug === slug) || allClubs.find(c => c.slug === slug);
   const name = co ? co.name : slug;
-  const typed = prompt('Delete ' + name + ' for good? This removes the company page, every keyword listing, job post, review and request it has. The owner keeps their sign-in.\n\nType the company name exactly to confirm:');
+  const typed = await askText('Delete ' + name + ' for good? This removes the company page, every keyword listing, job post, review and request it has. The owner keeps their sign-in.\n\nType the company name exactly to confirm:');
   if(typed === null) return;
-  if(typed.trim() !== name.trim()){ alert('The name did not match. Nothing was deleted.'); return; }
-  const reason = prompt('Reason (goes in the permanent audit log):');
+  if(typed.trim() !== name.trim()){ tell('The name did not match. Nothing was deleted.'); return; }
+  const reason = await askText('Reason (goes in the permanent audit log):');
   if(reason === null) return;
   const err = await deleteCompany(slug, reason);
-  if(err){ alert('Could not delete: ' + err); return; }
+  if(err){ tell('Could not delete: ' + err); return; }
+  if(typeof toast === 'function') toast(name + ' was deleted.', true);
   await reloadCompanies(); await reloadClubs(); reload();
 }
 
@@ -692,15 +734,16 @@ async function setSuspended(slug, suspend){
   const name = co ? co.name : slug;
   /* A reason is required going in, because the audit entry is permanent and a
      bare "suspended" tells nobody anything six months later. */
-  const reason = prompt(
+  const reason = await askText(
     (suspend ? 'Suspend ' : 'Reinstate ') + name + '.\n\n'
     + (suspend
         ? 'This hides the listing from the directory and from search, and blocks the owner from editing it. Nothing is deleted.\n\nWhy?'
         : 'This puts the listing back in the directory.\n\nWhy?'));
   if(reason === null) return;
-  if(!reason.trim()){ alert('Please give a reason. It goes in the permanent audit log.'); return; }
+  if(!reason.trim()){ tell('Please give a reason. It goes in the permanent audit log.'); return; }
   const err = await suspendCompany(slug, suspend, reason.trim());
-  if(err){ alert('Could not do that: ' + err); return; }
+  if(err){ tell('Could not do that: ' + err); return; }
+  if(typeof toast === 'function') toast(name + (suspend ? ' is suspended.' : ' is reinstated.'), true);
   await reloadCompanies();
   await reloadClubs();
   await reloadAudit();

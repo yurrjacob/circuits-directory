@@ -2565,3 +2565,14 @@ body.club-mode .pt-tab[data-tab="admin"]{order:6}
 #tab-admin:not(.adm-clubs) .adm-tab.adm-club,#tab-admin.adm-clubs .adm-tab:not(.adm-club){display:none}
 .adm-sub{margin:4px 0 10px;font-size:.92rem;font-weight:800}
 .adm-sub:not(:first-child){margin-top:22px}
+
+/* Admin's own confirm and prompt (2026-10-28): drawn in the page, so a browser
+   that has stopped showing dialogs cannot silently cancel an action */
+.adm-dialog{z-index:1000;align-items:center}
+.adm-dialog-box{max-width:520px;padding:22px 24px;display:flex;flex-direction:column;gap:14px}
+.adm-dialog-msg{margin:0;white-space:pre-wrap;line-height:1.5;font-size:.95rem}
+.adm-dialog-in{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font:inherit}
+.adm-dialog-in:focus{outline:0;border-color:var(--green);box-shadow:0 0 0 3px rgba(118,192,0,.16)}
+.adm-dialog-acts{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.adm-dialog .btn-danger{background:#b3261e;border:1px solid #b3261e;color:#fff}
+.adm-dialog .btn-danger:hover{background:#8f1d17}

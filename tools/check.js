@@ -274,6 +274,16 @@ assert.ok(/<body class="home-page">/.test(fs.readFileSync(path.join(ROOT, 'index
   && /@media \(min-width:861px\) and \(min-height:520px\)\{\s*html:has\(body\.home-page\),body\.home-page\{height:100%;overflow:hidden\}/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')),
   'the homepage scrolls again on a desktop window');
 
+/* Admin never uses the browser's confirm(), prompt() or alert(): a browser
+   told to stop showing dialogs cancels them silently, which made Deny, Suspend
+   and Delete do nothing (Jacob, 2026-10-28). Its own in-page dialogs instead. */
+{
+  const aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
+  const code = aj.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  assert.ok(!/(^|[^.\w])(confirm|prompt|alert)\(/m.test(code), 'admin.js calls the browser confirm(), prompt() or alert() again');
+  assert.ok(/function adminDialog\(message, opts\)/.test(aj) && /const askConfirm = /.test(aj) && /const askText = /.test(aj), 'the admin in-page dialogs are gone');
+}
+
 /* How It Works was merged into About; the old URL must still point somewhere */
 const hiw = fs.readFileSync(path.join(ROOT, 'how-it-works.html'), 'utf8');
 assert.ok(hiw.includes('rel="canonical" href="https://circuits.com/about"'),
