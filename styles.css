@@ -2665,3 +2665,4 @@ body.wc-invite .wc-lede,body.wc-invite .wc-wrap-cards{display:none}
 .adm-badge-edit input[type=text]{width:140px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;font:inherit;font-size:.84rem}
 .adm-badge-edit input[type=color]{width:34px;height:30px;padding:2px;border:1px solid var(--line);border-radius:7px;background:var(--card);cursor:pointer}
 .adm-badge-prev{display:inline-block;margin-top:5px;font-size:.78rem;font-weight:800}
+.adm-cell-in{width:100%;min-width:120px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;font:inherit;font-size:.84rem;background:var(--input-bg)}

@@ -231,6 +231,14 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   const cl = fs.readFileSync(path.join(ROOT, 'clubs.html'), 'utf8');
   assert.ok(/<title>Global Club List \| Circuits\.com<\/title>/.test(cl), '/clubs is not titled Global Club List');
   assert.deepStrictEqual([...cl.matchAll(/<th[^>]*>([^<]+)<\/th>/g)].map(m => m[1]), ['#', 'Club Name', 'University Name', 'Circuits URL', 'Club Email Address'], 'the Global Club List columns are not #, Club Name, University Name, Circuits URL, Club Email Address');
+  /* Club Admin, Club Applications and Projects (Jacob, 2026-10-28) */
+  {
+    const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
+    const head = (ph.match(/<thead><tr><th>Club<\/th><th>University<\/th><th>Circuits URL<\/th>[\s\S]*?<\/tr><\/thead>/) || [''])[0];
+    assert.ok(/<th>Club Badge<\/th>/.test(head) && !/Price|Keyword|Banner|Trust Badge/.test(head) && /id="ca-pending-body"/.test(ph) && /id="ca-body"/.test(ph), 'Club Applications is not pending and approved boxes with a Club Badge column and no pricing, keyword or banner columns');
+    assert.ok(/const text = \(b\.text \|\| ''\)\.trim\(\) \|\| c\.name \|\| '';/.test(aj), 'the Club Badge no longer starts as the club name');
+    assert.ok(/<th>Project Name<\/th><th>Club Name<\/th><th>College or University Name<\/th><th># of Products Listed<\/th>/.test(ph), 'the Projects columns are not Project Name, Club Name, College or University Name, # of Products Listed');
+  }
   /* Members & Officers (Jacob, 2026-10-28) */
   {
     const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8'), aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
@@ -1933,13 +1941,13 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
   const tabs = [...ph.matchAll(/class="adm-tab[^"]*" data-adm="([a-z]+)">(?:<svg[\s\S]*?<\/svg>)?([^<]+)</g)].map(m => m[1] + ':' + m[2]);
   assert.deepStrictEqual(tabs, ['companies:All Profiles', 'listings:Listings', 'applications:Website Applications',
-    'upgrades:Upgrade Applications', 'employment:Recruiting Applications', 'clubs:Club Pages', 'clubkw:Club Keywords', 'clubup:Badges &amp; Upgrades',
-    'clubppl:Members &amp; Officers', 'clubproj:Projects', 'messages:Notifications', 'activity:Activity'],
+    'upgrades:Upgrade Applications', 'employment:Recruiting Applications', 'clubs:Club Pages', 'clubkw:Club Keywords', 'clubapps:Club Applications',
+    'clubppl:Members &amp; Officers', 'clubproj:Projects', 'clubup:Badges &amp; Upgrades', 'messages:Notifications', 'activity:Activity'],
     'the admin sub-tabs are out of order or renamed: ' + tabs.join(', '));
   /* Profiles Admin / Club Admin (Jacob, 2026-10-19): a switch, and the five
      club sub-tabs marked adm-club so they show only under Club Admin */
   assert.ok(/data-mode="profiles"[^>]*>Directory Admin<\/button>/.test(ph) && /data-mode="clubs"[^>]*>Club Admin<\/button>/.test(ph), 'the Directory Admin / Club Admin switch is gone');
-  assert.deepStrictEqual([...ph.matchAll(/class="adm-tab adm-club" data-adm="([a-z]+)"/g)].map(m => m[1]), ['clubs', 'clubkw', 'clubup', 'clubppl', 'clubproj'], 'Club Admin is not Club Pages, Club Keywords, Badges & Upgrades, Members & Officers, Projects');
+  assert.deepStrictEqual([...ph.matchAll(/class="adm-tab adm-club" data-adm="([a-z]+)"/g)].map(m => m[1]), ['clubs', 'clubkw', 'clubapps', 'clubppl', 'clubproj', 'clubup'], 'Club Admin is not Club Pages, Club Keywords, Club Applications, Members & Officers, Projects (then Badges & Upgrades)');
   { const aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
     assert.ok(/const approved = \(\) => allApps\.filter\(a=>a\.status==='Approved' && !isClubApp\(a\)\);/.test(aj) && /const clubApproved = /.test(aj), 'club listings are not split from Profiles Admin');
     assert.ok(/lb\.innerHTML = live\.map\(extrasRow\)\.join\(''\);/.test(aj) && /const extrasRow = l => [\s\S]*?\$\{actionsCell\(l\)\}/.test(aj), 'Club Keywords lost the Edit, Badge, Lock, Pause and Remove actions');

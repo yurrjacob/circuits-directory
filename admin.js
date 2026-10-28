@@ -383,16 +383,80 @@ async function removePersonUI(key){
   if(!await askConfirm('Remove ' + (p.name || p.handle) + ' from ' + c.name + '? They come off the club page and lose the badge.')) return;
   await changePerson(key, (q, arr, i) => { arr[i] = null; }, 'Removed.');
 }
+/* ---- Club Admin, Club Applications (Jacob, 2026-10-28) ----
+   Website Applications for clubs: pending, then approved (denied ones wait
+   with the pending). The Club Badge starts as the club's name; staff set
+   its text and colour, and the club page shows it. */
+function clubAppRow(c, pending){
+  const s = esc(c.slug), b = c.club_badge || {};
+  const color = /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : '#3f6300';
+  const text = (b.text || '').trim() || c.name || '';
+  const cell = (f, v, type) => `<td><input class="adm-cell-in" type="${type || 'text'}" id="ca-${f}-${s}" value="${esc(v || '')}" aria-label="${f}"></td>`;
+  return `<tr class="${pending ? 'row-waiting' : ''}">
+      <td><a href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener"><b>${esc(c.name)}</b></a></td>
+      <td>${esc(c.college_name || 'none')}</td>
+      <td><a class="web-link" href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener">circuits.com/${esc(c.handle || c.slug)}</a></td>
+      ${cell('contact', c.contact)}${cell('email', c.email, 'email')}${cell('phone', c.phone)}${cell('website', c.website)}
+      <td class="cell-muted">${new Date(c.created_at).toLocaleDateString()}</td>
+      <td><span class="adm-badge-edit"><input type="text" id="cb-t-${s}" value="${esc(text)}" maxlength="40" aria-label="Club badge text"><input type="color" id="cb-c-${s}" value="${esc(color)}" aria-label="Club badge colour"></span>
+        <span class="adm-badge-prev" style="color:${esc(color)}">${esc(text)}</span></td>
+      <td>${c.suspended_at ? '<b>Suspended</b>' : c.club_status === 'Pending' ? '<b>Pending</b>' : esc(c.club_status || 'Pending')}</td>
+      <td class="row-actions">
+        ${c.club_status !== 'Approved' ? `<button class="mini-btn green" onclick="approveClubAppUI('${s}')">Approve</button>` : ''}
+        ${c.club_status !== 'Denied' ? `<button class="mini-btn" onclick="setClubStatusUI('${s}', 'Denied')">Deny</button>` : ''}
+        <button class="mini-btn" onclick="saveClubAppUI('${s}')">Save</button>
+        <button class="mini-btn danger" onclick="deleteCompanyUI('${s}')">Delete</button></td></tr>`;
+}
+function renderClubApps(){
+  const pend = $('ca-pending-body'), body = $('ca-body'); if(!pend || !body) return;
+  const waiting = allClubs.filter(c => c.club_status !== 'Approved'), live = allClubs.filter(c => c.club_status === 'Approved');
+  pend.innerHTML = waiting.map(c => clubAppRow(c, true)).join('');
+  body.innerHTML = live.map(c => clubAppRow(c, false)).join('');
+  $('ca-pending-empty').style.display = waiting.length ? 'none' : 'block';
+  $('ca-empty').style.display = live.length ? 'none' : 'block';
+  const n = allClubs.filter(c => c.club_status === 'Pending').length;
+  $('ca-hint').textContent = n ? `${n} club application${n === 1 ? '' : 's'} waiting` : 'Every Club That Asked For A Page. Approve Or Deny New Ones; Edit Details And The Club Badge In Place';
+}
+/* the row as staff left it: contact details and the Club Badge */
+function clubAppFields(slug){
+  const v = f => { const i = document.getElementById(`ca-${f}-${slug}`); return i ? i.value.trim() : null; };
+  const t = document.getElementById('cb-t-' + slug), c = document.getElementById('cb-c-' + slug);
+  const fields = {};
+  for(const f of ['contact', 'email', 'phone', 'website']){ const x = v(f); if(x !== null) fields[f] = x || null; }
+  if(fields.email && !isValidEmail(fields.email)) return { error: '"' + fields.email + '" is not an email address.' };
+  if(t){ const text = t.value.trim(); fields.club_badge = text ? { text, color: c && /^#[0-9a-f]{6}$/i.test(c.value) ? c.value : '#3f6300' } : null; }
+  return { fields };
+}
+async function saveClubAppUI(slug){
+  const c = allClubs.find(x => x.slug === slug); if(!c) return;
+  const r = clubAppFields(slug); if(r.error){ tell(r.error); return; }
+  const err = await updateClubPeople(slug, r.fields);
+  if(err){ tell('Could not save: ' + err); return; }
+  if(typeof toast === 'function') toast(c.name + ' saved.', true);
+  await reloadClubs();
+}
+async function approveClubAppUI(slug){
+  const c = allClubs.find(x => x.slug === slug); if(!c) return;
+  const r = clubAppFields(slug); if(r.error){ tell(r.error); return; }
+  const err = await updateClubPeople(slug, r.fields);
+  if(err){ tell('Could not save: ' + err); return; }
+  await setClubStatusUI(slug, 'Approved');
+}
+
 let allProjects = [];
 async function reloadClubProjects(){
   const body = $('cj-body'); if(!body) return;
   allProjects = await fetchAllProjects(allClubs.map(c => c.slug));
   body.innerHTML = allProjects.map(p => {
     const team = (Array.isArray(p.team) ? p.team : []).filter(t => t && (t.name || t.handle)).length;
+    /* Project Name, Club Name, College or University Name, # of Products
+       Listed (Jacob, 2026-10-28): the products are the Project Parts rows */
+    const club = allClubs.find(c => c.slug === p.company_slug) || {};
+    const parts = (Array.isArray(p.parts) ? p.parts : []).filter(x => x && (x.name || '').trim()).length;
     return `<tr class="${p.published === false ? 'row-paused' : ''}">
-      <td><a href="/${esc(clubHandle(p.company_slug) || p.company_slug)}#project-${esc(String(p.id))}" target="_blank" rel="noopener"><b>${esc(p.title)}</b></a></td>
-      <td>${esc(clubName(p.company_slug))}</td><td class="cell-muted">${esc(p.year || '')}</td>
-      <td class="cell-muted">${team} ${team === 1 ? 'person' : 'people'}</td>
+      <td><a href="/${esc(clubHandle(p.company_slug) || p.company_slug)}#project-${esc(String(p.id))}" target="_blank" rel="noopener"><b>${esc(p.title)}</b></a>${p.year ? ` <span class="cell-muted">${esc(p.year)}</span>` : ''}<br><span class="cell-muted">${team} on the team</span></td>
+      <td>${esc(clubName(p.company_slug))}</td><td>${esc(club.college_name || 'none')}</td>
+      <td><b>${parts}</b></td>
       <td>${p.published === false ? 'Hidden' : 'Shown'}</td>
       <td class="row-actions"><button class="mini-btn" onclick="toggleProjectUI('${esc(String(p.id))}')">${p.published === false ? 'Show' : 'Hide'}</button>
         <button class="mini-btn danger" onclick="deleteProjectUI('${esc(String(p.id))}')">Delete</button></td></tr>`; }).join('');
@@ -616,6 +680,7 @@ async function reloadClubs(){
         <button class="mini-btn danger" onclick="deleteCompanyUI('${esc(c.slug)}')">Delete</button>
       </td></tr>`).join('');
   $('clubs-adm-empty').style.display = allClubs.length ? 'none' : 'block';
+  renderClubApps();
   renderClubPeople();
   reloadClubProjects();
   if(allApps.length) renderAll();
@@ -956,6 +1021,6 @@ window.initAdmin = async function(){
 Object.assign(window, {
   editListing, editBadge, removeListing, togglePause, lockListing,
   approveApp, rejectApp, setSuspended, approveJob, closeJob, approveUpgrade, denyUpgrade, sendNotificationUI, notifyAudienceUI, setRecruitStatus, deleteCompanyUI, setClubStatusUI, toggleProjectUI, deleteProjectUI, setProfileSuspendedUI,
-  approvePersonUI, denyPersonUI, savePersonBadgeUI, removePersonUI
+  approvePersonUI, denyPersonUI, savePersonBadgeUI, removePersonUI, saveClubAppUI, approveClubAppUI
 });
 })();

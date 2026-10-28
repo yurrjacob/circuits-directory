@@ -502,3 +502,23 @@ begin
   end if;
   return c.handle;
 end $$;
+
+-- ---- Club Badge (Jacob, 2026-10-28) -----------------------------------------
+-- {text, color} set by staff in Club Admin, Club Applications; null shows the
+-- club name. Only staff change it: the guard below keeps an owner's update
+-- from touching it, like club_status and kind.
+alter table public.companies add column if not exists club_badge jsonb;
+create or replace function public.guard_talent_staff_fields()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if is_staff() then return new; end if;
+  if tg_table_name = 'profiles' then new.talent_hidden := old.talent_hidden; new.talent_status := old.talent_status; end if;
+  if tg_table_name = 'companies' then
+    new.talent_access_until := old.talent_access_until;
+    new.club_status := old.club_status;
+    new.kind := old.kind;
+    new.club_badge := old.club_badge;
+  end if;
+  if tg_table_name = 'jobs' then new.paid_until := old.paid_until; end if;
+  return new;
+end $$;

@@ -1430,7 +1430,7 @@ async function notifyFunction(kind, payload){
 async function fetchAdminClubs(){
   if(!sb) return [];
   const { data, error } = await sb.from('companies')
-    .select('slug, name, handle, email, contact, phone, college_name, club_status, created_at, suspended_at, team, members')
+    .select('slug, name, handle, email, contact, phone, website, college_name, club_status, club_badge, created_at, suspended_at, team, members')
     .eq('kind', 'club').order('created_at', { ascending: false });
   if(error){ console.error('fetchAdminClubs', error); return []; }
   const rows = data || [];
