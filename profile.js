@@ -137,11 +137,14 @@ function personExperience(p){
    box in the sidebar card. Save keeps the profile in this browser's list,
    Copy puts the address on the clipboard. */
 function linkBoxHtml(handle, co){
+  /* a club page says Profile URL (Jacob, 2026-10-28) */
+  const club = co && co.kind === 'club';
+  const saveL = club ? 'Save This Profile URL' : 'Save this Profile', copyL = club ? 'Copy This Profile URL' : 'Copy this Profile';
   return `<div class="pf-linkbox">
       <span class="pf-url">circuits.com/${escapeHtml(handle)}</span>
       <div class="pf-linkacts">
-        <a href="#" class="pf-linkact" id="pf-save" data-slug="${escapeHtml(co.slug || '')}" data-handle="${escapeHtml(handle || '')}" data-name="${escapeHtml(co.name || '')}">Save this Profile</a>
-        <a href="#" class="pf-linkact" id="pf-copy" data-url="https://circuits.com/${escapeHtml(handle)}">Copy this Profile</a>
+        <a href="#" class="pf-linkact" id="pf-save" data-label="${saveL}" data-slug="${escapeHtml(co.slug || '')}" data-handle="${escapeHtml(handle || '')}" data-name="${escapeHtml(co.name || '')}">${saveL}</a>
+        <a href="#" class="pf-linkact" id="pf-copy" data-label="${copyL}" data-url="https://circuits.com/${escapeHtml(handle)}">${copyL}</a>
       </div>
       <p class="pf-save-note" id="pf-save-note" hidden></p>
     </div>`;
@@ -156,36 +159,50 @@ let CLUB_PROJECTS = [];   // the club page's projects, for the card a thumbnail 
 /* The head from Jacob's sketch (2026-10-01): the college's logo on the left,
    the club's on the right, the name between them with the college under it,
    two lines of description and a Join Club button. */
+/* outside the template below: tools/check.js scans braces inside templates */
+const FOUR_DIGITS = /^\d{4}$/;
 function clubHeroHtml(co){
   const college = (co.college_name || '').trim();
   const desc = (co.tagline || co.description || '').trim();
   const join = safeUrl(co.club_join_url) || (looksEmail(co.email) ? `mailto:${co.email.trim()}?subject=${encodeURIComponent('Joining ' + co.name)}` : '');
-  const site = safeUrl(co.website);
+  const site = safeUrl(co.website), other = safeUrl(co.other_link);
+  /* Links (Jacob, 2026-10-28): the website and one other link, small, on the
+     right; each slot shows once it is filled in on Club Details */
+  const short = u => u.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '').slice(0, 40);
+  const links = [site, other].filter(Boolean);
+  const linksHtml = links.length ? `<div class="pf-club-links"><span class="pf-club-links-k">Links</span>${links.map(u => `<a class="web-link" href="${escapeHtml(u)}" target="_blank" rel="noopener nofollow">${escapeHtml(short(u))}</a>`).join('')}</div>` : '';
+  /* the Club Badge staff set in Club Admin; the club name until they do */
+  const cb = co.club_badge && typeof co.club_badge === 'object' ? co.club_badge : {};
+  const cbColor = /^#[0-9a-f]{6}$/i.test(cb.color || '') ? cb.color : '';
+  const badge = co.club_status === 'Approved' ? `<span class="pf-club-badge"${cbColor ? ` style="background:${cbColor}"` : ''}>${escapeHtml((cb.text || '').trim() || co.name)}</span>` : '';
   const logoBox = (url, alt, fallback) => `<div class="pf-club-logo">${isLogoUrl(url) ? `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}">` : `<span class="pf-club-logo-ph">${escapeHtml(fallback)}</span>`}</div>`;
   return `<div class="pf-club-head">
     ${logoBox(co.college_logo, (college || 'College') + ' logo', (college || 'C').slice(0, 1).toUpperCase())}
     <div class="pf-club-id">
       <h1>${escapeHtml(co.name)}</h1>
+      ${badge}
       ${college ? `<p class="pf-club-college">${escapeHtml(college)}</p>` : ''}
       ${desc ? `<p class="pf-club-desc">${escapeHtml(desc)}</p>` : ''}
       <div class="pf-club-acts">
         ${join ? `<a class="btn btn-primary" href="${escapeHtml(join)}"${/^https?:/i.test(join) ? ' target="_blank" rel="noopener nofollow"' : ''}>Join Club</a>` : ''}
-        ${site ? `<a class="btn btn-outline" href="${escapeHtml(site)}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
       </div>
       ${(() => {
         const n = CLUB_PROJECTS.filter(p => p && p.title && p.published !== false).length;
-        const officers = (Array.isArray(co.team) ? co.team : []).filter(t => t && ((t.name || '').trim() || (t.handle || '').trim())).length;
+        const officers = livePeople(co.team).length;
         const chips = [
           n ? `<a class="pf-chip pf-chip-link" href="#showcase">${iconHtml('Projects')}${n} project${n === 1 ? '' : 's'}</a>` : '',
           officers ? `<a class="pf-chip pf-chip-link" href="#officers">${iconHtml('Employees')}${officers} officer${officers === 1 ? '' : 's'}</a>` : '',
-          (() => { const m = (Array.isArray(co.members) ? co.members : []).filter(x => x && ((x.name || '').trim() || (x.handle || '').trim())).length;
-            return m ? `<a class="pf-chip pf-chip-link" href="#members">${iconHtml('Contact')}${m} member${m === 1 ? '' : 's'}</a>` : ''; })(),
-          /^\d{4}$/.test((co.founded || '').trim()) ? `<span class="pf-chip">${iconHtml('Founded')}Est. ${escapeHtml(co.founded.trim())}</span>` : '',
+          (() => { const m = livePeople(co.members).length;
+            return m ? `<a class="pf-chip pf-chip-link" href="#officers">${iconHtml('Contact')}${m} member${m === 1 ? '' : 's'}</a>` : ''; })(),
+          FOUR_DIGITS.test((co.founded || '').trim()) ? `<span class="pf-chip">${iconHtml('Founded')}Est. ${escapeHtml(co.founded.trim())}</span>` : '',
           fitsLine(co.address, 60) ? `<span class="pf-chip">${iconHtml('Address')}${escapeHtml(co.address)}</span>` : ''].filter(Boolean);
         return chips.length ? `<div class="pf-meta">${chips.join('')}</div>` : '';
       })()}
     </div>
-    ${logoBox(co.logo, co.name + ' logo', co.name.slice(0, 1).toUpperCase())}
+    <div class="pf-club-right">
+      ${logoBox(co.logo, co.name + ' logo', co.name.slice(0, 1).toUpperCase())}
+      ${linksHtml}
+    </div>
   </div>`;
 }
 const PROMO_KEYS = [
@@ -293,22 +310,26 @@ function openProjectCard(p, co){
   document.body.appendChild(box);
   box.querySelector('.pf-modal-x').focus();
 }
+/* who shows on the club page: approved people, and everyone listed before
+   approvals existed (no status). Pending and denied stay off. */
+function livePeople(list){
+  return (Array.isArray(list) ? list : []).filter(t => t && ((t.name || '').trim() || (t.handle || '').trim()) && (!t.status || t.status === 'Approved'));
+}
+/* Officers & Members (Jacob, 2026-10-28): the officers' cards, then every
+   member in a dropdown, each linked to their own profile */
 function officersHtml(co){
-  const team = (Array.isArray(co.team) ? co.team : []).filter(t => t && ((t.name || '').trim() || (t.handle || '').trim()));
-  if(!team.length) return '';
-  return section('Officers', `<div class="pf-team">${team.map(t => `
+  const team = livePeople(co.team), members = livePeople(co.members);
+  if(!team.length && !members.length) return '';
+  const memberList = members.length ? `<details class="pf-members-dd"${team.length ? '' : ' open'}><summary>Members &middot; ${members.length}</summary>
+      <ul class="pf-members-list">${members.map(m => `<li>${(m.handle || '').trim()
+        ? `<a class="web-link" href="${handleLink(m.handle)}">${escapeHtml((m.name || m.handle).trim())}</a>`
+        : escapeHtml((m.name || '').trim())}</li>`).join('')}</ul></details>` : '';
+  return section('Officers & Members', `${team.length ? `<div class="pf-team">${team.map(t => `
       <div class="founder-card">
         <div class="founder-avatar">${escapeHtml(((t.name || t.handle || '?').trim()).slice(0, 1).toUpperCase())}</div>
         <div><div class="founder-name">${(t.handle || '').trim() ? `<a href="${handleLink(t.handle)}">${escapeHtml((t.name || t.handle).trim())}</a>` : escapeHtml((t.name || '').trim())}</div>
         <div class="founder-role">${escapeHtml(t.role || 'Officer')}</div></div>
-      </div>`).join('')}</div>`, ' id="officers"');
-}
-function membersHtml(co){
-  const list = (Array.isArray(co.members) ? co.members : []).filter(m => m && ((m.name || '').trim() || (m.handle || '').trim()));
-  if(!list.length) return '';
-  return section(`Members · ${list.length}`, `<div class="pf-tags pf-members">${list.map(m => (m.handle || '').trim()
-    ? `<a class="pf-tag" href="${handleLink(m.handle)}">${escapeHtml((m.name || m.handle).trim())}</a>`
-    : `<span class="pf-tag">${escapeHtml(m.name.trim())}</span>`).join('')}</div>`, ' id="members"');
+      </div>`).join('')}</div>` : ''}${memberList}`, ' id="officers"');
 }
 /* the student's side: skills they typed, badges they earned, projects they are on */
 function badgeIcon(kind){
@@ -325,7 +346,8 @@ function personClubSections(p){
   const roles = Array.isArray(p.club_roles) ? p.club_roles : [];
   const projects = (Array.isArray(p.club_projects) ? p.club_projects : []).filter(x => x && x.title);
   /* the badge text and colour staff set in Club Admin (2026-10-28) */
-  const bText = r => `<b${/^#[0-9a-f]{6}$/i.test(r.color || '') ? ` style="color:${r.color}"` : ''}>`;
+  const HEX = /^#[0-9a-f]{6}$/i;
+  const bText = r => HEX.test(r.color || '') ? '<b style="color:' + r.color + '">' : '<b>';
   const pills = roles.map(r => r.kind === 'member'
       ? `<a class="pf-badge pf-badge-member" href="${handleLink(r.handle)}"><span class="pf-badge-k">${badgeIcon('member')}Member</span>${bText(r)}${escapeHtml(r.badge || r.name || '')}</b><span>${escapeHtml(r.badge && r.badge !== r.name ? r.name + (r.college_name ? ', ' + r.college_name : '') : r.college_name || '')}</span></a>`
       : `<a class="pf-badge pf-badge-lead" href="${handleLink(r.handle)}"><span class="pf-badge-k">${badgeIcon('lead')}Leadership</span>${bText(r)}${escapeHtml(r.badge || r.role || 'Officer')}</b><span>${escapeHtml(r.name || '')}${r.college_name ? `, ${escapeHtml(r.college_name)}` : ''}</span></a>`)
@@ -336,7 +358,7 @@ function personClubSections(p){
     }));
   if(pills.length) html += section('Badges', `<div class="pf-badges">${pills.join('')}</div><p class="pf-note">Badges are awarded by the club pages that list this person, not written here.</p>`);
   if(projects.length) html += section('Projects', `<div class="pf-showcase pf-showcase-mini">${projects.map(x => {
-      const c = x.companies || {};
+      const c = Object(x.companies);   // no brace literal: tools/check.js scans braces inside templates
       const cover = safeUrl(x.cover_url);
       const me = (Array.isArray(x.team) ? x.team : []).find(t => t && String(t.handle || '').toLowerCase() === String(p.handle || '').toLowerCase()) || {};
       return `<a class="pf-project pf-project-link" href="${handleLink(c.handle)}#project-${escapeHtml(String(x.id))}">
@@ -477,7 +499,9 @@ async function initProfile(){
 
   /* ---- a club page (Jacob's hiring brief, 2026-09-29): who it is for, what
      it has built, who runs it. Each section draws only when it has content. */
-  if(isClub) html += promoHubHtml(co) + projectsShowcaseHtml(projects, co) + officersHtml(co) + membersHtml(co);
+  /* order (Jacob, 2026-10-28): the showcase right under About, then
+     Officers & Members, then the Promo Hub */
+  if(isClub) html += projectsShowcaseHtml(projects, co) + officersHtml(co) + promoHubHtml(co);
 
   /* ---- keywords ----
      The badge belongs against the keyword it applies to, "PCB Design
@@ -494,9 +518,11 @@ async function initProfile(){
      highlights this company's row there (?hl= picks it out), the listing is
      where the position, the sponsor banner and the quote button live. */
   const anyBanner = kws.some(k => k.banner);
-  html += section('Keyword Listings', kws.length
+  /* a club's keywords live in the club search (2026-10-28) */
+  const kwHref = k => isClub ? '/clubs?q=' + encodeURIComponent(k.keyword) : `/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}`;
+  html += section(isClub ? 'Club Keywords' : 'Keyword Listings', kws.length
     ? `<div class="kw-tags pf-kws">${kws.map(k =>
-        `<a class="kw-tag${k.banner ? ' kw-sponsored' : ''}" href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}"${k.banner ? ` title="${SPONSOR_TITLE}"` : ''}>${escapeHtml(k.keyword)}${k.banner ? starHtml() : ''}`
+        `<a class="kw-tag${k.banner ? ' kw-sponsored' : ''}" href="${kwHref(k)}"${k.banner ? ` title="${SPONSOR_TITLE}"` : ''}>${escapeHtml(k.keyword)}${k.banner ? starHtml() : ''}`
         + badgeHtml(k.badge, 'kw-lb')
         + `</a>`
       ).join('')}</div>`
@@ -561,7 +587,7 @@ async function initProfile(){
       </div>`).join('')}</div>`;
     if(!inner) continue;
     html += `<section class="pf-sec pf-listing" id="kw-${escapeHtml(k.id)}">
-      <h2 class="pf-sec-h"><a href="/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}" class="tc">${escapeHtml(k.keyword)}</a>${k.banner ? starHtml() : ''}${badgeHtml(k.badge, 'kw-lb')}</h2>
+      <h2 class="pf-sec-h"><a href="${kwHref(k)}" class="tc">${escapeHtml(k.keyword)}</a>${k.banner ? starHtml() : ''}${badgeHtml(k.badge, 'kw-lb')}</h2>
       ${inner}</section>`;
   }
 
@@ -844,7 +870,7 @@ function wireSave(){
      above every search result on this browser */
   const paint = () => {
     const on = isSaved(entry.slug);
-    btn.textContent = on ? 'Saved ✓' : 'Save this Profile';
+    btn.textContent = on ? 'Saved ✓' : (btn.dataset.label || 'Save this Profile');
     btn.classList.toggle('is-saved', on);
     btn.title = on
       ? 'Saved in this browser only. Click to remove.'
@@ -873,6 +899,6 @@ function wireCopyLink(){
       if(url){ const r = document.createRange(); r.selectNodeContents(url); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
       copy.textContent = 'Press Ctrl+C';
     }
-    setTimeout(() => { copy.textContent = 'Copy this Profile'; }, 2200);
+    setTimeout(() => { copy.textContent = copy.dataset.label || 'Copy this Profile'; }, 2200);
   });
 }

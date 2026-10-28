@@ -1674,6 +1674,7 @@ function wireClubFields(c){
   const promo = c.club_promo && typeof c.club_promo === 'object' ? c.club_promo : {};
   el('f-college').value = c.college_name || '';
   el('f-join').value = c.club_join_url || '';
+  if(el('f-other-link')) el('f-other-link').value = c.other_link || '';
   el('f-promo-members').value = promo.members || '';
   el('f-promo-alumni').value = promo.alumni || '';
   el('f-promo-employers').value = promo.employers || '';
@@ -2018,6 +2019,9 @@ async function saveProfile(){
       const join = val('f-join');
       if(join && !isValidWebsite(join)){ btn.disabled = false; saveNote('Not saved: the Join Club link does not look like a web address.', false); return; }
       fields.club_join_url = join ? (/^https?:\/\//i.test(join) ? join : 'https://' + join) : null;
+      const other = val('f-other-link');
+      if(other && !isValidWebsite(other)){ btn.disabled = false; saveNote('Not saved: the Other link does not look like a web address.', false); return; }
+      fields.other_link = other ? (/^https?:\/\//i.test(other) ? other : 'https://' + other) : null;
       fields.club_promo = { members: val('f-promo-members') || '', alumni: val('f-promo-alumni') || '', employers: val('f-promo-employers') || '' };
       const officers = collectPeople('officers');
       const tp = peopleProblem(officers, 'officer');

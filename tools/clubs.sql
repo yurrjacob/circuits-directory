@@ -522,3 +522,8 @@ begin
   if tg_table_name = 'jobs' then new.paid_until := old.paid_until; end if;
   return new;
 end $$;
+
+-- ---- Club page Links (Jacob, 2026-10-28) ------------------------------------
+-- The website and one other link sit small on the right of the club page.
+alter table public.companies add column if not exists other_link text
+  check (other_link is null or other_link ~* '^https?://[^\s]+$');

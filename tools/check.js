@@ -231,6 +231,14 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   const cl = fs.readFileSync(path.join(ROOT, 'clubs.html'), 'utf8');
   assert.ok(/<title>Global Club List \| Circuits\.com<\/title>/.test(cl), '/clubs is not titled Global Club List');
   assert.deepStrictEqual([...cl.matchAll(/<th[^>]*>([^<]+)<\/th>/g)].map(m => m[1]), ['#', 'Club Name', 'University Name', 'Circuits URL', 'Club Email Address'], 'the Global Club List columns are not #, Club Name, University Name, Circuits URL, Club Email Address');
+  /* the club page (Jacob, 2026-10-28) */
+  {
+    const pf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
+    assert.ok(/if\(isClub\) html \+= projectsShowcaseHtml\(projects, co\) \+ officersHtml\(co\) \+ promoHubHtml\(co\);/.test(pf), 'the club page order is not About, Project Showcase, Officers & Members, Promo Hub');
+    assert.ok(/section\('Officers & Members'/.test(pf) && /<details class="pf-members-dd"/.test(pf) && /<a class="web-link" href="\$\{handleLink\(m\.handle\)\}">/.test(pf) && !/function membersHtml/.test(pf), 'members are not a linked dropdown inside Officers & Members');
+    assert.ok(/<span class="pf-club-links-k">Links<\/span>/.test(pf) && /\[site, other\]\.filter\(Boolean\)/.test(pf) && !/btn btn-outline" href="\$\{escapeHtml\(site\)\}"[^>]*>Website</.test(pf), 'the club Website is still a button, or the two Links slots are gone');
+    assert.ok(/function livePeople\(list\)[\s\S]{0,200}!t\.status \|\| t\.status === 'Approved'/.test(pf), 'people waiting for approval show on the club page');
+  }
   /* Club Admin, Club Applications and Projects (Jacob, 2026-10-28) */
   {
     const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
@@ -306,7 +314,8 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
 {
   const pj = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
   assert.ok(/<a class="web-link" href="\$\{escapeHtml\(safeUrl\(s\[k\]\)\)\}"/.test(pj), 'profile social links are not hyperlink blue');
-  assert.ok(/>Save this Profile<\/a>/.test(pj) && />Copy this Profile<\/a>/.test(pj) && !/save this supplier/i.test(pj), 'the link box is not Save this Profile and Copy this Profile');
+  /* a club page says Profile URL (Jacob, 2026-10-28) */
+  assert.ok(/const saveL = club \? 'Save This Profile URL' : 'Save this Profile', copyL = club \? 'Copy This Profile URL' : 'Copy this Profile';/.test(pj) && /\$\{saveL\}<\/a>/.test(pj) && /\$\{copyL\}<\/a>/.test(pj) && !/save this supplier/i.test(pj), 'the link box is not Save this Profile and Copy this Profile (Save This Profile URL and Copy This Profile URL on a club)');
   assert.ok(!/class="pf-kind"/.test(pj), 'the kind pill is back in the club page head');
   assert.ok(/section\('Jobs Posted'[\s\S]*?>View on Job Board</.test(pj) && /View on Talent Board[\s\S]*?section\('Resumes Posted'/.test(pj), 'Jobs Posted or Resumes Posted lost its board button');
 }
@@ -1578,12 +1587,20 @@ for (const trigger of ['renderQuote()']) {
        function cannot see them. */
 function scanFunctions(src) {
 
-  /* Walk once, tracking what we are inside, so only real code counts. */
-  const code = [];                       // code[i] = src[i], or ' ' if inside a string/comment
-  let mode = 'code', tpl = 0, prev = '';
+  /* Walk once, tracking what we are inside, so only real code counts.
+     Templates nest: `a ${ b ? `c ${d}` : {} } e` is one template whose
+     expression holds a template and an object. A stack of template frames
+     follows that exactly (2026-10-28: a single counter lost its place on the
+     first `{}` or `{4}` inside an expression, and every function after it
+     vanished). Everything inside a template, expressions included, is
+     blanked: only braces outside templates matter here. */
+  const code = [];                       // code[i] = src[i], or ' ' if inside a string/comment/template
+  let mode = 'code', prev = '';
+  const stack = [];                      // frames: { t: 'tpl' } or { t: 'expr', depth }
+  const top = () => stack[stack.length - 1];
   for (let i = 0; i < src.length; i++) {
     const c = src[i], n = src[i + 1];
-    const keep = () => { code.push(c); if (!/\s/.test(c)) prev = c; };
+    const keep = () => { code.push(stack.length && c !== '\n' ? ' ' : c); if (!/\s/.test(c)) prev = c; };
     const skip = () => code.push(c === '\n' ? '\n' : ' ');
     if (mode === 'code') {
       if (c === '/' && n === '/') { mode = 'line'; skip(); }
@@ -1594,7 +1611,12 @@ function scanFunctions(src) {
          swallow every function defined after it. */
       else if (c === '/' && /^$|[(,=:[!&|?{};+\-*%<>~^]/.test(prev)) { mode = 're'; skip(); }
       else if (c === "'" || c === '"') { mode = c; skip(); }
-      else if (c === '`') { mode = 'tpl'; tpl = 0; skip(); }
+      else if (c === '`') { stack.push({ t: 'tpl' }); mode = 'tpl'; skip(); }
+      else if (c === '{' && top() && top().t === 'expr') { top().depth++; keep(); }
+      else if (c === '}' && top() && top().t === 'expr') {
+        if (top().depth === 0) { stack.pop(); mode = 'tpl'; skip(); }
+        else { top().depth--; keep(); }
+      }
       else keep();
     } else if (mode === 're') {
       if (c === '\\') { code.push(' '); i++; code.push(' '); continue; }
@@ -1610,13 +1632,10 @@ function scanFunctions(src) {
     else if (mode === 'endblock') { mode = 'code'; skip(); }
     else if (mode === "'" || mode === '"') { if (c === '\\') { code.push(' '); i++; code.push(' '); continue; } if (c === mode) mode = 'code'; skip(); }
     else if (mode === 'tpl') {
-      // ${ ... } inside a template is real code, but we only need brace balance,
-      // and those braces balance among themselves, so blanking the lot is safe
       if (c === '\\') { code.push(' '); i++; code.push(' '); continue; }
-      if (c === '`' && tpl === 0) mode = 'code';
-      else if (c === '$' && n === '{') tpl++;
-      else if (c === '}' && tpl > 0) tpl--;
-      skip();
+      if (c === '`') { stack.pop(); mode = 'code'; prev = '`'; skip(); }
+      else if (c === '$' && n === '{') { stack.push({ t: 'expr', depth: 0 }); mode = 'code'; prev = '{'; skip(); i++; code.push(' '); }
+      else skip();
     }
   }
   const clean = code.join('');

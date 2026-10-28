@@ -2666,3 +2666,14 @@ body.wc-invite .wc-lede,body.wc-invite .wc-wrap-cards{display:none}
 .adm-badge-edit input[type=color]{width:34px;height:30px;padding:2px;border:1px solid var(--line);border-radius:7px;background:var(--card);cursor:pointer}
 .adm-badge-prev{display:inline-block;margin-top:5px;font-size:.78rem;font-weight:800}
 .adm-cell-in{width:100%;min-width:120px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;font:inherit;font-size:.84rem;background:var(--input-bg)}
+
+/* club page (2026-10-28): Links small on the right under the club logo, the
+   Club Badge under the name, members in a dropdown under the officers */
+.pf-club-right{display:flex;flex-direction:column;align-items:center;gap:10px}
+.pf-club-links{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.82rem;max-width:180px;text-align:center}
+.pf-club-links-k{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.pf-club-links .web-link{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.pf-club-badge{display:inline-block;margin:2px 0 6px;padding:3px 12px;border-radius:999px;background:#3f6300;color:#fff;font-size:.78rem;font-weight:800;letter-spacing:.02em}
+.pf-members-dd{margin-top:14px;border:1px solid var(--line);border-radius:12px;background:var(--bg-soft)}
+.pf-members-dd summary{cursor:pointer;padding:10px 14px;font-weight:700}
+.pf-members-list{list-style:none;margin:0;padding:4px 14px 12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px 14px}
