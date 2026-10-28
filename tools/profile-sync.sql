@@ -86,3 +86,11 @@ where c.slug = a.company_slug and c.contact is null;
 -- disabled; it can be dropped:
 --   drop trigger applications_sync_company_trg on public.applications;
 --   drop function public.applications_sync_company();
+
+-- ---- Profile Title (Jacob, 2026-10-28) -------------------------------------
+-- Which name heads the public profile: the company name (businesses) or the
+-- contact person (students). The dashboard requires one; null reads as the
+-- company name. companies has table-level grants, so anon reads it with no
+-- extra grant.
+alter table public.companies add column if not exists title_source text
+  check (title_source in ('company', 'contact'));

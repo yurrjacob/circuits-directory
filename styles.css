@@ -2595,3 +2595,15 @@ body.club-mode #tab-listings > :not(#pt-club-kw){display:none}
 .dir-table .logo-col{width:56px;padding-right:0}
 .dir-table td.logo-col .co-logo{margin:0}
 @media(prefers-reduced-motion:reduce){.listings-table tbody tr.rv-out{transition:none}}
+
+/* Profile Title beside the Circuits.com address (2026-10-28) */
+.pt-addr-title{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:flex-start}
+.pt-addr-field{flex:1 1 400px;max-width:520px}
+.pt-title-field{flex:1 1 380px;max-width:560px}
+.pt-title-line{display:flex;gap:12px;align-items:center}
+.pt-title-opts{display:flex;flex-direction:column;gap:2px;flex:none}
+.auth-field .pt-title-opts .terms{display:flex;align-items:center;gap:8px;margin:0;color:var(--ink);font-size:.88rem;font-weight:600;white-space:nowrap}
+.auth-field .pt-title-opts .terms input{width:auto;flex:none;margin:0;padding:0;accent-color:var(--green)}
+#f-title-show{flex:1;min-width:0;font-weight:700;background:var(--bg-soft)}
+body.club-mode .pt-title-field{display:none}
+@media(max-width:620px){.pt-title-line{flex-direction:column;align-items:stretch}.pt-title-opts .terms{white-space:normal}}

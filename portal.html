@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=d4dee5b3ba">
+<link rel="stylesheet" href="/styles.css?v=4f9fd8cc13">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -156,7 +156,8 @@
       <div id="pt-fresh-note"></div>
       <section class="cb-card">
       <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Your details</h3>
-      <div class="auth-field" style="max-width:520px">
+      <div class="pt-addr-title">
+      <div class="auth-field pt-addr-field">
         <label for="f-handle">Your Circuits.com address</label>
         <div class="handle-line">
           <div class="handle-row">
@@ -171,6 +172,23 @@
         <div id="handle-msg" class="pf-note"></div>
         <p class="pf-note">Short and memorable. This is the link you put on adverts, business cards and
         email signatures. Changing it breaks any link already printed with the old one.</p>
+      </div>
+      <!-- Profile Title (Jacob, 2026-10-28): the name at the top of the public
+           profile. A business shows its company name, a student their own
+           name. Exactly one box, required; the field beside them shows the
+           name it picks, straight from the form below. Not on a club page,
+           which is always headed by the club's name. -->
+      <div class="auth-field pt-title-field" id="f-title-box">
+        <label for="f-title-show">Profile Title <span class="req">*</span></label>
+        <div class="pt-title-line">
+          <div class="pt-title-opts" role="group" aria-label="Profile Title">
+            <label class="terms"><input type="checkbox" id="f-title-company" value="company" autocomplete="off"> <span>Use Company Name (For Businesses)</span></label>
+            <label class="terms"><input type="checkbox" id="f-title-contact" value="contact" autocomplete="off"> <span>Use Contact Person (For Students)</span></label>
+          </div>
+          <input id="f-title-show" type="text" readonly tabindex="-1" placeholder="Tick one" autocomplete="off">
+        </div>
+        <p class="pf-note">The name at the top of your profile page.</p>
+      </div>
       </div>
 
       <div class="pt-row">
@@ -946,7 +964,7 @@
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
 <script src="/store.js?v=1a06bbfd91"></script>
 <script src="/app.js?v=847d31607c"></script>
-<script src="/portal.js?v=2d0805c1ab"></script>
+<script src="/portal.js?v=6bf0b5d710"></script>
 <script src="/admin.js?v=cbbf8feabb"></script>
 <script>
 /* Save profile, Save club and Save members all run the one save. Save club

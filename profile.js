@@ -422,7 +422,10 @@ async function initProfile(){
   const avg = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
   const site = safeUrl(co.website);
 
-  document.title = co.name + ' | Profile | Circuits.com';
+  /* Profile Title (2026-10-28): a student heads the page with their own
+     name, a business with the company's; a club is always the club */
+  const heading = !isClub && co.title_source === 'contact' && (co.contact || '').trim() ? co.contact.trim() : co.name;
+  document.title = heading + ' | Profile | Circuits.com';
   setMeta('description', (co.tagline || co.description || (co.name + ' on the Circuits.com directory.')).slice(0, 155));
 
   /* ---- hero ---- */
@@ -439,7 +442,7 @@ async function initProfile(){
   <div class="pf-head pf-head-covered">
     <div class="pf-logo">${logo}</div>
     <div class="pf-id">
-      <h1>${escapeHtml(co.name)}</h1>
+      <h1>${escapeHtml(heading)}</h1>
       ${co.tagline ? `<p class="pf-tagline">${escapeHtml(co.tagline)}</p>`
         : person && person.title ? `<p class="pf-tagline">${escapeHtml(person.title)}</p>` : ''}
       <div class="pf-meta">

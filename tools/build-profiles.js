@@ -43,7 +43,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&am
 const isSample = co => /^sample-/.test(co.slug || '') || /^sample-/.test(co.handle || '');
 
 function pageFor(template, co) {
-  const title = co.name + ' | Supplier Profile | Circuits.com';
+  const title = (co.kind !== 'club' && co.title_source === 'contact' && (co.contact || '').trim() ? co.contact.trim() : co.name) + ' | Supplier Profile | Circuits.com';
   const raw = co.tagline || co.description ||
     (co.name + ' is listed on Circuits.com, the integrated circuits directory. See documentation and contact details, or request a quote.');
   const desc = raw.replace(/\s+/g, ' ').trim().slice(0, 155);
@@ -77,7 +77,7 @@ function pageFor(template, co) {
   let companies = [];
   if (slugs.length) {
     companies = (await api(
-      'companies?select=slug,handle,name,tagline,description,logo,updated_at&published=is.true' +
+      'companies?select=slug,handle,name,tagline,description,logo,updated_at,kind,contact,title_source&published=is.true' +
       '&slug=in.(' + slugs.map(encodeURIComponent).join(',') + ')'
     )).filter(c => c.handle);
   }

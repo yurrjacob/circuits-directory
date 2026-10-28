@@ -231,6 +231,14 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   const cl = fs.readFileSync(path.join(ROOT, 'clubs.html'), 'utf8');
   assert.ok(/<title>Global Club List \| Circuits\.com<\/title>/.test(cl), '/clubs is not titled Global Club List');
   assert.deepStrictEqual([...cl.matchAll(/<th[^>]*>([^<]+)<\/th>/g)].map(m => m[1]), ['#', 'Club Name', 'University Name', 'Circuits URL', 'Club Email Address'], 'the Global Club List columns are not #, Club Name, University Name, Circuits URL, Club Email Address');
+  /* Profile Title (Jacob, 2026-10-28): two boxes beside the address, exactly one required, and the public heading follows it */
+  {
+    const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8'), pf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
+    assert.ok(/<div class="pt-addr-title">[\s\S]*?id="f-handle"[\s\S]*?Profile Title <span class="req">\*<\/span>[\s\S]*?Use Company Name \(For Businesses\)[\s\S]*?Use Contact Person \(For Students\)[\s\S]*?id="f-title-show"/.test(ph), 'the Profile Title field is not beside the Circuits.com address with its two boxes');
+    assert.ok(/!clubPage && !titleSource\(\)\)\{[^\n]*Not saved: pick a Profile Title/.test(pj) && /fields\.title_source = titleSource\(\)/.test(pj), 'the dashboard saves without a Profile Title');
+    assert.ok(/if\(a\.checked\) b\.checked = false/.test(pj) && /if\(b\.checked\) a\.checked = false/.test(pj), 'both Profile Title boxes can be ticked at once');
+    assert.ok(/co\.title_source === 'contact'/.test(pf) && /<h1>\$\{escapeHtml\(heading\)\}<\/h1>/.test(pf), 'the public profile heading ignores the Profile Title');
+  }
   /* the Global Directory List (Jacob, 2026-10-28): the club list's format for every live Directory keyword, revolving */
   const gl = fs.readFileSync(path.join(ROOT, 'global.html'), 'utf8');
   assert.ok(/<title>Global Directory List \| Circuits\.com<\/title>/.test(gl), '/global is not titled Global Directory List');
@@ -831,7 +839,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   { const pjs = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
     assert.ok(/const PREVIEW_FIELDS = \[\s*\['f-name', 'Company or Organization Name', true\], \['f-contact', 'Contact Person', true\], \['f-email', 'Public Email', true\],\s*\['f-website', 'Website', false\], \['f-phone', 'Public Phone', false\], \['f-address', 'Address', false\]\];/.test(pjs)
       && /i\.classList\.toggle\('pv-missing', !v\(id\)\)/.test(pjs), 'the preview does not mark the six fields red when empty');
-    assert.ok(/saveNote\(isClubPage \? 'Saved' : fresh \? 'Profile Saved\. Your page is at circuits\.com\/' \+ wantHandle : 'Profile Saved', true, true\)/.test(pjs), 'the bottom of Profile Details does not say Profile Saved after a save'); }
+    assert.ok(/saveNote\(fresh && !isClubPage \? 'Profile Saved\. Your page is at circuits\.com\/' \+ wantHandle : 'Profile Saved', true, true\)/.test(pjs), 'Profile Details or Club Details does not say Profile Saved after a save (Jacob, 2026-10-28: the club said only Saved)'); }
   assert.ok(/<label for="f-name">Name \(Company, Club or Org\) <span class="req">\*<\/span><\/label>/.test(portalHtml) && /<label for="f-address">Address \(City, Country\)<\/label>/.test(portalHtml), 'the Name or Address label is not the 2026-10-12 wording');
   assert.ok(/class="mini-btn green" id="pt-crop-ok">Use this</.test(portalHtml), 'the cropper Use this button is not green');
   /* ---- college clubs, student badges, projects and the resume (2026-09-29) ---- */
@@ -893,7 +901,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   {
     const pjs = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
     assert.ok(/const REQUIRED_FIELDS = \['f-name', 'f-contact', 'f-email'\]/.test(pjs) && /is-missing/.test(pjs), 'empty required fields are no longer marked');
-    assert.ok(/saveNote\(isClubPage \? 'Saved' : fresh \? 'Profile Saved/.test(pjs), 'a saved profile no longer says so beside the button');
+    assert.ok(/saveNote\(fresh && !isClubPage \? 'Profile Saved/.test(pjs), 'a saved profile no longer says so beside the button');
     const css = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
     assert.ok(/\.auth-field\.is-missing input\{border-color:#d93025/.test(css), 'the missing-field mark is not red');
   }

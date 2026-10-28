@@ -1394,6 +1394,34 @@ function markMissing(){
     const i = el(id); const box = i && i.closest('.auth-field');
     if(box) box.classList.toggle('is-missing', !i.value.trim());
   });
+  const tb = el('f-title-box');
+  if(tb) tb.classList.toggle('is-missing', !titleSource());
+}
+/* Profile Title (Jacob, 2026-10-28): two boxes, exactly one ticked. Ticking
+   one clears the other; the read-only field beside them shows the name the
+   choice picks, and follows the form as it is typed. */
+function titleSource(){
+  return el('f-title-contact') && el('f-title-contact').checked ? 'contact'
+    : el('f-title-company') && el('f-title-company').checked ? 'company' : '';
+}
+function showProfileTitle(){
+  const out = el('f-title-show'); if(!out) return;
+  const src = titleSource();
+  out.value = src === 'contact' ? val('f-contact') : src === 'company' ? val('f-name') : '';
+  out.placeholder = src ? (src === 'contact' ? 'Fill in Contact Person below' : 'Fill in the Name below') : 'Tick one';
+}
+function setTitleSource(src){
+  if(el('f-title-company')) el('f-title-company').checked = src === 'company';
+  if(el('f-title-contact')) el('f-title-contact').checked = src === 'contact';
+  showProfileTitle();
+}
+function wireProfileTitle(){
+  const a = el('f-title-company'), b = el('f-title-contact');
+  if(!a || !b || a.__wired) return;
+  a.__wired = true;
+  a.addEventListener('change', () => { if(a.checked) b.checked = false; showProfileTitle(); markMissing(); });
+  b.addEventListener('change', () => { if(b.checked) a.checked = false; showProfileTitle(); markMissing(); });
+  ['f-name', 'f-contact'].forEach(id => { const i = el(id); if(i) i.addEventListener('input', showProfileTitle); });
 }
 /* Every word about the save goes beside the Save button as well as into the
    toast at the top: the button is at the bottom of a long form. */
@@ -1470,6 +1498,8 @@ function renderProfileForm(){
   set('f-phone', c.phone); set('f-email', c.email); set('f-contact', c.contact);
   set('f-address', c.address); set('f-founded', c.founded); set('f-employees', c.employees);
   set('f-handle', c.handle);
+  wireProfileTitle();
+  setTitleSource(c.title_source || '');
   renderProgress();
   syncAccountUrl();
   markMissing();
@@ -1788,6 +1818,8 @@ async function saveProfile(){
      contact, which is how companies ended up listed with no one to call. */
   if(!val('f-contact')){ btn.disabled = false; saveNote('Not saved: a contact person is needed. It is who buyers see on your listings.', false); el('f-contact').focus(); return; }
   if(!val('f-email')){ btn.disabled = false; saveNote('Not saved: a public email is needed. It is how buyers reach you from your listings.', false); el('f-email').focus(); return; }
+  const clubPage = PT.co && PT.co.kind === 'club';
+  if(!clubPage && !titleSource()){ btn.disabled = false; markMissing(); saveNote('Not saved: pick a Profile Title. Tick Use Company Name for a business, or Use Contact Person for a student.', false); el('f-title-company').focus(); return; }
   if(handleChanged && wantHandle){
     const why = await handleAvailable(wantHandle, PT.slug, PT.user && PT.user.id);
     if(why){ btn.disabled = false; saveNote('Address not saved: ' + why + ' Your other changes were not saved either. Fix the address or put the old one back.', false); return; }
@@ -1820,6 +1852,7 @@ async function saveProfile(){
     employees: val('f-employees') || null,
     socials
   };
+  if(!clubPage) fields.title_source = titleSource();
   /* College club: only saved as one when the box is ticked; the officers list
      is validated because a bad address would tag nobody */
   if(el('f-club')){
@@ -1890,7 +1923,7 @@ async function saveProfile(){
     const e2 = await updateMyProfile(mine);
     if(e2) console.warn('profile mirror', e2);
   }
-  saveNote(isClubPage ? 'Saved' : fresh ? 'Profile Saved. Your page is at circuits.com/' + wantHandle : 'Profile Saved', true, true);
+  saveNote(fresh && !isClubPage ? 'Profile Saved. Your page is at circuits.com/' + wantHandle : 'Profile Saved', true, true);
   markClean();
   if(fresh){
     renderSeeking(await myProfile());
