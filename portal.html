@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=ac58b1e121">
+<link rel="stylesheet" href="/styles.css?v=38555ed87b">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -383,25 +383,38 @@
   </section>
 
 
-  <!-- Members (Jacob, 2026-10-12): a club page's members and its member
-       invite link, a tab of their own. Officers stay on Club Details: the
-       club's owner is the only one who approves them. -->
+  <!-- Members & Officers (Jacob, 2026-10-12, officers joined it 2026-10-28):
+       a club page's people and their invite links, a tab of their own. -->
   <section class="pt-panel" id="tab-members">
     <div class="pt-tab-head"><div><h2>Members &amp; Officers</h2>
-      <p class="kit-intro">Everyone in the club. A member with a Circuits.com address gets a Member badge on their own profile, linked to the club page.</p></div></div>
-    <div class="cb-grid">
-          <section class="cb-card">
-            <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2"/></svg>Members <span class="pf-note" id="fold-members-n"></span></h3>
-            <p class="pf-note" style="margin:0 0 12px">A member with a Circuits.com address gets a Member badge on their own profile. Members without one are named only.</p>
-            <div class="pt-list cb-rows" id="f-members"></div>
+      <p class="kit-intro">Everyone in the club. Add people by hand, or send an invite link: whoever signs up through it and confirms their email lands on the list Confirmed. Circuits.com approves each person before their badge shows on their own profile.</p></div></div>
+    <!-- Officers and Members, each a box and an invite link (Jacob,
+         2026-10-28: officers are back on invite links). Emails are private:
+         they are kept apart from the club page, readable by the owner and
+         Circuits.com only. Confirmed is set by the invite link, never typed. -->
+    <div class="cb-grid cb-people">
+          <section class="cb-card cb-span">
+            <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2"/></svg>Officers <span class="pf-note" id="fold-officers-n"></span></h3>
+            <p class="pf-note" style="margin:0 0 12px">An officer with a Circuits.com Profile URL gets a badge with their Officer Title on their own profile, once approved.</p>
+            <div class="pt-people" id="f-officers"></div>
           </section>
           <section class="cb-card cb-span">
-            <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.5 1.5"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.5"/></svg>Member invite link</h3>
-            <p class="pf-note" style="margin:0 0 12px">Send members a link. Whoever creates an account through it is added to this club as a member the moment their email is confirmed, badge and all. Officers are added by you alone, on Club Details.</p>
+            <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.5 1.5"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.5"/></svg>Officer Invite Link</h3>
+            <p class="pf-note" style="margin:0 0 12px">Send officers this link. Whoever creates an account through it, or signs in with it, is added to Officers as Confirmed the moment their email is confirmed.</p>
+            <div id="pt-officer-invites"></div>
+          </section>
+          <section class="cb-card cb-span">
+            <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2"/></svg>Members <span class="pf-note" id="fold-members-n"></span></h3>
+            <p class="pf-note" style="margin:0 0 12px">A member with a Circuits.com Profile URL gets a badge with the club&rsquo;s name on their own profile, once approved.</p>
+            <div class="pt-people" id="f-members"></div>
+          </section>
+          <section class="cb-card cb-span">
+            <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.5 1.5"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.5"/></svg>Member Invite Link</h3>
+            <p class="pf-note" style="margin:0 0 12px">Send members this link. Whoever creates an account through it, or signs in with it, is added to Members as Confirmed the moment their email is confirmed.</p>
             <div id="pt-club-invites"></div>
           </section>
     </div>
-    <div class="pt-save-row cb-save"><button class="btn btn-primary pt-save-club cb-cta" type="button"><span>Save members</span></button><span class="pt-save-msg" id="pt-members-msg" role="status"></span></div>
+    <div class="pt-save-row cb-save"><button class="btn btn-primary pt-save-club cb-cta" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Save Members &amp; Officers</span></button><span class="pt-save-msg" id="pt-members-msg" role="status"></span></div>
   </section>
 
   <!-- branding: the printable artwork (was the Promote tab until 2026-09-11) -->
@@ -466,11 +479,6 @@
               <div class="auth-field"><label for="f-promo-alumni"><span class="cb-k">Stay connected.</span>Alumni</label><textarea id="f-promo-alumni" rows="4" maxlength="600" placeholder="How past members stay involved." autocomplete="off"></textarea></div>
               <div class="auth-field"><label for="f-promo-employers"><span class="cb-k">Hire from the club.</span>Employers</label><textarea id="f-promo-employers" rows="4" maxlength="600" placeholder="Why hire from this club, how to sponsor or recruit." autocomplete="off"></textarea></div>
             </div>
-          </section>
-          <section class="cb-card">
-            <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2"/></svg>Officers <span class="pf-note" id="fold-officers-n"></span></h3>
-            <p class="pf-note" style="margin:0 0 12px">An officer with a Circuits.com address gets a Leadership badge on their own profile, linked to this page.</p>
-            <div class="pt-list cb-rows" id="f-officers"></div>
           </section>
         </div>
         <div class="pt-save-row cb-save"><button class="btn btn-primary pt-save-club cb-cta" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Save club</span></button><span class="pt-save-msg" id="pt-club-msg" role="status"></span></div>
@@ -884,17 +892,29 @@
     </div>
   </div>
 
-  <!-- Club Admin: Members & Officers, across every club page -->
+  <!-- Club Admin: Members & Officers, across every club page (Jacob,
+       2026-10-28): the Club Keywords layout, waiting and live, with Approve
+       and Deny and a badge whose text and colour staff set. The badge starts
+       as the club's name for a member, the officer's title for an officer. -->
   <div class="panel" data-adm="clubppl">
-    <div class="panel-head"><h2>Members &amp; Officers</h2><span class="hint" id="cp-hint">Everyone Listed On A Club Page. An Address Means They Carry A Member Or Leadership Badge On Their Own Profile</span></div>
+    <div class="panel-head"><h2>Members &amp; Officers</h2><span class="hint" id="cp-hint">Everyone Listed On A Club Page. Approve Puts Their Badge On Their Own Profile</span></div>
     <div class="panel-body">
+      <h3 class="adm-sub">Waiting For Approval</h3>
       <div class="table-scroll">
         <table class="dash-table">
-          <thead><tr><th>Club</th><th>Name</th><th>Circuits.com address</th><th>Role</th></tr></thead>
+          <thead><tr><th>Club</th><th>Name</th><th>Role</th><th>Email</th><th>Profile URL</th><th>Confirmed</th><th>Badge</th><th>Actions</th></tr></thead>
+          <tbody id="cp-pending-body"></tbody>
+        </table>
+      </div>
+      <div id="cp-pending-empty" class="empty-line" style="display:none">No Members Or Officers Waiting.</div>
+      <h3 class="adm-sub">Live Members &amp; Officers</h3>
+      <div class="table-scroll">
+        <table class="dash-table">
+          <thead><tr><th>Club</th><th>Name</th><th>Role</th><th>Email</th><th>Profile URL</th><th>Confirmed</th><th>Badge</th><th>Actions</th></tr></thead>
           <tbody id="cp-body"></tbody>
         </table>
       </div>
-      <div id="cp-empty" class="empty-line" style="display:none">No Members Or Officers Listed On Any Club Yet.</div>
+      <div id="cp-empty" class="empty-line" style="display:none">No Approved Members Or Officers Yet.</div>
     </div>
   </div>
 
@@ -983,10 +1003,10 @@
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
-<script src="/store.js?v=cdcf6d510e"></script>
-<script src="/app.js?v=e2f61b536c"></script>
-<script src="/portal.js?v=bd3f4820cc"></script>
-<script src="/admin.js?v=cbbf8feabb"></script>
+<script src="/store.js?v=300a05868f"></script>
+<script src="/app.js?v=51344b3c99"></script>
+<script src="/portal.js?v=a7d513abfc"></script>
+<script src="/admin.js?v=5d9e932546"></script>
 <script>
 /* Save profile, Save club and Save members all run the one save. Save club
    was never wired, so pressing it did nothing (Jacob, 2026-10-12: "Save

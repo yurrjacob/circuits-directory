@@ -231,6 +231,21 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   const cl = fs.readFileSync(path.join(ROOT, 'clubs.html'), 'utf8');
   assert.ok(/<title>Global Club List \| Circuits\.com<\/title>/.test(cl), '/clubs is not titled Global Club List');
   assert.deepStrictEqual([...cl.matchAll(/<th[^>]*>([^<]+)<\/th>/g)].map(m => m[1]), ['#', 'Club Name', 'University Name', 'Circuits URL', 'Club Email Address'], 'the Global Club List columns are not #, Club Name, University Name, Circuits URL, Club Email Address');
+  /* Members & Officers (Jacob, 2026-10-28) */
+  {
+    const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8'), aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
+    const st = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8'), wc = fs.readFileSync(path.join(ROOT, 'welcome.html'), 'utf8'), pf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
+    assert.ok(/<th>\$\{L\} Name<\/th><th>\$\{L\} Email Address<\/th><th>\$\{L\} Profile URL<\/th>\$\{officer \? '<th>Officer Title<\/th>' : ''\}<th>Confirmed<\/th>/.test(pj), 'the Members and Officers boxes lost Name, Email Address, Profile URL or Confirmed');
+    /* emails are private: never in the public team or members lists */
+    assert.ok(/fields\.team = officers\.map\(\(\{ email, \.\.\.p \}\) => p\);/.test(pj) && /fields\.members = members\.map\(\(\{ email, \.\.\.p \}\) => p\);/.test(pj) && /saveClubEmails\(PT\.slug, PT\.peopleEmails\)/.test(pj), 'member or officer emails would be written onto the public club page');
+    assert.ok(/from\('club_emails'\)/.test(st) && !/club_emails'\)\.select\('\*'\)/.test(st), 'club emails are not read from club_emails, or with select(*)');
+    assert.ok(/id="wc-pill-t"/.test(wc) && /'Officer Confirmed' : 'Membership Confirmed'/.test(wc) && /'Welcome ' \+ info\.name/.test(wc) && /class="wc-club-go wc-club-link" href=[^>]*>View Club Page</.test(wc), 'the invite landing is not Membership Confirmed, Welcome <club>, View Club Page');
+    assert.ok(/if\(t\)\{ sub\.hidden = true; await acceptPendingInvite\(user, t, info\); return; \}/.test(wc) && /body\.wc-invite \.wc-lede,body\.wc-invite \.wc-wrap-cards\{display:none\}/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the invite landing still shows the address line, the free line or the start cards');
+    assert.ok(/id="cp-pending-body"/.test(ph) && /id="cp-body"/.test(ph) && (ph.match(/<th>Club<\/th><th>Name<\/th><th>Role<\/th><th>Email<\/th><th>Profile URL<\/th><th>Confirmed<\/th><th>Badge<\/th><th>Actions<\/th>/g) || []).length === 2, 'Club Admin Members & Officers is not waiting and live boxes with a Badge column');
+    assert.ok(/function personBadgeDefault\(r\)\{ return r\.list === 'team' \? \(r\.p\.role \|\| 'Officer'\) : \(r\.c\.name \|\| 'Member'\); \}/.test(aj), 'a badge no longer defaults to the officer title or the club name');
+    assert.ok(/const live = p => p && \(!p\.status \|\| p\.status === 'Approved'\);/.test(st), 'a person waiting for approval would carry a badge');
+    assert.ok(/r\.badge \|\| r\.role \|\| 'Officer'/.test(pf), 'the officer badge ignores the badge staff set');
+  }
   /* Club Details and Add a Project (Jacob, 2026-10-28) */
   {
     const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8'), pf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8'), st = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
@@ -983,8 +998,10 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     assert.deepStrictEqual(order, ['1', '2', '3', '4', '5'], 'club mode tabs are not in the order Club Details, Club Keywords, Members, Branding, Account Settings');
     assert.ok(/body\.club-mode \.pt-tab\[data-tab="profile"\],body\.club-mode \.pt-tab\[data-tab="upgrades"\],\s*body\.club-mode \.pt-tab\[data-tab="hiring"\],body\.club-mode \.pt-tab\[data-tab="seeking"\]\{display:none\}/.test(css), 'club mode still shows Profile Details, Upgrades, Hire Talent or Search Work');
     assert.ok(/tabLabel\('club', club \? 'Club Details' : 'Student Club'\);/.test(portalSrc2) && /tabLabel\('listings', club \? 'Club Keywords' : 'Your Listings'\);/.test(portalSrc2), 'club mode does not rename Club Details and Club Keywords');
-    assert.ok(/for\(const \[role, label, what\] of \[\['member', 'Members',[^\]]*\]\]\)/.test(portalSrc2) && !/\['officer', 'Officers'/.test(portalSrc2), 'officer invite links are back');
-    assert.ok(portalHtml2.indexOf('id="f-members"') > portalHtml2.indexOf('id="tab-members"') && portalHtml2.indexOf('id="pt-club-invites"') > portalHtml2.indexOf('id="tab-members"'), 'the members list and its invite link are not on the Members tab');
+    /* officers are back on invite links, in their own box (Jacob, 2026-10-28) */
+    assert.ok(/\['officer', 'Officers', [^\]]*'pt-officer-invites'\], \['member', 'Members', [^\]]*'pt-club-invites'\]/.test(portalSrc2), 'the Officer and Member invite links are not both drawn');
+    const tm = portalHtml2.indexOf('id="tab-members"'), tb = portalHtml2.indexOf('id="tab-club"');
+    assert.ok(['f-officers', 'pt-officer-invites', 'f-members', 'pt-club-invites'].every(id => { const i = portalHtml2.indexOf(`id="${id}"`); return i > tm && i < tb; }), 'Officers, Officer Invite Link, Members and Member Invite Link are not all on the Members & Officers tab');
     assert.ok(/<label for="nc-name">Club Name <span class="req">\*<\/span><\/label>/.test(portalHtml2) && /<label for="nc-college">College or University <span class="req">\*<\/span><\/label>/.test(portalHtml2) && /The Club's Circuits\.com address <span class="req">\*<\/span>/.test(portalHtml2), 'the create-club fields are not marked required');
     assert.ok(/if\(!isClubPage\)\{\s*const mine = /.test(portalSrc2), 'saving a club page writes the club onto the owner\'s own profile');
     assert.ok(/document\.querySelectorAll\('\.pt-save, \.pt-save-club'\)\.forEach\(b => b\.addEventListener\('click', saveProfile\)\);/.test(portalHtml2), 'Save club and Save members are not wired to the save');

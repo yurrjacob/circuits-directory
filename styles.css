@@ -2637,3 +2637,31 @@ body.club-mode .handle-line .handle-row{flex:0 1 380px}
 .pj-ds-up input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .pj-part-x{border:0;background:none;cursor:pointer;color:var(--muted);font-size:1rem;line-height:1;padding:0 2px}
 #pj-part-add{margin:0 0 18px}
+
+/* the club invite landing (2026-10-28): the welcome page without its cards */
+body.wc-invite .wc-lede,body.wc-invite .wc-wrap-cards{display:none}
+.wc-club .wc-club-link{color:#8ab8ff;text-decoration:underline;text-underline-offset:2px}
+.wc-club .wc-club-link:hover{color:#b5d1ff}
+
+/* Members & Officers tables (2026-10-28) */
+.pp-wrap{overflow-x:auto;margin:0 0 10px}
+.pp-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.pp-table th{text-align:left;font-size:.74rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.pp-table td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.pp-table input{width:100%;min-width:130px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--input-bg)}
+.pp-url{display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--input-bg);padding-left:9px}
+.pp-url span{color:var(--muted);font-size:.82rem;white-space:nowrap}
+.pp-url input{border:0;padding-left:2px;min-width:90px;font-weight:700}
+.pp-state{white-space:nowrap}
+.pp-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:.78rem;font-weight:700}
+.pp-yes{background:#e8f5d4;color:#2f5a00}
+.pp-no{background:#f1f2f4;color:var(--muted)}
+.pp-st{display:block;font-size:.72rem;color:#8a5a00;margin-top:3px}
+.pp-st-ok{color:#2f5a00}
+.pp-st-bad{color:#b3261e}
+
+/* Club Admin badge editor (2026-10-28) */
+.adm-badge-edit{display:flex;gap:6px;align-items:center}
+.adm-badge-edit input[type=text]{width:140px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;font:inherit;font-size:.84rem}
+.adm-badge-edit input[type=color]{width:34px;height:30px;padding:2px;border:1px solid var(--line);border-radius:7px;background:var(--card);cursor:pointer}
+.adm-badge-prev{display:inline-block;margin-top:5px;font-size:.78rem;font-weight:800}

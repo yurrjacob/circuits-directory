@@ -792,14 +792,24 @@ async function fetchClubRoles(handle){
     sb.from('companies').select(cols).eq('kind', 'club').eq('published', true).contains('members', [{ handle: h }])]);
   if(a.error) console.warn('fetchClubRoles', a.error.message);
   if(b.error) console.warn('fetchClubRoles', b.error.message);
+  /* only an approved person carries the badge (2026-10-28; people from
+     before approvals have no status and count as approved). Its text and
+     colour are what staff set, else the officer's title or the club's name. */
+  const live = p => p && (!p.status || p.status === 'Approved');
+  const color = p => (p && p.badge && /^#[0-9a-f]{6}$/i.test(p.badge.color || '')) ? p.badge.color : '';
+  const find = (list, k) => (Array.isArray(list) ? list : []).find(t => t && String(t.handle || '').toLowerCase() === k);
   const out = new Map();
   for(const c of (a.data || [])){
-    const me = (Array.isArray(c.team) ? c.team : []).find(t => t && String(t.handle || '').toLowerCase() === h) || {};
-    out.set(c.handle, { name: c.name, handle: c.handle, logo: c.logo, college_name: c.college_name, kind: 'lead', role: me.role || 'Officer' });
+    const me = find(c.team, h);
+    if(!live(me)) continue;
+    out.set(c.handle, { name: c.name, handle: c.handle, logo: c.logo, college_name: c.college_name, kind: 'lead', role: me.role || 'Officer',
+      badge: (me.badge && String(me.badge.text || '').trim()) || me.role || 'Officer', color: color(me) });
   }
   for(const c of (b.data || [])){
-    if(out.has(c.handle)) continue;
-    out.set(c.handle, { name: c.name, handle: c.handle, logo: c.logo, college_name: c.college_name, kind: 'member', role: 'Member' });
+    const me = find(c.members, h);
+    if(out.has(c.handle) || !live(me)) continue;
+    out.set(c.handle, { name: c.name, handle: c.handle, logo: c.logo, college_name: c.college_name, kind: 'member', role: 'Member',
+      badge: (me.badge && String(me.badge.text || '').trim()) || c.name, color: color(me) });
   }
   return [...out.values()];
 }
@@ -843,6 +853,37 @@ async function acceptClubInvite(token){
   const { data, error } = await sb.rpc('accept_club_invite', { p_token: token });
   if(error) return { error: /bad_invite/.test(error.message) ? 'That invite link has expired or was reset.' : /no_profile/.test(error.message) ? 'Finish creating your account first.' : error.message };
   return { handle: data };
+}
+/* Members & Officers emails (2026-10-28): private, readable by the club's
+   owner and staff only, keyed '<club slug>:<person id>'. */
+async function fetchClubEmails(slugs){
+  if(!sb || !slugs || !slugs.length) return {};
+  const { data, error } = await sb.from('club_emails').select('company_slug, person_id, email').in('company_slug', slugs);
+  if(error){ console.warn('fetchClubEmails', error.message); return {}; }
+  const out = {};
+  (data || []).forEach(r => { out[r.company_slug + ':' + r.person_id] = r.email; });
+  return out;
+}
+/* the whole set for one club: rows given are written, any other row goes */
+async function saveClubEmails(slug, list){
+  if(!sb) return 'No connection';
+  const keep = (list || []).filter(x => x && x.person_id && x.email);
+  if(keep.length){
+    const { error } = await sb.from('club_emails').upsert(keep.map(x => ({ company_slug: slug, person_id: x.person_id, email: x.email })));
+    if(error) return error.message;
+  }
+  let q = sb.from('club_emails').delete().eq('company_slug', slug);
+  if(keep.length) q = q.not('person_id', 'in', '(' + keep.map(x => x.person_id).join(',') + ')');
+  const { error } = await q;
+  return error ? error.message : '';
+}
+/* staff: approve, deny or badge the people on a club page (the database lets
+   only staff change status and badge) */
+async function updateClubPeople(slug, fields){
+  if(!sb) return 'No connection';
+  const { data, error } = await sb.from('companies').update(fields).eq('slug', slug).select('slug');
+  if(error) return error.message;
+  return data && data.length ? '' : 'That change was refused.';
 }
 /* the invite a visitor arrived with, kept until an account accepts it */
 const INVITE_KEY = 'cx_club_invite';

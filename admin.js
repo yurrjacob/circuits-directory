@@ -297,22 +297,91 @@ function renderClubUpgrades(){
   lb.innerHTML = live.map(extrasRow).join('');
   $('cu-live-empty').style.display = live.length ? 'none' : 'block';
 }
-function renderClubPeople(){
-  const body = $('cp-body'); if(!body) return;
+/* ---- Club Admin, Members & Officers (Jacob, 2026-10-28) ----
+   Waiting and live, like Club Keywords. Only staff can approve, deny or set a
+   badge (the database keeps an owner's hands off all three). A badge starts
+   as the club's name for a member and the officer's title for an officer. */
+let clubEmails = {};
+const PERSON_LIST = { team: 'Officer', members: 'Member' };
+function clubPeopleRows(){
   const rows = [];
-  for(const c of allClubs){
-    for(const t of (Array.isArray(c.team) ? c.team : [])) if(t && (t.name || t.handle)) rows.push({ c, name: t.name, handle: t.handle, role: t.role || 'Officer', lead: true });
-    for(const m of (Array.isArray(c.members) ? c.members : [])) if(m && (m.name || m.handle)) rows.push({ c, name: m.name, handle: m.handle, role: 'Member', lead: false });
-  }
-  body.innerHTML = rows.map(r => `<tr>
-      <td><a href="/${esc(r.c.handle || r.c.slug)}" target="_blank" rel="noopener">${esc(r.c.name)}</a></td>
-      <td>${esc(r.name || r.handle)}</td>
-      <td>${r.handle ? `<a href="/${esc(r.handle)}" target="_blank" rel="noopener">circuits.com/${esc(r.handle)}</a>` : '<span class="cell-muted">none, named only</span>'}</td>
-      <td>${r.lead ? '<b>' + esc(r.role) + '</b> <span class="cell-muted">(Leadership badge)</span>' : 'Member' + (r.handle ? ' <span class="cell-muted">(Member badge)</span>' : '')}</td></tr>`).join('');
-  $('cp-empty').style.display = rows.length ? 'none' : 'block';
-  const lead = rows.filter(r => r.lead).length;
-  $('cp-hint').textContent = rows.length ? `${lead} officer${lead === 1 ? '' : 's'} and ${rows.length - lead} member${rows.length - lead === 1 ? '' : 's'} across ${allClubs.length} club page${allClubs.length === 1 ? '' : 's'}`
-    : 'Everyone Listed On A Club Page. An Address Means They Carry A Member Or Leadership Badge On Their Own Profile';
+  for(const c of allClubs) for(const list of ['team', 'members'])
+    for(const p of (Array.isArray(c[list]) ? c[list] : []))
+      if(p && p.id && (p.name || p.handle)) rows.push({ c, list, p, key: c.slug + '|' + list + '|' + p.id });
+  return rows;
+}
+function personBadgeDefault(r){ return r.list === 'team' ? (r.p.role || 'Officer') : (r.c.name || 'Member'); }
+function personRow(r, pending){
+  const p = r.p, b = p.badge || {}, k = esc(r.key);
+  const color = /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : '#3f6300';
+  return `<tr class="${pending ? 'row-waiting' : ''}">
+      <td><a href="/${esc(r.c.handle || r.c.slug)}" target="_blank" rel="noopener">${esc(r.c.name)}</a><br><span class="cell-muted">${esc(r.c.college_name || '')}</span></td>
+      <td><b>${esc(p.name || p.handle)}</b></td>
+      <td>${r.list === 'team' ? esc(p.role || 'Officer') + ' <span class="cell-muted">(Officer)</span>' : 'Member'}</td>
+      <td class="cell-muted">${clubEmails[r.c.slug + ':' + p.id] ? `<a href="mailto:${esc(clubEmails[r.c.slug + ':' + p.id])}">${esc(clubEmails[r.c.slug + ':' + p.id])}</a>` : 'none'}</td>
+      <td>${p.handle ? `<a href="/${esc(p.handle)}" target="_blank" rel="noopener">circuits.com/${esc(p.handle)}</a>` : '<span class="cell-muted">none, named only</span>'}</td>
+      <td>${p.confirmed ? '<b>Yes</b>' : '<span class="cell-muted">No</span>'}</td>
+      <td><span class="adm-badge-edit"><input type="text" id="pb-t-${k}" value="${esc(b.text || personBadgeDefault(r))}" maxlength="40" aria-label="Badge text"><input type="color" id="pb-c-${k}" value="${esc(color)}" aria-label="Badge colour"></span>
+        <span class="adm-badge-prev" style="color:${esc(color)}">${esc(b.text || personBadgeDefault(r))}</span></td>
+      <td class="row-actions">
+        ${pending ? `<button class="mini-btn green" onclick="approvePersonUI('${k}')">Approve</button><button class="mini-btn" onclick="denyPersonUI('${k}')">Deny</button>`
+          : `<button class="mini-btn green" onclick="savePersonBadgeUI('${k}')">Save badge</button><button class="mini-btn" onclick="denyPersonUI('${k}')">Unapprove</button>`}
+        <button class="mini-btn danger" onclick="removePersonUI('${k}')">Remove</button></td></tr>`;
+}
+async function renderClubPeople(){
+  const body = $('cp-body'), pend = $('cp-pending-body'); if(!body || !pend) return;
+  try{ clubEmails = await fetchClubEmails(allClubs.map(c => c.slug)); }catch(e){ clubEmails = {}; }
+  const rows = clubPeopleRows();
+  const waiting = rows.filter(r => r.p.status === 'Pending' || r.p.status === 'Denied');
+  const live = rows.filter(r => !r.p.status || r.p.status === 'Approved');
+  waiting.sort((a, b) => (a.p.status === 'Denied') - (b.p.status === 'Denied'));
+  pend.innerHTML = waiting.map(r => personRow(r, true)).join('');
+  body.innerHTML = live.map(r => personRow(r, false)).join('');
+  $('cp-pending-empty').style.display = waiting.length ? 'none' : 'block';
+  $('cp-empty').style.display = live.length ? 'none' : 'block';
+  const n = waiting.filter(r => r.p.status === 'Pending').length;
+  $('cp-hint').textContent = n ? `${n} ${n === 1 ? 'person' : 'people'} waiting for approval` : 'Everyone Listed On A Club Page. Approve Puts Their Badge On Their Own Profile';
+}
+/* one change to one person, written back as the club's whole list */
+async function changePerson(key, fn, done){
+  const [slug, list, id] = String(key).split('|');
+  const c = allClubs.find(x => x.slug === slug);
+  if(!c || !PERSON_LIST[list]) return;
+  const arr = (Array.isArray(c[list]) ? c[list] : []).map(x => Object.assign({}, x));
+  const i = arr.findIndex(x => x && x.id === id); if(i < 0) return;
+  const next = fn(arr[i], arr, i);
+  if(next === false) return;
+  const err = await updateClubPeople(slug, { [list]: arr.filter(Boolean) });
+  if(err){ tell('Could not save: ' + err); return; }
+  if(done && typeof toast === 'function') toast(done, true);
+  await reloadClubs();
+}
+function badgeFromRow(key){
+  const t = document.getElementById('pb-t-' + key), c = document.getElementById('pb-c-' + key);
+  const text = t ? t.value.trim() : '', color = c && /^#[0-9a-f]{6}$/i.test(c.value) ? c.value : '';
+  return text ? Object.assign({ text }, color ? { color } : {}) : null;
+}
+async function approvePersonUI(key){
+  const badge = badgeFromRow(key);
+  await changePerson(key, p => { p.status = 'Approved'; if(badge) p.badge = badge; }, 'Approved. Their badge is on their profile.');
+}
+async function denyPersonUI(key){
+  const [slug, list, id] = String(key).split('|');
+  const c = allClubs.find(x => x.slug === slug); if(!c) return;
+  const p = (c[list] || []).find(x => x && x.id === id); if(!p) return;
+  if(!await askConfirm('Deny ' + (p.name || p.handle) + ' on ' + c.name + '? They stay on the club\'s list but carry no badge.')) return;
+  await changePerson(key, q => { q.status = 'Denied'; }, 'Denied.');
+}
+async function savePersonBadgeUI(key){
+  const badge = badgeFromRow(key);
+  await changePerson(key, p => { if(badge) p.badge = badge; else delete p.badge; }, 'Badge saved.');
+}
+async function removePersonUI(key){
+  const [slug, list, id] = String(key).split('|');
+  const c = allClubs.find(x => x.slug === slug); if(!c) return;
+  const p = (c[list] || []).find(x => x && x.id === id); if(!p) return;
+  if(!await askConfirm('Remove ' + (p.name || p.handle) + ' from ' + c.name + '? They come off the club page and lose the badge.')) return;
+  await changePerson(key, (q, arr, i) => { arr[i] = null; }, 'Removed.');
 }
 let allProjects = [];
 async function reloadClubProjects(){
@@ -886,6 +955,7 @@ window.initAdmin = async function(){
    tools/check.js fails if a new onclick appears without being listed here. */
 Object.assign(window, {
   editListing, editBadge, removeListing, togglePause, lockListing,
-  approveApp, rejectApp, setSuspended, approveJob, closeJob, approveUpgrade, denyUpgrade, sendNotificationUI, notifyAudienceUI, setRecruitStatus, deleteCompanyUI, setClubStatusUI, toggleProjectUI, deleteProjectUI, setProfileSuspendedUI
+  approveApp, rejectApp, setSuspended, approveJob, closeJob, approveUpgrade, denyUpgrade, sendNotificationUI, notifyAudienceUI, setRecruitStatus, deleteCompanyUI, setClubStatusUI, toggleProjectUI, deleteProjectUI, setProfileSuspendedUI,
+  approvePersonUI, denyPersonUI, savePersonBadgeUI, removePersonUI
 });
 })();

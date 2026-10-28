@@ -352,3 +352,153 @@ on conflict (id) do nothing;
 create policy videos_public_read on storage.objects for select using (bucket_id = 'videos');
 create policy videos_signed_in_upload on storage.objects for insert to authenticated with check (bucket_id = 'videos');
 create policy videos_staff_delete on storage.objects for delete using (bucket_id = 'videos' and public.is_staff());
+
+-- ---- Members & Officers (Jacob, 2026-10-28) --------------------------------
+-- Every person on a club page (companies.team for officers, companies.members
+-- for members) is {id, handle, name, role?, confirmed, status, badge}.
+--   confirmed: they joined through the club's invite link and confirmed their
+--              email. Only accept_club_invite sets it.
+--   status:    Pending until staff approve it in Club Admin, Members &
+--              Officers. Entries from before this change have none and read as
+--              Approved, so no badge already shown disappears.
+--   badge:     {text, color}, set by staff. Defaults: the club's name for a
+--              member, the officer's title for an officer.
+-- Emails are private, so they never go in companies (anyone can read it):
+-- they live in club_emails, readable by the club's owner and staff only.
+create table if not exists public.club_emails (
+  company_slug text not null references public.companies(slug) on delete cascade on update cascade,
+  person_id text not null,
+  email text not null,
+  primary key (company_slug, person_id)
+);
+alter table public.club_emails enable row level security;
+create policy club_emails_owner_or_staff on public.club_emails for all to authenticated
+  using (public.owns_company(company_slug) or public.is_staff())
+  with check (public.owns_company(company_slug) or public.is_staff());
+grant select, insert, update, delete on public.club_emails to authenticated;
+
+create or replace function public.club_people_ids(j jsonb) returns jsonb
+language sql volatile set search_path = public as $$
+  select coalesce(jsonb_agg(case when jsonb_typeof(v) = 'object' and coalesce(v->>'id', '') = ''
+    then v || jsonb_build_object('id', replace(gen_random_uuid()::text, '-', '')) else v end order by o), '[]'::jsonb)
+  from jsonb_array_elements(coalesce(j, '[]'::jsonb)) with ordinality as x(v, o)
+$$;
+
+-- An owner edits names, addresses, emails and titles; status, badge and
+-- confirmed always come from the row as it was. A new person, or one whose
+-- address changed, starts Pending and unconfirmed. Staff and the invite
+-- function pass through.
+create or replace function public.club_people_guard() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare lst text; arr jsonb; olds jsonb; e jsonb; o jsonb; outa jsonb;
+begin
+  if new.kind is distinct from 'club' then return new; end if;
+  if public.is_staff() or current_setting('circuits.club_invite', true) = 'on' then
+    new.team := public.club_people_ids(new.team);
+    new.members := public.club_people_ids(new.members);
+    return new;
+  end if;
+  foreach lst in array array['team', 'members'] loop
+    arr := case lst when 'team' then coalesce(new.team, '[]'::jsonb) else coalesce(new.members, '[]'::jsonb) end;
+    olds := case when tg_op = 'UPDATE' then (case lst when 'team' then coalesce(old.team, '[]'::jsonb) else coalesce(old.members, '[]'::jsonb) end) else '[]'::jsonb end;
+    outa := '[]'::jsonb;
+    for e in select value from jsonb_array_elements(arr) loop
+      if jsonb_typeof(e) <> 'object' then continue; end if;
+      o := null;
+      if coalesce(e->>'id', '') <> '' then
+        select value into o from jsonb_array_elements(olds) where value->>'id' = e->>'id' limit 1;
+      end if;
+      if o is null and coalesce(e->>'handle', '') <> '' then
+        select value into o from jsonb_array_elements(olds) where lower(value->>'handle') = lower(e->>'handle') limit 1;
+      end if;
+      e := e - 'status' - 'badge' - 'confirmed';
+      if o is not null and lower(coalesce(o->>'handle', '')) = lower(coalesce(e->>'handle', '')) then
+        e := e || jsonb_strip_nulls(jsonb_build_object('status', o->'status', 'badge', o->'badge', 'confirmed', o->'confirmed'));
+        if coalesce(e->>'id', '') = '' and coalesce(o->>'id', '') <> '' then e := e || jsonb_build_object('id', o->>'id'); end if;
+      else
+        e := e || jsonb_build_object('status', 'Pending', 'confirmed', false);
+      end if;
+      if coalesce(e->>'id', '') = '' then e := e || jsonb_build_object('id', replace(gen_random_uuid()::text, '-', '')); end if;
+      outa := outa || jsonb_build_array(e);
+    end loop;
+    if lst = 'team' then new.team := outa; else new.members := outa; end if;
+  end loop;
+  return new;
+end $$;
+create trigger companies_club_people_trg before insert or update of team, members on public.companies
+  for each row execute function public.club_people_guard();
+
+-- every existing person gets an id now, status untouched
+select set_config('circuits.club_invite', 'on', true);
+update public.companies set team = team, members = members where kind = 'club';
+select set_config('circuits.club_invite', 'off', true);
+
+-- Officer invite links are back (Jacob, 2026-10-28); 2026-10-12 had made
+-- officers owner-only.
+create or replace function public.club_invite_link(p_slug text, p_role text default 'member')
+returns text language plpgsql security definer set search_path = public as $$
+declare t text;
+begin
+  if auth.uid() is null or not owns_company(p_slug) then raise exception 'not_yours' using errcode = 'insufficient_privilege'; end if;
+  if not exists (select 1 from companies c where c.slug = p_slug and c.kind = 'club') then raise exception 'not_a_club' using errcode = 'check_violation'; end if;
+  if p_role is distinct from 'officer' then p_role := 'member'; end if;
+  select token into t from club_invites where company_slug = p_slug and role = p_role and revoked_at is null order by created_at desc limit 1;
+  if t is null then
+    t := replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '');
+    insert into club_invites (token, company_slug, role, created_by) values (t, p_slug, p_role, auth.uid());
+  end if;
+  return t;
+end $$;
+
+-- Joining through an invite link: the person lands on the list Confirmed and
+-- Pending. If the owner already listed them (by address, or by the email the
+-- owner typed) that row is confirmed instead of adding a second one. Staff
+-- are told there is someone to approve.
+create or replace function public.accept_club_invite(p_token text)
+returns text language plpgsql security definer set search_path = public as $$
+declare inv club_invites%rowtype; p profiles%rowtype; c companies%rowtype;
+        k text; lst jsonb; idx int; e jsonb; pid text; em text;
+begin
+  select * into p from profiles where user_id = auth.uid();
+  if p.user_id is null or p.handle is null then raise exception 'no_profile' using errcode = 'no_data_found'; end if;
+  select * into inv from club_invites where token = p_token and revoked_at is null;
+  if inv.token is null then raise exception 'bad_invite' using errcode = 'no_data_found'; end if;
+  select * into c from companies where slug = inv.company_slug and kind = 'club' and suspended_at is null;
+  if c.slug is null then raise exception 'bad_invite' using errcode = 'no_data_found'; end if;
+  k := case when inv.role = 'officer' then 'team' else 'members' end;
+  em := lower(coalesce(nullif(auth.jwt()->>'email', ''), (select email from auth.users where id = auth.uid()), ''));
+  /* already an officer: a member link changes nothing */
+  if k = 'members' and coalesce(c.team, '[]'::jsonb) @> jsonb_build_array(jsonb_build_object('handle', p.handle)) then
+    update club_invites set uses = uses + 1 where token = inv.token;
+    return c.handle;
+  end if;
+  lst := case k when 'team' then coalesce(c.team, '[]'::jsonb) else coalesce(c.members, '[]'::jsonb) end;
+  select (x.o - 1)::int into idx from jsonb_array_elements(lst) with ordinality as x(v, o)
+   where lower(coalesce(x.v->>'handle', '')) = lower(p.handle)
+      or (em <> '' and exists (select 1 from club_emails ce where ce.company_slug = c.slug and ce.person_id = x.v->>'id' and lower(ce.email) = em))
+   order by x.o limit 1;
+  if idx is not null then
+    e := lst->idx;
+    e := e || jsonb_build_object('handle', p.handle, 'confirmed', true);
+    if coalesce(e->>'name', '') = '' then e := e || jsonb_build_object('name', coalesce(nullif(p.display_name, ''), p.handle)); end if;
+    lst := jsonb_set(lst, array[idx::text], e);
+  else
+    pid := replace(gen_random_uuid()::text, '-', '');
+    e := jsonb_build_object('id', pid, 'handle', p.handle, 'name', coalesce(nullif(p.display_name, ''), p.handle), 'confirmed', true, 'status', 'Pending');
+    if k = 'team' then e := e || jsonb_build_object('role', 'Officer'); end if;
+    lst := lst || jsonb_build_array(e);
+    if em <> '' then insert into club_emails (company_slug, person_id, email) values (c.slug, pid, em) on conflict do nothing; end if;
+  end if;
+  perform set_config('circuits.club_invite', 'on', true);
+  if k = 'team' then update companies set team = lst, updated_at = now() where slug = c.slug;
+  else update companies set members = lst, updated_at = now() where slug = c.slug; end if;
+  perform set_config('circuits.club_invite', 'off', true);
+  update club_invites set uses = uses + 1 where token = inv.token;
+  if idx is null or coalesce(lst->idx->>'status', '') = 'Pending' then
+    perform notify_staff('New club ' || case k when 'team' then 'officer' else 'member' end || ' to approve: ' || c.name,
+      coalesce(nullif(p.display_name, ''), p.handle) || ' (circuits.com/' || p.handle || ') joined ' || c.name || ' through its '
+        || case k when 'team' then 'officer' else 'member' end || ' invite link and confirmed their email.',
+      '/portal#admin:clubppl');
+  end if;
+  return c.handle;
+end $$;

@@ -515,7 +515,7 @@ function applyPageMode(co){
   const h = el('pt-club-h'); if(h) h.textContent = club ? 'Club Details' : 'Student Club';
   const intro = el('pt-club-intro');
   if(intro) intro.textContent = club
-    ? 'Everything on your club\'s page: its name, contact, logo and about, the college, the Join Club link, the promo hub, the officers and the project showcase. Only you can edit it, and only you add officers.'
+    ? 'Everything on your club\'s page: its name, contact, logo and about, the college, the Join Club link, the promo hub and the project showcase. Only you can edit it. Officers and members are on the Members & Officers tab.'
     : 'Run a student club? Create its page here. It gets a public page of its own: your college\'s logo beside the club\'s, a Join Club button, a pitch for new members, alumni and employers, your officers and members, and a showcase of what the club has built. Officers get a Leadership badge, members a Member badge, each on their own profile.';
   /* the details form lives on Profile Details for a person and on Club Details for a club */
   const form = document.querySelector('#tab-profile > .pf-form, #pt-club-details-host > .pf-form');
@@ -1690,41 +1690,100 @@ function wireClubFields(c){
     PT.collegeFile = f; PT.clearCollege = false; show(URL.createObjectURL(f)); markDirty();
   };
   rm.onclick = () => { PT.clearCollege = true; PT.collegeFile = null; inp.value = ''; show(''); markDirty(); };
-  renderRepeater('officers', Array.isArray(c.team) ? c.team : [], ['handle', 'name', 'role'], ['Circuits.com address', 'Name', 'Role']);
-  renderRepeater('members', Array.isArray(c.members) ? c.members : [], ['handle', 'name'], ['Circuits.com address', 'Name']);
+  loadPeople(c);
   renderInvites(c);
+}
+/* ---- Members & Officers (Jacob, 2026-10-28) ----
+   Name, Email Address, Profile URL (and Officer Title), Confirmed. Each
+   person carries an id; their email lives in club_emails under that id,
+   never on the public club page. Confirmed and the approval status are set
+   by the invite link and by Circuits.com, and the database keeps them. */
+const PEOPLE = { emails: {} };
+function newPersonId(){ return [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join(''); }
+async function loadPeople(c){
+  try{ PEOPLE.emails = await fetchClubEmails([c.slug]); }catch(e){ PEOPLE.emails = {}; }
+  renderPeople('officers', c.team, c.slug);
+  renderPeople('members', c.members, c.slug);
+}
+function peopleState(p){
+  const conf = p.confirmed ? '<span class="pp-pill pp-yes">Yes</span>' : '<span class="pp-pill pp-no">No</span>';
+  const st = !p.id || !p.saved ? '' : p.status === 'Pending' ? '<span class="pp-st">Awaiting approval</span>' : p.status === 'Denied' ? '<span class="pp-st pp-st-bad">Not approved</span>' : '<span class="pp-st pp-st-ok">Approved</span>';
+  return conf + st;
+}
+function renderPeople(key, items, slug){
+  const box = el('f-' + key); if(!box) return;
+  const officer = key === 'officers', L = officer ? 'Officer' : 'Member';
+  const list = (Array.isArray(items) ? items : []).filter(x => x && typeof x === 'object')
+    .map(x => Object.assign({}, x, { saved: true, email: (x.id && PEOPLE.emails[slug + ':' + x.id]) || '' }));
+  box.__list = list;
+  const draw = () => {
+    box.innerHTML = (list.length ? `<div class="pp-wrap"><table class="pp-table"><thead><tr><th>${L} Name</th><th>${L} Email Address</th><th>${L} Profile URL</th>${officer ? '<th>Officer Title</th>' : ''}<th>Confirmed</th><th><span class="sr-only">Remove</span></th></tr></thead><tbody>`
+      + list.map((p, i) => `<tr>
+        <td><input type="text" data-i="${i}" data-f="name" maxlength="120" value="${escapeHtml(p.name || '')}" placeholder="Jane Doe" aria-label="${L} name ${i + 1}" autocomplete="off"></td>
+        <td><input type="email" data-i="${i}" data-f="email" maxlength="200" value="${escapeHtml(p.email || '')}" placeholder="jane@college.edu" aria-label="${L} email address ${i + 1}" autocomplete="off"></td>
+        <td><span class="pp-url"><span>circuits.com/</span><input type="text" data-i="${i}" data-f="handle" maxlength="40" value="${escapeHtml(p.handle || '')}" placeholder="jane" aria-label="${L} profile URL ${i + 1}" autocomplete="off" spellcheck="false"></span></td>
+        ${officer ? `<td><input type="text" data-i="${i}" data-f="role" maxlength="60" value="${escapeHtml(p.role || '')}" placeholder="President" aria-label="Officer title ${i + 1}" autocomplete="off"></td>` : ''}
+        <td class="pp-state">${peopleState(p)}</td>
+        <td><button type="button" class="mini-btn" data-del="${i}">Remove</button></td></tr>`).join('') + '</tbody></table></div>'
+      : `<p class="cb-empty">No ${L.toLowerCase()}s yet. Add one here, or send the ${L} Invite Link.</p>`)
+      + `<button type="button" class="mini-btn green rp-add" data-add="1">+ Add ${L}</button>`;
+    const n = el('fold-' + key + '-n'); if(n) n.textContent = list.length ? '\u00b7 ' + list.length : '\u00b7 none yet';
+  };
+  box.onclick = e => {
+    if(e.target.closest('[data-add]')){ list.push({ id: newPersonId() }); draw(); markDirty(); const ins = box.querySelectorAll('input[data-f="name"]'); if(ins.length) ins[ins.length - 1].focus(); }
+    const d = e.target.closest('[data-del]'); if(d){ list.splice(+d.dataset.del, 1); draw(); markDirty(); }
+  };
+  box.oninput = e => { const t = e.target; if(!t.dataset.f) return; list[+t.dataset.i][t.dataset.f] = t.value; markDirty(); };
+  draw();
+}
+/* the lists as the owner left them, each with its id, ready to save */
+function collectPeople(key){
+  const officer = key === 'officers';
+  return ((el('f-' + key) && el('f-' + key).__list) || []).map(p => {
+    if(!p.id) p.id = newPersonId();
+    const out = { id: p.id, handle: cleanHandle(p.handle), name: String(p.name || '').trim(), email: String(p.email || '').trim() };
+    if(officer) out.role = String(p.role || '').trim();
+    return out;
+  }).filter(p => p.handle || p.name || p.email);
+}
+function peopleProblem(list, L){
+  for(const p of list){
+    if(!p.name) return `every ${L} needs a ${L} Name.`;
+    if(p.email && !isValidEmail(p.email)) return `"${p.email}" is not an email address.`;
+  }
+  return teamProblem(list);
 }
 /* Invite links (2026-10-05): one for members, one for officers. Whoever signs
    up through one is added to the club when their email is confirmed. Reset
    makes a fresh link and the old one stops working. */
 async function renderInvites(c){
-  const host = el('pt-club-invites'); if(!host) return;
-  host.innerHTML = '<p class="pf-note">Preparing your invite links…</p>';
-  const rows = [];
-  /* members only (Jacob, 2026-10-12): officers are added by the owner alone */
-  for(const [role, label, what] of [['member', 'Members', 'added to the Members list, with a Member badge']]){
+  /* officers have a link again (Jacob, 2026-10-28), in a box of its own */
+  for(const [role, label, what, hostId] of [['officer', 'Officers', 'added to the Officers list, Confirmed', 'pt-officer-invites'], ['member', 'Members', 'added to the Members list, Confirmed', 'pt-club-invites']]){
+    const host = el(hostId); if(!host) continue;
+    host.innerHTML = '<p class="pf-note">Preparing your invite link…</p>';
     const r = await clubInviteLink(c.slug, role);
+    const rows = [];
     rows.push(`<div class="inv-row" data-role="${role}">
         <div class="inv-text"><b>${label}</b><span>Whoever signs up through this link is ${what}.</span></div>
         <div class="inv-link"><input type="text" readonly value="${r.error ? '' : escapeHtml(r.url)}" aria-label="${label} invite link" ${r.error ? `placeholder="${escapeHtml(r.error)}"` : ''}>
           <button type="button" class="btn btn-primary inv-copy" ${r.error ? 'disabled' : ''}>Copy link</button>
           <button type="button" class="mini-btn inv-reset" ${r.error ? 'disabled' : ''}>Reset</button></div>
       </div>`);
+    host.innerHTML = rows.join('');
+    host.querySelectorAll('.inv-copy').forEach(b => b.addEventListener('click', async () => {
+      const inp = b.parentElement.querySelector('input');
+      try{ await navigator.clipboard.writeText(inp.value); b.textContent = 'Copied'; }
+      catch(e){ inp.select(); b.textContent = 'Press Ctrl C'; }
+      setTimeout(() => { b.textContent = 'Copy link'; }, 2000);
+    }));
+    host.querySelectorAll('.inv-reset').forEach(b => b.addEventListener('click', async () => {
+      const row = b.closest('.inv-row');
+      if(!confirm('Reset this link? The old one stops working and anyone you already sent it to will need the new one.')) return;
+      const err = await revokeClubInvite(c.slug, row.dataset.role);
+      if(err){ toast(err, false); return; }
+      renderInvites(c);
+    }));
   }
-  host.innerHTML = rows.join('');
-  host.querySelectorAll('.inv-copy').forEach(b => b.addEventListener('click', async () => {
-    const inp = b.parentElement.querySelector('input');
-    try{ await navigator.clipboard.writeText(inp.value); b.textContent = 'Copied'; }
-    catch(e){ inp.select(); b.textContent = 'Press Ctrl C'; }
-    setTimeout(() => { b.textContent = 'Copy link'; }, 2000);
-  }));
-  host.querySelectorAll('.inv-reset').forEach(b => b.addEventListener('click', async () => {
-    const row = b.closest('.inv-row');
-    if(!confirm('Reset this link? The old one stops working and anyone you already sent it to will need the new one.')) return;
-    const err = await revokeClubInvite(c.slug, row.dataset.role);
-    if(err){ toast(err, false); return; }
-    renderInvites(c);
-  }));
 }
 /* Create club page: a second page for this account (Jacob, 2026-10-05). The
    database makes the row and the ownership; the picker then carries both. */
@@ -1960,14 +2019,16 @@ async function saveProfile(){
       if(join && !isValidWebsite(join)){ btn.disabled = false; saveNote('Not saved: the Join Club link does not look like a web address.', false); return; }
       fields.club_join_url = join ? (/^https?:\/\//i.test(join) ? join : 'https://' + join) : null;
       fields.club_promo = { members: val('f-promo-members') || '', alumni: val('f-promo-alumni') || '', employers: val('f-promo-employers') || '' };
-      const officers = cleanTeam(el('f-officers') && el('f-officers').__list);
-      const tp = teamProblem(officers);
+      const officers = collectPeople('officers');
+      const tp = peopleProblem(officers, 'officer');
       if(tp){ btn.disabled = false; saveNote('Not saved: ' + tp, false); return; }
-      fields.team = officers;
-      const members = cleanTeam(el('f-members') && el('f-members').__list).map(m => ({ handle: m.handle, name: m.name }));
-      const mp = teamProblem(members);
+      const members = collectPeople('members');
+      const mp = peopleProblem(members, 'member');
       if(mp){ btn.disabled = false; saveNote('Not saved: ' + mp, false); return; }
-      fields.members = members;
+      /* emails stay private: off the public lists, into club_emails below */
+      PT.peopleEmails = [...officers, ...members].map(p => ({ person_id: p.id, email: p.email }));
+      fields.team = officers.map(({ email, ...p }) => p);
+      fields.members = members.map(({ email, ...p }) => p);
       if(PT.collegeFile){
         const url = await uploadLogo(PT.collegeFile);
         if(url) fields.college_logo = url;
@@ -2007,6 +2068,10 @@ async function saveProfile(){
   const err = await updateCompany(PT.slug, fields);
   btn.disabled = false;
   if(err){ toast('Could not save: ' + err, false); return; }
+  if(fields.team && PT.peopleEmails){
+    const e3 = await saveClubEmails(PT.slug, PT.peopleEmails);
+    if(e3){ saveNote('Saved, but the member and officer emails were not: ' + e3, false); return; }
+  }
   /* the person behind the account shares the picture and the address, so
      recruiters and the public page agree. Their own name is the Contact
      Person, never the company name (Jacob, 2026-10-12: the Get Listed Name

@@ -324,9 +324,11 @@ function personClubSections(p){
   if(p.show_clubs === false) return html;
   const roles = Array.isArray(p.club_roles) ? p.club_roles : [];
   const projects = (Array.isArray(p.club_projects) ? p.club_projects : []).filter(x => x && x.title);
+  /* the badge text and colour staff set in Club Admin (2026-10-28) */
+  const bText = r => `<b${/^#[0-9a-f]{6}$/i.test(r.color || '') ? ` style="color:${r.color}"` : ''}>`;
   const pills = roles.map(r => r.kind === 'member'
-      ? `<a class="pf-badge pf-badge-member" href="${handleLink(r.handle)}"><span class="pf-badge-k">${badgeIcon('member')}Member</span><b>${escapeHtml(r.name || '')}</b><span>${escapeHtml(r.college_name || '')}</span></a>`
-      : `<a class="pf-badge pf-badge-lead" href="${handleLink(r.handle)}"><span class="pf-badge-k">${badgeIcon('lead')}Leadership</span><b>${escapeHtml(r.role || 'Officer')}</b><span>${escapeHtml(r.name || '')}${r.college_name ? `, ${escapeHtml(r.college_name)}` : ''}</span></a>`)
+      ? `<a class="pf-badge pf-badge-member" href="${handleLink(r.handle)}"><span class="pf-badge-k">${badgeIcon('member')}Member</span>${bText(r)}${escapeHtml(r.badge || r.name || '')}</b><span>${escapeHtml(r.badge && r.badge !== r.name ? r.name + (r.college_name ? ', ' + r.college_name : '') : r.college_name || '')}</span></a>`
+      : `<a class="pf-badge pf-badge-lead" href="${handleLink(r.handle)}"><span class="pf-badge-k">${badgeIcon('lead')}Leadership</span>${bText(r)}${escapeHtml(r.badge || r.role || 'Officer')}</b><span>${escapeHtml(r.name || '')}${r.college_name ? `, ${escapeHtml(r.college_name)}` : ''}</span></a>`)
     .concat(projects.map(x => {
       const c = x.companies || {};
       const me = (Array.isArray(x.team) ? x.team : []).find(t => t && String(t.handle || '').toLowerCase() === String(p.handle || '').toLowerCase()) || {};
