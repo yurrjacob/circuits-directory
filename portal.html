@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=4f9fd8cc13">
+<link rel="stylesheet" href="/styles.css?v=ac58b1e121">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -112,7 +112,7 @@
     <button class="pt-tab" data-tab="seeking"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="18" height="12.5" rx="2"/><path d="M8.5 7.5V5.8A1.8 1.8 0 0 1 10.3 4h3.4a1.8 1.8 0 0 1 1.8 1.8v1.7"/><path d="M3 12.5h18"/></svg>Search Work</button>
     <button class="pt-tab" data-tab="club"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/><path d="M22 9v6"/></svg>Student Club</button>
     <!-- Members: a club page's own tab (Jacob, 2026-10-12), shown in club mode only -->
-    <button class="pt-tab pt-tab-clubonly" data-tab="members"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18.5 20a6.5 6.5 0 0 0-3-5.5"/></svg>Members</button>
+    <button class="pt-tab pt-tab-clubonly" data-tab="members"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18.5 20a6.5 6.5 0 0 0-3-5.5"/></svg>Members &amp; Officers</button>
     <button class="pt-tab" data-tab="branding"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20a8 8 0 1 1 0-16 7 7 0 0 1 7 7 3 3 0 0 1-3 3h-1.5a1.5 1.5 0 0 0-1 2.6A2 2 0 0 1 12 20z"/><circle cx="8" cy="10" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="16" cy="10" r="1" fill="currentColor" stroke="none"/></svg>Branding</button>
     <button class="pt-tab" data-tab="account" id="pt-tab-account"><svg class="pt-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Account Settings</button>
     <!-- shown by portal.js only when the signed-in account is a Circuits.com admin -->
@@ -168,6 +168,8 @@
                profile as it stands in the form, with every field still to fill
                in marked red. The live page link sits inside the preview. -->
           <button type="button" class="btn btn-outline" id="f-preview">Preview Profile</button>
+          <!-- club pages only: where the club lives (Jacob, 2026-10-28) -->
+          <p class="pf-note pt-lives" id="pt-lives"></p>
         </div>
         <div id="handle-msg" class="pf-note"></div>
         <p class="pf-note">Short and memorable. This is the link you put on adverts, business cards and
@@ -385,7 +387,7 @@
        invite link, a tab of their own. Officers stay on Club Details: the
        club's owner is the only one who approves them. -->
   <section class="pt-panel" id="tab-members">
-    <div class="pt-tab-head"><div><h2>Members</h2>
+    <div class="pt-tab-head"><div><h2>Members &amp; Officers</h2>
       <p class="kit-intro">Everyone in the club. A member with a Circuits.com address gets a Member badge on their own profile, linked to the club page.</p></div></div>
     <div class="cb-grid">
           <section class="cb-card">
@@ -427,6 +429,7 @@
       <input type="checkbox" id="f-club" hidden autocomplete="off">
       <!-- a page that is not a club: make the club its own page here. The
            president keeps their own profile; the club gets its own address. -->
+      <div class="cb-club-note" id="pt-club-mine" hidden></div>
       <section class="cb-card cb-create" id="pt-club-create">
         <h3 class="cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/><path d="M22 9v6"/></svg>Create your club's page</h3>
         <p class="pf-note" style="margin:0 0 14px">Your own profile stays as it is. The club gets a page of its own at circuits.com/<b>its-address</b>, owned by this account. You switch between your pages with the picker at the top of the dashboard.</p>
@@ -439,7 +442,6 @@
           <div id="nc-handle-msg" class="pf-note"></div></div>
         <div class="pt-save-row"><button type="button" class="btn btn-primary cb-cta" id="nc-create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Create club page</span></button><span class="pt-save-msg" id="nc-msg" role="status"></span></div>
       </section>
-      <div class="cb-club-note pt-club-fields" id="pt-club-which"></div>
       <div class="pt-club-fields">
         <div class="cb-grid">
           <section class="cb-card">
@@ -447,7 +449,7 @@
             <div class="cb-logo-row">
               <div class="cb-logo-prev" id="pt-college-prev"><span class="rp-img-ph">Logo</span></div>
               <div class="cb-logo-acts">
-                <label class="btn btn-outline cb-file">Choose college logo<input id="pt-college-logo" type="file" accept="image/png,image/jpeg,image/webp"></label>
+                <label class="btn btn-outline cb-file">Choose College Logo<input id="pt-college-logo" type="file" accept="image/png,image/jpeg,image/webp"></label>
                 <button type="button" class="mini-btn" id="pt-college-rm" style="display:none">Clear</button>
                 <p class="field-hint">Shown beside your club's logo at the top of the page. PNG, JPEG or WebP, square is best.</p>
               </div>
@@ -491,27 +493,46 @@
             </div>
             <div class="auth-field"><label for="pj-summary">What it is and what it does</label>
               <textarea id="pj-summary" rows="7" maxlength="2000" placeholder="The problem, the design, the result." autocomplete="off"></textarea></div>
-            <div class="auth-field"><label for="pj-videos">Videos <span class="cell-muted">(one link per line)</span></label>
-              <textarea id="pj-videos" rows="3" maxlength="2000" placeholder="https://youtu.be/… or https://vimeo.com/…" autocomplete="off"></textarea>
+            <!-- Videos three ways (Jacob, 2026-10-28): upload one, a YouTube
+                 URL, or paste any other link -->
+            <div class="auth-field"><label for="pj-video-file">Videos</label>
+              <div class="pj-video-up">
+                <label class="btn btn-outline cb-file">Choose Video<input id="pj-video-file" type="file" accept="video/mp4,video/webm,video/quicktime"></label>
+                <span class="field-hint">MP4, WebM or MOV, up to 50 MB. It plays on the card.</span>
+              </div>
+              <div class="kw-tags cb-chips" id="pj-video-list"></div></div>
+            <div class="auth-field"><label for="pj-youtube">YouTube URL</label>
+              <input id="pj-youtube" type="text" maxlength="300" placeholder="https://youtu.be/…" autocomplete="off"></div>
+            <div class="auth-field"><label for="pj-videos">Or paste a video URL <span class="cell-muted">(one per line)</span></label>
+              <textarea id="pj-videos" rows="2" maxlength="2000" placeholder="https://vimeo.com/… or any other link" autocomplete="off"></textarea>
               <p class="field-hint">YouTube and Vimeo links play on the card. Any other link is shown as a link.</p></div>
           </div>
           <div>
             <div class="auth-field"><label for="pj-pics">Pictures</label>
-              <label class="cb-drop"><input id="pj-pics" type="file" multiple accept="image/png,image/jpeg,image/webp"><span>Choose pictures</span><small>The first one is the cover. PNG or JPEG, up to 10 MB each.</small></label>
+              <label class="cb-drop"><input id="pj-pics" type="file" multiple accept="image/png,image/jpeg,image/webp"><span class="cb-drop-btn">Choose Pictures</span><small>The first one is the cover. PNG or JPEG, up to 10 MB each.</small></label>
               <div class="kw-tags cb-chips" id="pj-pics-list"></div></div>
             <div class="auth-field"><label for="pj-docs">Build documents</label>
-              <label class="cb-drop"><input id="pj-docs" type="file" multiple accept="application/pdf,image/png,image/jpeg,image/webp"><span>Choose documents</span><small>Schematics, reports, slides. PDF, PNG or JPEG, up to 10 MB each.</small></label>
+              <label class="cb-drop"><input id="pj-docs" type="file" multiple accept="application/pdf,image/png,image/jpeg,image/webp"><span class="cb-drop-btn">Choose Documents</span><small>Schematics, reports, slides. PDF, PNG or JPEG, up to 10 MB each.</small></label>
               <div class="kw-tags cb-chips" id="pj-docs-list"></div></div>
             <div class="auth-field"><label for="pj-other">Other documents</label>
-              <label class="cb-drop"><input id="pj-other" type="file" multiple accept="application/pdf,image/png,image/jpeg,image/webp"><span>Choose documents</span><small>Posters, datasheets, anything else worth attaching.</small></label>
+              <label class="cb-drop"><input id="pj-other" type="file" multiple accept="application/pdf,image/png,image/jpeg,image/webp"><span class="cb-drop-btn">Choose Documents</span><small>Posters, datasheets, anything else worth attaching.</small></label>
               <div class="kw-tags cb-chips" id="pj-other-list"></div></div>
           </div>
         </div>
-        <h4 class="cb-h cb-h-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2"/></svg>Team <span class="pf-note" id="fold-pjteam-n"></span></h4>
+        <!-- Project Parts (Jacob, 2026-10-28): up to 10 rows. Links holds
+             Directory, our search for the part, and Datasheet, an upload. -->
+        <h4 class="cb-h cb-h-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>Project Parts <span class="pf-note" id="pj-parts-n"></span></h4>
+        <p class="pf-note" style="margin:0 0 10px">Up to 10 parts. Directory searches Circuits.com for the part name; attach a datasheet to link it too.</p>
+        <div class="pj-parts-wrap"><table class="pj-parts">
+          <thead><tr><th>Part Name</th><th>What It Does</th><th>Quantity</th><th>Links</th><th><span class="sr-only">Remove</span></th></tr></thead>
+          <tbody id="pj-parts"></tbody>
+        </table></div>
+        <button type="button" class="mini-btn green" id="pj-part-add">+ Add part</button>
+        <h4 class="cb-h cb-h-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4.5-6.2"/></svg>Project Team <span class="pf-note" id="fold-pjteam-n"></span></h4>
         <p class="pf-note" style="margin:0 0 10px">Address is the member's circuits.com/<b>address</b>. Members without one are named only. Tagged members get a Project badge on their profile.</p>
         <div class="pt-list cb-rows" id="f-pjteam"></div>
         <div class="pt-save-row cb-save">
-          <button class="btn btn-primary cb-cta" type="button" id="pj-save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Add to showcase</span></button>
+          <button class="btn btn-primary cb-cta" type="button" id="pj-save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Save &amp; Add to Showcase</span></button>
           <button class="mini-btn" type="button" id="pj-cancel" style="display:none">Cancel</button>
           <span class="pf-note" id="pj-msg" style="margin:0"></span>
         </div>
@@ -962,9 +983,9 @@
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
-<script src="/store.js?v=1a06bbfd91"></script>
-<script src="/app.js?v=847d31607c"></script>
-<script src="/portal.js?v=6bf0b5d710"></script>
+<script src="/store.js?v=cdcf6d510e"></script>
+<script src="/app.js?v=e2f61b536c"></script>
+<script src="/portal.js?v=bd3f4820cc"></script>
 <script src="/admin.js?v=cbbf8feabb"></script>
 <script>
 /* Save profile, Save club and Save members all run the one save. Save club

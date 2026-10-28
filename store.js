@@ -204,6 +204,19 @@ async function uploadDoc(file){
   return { name: file.name, url: sb.storage.from('docs').getPublicUrl(path).data.publicUrl };
 }
 
+/* A project video uploaded from the dashboard (2026-10-28): its own public
+   bucket, MP4, WebM or MOV up to 50 MB. The club page plays these in a
+   <video> player; only this bucket's URLs are trusted to play that way. */
+async function uploadVideo(file){
+  if(!sb || !file) return null;
+  const ext = (file.name.split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const path = Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+  const { error } = await sb.storage.from('videos').upload(path, file, { contentType: file.type, cacheControl: '31536000' });
+  if(error){ console.error('uploadVideo', error); return null; }
+  return { name: file.name, url: sb.storage.from('videos').getPublicUrl(path).data.publicUrl };
+}
+const UPLOADED_VIDEO_RE = /^https:\/\/ghpruernzhjwsgsezdyn\.supabase\.co\/storage\/v1\/object\/public\/videos\/[A-Za-z0-9._-]+\.(mp4|webm|mov)$/i;
+
 /* ---- write ---- */
 /* Join form: one submission becomes one row per keyword. */
 async function addApplicationKeywords(base, keywords){
@@ -747,7 +760,7 @@ async function fetchCompanyJobs(slug){
 /* ---- college clubs and projects (Jacob's hiring brief, 2026-09-29) ----
    A club is a companies row with kind = 'club'; its projects are their own
    rows. Both are public reads under RLS, so the column lists are explicit. */
-const PROJECT_COLS = 'id, company_slug, title, year, summary, cover_url, pics, docs, videos, other_docs, team, published, created_at';
+const PROJECT_COLS = 'id, company_slug, title, year, summary, cover_url, pics, docs, videos, other_docs, team, parts, published, created_at';
 /* every project on one club page, newest first (the owner also sees unpublished ones) */
 async function fetchProjects(slug){
   if(!sb || !slug) return [];
@@ -868,7 +881,7 @@ async function saveProject(p){
   if(!sb) return { error: 'No connection' };
   const row = { company_slug: p.company_slug, title: p.title, year: p.year || null, summary: p.summary || null,
     cover_url: p.cover_url || null, pics: p.pics || [], docs: p.docs || [], videos: p.videos || [], other_docs: p.other_docs || [],
-    team: p.team || [], published: p.published !== false };
+    team: p.team || [], parts: p.parts || [], published: p.published !== false };
   const q = p.id ? sb.from('projects').update(row).eq('id', p.id) : sb.from('projects').insert(row);
   const { data, error } = await q.select('id');
   if(error) return { error: error.message };

@@ -278,9 +278,17 @@ async function initPortal(){
     host.insertBefore(note, host.firstChild);
   }
 
+  PT.pages = cos;
   const picker = el('pt-company');
   picker.innerHTML = pickerOptions(cos);
   picker.style.display = cos.length > 1 ? '' : 'none';
+  /* a reload reopens the page you were on (2026-10-28). It used to reopen
+     your own page every time, so a club owner who saved the club and came
+     back landed on their own Student Club tab, which has no Save Club
+     button: the button seemed to vanish after the first save. */
+  let start = cos[0].slug;
+  try{ const last = localStorage.getItem('cx_pt_page'); if(last && cos.some(c => c.slug === last)) start = last; }catch(e){}
+  picker.value = start;
   picker.addEventListener('change', () => {
     if(PT_DIRTY && !confirm('You have unsaved profile changes. Switch company and lose them?')){
       picker.value = PT.slug; return;
@@ -297,13 +305,14 @@ async function initPortal(){
   if(admGroup) tab = 'admin';
   if(tab && document.querySelector(`.pt-tab[data-tab="${CSS.escape(tab)}"]`)) activateTab(tab);
   if(admGroup && typeof window.showAdminGroup === 'function' && document.querySelector(`.adm-tab[data-adm="${CSS.escape(admGroup)}"]`)) window.showAdminGroup(admGroup, true);
-  await loadCompany(cos[0].slug);
+  await loadCompany(start);
 }
 
 /* ===== Projects (Jacob's hiring brief, 2026-09-29): the club's showcase =====
    One card per project on the club page; every team member with an address
    gets a Project badge on their own profile, linked back to the card. */
-const PJ = { list: [], pics: [], docs: [], other: [], wired: false };
+const PJ = { list: [], pics: [], docs: [], other: [], vids: [], parts: [], wired: false };
+const PJ_YT_RE = /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)[A-Za-z0-9_-]{6,}/i;
 async function renderProjects(){
   const list = el('pt-project-list'); if(!list) return;
   if(!PT.slug || !(PT.co && PT.co.kind === 'club')){
@@ -317,7 +326,7 @@ async function renderProjects(){
     return `<div class="pt-project">
       ${cover ? `<img src="${escapeHtml(cover)}" alt="">` : `<div class="pt-project-ph">${escapeHtml(p.title.slice(0, 1).toUpperCase())}</div>`}
       <div class="pt-project-b"><b>${escapeHtml(p.title)}${p.year ? ` <span class="pf-year">${escapeHtml(String(p.year))}</span>` : ''}</b>
-        <span class="pf-note">${(p.team || []).length} on the team &middot; ${(p.pics || []).length} pictures &middot; ${(p.docs || []).length + (p.other_docs || []).length} documents &middot; ${(p.videos || []).length} videos</span>
+        <span class="pf-note">${(p.team || []).length} on the team &middot; ${(p.parts || []).length} parts &middot; ${(p.pics || []).length} pictures &middot; ${(p.docs || []).length + (p.other_docs || []).length} documents &middot; ${(p.videos || []).length} videos</span>
         <div class="pt-project-acts">
           <button type="button" class="mini-btn" data-edit-pj="${escapeHtml(p.id)}">Edit</button>
           <button type="button" class="mini-btn danger" data-del-pj="${escapeHtml(p.id)}">Delete</button>
@@ -331,11 +340,37 @@ function pjDraw(){
   if(docs) docs.innerHTML = PJ.docs.map((d, i) => `<span class="kw-tag">${escapeHtml(d.name || 'Document')}<button type="button" data-rmpjdoc="${i}" aria-label="Remove">&times;</button></span>`).join('');
   const other = el('pj-other-list');
   if(other) other.innerHTML = PJ.other.map((d, i) => `<span class="kw-tag">${escapeHtml(d.name || 'Document')}<button type="button" data-rmpjother="${i}" aria-label="Remove">&times;</button></span>`).join('');
+  const vids = el('pj-video-list');
+  if(vids) vids.innerHTML = PJ.vids.map((u, i) => `<span class="kw-tag"><a href="${escapeHtml(u)}" target="_blank" rel="noopener">Video ${i + 1}</a><button type="button" data-rmpjvid="${i}" aria-label="Remove">&times;</button></span>`).join('');
+}
+/* Project Parts (Jacob, 2026-10-28): up to 10 rows of name, what it does,
+   quantity; Links is Directory (our search for the name) over Datasheet (an
+   upload). Inputs write straight into PJ.parts, so a redraw loses nothing. */
+const PJ_PARTS_MAX = 10;
+function pjPartLinks(p, i){
+  const name = (p.name || '').trim();
+  const dir = name ? `<a class="web-link" href="/results?q=${encodeURIComponent(name)}" target="_blank" rel="noopener">Directory</a>` : '<span class="cell-muted">Directory</span>';
+  const ds = p.datasheet && p.datasheet.url
+    ? `<a class="web-link" href="${escapeHtml(p.datasheet.url)}" target="_blank" rel="noopener">Datasheet</a> <button type="button" class="pj-part-x" data-rmds="${i}" aria-label="Remove the datasheet">&times;</button>`
+    : `<label class="pj-ds-up">Upload Datasheet<input type="file" data-ds="${i}" accept="application/pdf,image/png,image/jpeg,image/webp"></label>`;
+  return `<span class="pj-links">${dir}<span>${ds}</span></span>`;
+}
+function pjPartsDraw(){
+  const body = el('pj-parts'); if(!body) return;
+  body.innerHTML = PJ.parts.map((p, i) => `<tr>
+      <td><input type="text" data-part="${i}" data-pf="name" maxlength="80" value="${escapeHtml(p.name || '')}" placeholder="LM7805" aria-label="Part name ${i + 1}"></td>
+      <td><input type="text" data-part="${i}" data-pf="does" maxlength="160" value="${escapeHtml(p.does || '')}" placeholder="5 V regulator" aria-label="What part ${i + 1} does"></td>
+      <td class="pj-qty"><input type="text" data-part="${i}" data-pf="qty" maxlength="8" inputmode="numeric" value="${escapeHtml(p.qty || '')}" placeholder="1" aria-label="Quantity of part ${i + 1}"></td>
+      <td class="pj-links-cell" data-links="${i}">${pjPartLinks(p, i)}</td>
+      <td><button type="button" class="mini-btn" data-rmpart="${i}">Remove</button></td>
+    </tr>`).join('') || '<tr><td colspan="5" class="cell-muted">No parts yet.</td></tr>';
+  const n = el('pj-parts-n'); if(n) n.textContent = PJ.parts.length ? '\u00b7 ' + PJ.parts.length + ' of ' + PJ_PARTS_MAX : '';
+  const add = el('pj-part-add'); if(add) add.disabled = PJ.parts.length >= PJ_PARTS_MAX;
 }
 function pjSetMode(p){
   el('pj-id').value = p ? p.id : '';
   el('pj-form-h').textContent = p ? 'Edit project' : 'Add a project';
-  const lab = el('pj-save').querySelector('span'); if(lab) lab.textContent = p ? 'Save changes' : 'Add to showcase'; else el('pj-save').textContent = p ? 'Save changes' : 'Add to showcase';
+  const lab = el('pj-save').querySelector('span'); if(lab) lab.textContent = p ? 'Save changes' : 'Save & Add to Showcase'; else el('pj-save').textContent = p ? 'Save changes' : 'Save & Add to Showcase';
   el('pj-cancel').style.display = p ? '' : 'none';
   el('pj-title').value = p ? p.title || '' : '';
   el('pj-year').value = p ? p.year || '' : '';
@@ -343,8 +378,15 @@ function pjSetMode(p){
   PJ.pics = p && Array.isArray(p.pics) ? p.pics.slice() : [];
   PJ.docs = p && Array.isArray(p.docs) ? p.docs.slice() : [];
   PJ.other = p && Array.isArray(p.other_docs) ? p.other_docs.slice() : [];
-  el('pj-videos').value = p && Array.isArray(p.videos) ? p.videos.join('\n') : '';
+  /* the saved list splits back into the three ways it was added */
+  const vids = p && Array.isArray(p.videos) ? p.videos.filter(Boolean) : [];
+  PJ.vids = vids.filter(u => UPLOADED_VIDEO_RE.test(u));
+  const yt = vids.find(u => !UPLOADED_VIDEO_RE.test(u) && PJ_YT_RE.test(u)) || '';
+  el('pj-youtube').value = yt;
+  el('pj-videos').value = vids.filter(u => !UPLOADED_VIDEO_RE.test(u) && u !== yt).join('\n');
+  PJ.parts = p && Array.isArray(p.parts) ? p.parts.map(x => Object.assign({}, x)) : [];
   pjDraw();
+  pjPartsDraw();
   renderRepeater('pjteam', p && Array.isArray(p.team) ? p.team : [], ['handle', 'name', 'role'], ['Circuits.com address', 'Name', 'Role']);
   el('pj-msg').textContent = '';
 }
@@ -365,6 +407,37 @@ function wireProjects(){
   el('pj-docs').addEventListener('change', () => uploadList(el('pj-docs'), PJ.docs, false));
   el('pj-other').addEventListener('change', () => uploadList(el('pj-other'), PJ.other, false));
   el('pj-other-list').addEventListener('click', e => { const b = e.target.closest('[data-rmpjother]'); if(!b) return; PJ.other.splice(+b.dataset.rmpjother, 1); pjDraw(); });
+  el('pj-video-file').addEventListener('change', async () => {
+    const inp = el('pj-video-file'), f = inp.files && inp.files[0]; inp.value = '';
+    if(!f) return;
+    if(!/^video\/(mp4|webm|quicktime)$/.test(f.type)){ toast(f.name + ' is not an MP4, WebM or MOV video.', false); return; }
+    if(f.size > 50 * 1024 * 1024){ toast(f.name + ' is over 50 MB. Put it on YouTube and paste the link instead.', false); return; }
+    say('Uploading ' + f.name + '…', false);
+    const v = await uploadVideo(f);
+    if(v && v.url){ PJ.vids.push(v.url); say('', false); } else say('Could not upload ' + f.name + '.', true);
+    pjDraw();
+  });
+  el('pj-video-list').addEventListener('click', e => { const b = e.target.closest('[data-rmpjvid]'); if(!b) return; PJ.vids.splice(+b.dataset.rmpjvid, 1); pjDraw(); });
+  el('pj-part-add').addEventListener('click', () => { if(PJ.parts.length >= PJ_PARTS_MAX) return; PJ.parts.push({ name: '', does: '', qty: '' }); pjPartsDraw(); const ins = el('pj-parts').querySelectorAll('input[data-pf="name"]'); if(ins.length) ins[ins.length - 1].focus(); });
+  el('pj-parts').addEventListener('input', e => {
+    const t = e.target; if(!t.dataset.pf) return;
+    const p = PJ.parts[+t.dataset.part]; if(!p) return;
+    p[t.dataset.pf] = t.value;
+    if(t.dataset.pf === 'name'){ const c = el('pj-parts').querySelector(`[data-links="${t.dataset.part}"]`); if(c) c.innerHTML = pjPartLinks(p, +t.dataset.part); }
+  });
+  el('pj-parts').addEventListener('click', e => {
+    const rm = e.target.closest('[data-rmpart]'), rds = e.target.closest('[data-rmds]');
+    if(rm){ PJ.parts.splice(+rm.dataset.rmpart, 1); pjPartsDraw(); }
+    if(rds){ const p = PJ.parts[+rds.dataset.rmds]; if(p) delete p.datasheet; pjPartsDraw(); }
+  });
+  el('pj-parts').addEventListener('change', async e => {
+    const t = e.target; if(!t.dataset.ds) return;
+    const f = t.files && t.files[0]; const p = PJ.parts[+t.dataset.ds]; t.value = '';
+    if(!f || !p) return;
+    if(f.size > 10 * 1024 * 1024){ toast(f.name + ' is over 10 MB.', false); return; }
+    const d = await uploadDoc(f);
+    if(d && d.url){ p.datasheet = d; pjPartsDraw(); } else toast('Could not upload ' + f.name + '.', false);
+  });
   el('pj-pics-list').addEventListener('click', e => { const b = e.target.closest('[data-rmpjpic]'); if(!b) return; PJ.pics.splice(+b.dataset.rmpjpic, 1); pjDraw(); });
   el('pj-docs-list').addEventListener('click', e => { const b = e.target.closest('[data-rmpjdoc]'); if(!b) return; PJ.docs.splice(+b.dataset.rmpjdoc, 1); pjDraw(); });
   el('pj-cancel').addEventListener('click', () => pjSetMode(null));
@@ -384,12 +457,18 @@ function wireProjects(){
     if(!title){ say('A project needs a title.', true); el('pj-title').focus(); return; }
     const team = cleanTeam(el('f-pjteam') && el('f-pjteam').__list);
     const tp = teamProblem(team); if(tp){ say(tp, true); return; }
-    const videos = val('pj-videos').split(/\n+/).map(s => s.trim()).filter(Boolean).slice(0, 10);
-    const badVideo = videos.find(v => !/^https?:\/\/\S+$/i.test(v));
+    const yt = val('pj-youtube');
+    if(yt && !PJ_YT_RE.test(yt)){ say('The YouTube URL does not look like a YouTube video link. Paste it from the Share button on YouTube.', true); el('pj-youtube').focus(); return; }
+    const pasted = val('pj-videos').split(/\n+/).map(s => s.trim()).filter(Boolean);
+    const badVideo = pasted.find(v => !/^https?:\/\/\S+$/i.test(v));
     if(badVideo){ say('"' + badVideo + '" is not a web address. Paste the full link, starting with https://.', true); el('pj-videos').focus(); return; }
+    const videos = [...PJ.vids, ...(yt ? [/^https?:\/\//i.test(yt) ? yt : 'https://' + yt] : []), ...pasted].slice(0, 10);
+    const parts = PJ.parts.map(p => ({ name: (p.name || '').trim(), does: (p.does || '').trim(), qty: String(p.qty || '').trim(), ...(p.datasheet && p.datasheet.url ? { datasheet: { name: p.datasheet.name || 'Datasheet', url: p.datasheet.url } } : {}) }))
+      .filter(p => p.name || p.does || p.datasheet).slice(0, PJ_PARTS_MAX);
+    if(parts.some(p => !p.name)){ say('Every part needs a Part Name, or remove the row.', true); return; }
     el('pj-save').disabled = true; say('Saving…', false);
     const r = await saveProject({ id: el('pj-id').value || null, company_slug: PT.slug, title, year: val('pj-year'), summary: val('pj-summary'),
-      cover_url: PJ.pics[0] ? PJ.pics[0].url : null, pics: PJ.pics, docs: PJ.docs, videos, other_docs: PJ.other, team });
+      cover_url: PJ.pics[0] ? PJ.pics[0].url : null, pics: PJ.pics, docs: PJ.docs, videos, other_docs: PJ.other, team, parts });
     el('pj-save').disabled = false;
     if(r.error){ say(r.error, true); return; }
     say(el('pj-id').value ? 'Saved.' : 'Added to the showcase.', false);
@@ -575,6 +654,7 @@ function wireTabs(){
 
 async function loadCompany(slug){
   PT.slug = slug;
+  try{ localStorage.setItem('cx_pt_page', slug); }catch(e){}
   PT.co = await fetchCompany(slug);
   if(!PT.co){ toast('Could not load that company.', false); return; }
   el('pt-name').textContent = PT.co.name;
@@ -1568,10 +1648,27 @@ function wireClubFields(c){
   fold.classList.toggle('pt-club-on', isClub);
   const sc = el('pt-club-showcase'); if(sc) sc.classList.toggle('pt-club-on', isClub);
   const create = el('pt-club-create'); if(create) create.hidden = isClub;
-  const which = el('pt-club-which');
-  if(which) which.innerHTML = isClub
+  /* where the club lives sits in Your Details, beside Preview Profile
+     (Jacob, 2026-10-28) */
+  const lives = el('pt-lives');
+  if(lives) lives.innerHTML = isClub
     ? `<b>${escapeHtml(c.name || 'This club')}</b> lives at <a href="${escapeHtml(profileUrl(c.handle) || '#')}" target="_blank" rel="noopener">circuits.com/${escapeHtml(c.handle || '')}</a>. Your own profile is a separate page; switch between them with the picker at the top.`
     : '';
+  /* on your own page, the clubs you already run are one click away */
+  const mine = el('pt-club-mine');
+  const clubs = isClub ? [] : (PT.pages || []).filter(p => p.kind === 'club');
+  if(mine){
+    mine.hidden = !clubs.length;
+    mine.innerHTML = clubs.map(p => `<p><b>${escapeHtml(p.name || p.handle)}</b> is your club's page. Its Club Details, with the Save Club button, open when the picker at the top is set to it.
+      <button type="button" class="btn btn-outline" data-open-page="${escapeHtml(p.slug)}">Open ${escapeHtml(p.name || 'the club')}</button></p>`).join('');
+    mine.onclick = async e => {
+      const b = e.target.closest('[data-open-page]'); if(!b) return;
+      if(PT_DIRTY && !confirm('You have unsaved profile changes. Switch pages and lose them?')) return;
+      el('pt-company').value = b.dataset.openPage;
+      await loadCompany(b.dataset.openPage);
+      activateTab('club');
+    };
+  }
   wireClubCreate();
   if(!isClub) return;
   const promo = c.club_promo && typeof c.club_promo === 'object' ? c.club_promo : {};
@@ -1682,6 +1779,7 @@ function pickerOptions(cos){
 async function refreshPages(openSlug){
   let cos = [];
   try{ cos = await myPages(); }catch(e){ cos = []; }
+  PT.pages = cos;
   const picker = el('pt-company');
   if(picker){
     picker.innerHTML = pickerOptions(cos);

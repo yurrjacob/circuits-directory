@@ -216,7 +216,20 @@ function videoHtml(url){
   const vm = u.match(/vimeo\.com\/(?:video\/)?(\d{5,})/);
   if(yt) return `<iframe class="pf-video" src="https://www.youtube-nocookie.com/embed/${yt[1]}" title="Video" loading="lazy" allow="encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
   if(vm) return `<iframe class="pf-video" src="https://player.vimeo.com/video/${vm[1]}" title="Video" loading="lazy" allow="picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  /* uploaded from the dashboard (2026-10-28): only our own videos bucket plays inline */
+  if(typeof UPLOADED_VIDEO_RE !== 'undefined' && UPLOADED_VIDEO_RE.test(u)) return `<video class="pf-video" src="${escapeHtml(u)}" controls preload="metadata" playsinline></video>`;
   return '';
+}
+/* Project Parts (Jacob, 2026-10-28): the table on the project card. Links
+   stacks Directory (our search for the part) over Datasheet (the upload). */
+function partsTableHtml(parts){
+  const list = (Array.isArray(parts) ? parts : []).filter(p => p && (p.name || '').trim());
+  if(!list.length) return '';
+  return `<div class="pf-parts-wrap"><table class="pf-parts"><thead><tr><th>Part Name</th><th>What It Does</th><th>Quantity</th><th>Links</th></tr></thead><tbody>${list.map(p => {
+    const ds = p.datasheet && safeUrl(p.datasheet.url);
+    return `<tr><td><b>${escapeHtml(p.name)}</b></td><td>${escapeHtml(p.does || '')}</td><td>${escapeHtml(String(p.qty || ''))}</td>
+      <td><span class="pj-links"><a class="web-link" href="/results?q=${encodeURIComponent(p.name.trim())}">Directory</a>${ds ? `<a class="web-link" href="${escapeHtml(ds)}" target="_blank" rel="noopener nofollow">Datasheet</a>` : ''}</span></td></tr>`;
+  }).join('')}</tbody></table></div>`;
 }
 /* a link that is not YouTube or Vimeo is listed under the players as a chip */
 function videoLinkHtml(url){
@@ -257,7 +270,8 @@ function projectCardHtml(p, co){
         <h2>${escapeHtml(p.title)}${p.year ? `<span class="pf-year">${escapeHtml(String(p.year))}</span>` : ''}</h2>
         ${co && co.name ? `<p class="pf-note" style="margin:-8px 0 0">${escapeHtml(co.name)}${co.college_name ? `, ${escapeHtml(co.college_name)}` : ''}</p>` : ''}
         ${p.summary ? `<p class="pf-prose">${escapeHtml(p.summary).replace(/\n+/g, '<br>')}</p>` : ''}
-        ${sec('Team members', teamTagsHtml(p.team))}
+        ${sec('Project Team', teamTagsHtml(p.team))}
+        ${sec('Project Parts', partsTableHtml(p.parts))}
         ${sec('Pictures', pics.length ? galleryHtml(pics, p.title) : '')}
         ${sec('Project build documents', docChips(p.docs))}
         ${sec('Videos', (videos.length ? `<div class="pf-videos">${videos.join('')}</div>` : '') + (vlinks.length ? `<div class="pf-ldocs"${videos.length ? ' style="margin-top:10px"' : ''}>${vlinks.join('')}</div>` : ''))}

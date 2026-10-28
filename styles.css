@@ -2607,3 +2607,33 @@ body.club-mode #tab-listings > :not(#pt-club-kw){display:none}
 #f-title-show{flex:1;min-width:0;font-weight:700;background:var(--bg-soft)}
 body.club-mode .pt-title-field{display:none}
 @media(max-width:620px){.pt-title-line{flex-direction:column;align-items:stretch}.pt-title-opts .terms{white-space:normal}}
+
+/* Club Details (2026-10-28): where the club lives, beside Preview Profile;
+   the upload buttons in Add a Project drawn like Branding's; Project Parts */
+.pt-lives{margin:0;align-self:center;flex:1 1 240px;font-size:.84rem}
+body:not(.club-mode) .pt-lives{display:none}
+body.club-mode .pt-addr-field{max-width:none;flex-basis:100%}
+body.club-mode .handle-line{flex-wrap:wrap}
+body.club-mode .handle-line .handle-row{flex:0 1 380px}
+.pt-lives a{color:var(--green-dark);font-weight:700}
+.cb-club-note p{margin:0;display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.cb-club-note p+p{margin-top:10px}
+.cb-club-note .btn{padding:7px 14px}
+.cb-file{font-weight:700}
+.auth-field label.cb-file,.cb-logo-acts label.cb-file{font-weight:700}
+.cb-drop span.cb-drop-btn,.auth-field label.cb-drop span.cb-drop-btn{display:inline-flex;align-items:center;border:2px solid var(--green);border-radius:8px;padding:7px 14px;background:var(--card);color:#0f0f0f;font-weight:700;font-size:.88rem;margin-bottom:4px}
+.cb-drop:hover span.cb-drop-btn{background:var(--green)}
+.pj-video-up{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.pj-video-up .field-hint{margin:0}
+.pj-parts-wrap,.pf-parts-wrap{overflow-x:auto;margin:0 0 10px}
+.pj-parts,.pf-parts{width:100%;border-collapse:collapse;font-size:.88rem}
+.pj-parts th,.pf-parts th{text-align:left;font-size:.74rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line)}
+.pj-parts td,.pf-parts td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.pj-parts input[type=text]{width:100%;min-width:110px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--input-bg)}
+.pj-parts td.pj-qty input{min-width:56px;width:70px}
+.pj-links{display:flex;flex-direction:column;gap:2px;white-space:nowrap}
+.pj-links .web-link,.pj-links .cell-muted{font-size:.84rem}
+.pj-ds-up{position:relative;overflow:hidden;cursor:pointer;color:var(--muted);text-decoration:underline dotted;font-size:.8rem}
+.pj-ds-up input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.pj-part-x{border:0;background:none;cursor:pointer;color:var(--muted);font-size:1rem;line-height:1;padding:0 2px}
+#pj-part-add{margin:0 0 18px}

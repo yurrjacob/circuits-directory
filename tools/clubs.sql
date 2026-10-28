@@ -336,3 +336,19 @@ create trigger companies_is_club_trg after update of kind on public.companies
 -- The Global Directory List (2026-10-28) lives at /global, so the name is
 -- reserved like every other root page.
 insert into public.reserved_handles (name) values ('global') on conflict do nothing;
+
+-- ---- Project Parts and uploaded project videos (Jacob, 2026-10-28) ---------
+-- Up to 10 parts per project: [{name, does, qty, datasheet:{name,url}}].
+-- projects has table-level grants, so anon reads the new column as is.
+alter table public.projects add column if not exists parts jsonb not null default '[]'::jsonb;
+alter table public.projects add constraint projects_parts_max10
+  check (jsonb_typeof(parts) = 'array' and jsonb_array_length(parts) <= 10);
+
+-- Videos uploaded from Add a Project: their own public bucket, 50 MB, video
+-- only. Same policies as docs: anyone reads, signed-in uploads, staff delete.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('videos', 'videos', true, 52428800, array['video/mp4', 'video/webm', 'video/quicktime'])
+on conflict (id) do nothing;
+create policy videos_public_read on storage.objects for select using (bucket_id = 'videos');
+create policy videos_signed_in_upload on storage.objects for insert to authenticated with check (bucket_id = 'videos');
+create policy videos_staff_delete on storage.objects for delete using (bucket_id = 'videos' and public.is_staff());

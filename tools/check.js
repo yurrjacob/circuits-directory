@@ -231,6 +231,21 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   const cl = fs.readFileSync(path.join(ROOT, 'clubs.html'), 'utf8');
   assert.ok(/<title>Global Club List \| Circuits\.com<\/title>/.test(cl), '/clubs is not titled Global Club List');
   assert.deepStrictEqual([...cl.matchAll(/<th[^>]*>([^<]+)<\/th>/g)].map(m => m[1]), ['#', 'Club Name', 'University Name', 'Circuits URL', 'Club Email Address'], 'the Global Club List columns are not #, Club Name, University Name, Circuits URL, Club Email Address');
+  /* Club Details and Add a Project (Jacob, 2026-10-28) */
+  {
+    const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8'), pf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8'), st = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+    assert.ok(/id="f-preview">Preview Profile<\/button>\s*<!--[^>]*-->\s*<p class="pf-note pt-lives" id="pt-lives">/.test(ph) && !/id="pt-club-which"/.test(ph), 'where the club lives is not beside Preview Profile');
+    assert.ok(/localStorage\.getItem\('cx_pt_page'\)/.test(pj) && /localStorage\.setItem\('cx_pt_page', slug\)/.test(pj), 'a reload no longer reopens the page you were on, so Save Club seems to vanish after a club save');
+    assert.ok(/<span>Save &amp; Add to Showcase<\/span>/.test(ph) && /'Save & Add to Showcase'/.test(pj), 'the project button is not Save & Add to Showcase');
+    assert.strictEqual((ph.match(/<span class="cb-drop-btn">Choose (Pictures|Documents)<\/span>/g) || []).length, 3, 'Choose Pictures and both Choose Documents are not drawn as buttons');
+    assert.ok(/class="btn btn-outline cb-file">Choose Video<input id="pj-video-file"/.test(ph) && /id="pj-youtube"/.test(ph) && /id="pj-videos"/.test(ph), 'a project video cannot be added three ways');
+    assert.ok(/Choose College Logo<input/.test(ph) && /<\/svg>Project Team <span/.test(ph), 'Choose College Logo or Project Team wording is gone');
+    assert.ok(/<th>Part Name<\/th><th>What It Does<\/th><th>Quantity<\/th><th>Links<\/th>/.test(ph) && /const PJ_PARTS_MAX = 10;/.test(pj) && /team, parts \}\)/.test(pj), 'the Project Parts table is gone or not saved');
+    assert.ok(/PROJECT_COLS = '[^']*\bparts\b/.test(st) && /team: p\.team \|\| \[\], parts: p\.parts \|\| \[\]/.test(st), 'project parts are not read or written');
+    assert.ok(/sec\('Project Parts', partsTableHtml\(p\.parts\)\)/.test(pf) && /href="\/results\?q=\$\{encodeURIComponent\(p\.name\.trim\(\)\)\}">Directory<\/a>/.test(pf), 'the project card does not show its parts with Directory links');
+    assert.ok(/UPLOADED_VIDEO_RE\.test\(u\)\) return `<video class="pf-video"/.test(pf) && /UPLOADED_VIDEO_RE = \/\^https:\\\/\\\/ghpruernzhjwsgsezdyn\\\.supabase\\\.co/.test(st), 'uploaded project videos do not play, or any URL is trusted in a video tag');
+    assert.ok(/>Members &amp; Officers<\/button>/.test(ph) && /<h2>Members &amp; Officers<\/h2>/.test(ph), 'the club tab is not called Members & Officers');
+  }
   /* Profile Title (Jacob, 2026-10-28): two boxes beside the address, exactly one required, and the public heading follows it */
   {
     const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8'), pf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
