@@ -1921,7 +1921,42 @@ function listingStatusChip(l){
   return `<span class="badge ${l.paused ? '' : 'live'}">${l.paused ? 'Inactive' : 'Active'}</span>`;
 }
 
+/* Club Keywords: what a club page has asked for and what is live in Search
+   Clubs (Jacob, 2026-10-28). The keyword form is /join?club=<slug>. */
+function renderClubKeywords(){
+  const host = el('pt-club-kw'); if(!host) return;
+  if(!(PT.co && PT.co.kind === 'club')){ host.innerHTML = ''; return; }
+  const name = PT.co.name || 'Your club', handle = PT.co.handle || PT.co.slug;
+  const club = `<b>${escapeHtml(name)}</b><br><span class="cell-muted">circuits.com/${escapeHtml(handle || '')}</span>`;
+  const when = d => d ? new Date(d).toLocaleDateString() : '';
+  const pend = PT.listings.filter(l => l.status !== 'Approved');
+  const live = PT.listings.filter(l => l.status === 'Approved');
+  const table = (heads, rows, empty) => rows.length
+    ? `<div class="table-wrap"><table class="listings-table"><thead><tr>${heads.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`
+    : `<p class="pf-note pt-ckw-empty">${empty}</p>`;
+  host.innerHTML = `
+    <div class="pt-empty pt-getlisted">
+      <div><b>Choose Your Free Club Keywords</b><p>Add Up to 10 Circuits-Keywords&trade;</p></div>
+      <div class="pt-getlisted-btns"><a class="btn btn-primary" href="/join?club=${encodeURIComponent(PT.co.slug)}">Select Club Keywords</a></div>
+    </div>
+    <section class="cb-card pt-ckw-box"><h3 class="cb-h">Pending Club Keywords</h3>
+      ${table(['Club', 'Keyword', 'Email', 'Asked', 'Status'], pend.map(l => `<tr><td>${club}</td><td class="kw"><b>${escapeHtml(l.keyword || '')}</b></td>
+        <td class="cell-muted">${escapeHtml(l.email || '')}</td><td class="cell-muted">${when(l.created_at)}</td>
+        <td><span class="badge ${l.status === 'Pending' ? 'pending' : ''}">${l.status === 'Pending' ? 'Waiting for approval' : escapeHtml(l.status || '')}</span></td></tr>`),
+        'No club keywords waiting. Pick some with Select Club Keywords.')}
+    </section>
+    <section class="cb-card pt-ckw-box"><h3 class="cb-h">Live Club Keywords</h3>
+      ${table(['Club', 'Keyword', 'Banner', 'Badge', 'Lock', 'Status'], live.map(l => `<tr><td>${club}</td>
+        <td class="kw"><a href="/clubs?q=${encodeURIComponent(l.keyword || '')}" target="_blank" rel="noopener"><b>${escapeHtml(l.keyword || '')}</b></a></td>
+        <td>${l.banner ? TICK : DASH}</td><td>${l.badge ? `<span class="lb" style="${badgeStyle(l.badge.color)}">${escapeHtml(l.badge.text)}</span>` : DASH}</td>
+        <td>${l.locked_position ? '#' + escapeHtml(String(l.locked_position)) : DASH}</td>
+        <td><span class="badge ${l.paused ? '' : 'live'}">${l.paused ? 'Paused' : 'Live in Search Clubs'}</span></td></tr>`),
+        'No live club keywords yet. Approved ones appear here and in Search Clubs.')}
+    </section>`;
+}
+
 function renderListings(){
+  renderClubKeywords();
   const rows = PT.listings.map((l, i) => { const open = PT.editing === l.id; return `
     <tr class="pt-krow ${open ? 'is-open' : ''}">
       <td class="rank" data-label="#">${i + 1}</td>

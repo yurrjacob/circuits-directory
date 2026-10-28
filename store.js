@@ -66,7 +66,8 @@ async function fetchApplications(){
 }
 async function fetchApproved(){
   if(!sb) return [];
-  const { data, error } = await sb.from('applications').select('*').eq('status','Approved')
+  /* club keywords live in Search Clubs, never in the Directory (2026-10-28) */
+  const { data, error } = await sb.from('applications').select('*').eq('status','Approved').eq('is_club', false)
     .order('created_at', { ascending:true }).order('id', { ascending:true });
   if(error){ console.error('fetchApproved', error); return []; }
   return data || [];
@@ -104,7 +105,7 @@ async function fetchApprovedByKeyword(keyword){
   const k = normKw(keyword);
   if(!k) return [];
   const { data, error } = await sb.from('applications').select(APP_PUBLIC_COLS)
-    .eq('status','Approved').eq('paused', false).eq('keyword_norm', k)
+    .eq('status','Approved').eq('paused', false).eq('is_club', false).eq('keyword_norm', k)
     .order('created_at', { ascending:true }).order('id', { ascending:true });
   /* Throw, don't return []. An empty array here means "nobody owns this
      keyword", which the results page turns into a pitch to buy it. If the
@@ -156,7 +157,7 @@ async function fetchRelatedByKeyword(keyword){
   const terms = [...new Set(words.map(normKw))].filter(Boolean).slice(0, 6);
   if(!terms.length) return [];
   const { data, error } = await sb.from('applications').select(APP_PUBLIC_COLS)
-    .eq('status','Approved').eq('paused', false).in('keyword_norm', terms)
+    .eq('status','Approved').eq('paused', false).eq('is_club', false).in('keyword_norm', terms)
     .order('created_at', { ascending:true }).order('id', { ascending:true });
   if(error){ console.warn('fetchRelatedByKeyword', error.message); return []; }
   const seen = new Set(), out = [];
@@ -846,7 +847,7 @@ async function fetchClubs(){
   if(error){ console.warn('fetchClubs', error.message); return []; }
   const rows = data || [];
   const slugs = rows.map(r => r.slug);
-  const kw = slugs.length ? await sb.from('applications').select('company_slug, keyword').in('company_slug', slugs).eq('status', 'Approved') : { data: [] };
+  const kw = slugs.length ? await sb.from('applications').select('company_slug, keyword').in('company_slug', slugs).eq('status', 'Approved').eq('is_club', true) : { data: [] };
   const by = {};
   (kw.data || []).forEach(k => { if(k.keyword) (by[k.company_slug] = by[k.company_slug] || []).push(k.keyword); });
   rows.forEach(r => { r.keywords = by[r.slug] || []; });
@@ -1482,7 +1483,7 @@ async function fetchKeywordIndex(){
   try{
     const { data, error } = await sb.from('applications')
       .select('keyword, keyword_norm, company_slug, company')
-      .eq('status', 'Approved').eq('paused', false).limit(2000);
+      .eq('status', 'Approved').eq('paused', false).eq('is_club', false).limit(2000);
     if(error) throw error;
     const byNorm = new Map();
     for(const r of (data || [])){

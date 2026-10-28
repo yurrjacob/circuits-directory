@@ -284,6 +284,23 @@ assert.ok(/<body class="home-page">/.test(fs.readFileSync(path.join(ROOT, 'index
   assert.ok(/function adminDialog\(message, opts\)/.test(aj) && /const askConfirm = /.test(aj) && /const askText = /.test(aj), 'the admin in-page dialogs are gone');
 }
 
+/* Club keywords are their own dataset (Jacob, 2026-10-28): the Directory
+   never reads a club's keyword, Search Clubs reads only those, and the Get
+   Listed form files /join?club=<slug> under that club, sections 01 and 06 only */
+{
+  const st = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+  for (const fn of ['fetchApproved', 'fetchApprovedByKeyword', 'fetchRelatedByKeyword', 'fetchKeywordIndex']) {
+    const body = (st.match(new RegExp(`async function ${fn}\\([^)]*\\)\\{[\\s\\S]*?\\n\\}`)) || [''])[0];
+    assert.ok(/\.eq\('is_club', false\)/.test(body), `${fn} would show club keywords in the Directory`);
+  }
+  assert.ok(/\.eq\('status', 'Approved'\)\.eq\('is_club', true\)/.test(st), 'Search Clubs does not read club keywords only');
+  const jn = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
+  assert.ok(/get\('club'\)/.test(jn) && /cos\.find\(c => c\.slug === wantClub && c\.kind === 'club'\)/.test(jn) && /cos\.find\(c => c\.kind !== 'club'\)/.test(jn), 'the Get Listed form can file keywords under the wrong page');
+  assert.ok(/if\(n\.trim\(\) !== '01' && n\.trim\(\) !== '06'\) s\.hidden = true;/.test(jn), 'the club keyword form shows more than sections 01 and 06');
+  const pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
+  assert.ok(/<b>Choose Your Free Club Keywords<\/b>/.test(pj) && />Select Club Keywords<\/a>/.test(pj) && /Pending Club Keywords<\/h3>/.test(pj) && /Live Club Keywords<\/h3>/.test(pj) && /href="\/join\?club=/.test(pj), 'the Club Keywords tab lost its three boxes or its Select Club Keywords link');
+}
+
 /* How It Works was merged into About; the old URL must still point somewhere */
 const hiw = fs.readFileSync(path.join(ROOT, 'how-it-works.html'), 'utf8');
 assert.ok(hiw.includes('rel="canonical" href="https://circuits.com/about"'),
@@ -1034,7 +1051,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
          its own notice. The company's copy of an upgrade request reads
          "Upgrade request received:", which is why the pattern anchors on the
          colon and must not be loosened to a bare "Upgrade request". */
-  assert.ok(/const STAFF_QUEUE = \/\^\(New listing request:\|Upgrade request:\|New job post:\|Recruit waiting for approval:\|New profile confirmed:\|New club page:\)\//.test(appSrc2),
+  assert.ok(/const STAFF_QUEUE = \/\^\(New listing request:\|Upgrade request:\|New job post:\|Recruit waiting for approval:\|New profile confirmed:\|New club page:\|New club keyword request:\)\//.test(appSrc2),
     'the staff-queue subjects changed; check them against the notify_ triggers before editing');
   assert.ok(/isStaff && STAFF_QUEUE\.test\(n\.subject \|\| ''\)/.test(appSrc2),
     'the Admin badge no longer needs a staff reader, so a company could be told its own notice is admin work');

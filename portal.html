@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=68d572100e">
+<link rel="stylesheet" href="/styles.css?v=b726373254">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -310,6 +310,11 @@
   <!-- Your Listings: every keyword listing with its stats, badges, banners and
        upgrades, then the way to get more (the Get Listed page, Jacob 2026-09-03). -->
   <section class="pt-panel" id="tab-listings">
+    <!-- Club Keywords (Jacob, 2026-10-28): a club page's own keyword tab.
+         Choose Your Free Club Keywords, then the pending and the live ones, in
+         the columns Club Admin uses. Filled by portal.js in club mode only;
+         everything else on this tab belongs to a person's page and hides. -->
+    <div id="pt-club-kw" class="pt-club-kw"></div>
     <!-- One numbered row per keyword: the free listing itself, then which paid
          extras it carries. Buying them happens on the Upgrades tab (Jacob,
          2026-09-03), so this table only says where each keyword stands. -->
@@ -924,9 +929,9 @@
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
-<script src="/store.js?v=190fd6ab57"></script>
-<script src="/app.js?v=7516b09db6"></script>
-<script src="/portal.js?v=23a200fbc7"></script>
+<script src="/store.js?v=d94b565423"></script>
+<script src="/app.js?v=66cab936c4"></script>
+<script src="/portal.js?v=2d0805c1ab"></script>
 <script src="/admin.js?v=7a9d2539ac"></script>
 <script>
 /* Save profile, Save club and Save members all run the one save. Save club

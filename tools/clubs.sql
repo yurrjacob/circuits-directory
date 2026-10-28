@@ -295,3 +295,40 @@ create trigger company_users_club_owner before insert on public.company_users fo
 --    club_invite_link() raises officers_by_owner for role 'officer' and only
 --    makes member links; the four live officer links were revoked:
 --   update club_invites set revoked_at = now() where role = 'officer' and revoked_at is null;
+
+-- 2026-10-28, club keywords are their own dataset (Jacob: "Club approved
+-- keywords ... are incorrectly populating in the regular Main Directory").
+-- Applied to the project. The Get Listed form picked the account's first page
+-- by name, so a club owner's keywords were filed under their own page; the
+-- form now files /join?club=<slug> under the club, and every Directory query
+-- (results, related keywords, keyword index, the full list) adds
+-- is_club = false, while Search Clubs reads is_club = true.
+alter table public.applications add column if not exists is_club boolean not null default false;
+grant select (is_club) on public.applications to anon;
+grant select (is_club) on public.applications to authenticated;
+create or replace function public.applications_set_is_club()
+returns trigger language plpgsql security definer set search_path to 'public' as $fn$
+begin
+  new.is_club := coalesce((select c.kind = 'club' from companies c where c.slug = new.company_slug), false);
+  return new;
+end $fn$;
+create trigger applications_is_club_trg before insert or update of company_slug on public.applications
+  for each row execute function applications_set_is_club();
+create or replace function public.companies_sync_is_club()
+returns trigger language plpgsql security definer set search_path to 'public' as $fn$
+begin
+  if new.kind is distinct from old.kind then
+    update applications set is_club = (new.kind = 'club') where company_slug = new.slug;
+  end if;
+  return new;
+end $fn$;
+create trigger companies_is_club_trg after update of kind on public.companies
+  for each row execute function companies_sync_is_club();
+-- backfill (no club rows existed yet):
+-- update applications a set is_club = true from companies c where c.slug = a.company_slug and c.kind = 'club';
+
+-- notify_applications_batch(): a club's request is announced to staff as
+-- "New club keyword request: <club> / <keywords>", linked to Admin, Club
+-- Admin, Club Keywords. That subject is not one the notify function skips, so
+-- the inbox notice is also emailed to every staff address. Directory requests
+-- keep "New listing request:" unchanged. (Full body as applied: see the project.)
