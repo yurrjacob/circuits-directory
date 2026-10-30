@@ -422,7 +422,7 @@ async function setNewPassword(password){
   const { error } = await sb.auth.updateUser({ password });
   return error ? error.message : '';
 }
-async function signOut(){ if(sb) await sb.auth.signOut(); }
+async function signOut(){ try{ localStorage.removeItem('cx_staff'); }catch(e){} if(sb) await sb.auth.signOut(); }
 /* Ends every session on every device, not just this browser. What you want
    after a shared laptop or a lost phone. */
 async function signOutEverywhere(){

@@ -7,13 +7,13 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=c5fb2feda7">
+<link rel="stylesheet" href="/styles.css?v=79a6b8fdc5">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
      session is still there to pick up (Jacob, 2026-09-17). -->
 <script>if(/[#&]type=signup/.test(location.hash || '')) location.replace('/welcome' + location.hash);</script>
-<script src="/nav.js?v=89aa4289a6"></script>
+<script src="/nav.js?v=f09e7934e3"></script>
 </head>
 <body>
 
@@ -31,6 +31,7 @@
       <a href="/contact">Contact</a>
       <a class="nav-auth nav-signin" href="/portal">Sign In</a>
       <a class="nav-auth nav-dash active" href="/portal">Dashboard</a>
+      <a class="nav-auth nav-admin" href="/portal#admin"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5 20 6v6c0 5-3.4 8.6-8 9.5C7.4 20.6 4 17 4 12V6z"/><path d="m9 12 2 2 4-4"/></svg>Admin</a>
       <a class="cta" href="/join">Get Listed</a>
     </nav>
       <!-- The bell ships in the markup and starts hidden; nav.js shows it in
@@ -564,11 +565,15 @@
   <!-- admin: only rendered for staff, and every action behind it is enforced
        by the database, not by this tab being hidden -->
   <section class="pt-panel" id="tab-admin">
+  <!-- the Admin Dashboard is its own view now, opened from the Admin button in
+       the top bar (Jacob, 2026-10-30); the dashboard's header and tabs step
+       aside while it is open -->
   <div class="console-head admin-head">
     <div>
-      <h2 class="adm-title">Admin Console</h2>
-      <p>Every keyword listing, banner and application across Circuits.com.</p>
+      <h1 class="adm-title">Admin Dashboard</h1>
+      <p>Every account, keyword listing, club and application across Circuits.com.</p>
     </div>
+    <div class="console-acts"><button type="button" class="btn btn-outline adm-back" id="adm-back">&larr; Back to Dashboard</button></div>
   </div>
 
   <div class="stat-grid">
@@ -1067,9 +1072,9 @@
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
-<script src="/store.js?v=3ec51b2c98"></script>
-<script src="/app.js?v=89762093be"></script>
-<script src="/portal.js?v=da07d0ee1d"></script>
+<script src="/store.js?v=11b55e3b25"></script>
+<script src="/app.js?v=e71171869c"></script>
+<script src="/portal.js?v=3b63c79ac5"></script>
 <script src="/admin.js?v=03865f1a80"></script>
 <script>
 /* Save profile, Save club and Save members all run the one save. Save club

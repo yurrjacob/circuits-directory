@@ -304,7 +304,7 @@ async function initPortal(){
      inbox notices about recruiting land on /portal#seeking. */
   let tab = (location.hash || '').replace('#', '');
   PT.tabFromHash = !!tab;   // an address that names a tab always wins
-  if(!tab){ try{ tab = localStorage.getItem('cx_pt_tab') || ''; }catch(e){} }   // the tab you were on, when the address carries none
+  if(!tab){ try{ tab = localStorage.getItem('cx_pt_tab') || ''; }catch(e){} if(tab === 'admin') tab = ''; }   // the tab you were on, when the address carries none
   /* #admin:<group> names an admin sub-tab as well (2026-09-15) */
   const admGroup = tab.startsWith('admin:') ? tab.slice(6) : '';
   if(admGroup) tab = 'admin';
@@ -568,9 +568,28 @@ async function renderJakeButton(){
 }
 
 async function wireAdminTab(){
-  if(!(await checkStaff())) return false;
+  const staff = await checkStaff();
+  /* the hint nav.js reads to show the Admin button in the top bar on every
+     page; the database still refuses anything a non-staff account tries */
+  try{ if(staff) localStorage.setItem('cx_staff', '1'); else localStorage.removeItem('cx_staff'); }catch(e){}
+  document.querySelectorAll('.nav a.nav-admin').forEach(a => { a.style.display = staff ? 'inline-flex' : 'none'; });
+  if(!staff) return false;
   show('pt-tab-admin', true);
+  /* the top bar's Admin button on this page changes only the address */
+  window.addEventListener('hashchange', () => { if(/^#admin(:|$)/.test(location.hash)) activateTab('admin'); });
+  const back = el('adm-back');
+  if(back) back.addEventListener('click', () => {
+    activateTab(PT.lastTab || 'profile');
+    try{ history.replaceState(null, '', '#' + (PT.lastTab || 'profile')); }catch(e){}
+  });
   return true;
+}
+/* Admin is a view of its own (2026-10-30): the dashboard's header, picker,
+   progress and tabs step aside, and the top bar marks Admin, not Dashboard */
+function setAdminView(on){
+  document.body.classList.toggle('admin-view', on);
+  document.querySelectorAll('.nav a.nav-dash').forEach(a => a.classList.toggle('active', !on));
+  document.querySelectorAll('.nav a.nav-admin').forEach(a => a.classList.toggle('active', on));
 }
 
 /* Sign in. Registration is open to anyone at /register (a listing still needs
@@ -667,7 +686,11 @@ function wireTabs(){
     let hash = b.dataset.tab;
     if(hash === 'admin'){ try{ hash = 'admin:' + (localStorage.getItem('cx_admin_group') || 'companies'); }catch(e){} }   // the sub-tab too
     try{ history.replaceState(null, '', '#' + hash); }catch(e){}
-    try{ localStorage.setItem('cx_pt_tab', b.dataset.tab); }catch(e){}
+    setAdminView(b.dataset.tab === 'admin');
+    if(b.dataset.tab !== 'admin'){
+      PT.lastTab = b.dataset.tab;
+      try{ localStorage.setItem('cx_pt_tab', b.dataset.tab); }catch(e){}   // Admin is never the tab a plain /portal reopens
+    }
     /* The console loads nothing until an admin actually opens it, a company
        owner who never sees this tab never fetches a row of anyone else's data. */
     if(b.dataset.tab === 'admin' && typeof initAdmin === 'function') initAdmin();

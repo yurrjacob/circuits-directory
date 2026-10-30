@@ -2812,3 +2812,13 @@ body.wc-invite .wc-lede,body.wc-invite .wc-wrap-cards{display:none}
 .join-extras>.step{margin-left:12px;margin-right:12px}
 .console-pick-wrap{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .console-pick-wrap .console-pick{text-transform:none;letter-spacing:0;color:var(--ink);font-size:.95rem;border-color:var(--green)}
+
+/* the Admin button in the top bar (2026-10-30), next to Dashboard, for staff */
+.nav a.nav-admin{display:none;align-items:center;gap:6px;background:#0f0f0f;color:#fff;font-weight:700;border:2px solid var(--green);margin-right:4px}
+.nav a.nav-admin svg{color:var(--green)}
+.nav a.nav-admin:hover,.nav a.nav-admin.active{background:#1d2a0c;color:#fff}
+#pt-tab-admin{display:none!important}
+/* while the Admin Dashboard is open, the dashboard's own header steps aside */
+body.admin-view #pt-app>.console-head,body.admin-view #pt-progress,body.admin-view .pt-tabs,
+body.admin-view #pt-review-note,body.admin-view .pt-suspended,body.admin-view #pt-pending,body.admin-view #pt-fresh-note{display:none!important}
+.admin-head .adm-title{margin:0 0 4px;font-size:1.6rem}

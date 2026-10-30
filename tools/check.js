@@ -1408,8 +1408,15 @@ for (const gone of ['login.html', 'admin.html']) {
   // hidden by default: the tab is only revealed after is_staff() comes back true
   assert.ok(/id="pt-tab-admin"[^>]*display:none/.test(portalHtml),
     'the Admin tab is visible before anyone has checked the account is an admin');
-  assert.ok(/async function wireAdminTab\(\)\s*\{\s*if\(!\(await checkStaff\(\)\)\) return false;/.test(portalJs),
+  assert.ok(/async function wireAdminTab\(\)\s*\{\s*const staff = await checkStaff\(\);[\s\S]{0,700}if\(!staff\) return false;\s*show\('pt-tab-admin', true\);/.test(portalJs),
     'the Admin tab is shown without asking the database whether this account is an admin');
+  /* Admin is its own button in the top bar, beside Dashboard, and its own view (Jacob, 2026-10-30) */
+  { const pages = fs.readdirSync(ROOT).filter(f => f.endsWith('.html'));
+    for(const f of pages){ const h = fs.readFileSync(path.join(ROOT, f), 'utf8');
+      if(/class="nav-auth nav-dash/.test(h)) assert.ok(/class="nav-auth nav-dash[^"]*" href="\/portal">Dashboard<\/a>\s*<a class="nav-auth nav-admin" href="\/portal#admin">/.test(h), f + ' has no Admin button beside Dashboard'); }
+    const nav = fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8');
+    assert.ok(/localStorage\.getItem\('cx_staff'\) === '1'/.test(nav) && /\.nav a\.nav-admin\{display:none/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the Admin button is not hidden by default, or not shown for staff');
+    assert.ok(/function setAdminView\(on\)/.test(portalJs) && /#pt-tab-admin\{display:none!important\}/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'Admin is back inside the dashboard tabs'); }
   assert.ok(/if\(!\(await checkStaff\(\)\)\) return;/.test(adminJs),
     'the console starts loading data without checking the account is an admin');
   // and it must not fetch anything until the tab is actually opened

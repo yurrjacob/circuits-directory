@@ -56,7 +56,12 @@
      on screen, so the bar never changes shape after the page is drawn, which
      is what used to make every navigation look like a jump. */
   var css = document.createElement('style');
-  css.textContent = '.nav a.nav-signin{display:none}.nav a.nav-dash{display:block}.inbox-btn{display:inline-flex}';
+  /* staff also see Admin beside Dashboard (2026-10-30). cx_staff is set by
+     the dashboard after the database says so; like the rest, a hint only */
+  var staff = false;
+  try{ staff = localStorage.getItem('cx_staff') === '1'; }catch(e){}
+  css.textContent = '.nav a.nav-signin{display:none}.nav a.nav-dash{display:block}.inbox-btn{display:inline-flex}'
+    + (staff ? '.nav a.nav-admin{display:inline-flex}' : '');
   document.head.appendChild(css);
 })();
 
