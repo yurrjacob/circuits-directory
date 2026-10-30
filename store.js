@@ -1486,6 +1486,15 @@ async function fetchAdminAccounts(){
   if(error){ console.error('fetchAdminAccounts', error); return []; }
   return data || [];
 }
+/* staff: the logos of pages, by slug, for the pictures on All Profiles */
+async function fetchCompanyLogos(slugs){
+  if(!sb || !slugs || !slugs.length) return {};
+  const { data, error } = await sb.from('companies').select('slug, logo').in('slug', slugs);
+  if(error){ console.warn('fetchCompanyLogos', error.message); return {}; }
+  const out = {};
+  (data || []).forEach(r => { if(r.logo) out[r.slug] = r.logo; });
+  return out;
+}
 /* a profile-only account gets its page, the way its owner's first save would */
 async function adminEnsurePage(userId){
   if(!sb) return { error: 'No connection' };

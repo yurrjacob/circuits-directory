@@ -603,7 +603,15 @@ const isNew = d => d && (Date.now() - new Date(d).getTime()) < NEW_DAYS * 864e5;
 const dateCell = d => d ? new Date(d).toLocaleDateString() + (isNew(d) ? ' <span class="badge pending">New</span>' : '') : '';
 const confirmedCell = r => r.source === 'page' ? '<span class="cell-muted">no sign-in</span>' : r.confirmed ? 'Yes' : '<b>Not yet</b>';
 async function reloadCompanies(){
-  allProfiles = await fetchAdminProfiles();
+  /* each profile's picture (Jacob, 2026-10-30): the page's logo, else the
+     person's own photo, the same picture their profile shows */
+  const [profiles, accounts] = await Promise.all([fetchAdminProfiles(), fetchAdminAccounts()]);
+  allProfiles = profiles;
+  const pic = {};
+  accounts.forEach(a => { if(a.handle && a.logo) pic['h:' + a.handle.toLowerCase()] = a.logo; });
+  const orphan = allProfiles.filter(r => r.source === 'page' && r.company_slug).map(r => r.company_slug);
+  const logos = await fetchCompanyLogos(orphan);
+  allProfiles.forEach(r => { r.pic = pic['h:' + String(r.handle || '').toLowerCase()] || logos[r.company_slug] || ''; });
   allCompanies = allProfiles.filter(r => r.company_slug).map(r => ({ slug: r.company_slug, name: r.company_name || r.display_name, handle: r.handle, suspended_at: r.suspended_at }));
   const susp = allProfiles.filter(r => r.suspended_at).length, fresh = allProfiles.filter(r => isNew(r.created_at)).length;
   $('companies-hint').textContent = allProfiles.length + ' profiles' + (fresh ? ', ' + fresh + ' new this week' : '') + (susp ? ', ' + susp + ' suspended' : '')
@@ -618,7 +626,8 @@ async function reloadCompanies(){
       : (r.handle ? (r.suspended_at ? `<button class="mini-btn green" onclick="setProfileSuspendedUI('${esc(r.handle)}', false)">Reinstate</button>`
                                     : `<button class="mini-btn" onclick="setProfileSuspendedUI('${esc(r.handle)}', true)">Suspend</button>`) : '');
     return `<tr class="${r.suspended_at ? 'row-waiting' : isNew(r.created_at) ? 'row-new' : ''}">
-      <td><b>${esc(r.display_name || r.company_name || r.handle || 'none')}</b><br>${url}</td>
+      <td><span class="prof-cell"><span class="acc-av prof-av">${isLogoUrl(r.pic) ? `<img src="${esc(r.pic)}" alt="" loading="lazy">` : esc(String(r.display_name || r.company_name || r.handle || '?').trim().slice(0, 1).toUpperCase())}</span>
+        <span><b>${esc(r.display_name || r.company_name || r.handle || 'none')}</b><br>${url}</span></span></td>
       <td class="cell-muted">${esc(r.email || 'none')}</td>
       <td class="cell-muted nowrap">${dateCell(r.created_at)}</td>
       <td>${confirmedCell(r)}</td>

@@ -1994,7 +1994,9 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     assert.ok(/lb\.innerHTML = live\.map\(extrasRow\)\.join\(''\);/.test(aj) && /const extrasRow = l => [\s\S]*?\$\{actionsCell\(l\)\}/.test(aj), 'Club Keywords lost the Edit, Badge, Lock, Pause and Remove actions');
     assert.ok(/await reloadClubs\(\);\s*\/\/ the club set first/.test(aj), 'Directory Admin can render before the club set is known');
     /* All Profiles lists every profile URL with its created date (Jacob, 2026-10-28) */
-    assert.ok(/allProfiles = await fetchAdminProfiles\(\);/.test(aj) && /\$\('newprof-body'\)\.innerHTML = /.test(aj), 'All Profiles or New Profiles no longer lists every profile URL'); }
+    assert.ok(/\[profiles, accounts\] = await Promise\.all\(\[fetchAdminProfiles\(\), fetchAdminAccounts\(\)\]\);\s*allProfiles = profiles;/.test(aj) && /\$\('newprof-body'\)\.innerHTML = /.test(aj), 'All Profiles or New Profiles no longer lists every profile URL');
+    /* with each profile's picture beside its name (Jacob, 2026-10-30) */
+    assert.ok(/<span class="acc-av prof-av">\$\{isLogoUrl\(r\.pic\)/.test(aj), 'All Profiles lost the profile pictures'); }
   assert.ok(/<th>Profile<\/th><th>Email<\/th><th>Created<\/th><th>Email Confirmed<\/th>/.test(ph) && /<h2>New Profiles<\/h2>/.test(ph), 'All Profiles lost its Created column, or New Profiles is gone from Website Applications');
   assert.ok(/#tab-admin:not\(\.adm-clubs\) \.adm-tab\.adm-club,#tab-admin\.adm-clubs \.adm-tab:not\(\.adm-club\)\{display:none\}/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the admin switch no longer hides the other side\'s sub-tabs');
   for (const h of ['Keywords With Banners', 'Keywords With Badges']) {
