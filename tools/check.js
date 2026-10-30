@@ -1996,7 +1996,13 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     /* All Profiles lists every profile URL with its created date (Jacob, 2026-10-28) */
     assert.ok(/\[profiles, accounts\] = await Promise\.all\(\[fetchAdminProfiles\(\), fetchAdminAccounts\(\)\]\);\s*allProfiles = profiles;/.test(aj) && /\$\('newprof-body'\)\.innerHTML = /.test(aj), 'All Profiles or New Profiles no longer lists every profile URL');
     /* with each profile's picture beside its name (Jacob, 2026-10-30) */
-    assert.ok(/<span class="acc-av prof-av">\$\{isLogoUrl\(r\.pic\)/.test(aj), 'All Profiles lost the profile pictures'); }
+    /* the same picture beside every profile, club and person in the console,
+       Club Admin included (Jacob, 2026-10-30) */
+    assert.ok(/const coCell = \(name, handle\) =>\s*whoCell\(/.test(aj) && /function paintPics\(\)/.test(aj), 'the shared profile picture cell is gone');
+    for(const [where, re] of [['All Profiles', /whoCell\(r\.display_name \|\| r\.company_name \|\| r\.handle,/], ['New Profiles', /whoCell\(r\.display_name \|\| r\.handle,/],
+        ['Club Pages and Club Applications', /whoCell\(c\.name,[\s\S]*?whoCell\(c\.name,/], ['Members & Officers', /whoCell\(p\.name \|\| p\.handle,/], ['Projects', /whoCell\(p\.title,/],
+        ['Recruiting', /whoCell\(r\.display_name \|\| r\.handle,[^\n]*r\.photo_url\)/], ['Jobs', /whoCell\(j\.company_name,/]])
+      assert.ok(re.test(aj), where + ' lost the profile pictures'); }
   assert.ok(/<th>Profile<\/th><th>Email<\/th><th>Created<\/th><th>Email Confirmed<\/th>/.test(ph) && /<h2>New Profiles<\/h2>/.test(ph), 'All Profiles lost its Created column, or New Profiles is gone from Website Applications');
   assert.ok(/#tab-admin:not\(\.adm-clubs\) \.adm-tab\.adm-club,#tab-admin\.adm-clubs \.adm-tab:not\(\.adm-club\)\{display:none\}/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the admin switch no longer hides the other side\'s sub-tabs');
   for (const h of ['Keywords With Banners', 'Keywords With Badges']) {

@@ -2773,3 +2773,5 @@ body.wc-invite .wc-lede,body.wc-invite .wc-wrap-cards{display:none}
 /* All Profiles: the profile picture beside each name (2026-10-30) */
 .prof-cell{display:flex;align-items:center;gap:10px}
 .prof-av{width:36px;height:36px;border-radius:9px;font-size:.95rem}
+.prof-cell-top{align-items:flex-start}
+.acc-item .acc-av{width:36px;height:36px;border-radius:9px}

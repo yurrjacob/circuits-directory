@@ -996,7 +996,7 @@ async function jobApplicants(jobId){
 async function fetchRecruits(){
   if(!sb) return [];
   const { data, error } = await sb.from('profiles')
-    .select('user_id, handle, display_name, title, years, talent_listed, talent_hidden, talent_status, updated_at')
+    .select('user_id, handle, display_name, title, years, talent_listed, talent_hidden, talent_status, updated_at, photo_url')
     .or('talent_listed.eq.true,title.not.is.null').order('updated_at', { ascending: false }).limit(500);
   if(error){ console.error('fetchRecruits', error); return []; }
   const rows = data || [];
@@ -1033,11 +1033,12 @@ async function setTalentAccess(slug, untilIso){
 }
 async function fetchAllJobs(){
   if(!sb) return [];
-  const { data, error } = await sb.from('jobs').select('*, job_keywords(keyword), companies(name, handle)')
+  const { data, error } = await sb.from('jobs').select('*, job_keywords(keyword), companies(name, handle, logo)')
     .order('created_at', { ascending: false }).limit(500);
   if(error){ console.error('fetchAllJobs', error); return []; }
   return (data || []).map(j => ({ ...j, keywords: (j.job_keywords || []).map(k => k.keyword).sort(),
-    company_name: j.companies ? j.companies.name : j.company_slug, company_handle: j.companies ? j.companies.handle : null }));
+    company_name: j.companies ? j.companies.name : j.company_slug, company_handle: j.companies ? j.companies.handle : null,
+    company_logo: j.companies ? j.companies.logo : null }));
 }
 async function hasTalentAccess(){
   if(!sb) return false;
@@ -1430,7 +1431,7 @@ async function notifyFunction(kind, payload){
 async function fetchAdminClubs(){
   if(!sb) return [];
   const { data, error } = await sb.from('companies')
-    .select('slug, name, handle, email, contact, phone, website, college_name, club_status, club_badge, created_at, suspended_at, team, members')
+    .select('slug, name, handle, email, contact, phone, website, logo, college_name, club_status, club_badge, created_at, suspended_at, team, members')
     .eq('kind', 'club').order('created_at', { ascending: false });
   if(error){ console.error('fetchAdminClubs', error); return []; }
   const rows = data || [];

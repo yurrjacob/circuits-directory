@@ -76,8 +76,34 @@ const badgeTag = b => !b ? 'none'
    one: the name alone is ambiguous the day a second "Acme" signs up, the
    address (circuits.com/acme) never is. Rows filed without an account, the
    free Get Listed form does that, say so rather than showing nothing. */
+/* One picture per profile, the same in every table of the console, Club
+   Admin included (Jacob, 2026-10-30): the page's logo, else the person's own
+   photo, else the first letter of the name. PICS fills as data arrives
+   (accounts, listings, clubs), keyed by lowercased address and page slug. A
+   row drawn before its picture arrived keeps its keys in data-pic, and
+   paintPics() fills it in. */
+const PICS = {};
+const notePic = (key, url) => { const k = String(key || '').toLowerCase(); if(k && url && isLogoUrl(url) && !PICS[k]) PICS[k] = url; };
+const picFor = (...keys) => { for(const k of keys){ const u = k && PICS[String(k).toLowerCase()]; if(u) return u; } return ''; };
+const picImg = url => `<img src="${esc(url)}" alt="" loading="lazy">`;
+function avatarHtml(name, keys, pic){
+  const ks = (keys || []).filter(Boolean).map(k => String(k).toLowerCase());
+  const url = isLogoUrl(pic) ? pic : picFor(...ks);
+  const letter = esc(String(name || '?').trim().slice(0, 1).toUpperCase() || '?');
+  return url ? `<span class="acc-av prof-av">${picImg(url)}</span>`
+    : `<span class="acc-av prof-av"${ks.length ? ` data-pic="${esc(ks.join(' '))}"` : ''}>${letter}</span>`;
+}
+function paintPics(){
+  document.querySelectorAll('#tab-admin [data-pic]').forEach(el => {
+    const url = picFor(...el.dataset.pic.split(' '));
+    if(url){ el.innerHTML = picImg(url); el.removeAttribute('data-pic'); }
+  });
+}
+/* the name cell: picture, then the name over its second line */
+const whoCell = (name, nameHtml, sub, keys, pic) =>
+  `<td><span class="prof-cell">${avatarHtml(name, keys, pic)}<span>${nameHtml}${sub ? '<br>' + sub : ''}</span></span></td>`;
 const coCell = (name, handle) =>
-  `<td>${esc(name)||'none'}<br><span class="cell-muted">${handle ? 'circuits.com/' + esc(handle) : 'no username yet'}</span></td>`;
+  whoCell(name, esc(name) || 'none', `<span class="cell-muted">${handle ? 'circuits.com/' + esc(handle) : 'no username yet'}</span>`, [handle]);
 
 /* A keyword can only carry ONE live Exclusive Sponsor banner. An app conflicts
    when it wants a banner on a keyword that another APPROVED listing already
@@ -316,7 +342,7 @@ function personRow(r, pending){
   const color = /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : '#3f6300';
   return `<tr class="${pending ? 'row-waiting' : ''}">
       <td><a href="/${esc(r.c.handle || r.c.slug)}" target="_blank" rel="noopener">${esc(r.c.name)}</a><br><span class="cell-muted">${esc(r.c.college_name || '')}</span></td>
-      <td><b>${esc(p.name || p.handle)}</b></td>
+      ${whoCell(p.name || p.handle, '<b>' + esc(p.name || p.handle) + '</b>', '', [p.handle])}
       <td>${r.list === 'team' ? esc(p.role || 'Officer') + ' <span class="cell-muted">(Officer)</span>' : 'Member'}</td>
       <td class="cell-muted">${clubEmails[r.c.slug + ':' + p.id] ? `<a href="mailto:${esc(clubEmails[r.c.slug + ':' + p.id])}">${esc(clubEmails[r.c.slug + ':' + p.id])}</a>` : 'none'}</td>
       <td>${p.handle ? `<a href="/${esc(p.handle)}" target="_blank" rel="noopener">circuits.com/${esc(p.handle)}</a>` : '<span class="cell-muted">none, named only</span>'}</td>
@@ -393,7 +419,7 @@ function clubAppRow(c, pending){
   const text = (b.text || '').trim() || c.name || '';
   const cell = (f, v, type) => `<td><input class="adm-cell-in" type="${type || 'text'}" id="ca-${f}-${s}" value="${esc(v || '')}" aria-label="${f}"></td>`;
   return `<tr class="${pending ? 'row-waiting' : ''}">
-      <td><a href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener"><b>${esc(c.name)}</b></a></td>
+      ${whoCell(c.name, `<a href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener"><b>${esc(c.name)}</b></a>`, '', [c.handle, c.slug], c.logo)}
       <td>${esc(c.college_name || 'none')}</td>
       <td><a class="web-link" href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener">circuits.com/${esc(c.handle || c.slug)}</a></td>
       ${cell('contact', c.contact)}${cell('email', c.email, 'email')}${cell('phone', c.phone)}${cell('website', c.website)}
@@ -454,7 +480,7 @@ async function reloadClubProjects(){
     const club = allClubs.find(c => c.slug === p.company_slug) || {};
     const parts = (Array.isArray(p.parts) ? p.parts : []).filter(x => x && (x.name || '').trim()).length;
     return `<tr class="${p.published === false ? 'row-paused' : ''}">
-      <td><a href="/${esc(clubHandle(p.company_slug) || p.company_slug)}#project-${esc(String(p.id))}" target="_blank" rel="noopener"><b>${esc(p.title)}</b></a>${p.year ? ` <span class="cell-muted">${esc(p.year)}</span>` : ''}<br><span class="cell-muted">${team} on the team</span></td>
+      ${whoCell(p.title, `<a href="/${esc(clubHandle(p.company_slug) || p.company_slug)}#project-${esc(String(p.id))}" target="_blank" rel="noopener"><b>${esc(p.title)}</b></a>${p.year ? ` <span class="cell-muted">${esc(p.year)}</span>` : ''}`, `<span class="cell-muted">${team} on the team</span>`, [], p.cover_url)}
       <td>${esc(clubName(p.company_slug))}</td><td>${esc(club.college_name || 'none')}</td>
       <td><b>${parts}</b></td>
       <td>${p.published === false ? 'Hidden' : 'Shown'}</td>
@@ -476,7 +502,7 @@ async function deleteProjectUI(id){
   await reloadClubProjects();
 }
 function renderPanel(panel){ ({listings:renderListings,banners:renderBanners,badges:renderBadges,pending:renderPending}[panel])(); }
-async function reload(){ allApps = await fetchApplications(); renderAll(); }
+async function reload(){ allApps = await fetchApplications(); allApps.forEach(a => { notePic(a.company_handle, a.logo); notePic(a.company_slug, a.logo); }); renderAll(); paintPics(); }
 
 /* per-panel sort + limit controls */
 document.querySelectorAll('.list-controls').forEach(bar=>{
@@ -608,7 +634,7 @@ async function reloadCompanies(){
   const [profiles, accounts] = await Promise.all([fetchAdminProfiles(), fetchAdminAccounts()]);
   allProfiles = profiles;
   const pic = {};
-  accounts.forEach(a => { if(a.handle && a.logo) pic['h:' + a.handle.toLowerCase()] = a.logo; });
+  accounts.forEach(a => { if(a.handle && a.logo) pic['h:' + a.handle.toLowerCase()] = a.logo; notePic(a.handle, a.logo); notePic(a.company_slug, a.logo); });
   const orphan = allProfiles.filter(r => r.source === 'page' && r.company_slug).map(r => r.company_slug);
   const logos = await fetchCompanyLogos(orphan);
   allProfiles.forEach(r => { r.pic = pic['h:' + String(r.handle || '').toLowerCase()] || logos[r.company_slug] || ''; });
@@ -626,8 +652,7 @@ async function reloadCompanies(){
       : (r.handle ? (r.suspended_at ? `<button class="mini-btn green" onclick="setProfileSuspendedUI('${esc(r.handle)}', false)">Reinstate</button>`
                                     : `<button class="mini-btn" onclick="setProfileSuspendedUI('${esc(r.handle)}', true)">Suspend</button>`) : '');
     return `<tr class="${r.suspended_at ? 'row-waiting' : isNew(r.created_at) ? 'row-new' : ''}">
-      <td><span class="prof-cell"><span class="acc-av prof-av">${isLogoUrl(r.pic) ? `<img src="${esc(r.pic)}" alt="" loading="lazy">` : esc(String(r.display_name || r.company_name || r.handle || '?').trim().slice(0, 1).toUpperCase())}</span>
-        <span><b>${esc(r.display_name || r.company_name || r.handle || 'none')}</b><br>${url}</span></span></td>
+      ${whoCell(r.display_name || r.company_name || r.handle, '<b>' + (esc(r.display_name || r.company_name || r.handle) || 'none') + '</b>', url, [r.handle, r.company_slug], r.pic)}
       <td class="cell-muted">${esc(r.email || 'none')}</td>
       <td class="cell-muted nowrap">${dateCell(r.created_at)}</td>
       <td>${confirmedCell(r)}</td>
@@ -646,12 +671,13 @@ async function reloadCompanies(){
   const recent = allProfiles.filter(r => r.source === 'profile' && r.created_at && (Date.now() - new Date(r.created_at).getTime()) < 30 * 864e5);
   if($('newprof-body')){
     $('newprof-body').innerHTML = recent.map(r => `<tr class="${isNew(r.created_at) ? 'row-new' : ''}">
-      <td>${r.handle ? `<a href="/${esc(r.handle)}" target="_blank" rel="noopener">circuits.com/${esc(r.handle)}</a>` : '<span class="cell-muted">none</span>'}</td>
+      ${whoCell(r.display_name || r.handle, r.handle ? `<a href="/${esc(r.handle)}" target="_blank" rel="noopener">circuits.com/${esc(r.handle)}</a>` : '<span class="cell-muted">none</span>', '', [r.handle, r.company_slug], r.pic)}
       <td>${esc(r.display_name || '')}</td><td class="cell-muted">${esc(r.email || '')}</td>
       <td class="cell-muted nowrap">${dateCell(r.created_at)}</td><td>${confirmedCell(r)}</td></tr>`).join('');
     $('newprof-empty').style.display = recent.length ? 'none' : 'block';
     $('newprof-hint').textContent = recent.length + ' profile URL' + (recent.length === 1 ? '' : 's') + ' created in the last 30 days, newest first';
   }
+  paintPics();
 }
 async function setProfileSuspendedUI(handle, suspend){
   const reason = await askText((suspend ? 'Suspend circuits.com/' : 'Reinstate circuits.com/') + handle + '.\n\nWhy? (goes in the permanent audit log)');
@@ -971,6 +997,7 @@ let allClubs = [];
 async function reloadClubs(){
   const body = $('clubs-body'); if(!body) return;
   allClubs = await fetchAdminClubs();
+  allClubs.forEach(c => { notePic(c.handle, c.logo); notePic(c.slug, c.logo); });
   clubSlugs = new Set(allClubs.map(c => c.slug));
   const order = { Pending: 0, Approved: 1, Denied: 2 };
   allClubs.sort((a, b) => (order[a.club_status] ?? 9) - (order[b.club_status] ?? 9));
@@ -981,7 +1008,7 @@ async function reloadClubs(){
   const n = a => (Array.isArray(a) ? a : []).filter(x => x && ((x.name || '').trim() || (x.handle || '').trim())).length;
   body.innerHTML = allClubs.map(c => `
     <tr class="${c.club_status === 'Pending' ? 'row-waiting' : ''}">
-      <td><a href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener"><b>${esc(c.name)}</b></a><br><span class="cell-muted">circuits.com/${esc(c.handle || c.slug)}</span></td>
+      ${whoCell(c.name, `<a href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener"><b>${esc(c.name)}</b></a>`, `<span class="cell-muted">circuits.com/${esc(c.handle || c.slug)}</span>`, [c.handle, c.slug], c.logo)}
       <td>${esc(c.college_name || 'none')}</td>
       <td>${esc(c.contact || 'none')}${c.phone ? '<br><span class="cell-muted">' + esc(c.phone) + '</span>' : ''}</td>
       <td class="cell-muted">${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : 'none'}</td>
@@ -999,8 +1026,9 @@ async function reloadClubs(){
       </td></tr>`).join('');
   $('clubs-adm-empty').style.display = allClubs.length ? 'none' : 'block';
   renderClubApps();
-  renderClubPeople();
+  await renderClubPeople();
   reloadClubProjects();
+  paintPics();
   if(allApps.length) renderAll();
 }
 async function setClubStatusUI(slug, status){
@@ -1134,7 +1162,7 @@ async function reloadRecruits(){
   allRecruits.sort((a, b) => (b.talent_listed - a.talent_listed) || ((order[a.talent_status] ?? 9) - (order[b.talent_status] ?? 9)));
   body.innerHTML = allRecruits.map(r => `
     <tr class="${r.talent_listed && r.talent_status === 'Pending' ? 'row-waiting' : ''}">
-      <td><a href="/${esc(r.handle)}" target="_blank" rel="noopener">${esc(r.display_name || r.handle)}</a></td>
+      ${whoCell(r.display_name || r.handle, `<a href="/${esc(r.handle)}" target="_blank" rel="noopener">${esc(r.display_name || r.handle)}</a>`, `<span class="cell-muted">circuits.com/${esc(r.handle)}</span>`, [r.handle], r.photo_url)}
       <td>${esc(r.title || 'none')}</td>
       <td>${r.years == null ? 'none' : r.years}</td>
       <td>${(r.keywords || []).length ? (r.keywords || []).map(k => `<span class="kw-tag${k.enabled === false ? ' kw-off' : ''}">${esc(k.keyword)}</span>`).join(' ') : '<span class="cell-muted">none yet</span>'}</td>
@@ -1169,7 +1197,7 @@ async function reloadJobs(){
   allJobs = await fetchAllJobs();
   body.innerHTML = allJobs.map(j => `
     <tr class="${jobState(j) === 'Awaiting approval' ? 'row-waiting' : ''}">
-      <td><a href="/${esc(j.company_handle || j.company_slug)}" target="_blank" rel="noopener">${esc(j.company_name)}</a><br><span class="cell-muted">${j.company_handle ? 'circuits.com/' + esc(j.company_handle) : 'no username yet'}</span></td>
+      ${whoCell(j.company_name, `<a href="/${esc(j.company_handle || j.company_slug)}" target="_blank" rel="noopener">${esc(j.company_name)}</a>`, `<span class="cell-muted">${j.company_handle ? 'circuits.com/' + esc(j.company_handle) : 'no username yet'}</span>`, [j.company_handle, j.company_slug], j.company_logo)}
       <td><b>${esc(j.title)}</b>${j.location ? '<br><span class="cell-muted">' + esc(j.location) + '</span>' : ''}</td>
       <td class="cell-muted">${esc((j.keywords || []).join(', ') || 'none')}</td>
       <td class="cell-muted">${new Date(j.created_at).toLocaleDateString()}</td>

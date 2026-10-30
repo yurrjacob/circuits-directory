@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="styles.css?v=8d476742f6">
+<link rel="stylesheet" href="styles.css?v=6122dde439">
 <script>if(new URLSearchParams(location.search).has('embed')) document.documentElement.classList.add('embed');</script>
 </head>
 <body>
@@ -88,7 +88,7 @@
 </footer>
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
-<script src="store.js?v=19c099be77"></script>
+<script src="store.js?v=2da20af2c6"></script>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -148,13 +148,17 @@ function rowHtml(a){
   const conflict = a.status!=='Approved' && bannerConflict(a);
   return `<tr data-id="${a.id}" class="${conflict?'row-warn':''}">
     <td class="nowrap">${a.created_at ? new Date(a.created_at).toLocaleDateString() : ''}</td>
-    <td class="co-cell">
+    <td class="co-cell"><div class="prof-cell prof-cell-top">
+      <!-- the same picture as every other admin table (Jacob, 2026-10-30) -->
+      <span class="acc-av prof-av">${isLogoUrl(a.logo) ? `<img src="${esc(a.logo)}" alt="" loading="lazy">` : esc(String(a.company || '?').trim().slice(0, 1).toUpperCase() || '?')}</span>
+      <div>
       <span class="ce co-name" contenteditable data-field="company" data-ph="Company">${esc(a.company)}</span>
       <div class="co-sub">Web: <span class="ce" contenteditable data-field="website" data-ph="none">${esc(a.website)}</span></div>
       <div class="co-sub">Logo: ${logoHtml}
         <label class="mini-btn" style="padding:2px 8px;font-size:.72rem;cursor:pointer;margin-left:6px" title="Upload a logo image">Upload<input type="file" accept="image/png,image/jpeg,image/webp" data-logo-up style="display:none"></label>
         ${isLogoUrl(a.logo)?`<button type="button" class="mini-btn danger" data-act="clearlogo" style="padding:2px 8px;font-size:.72rem;margin-left:6px" title="Remove this logo">Clear</button>`:''}
       </div>
+      </div></div>
     </td>
     <td class="contact-cell">
       <span class="ce" contenteditable data-field="contact" data-ph="Name">${esc(a.contact)}</span>
