@@ -2825,7 +2825,9 @@ body.admin-view #pt-review-note,body.admin-view .pt-suspended,body.admin-view #p
 
 /* ---- Stats (2026-10-30): tiles, one blue for every chart mark ---- */
 #tab-admin:not(.adm-stats-mode) .adm-tab.adm-stats{display:none}
-#tab-admin.adm-stats-mode .adm-tabs,#tab-admin.adm-stats-mode .stat-grid{display:none}
+/* the count tiles stay on Stats too, so the Directory Admin / Club Admin / Stats
+   switch sits in the same place on all three (Jacob, 2026-10-30) */
+#tab-admin.adm-stats-mode .adm-tabs{display:none}
 .stats-panel{--st-mark:#2a78d6;--st-track:#eef0f3}
 .stats-panel .panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .st-range{display:inline-flex;align-items:center;gap:8px;font-size:.84rem;font-weight:700;color:var(--muted)}
