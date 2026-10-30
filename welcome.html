@@ -8,7 +8,7 @@
 <meta name="description" content="Your Circuits.com account is confirmed. Choose what to do first.">
 <link rel="icon" href="assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="styles.css?v=a74c4ef907">
+<link rel="stylesheet" href="styles.css?v=4307487077">
 <script src="/nav.js?v=89aa4289a6"></script>
 </head>
 <body>
@@ -48,11 +48,13 @@
        carries, each straight into the tab it names (Jacob, 2026-09-17; the
        club door 2026-10-01). -->
   <div class="wc-cards">
-    <a class="wc-card" href="/portal#listings">
+    <!-- the one that matters most leads (Jacob, 2026-10-30): keywords are how
+         buyers find you, and most new accounts never came back for them -->
+    <a class="wc-card wc-card-main" href="/join" id="wc-kw-card">
       <span class="wc-card-ico" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.7-4.5A2 2 0 0 1 6.6 3h10.8a2 2 0 0 1 1.9 1.5L21 9"/><path d="M4.5 9v10a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5V9"/><path d="M9 20.5V14h6v6.5"/></svg></span>
-      <span class="wc-card-b">Free Directory Listing</span>
-      <span class="wc-card-t">Put your company under the Circuits-Keywords&trade; buyers search. Up to ten of them, at no cost.</span>
-      <span class="wc-card-go">Start<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5.5 18.5 12 12 18.5"/></svg></span>
+      <span class="wc-card-b" id="wc-kw-b">Choose Your Free Directory Keywords</span>
+      <span class="wc-card-t" id="wc-kw-t">Put your company under the Circuits-Keywords&trade; buyers search. Up to ten of them, at no cost. This is how buyers find you.</span>
+      <span class="wc-card-go" id="wc-kw-go">Choose Keywords<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5.5 18.5 12 12 18.5"/></svg></span>
     </a>
     <a class="wc-card" href="/portal#hiring">
       <span class="wc-card-ico" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="18" height="12.5" rx="2"/><path d="M8.5 7.5V5.8A1.8 1.8 0 0 1 10.3 4h3.4a1.8 1.8 0 0 1 1.8 1.8v1.7"/><path d="M3 12.5h18"/></svg></span>
@@ -141,6 +143,13 @@ async function acceptPendingInvite(user, t, info){
     return;
   }
   if(t){ sub.hidden = true; await acceptPendingInvite(user, t, info); return; }
+  /* keywords picked at sign-up are already in for approval: say so */
+  const picked = user && user.user_metadata && Array.isArray(user.user_metadata.keywords) ? user.user_metadata.keywords.length : 0;
+  if(picked){
+    document.getElementById('wc-kw-b').textContent = 'Your ' + (picked === 1 ? 'Keyword Is' : picked + ' Keywords Are') + ' In For Approval';
+    document.getElementById('wc-kw-t').textContent = 'We email you the moment ' + (picked === 1 ? 'it goes' : 'they go') + ' live. You can add up to ' + (10 - picked) + ' more now.';
+    const go = document.getElementById('wc-kw-go'); go.firstChild.textContent = 'Add More Keywords';
+  }
   /* the address is the thing they just claimed, so name it and let them take it */
   let handle = '';
   try { const me = await myProfile(); handle = (me && me.handle) || ''; } catch(e){ handle = ''; }

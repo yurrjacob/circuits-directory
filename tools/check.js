@@ -239,6 +239,13 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
     assert.ok(/<span class="pf-club-links-k">Links<\/span>/.test(pf) && /\[site, other\]\.filter\(Boolean\)/.test(pf) && !/btn btn-outline" href="\$\{escapeHtml\(site\)\}"[^>]*>Website</.test(pf), 'the club Website is still a button, or the two Links slots are gone');
     assert.ok(/function livePeople\(list\)[\s\S]{0,200}!t\.status \|\| t\.status === 'Approved'/.test(pf), 'people waiting for approval show on the club page');
   }
+  /* keywords are the next step everywhere (Jacob, 2026-10-30) */
+  {
+    const wc = fs.readFileSync(path.join(ROOT, 'welcome.html'), 'utf8'), pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8'), rg = fs.readFileSync(path.join(ROOT, 'register.html'), 'utf8');
+    assert.ok(/<a class="wc-card wc-card-main" href="\/join" id="wc-kw-card">/.test(wc) && wc.indexOf('wc-card-main') < wc.indexOf('href="/portal#hiring"'), 'the welcome page no longer leads with Choose Your Free Directory Keywords');
+    assert.ok(/note\.className = 'pt-kw-nudge';/.test(pj) && /if\(none && !PT\.tabFromHash && !\(PT\.co && PT\.co\.kind === 'club'\)\) activateTab\('listings'\);/.test(pj), 'an account with no keywords is no longer sent to Your Listings with the nudge');
+    assert.ok(/<li>Register Your Account and Pick Your Free Keywords\.<\/li>/.test(rg), 'the register steps no longer end in picking keywords');
+  }
   /* Manage Accounts (Jacob, 2026-10-30) and suspended accounts below All Profiles */
   {
     const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8'), st = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
@@ -1173,12 +1180,13 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   /* the tabs read Directory, Hire Talent, Search Work, Search Clubs (Jacob, 2026-10-12) */
   assert.deepStrictEqual([...home.matchAll(/data-target="[a-z]+" role="tab"[^>]*>([^<]+)</g)].map(m => m[1]), ['Directory', 'Hire Talent', 'Search Work', 'Search Clubs'], 'the homepage search tabs are not Directory, Hire Talent, Search Work, Search Clubs');
   assert.ok(!/search-group|search-side|data-mode=|data-target="hiring"|data-target="seeking"/.test(home), 'an old homepage toggle layout is back');
-  /* the four doors under it are the welcome page's cards, word for word
-     (Jacob, 2026-10-07): the two blocks must stay identical */
+  /* the four doors under it are the welcome page's cards (Jacob, 2026-10-07).
+     Since 2026-10-30 the welcome page's first card leads with Choose Your
+     Free Directory Keywords; the other three stay word for word the same. */
   {
-    const pick = src => { const m = src.match(/<div class="wc-cards">[\s\S]*?<\/a>\s*<\/div>/); return m ? m[0].replace(/\s+/g, ' ') : ''; };
-    const onHome = pick(home), onWelcome = pick(fs.readFileSync(path.join(ROOT, 'welcome.html'), 'utf8'));
-    assert.ok(onHome && onHome === onWelcome, 'the homepage cards differ from the welcome page cards');
+    const cards = src => [...src.matchAll(/<a class="wc-card[^"]*"[^>]*>[\s\S]*?<\/a>/g)].map(m => m[0].replace(/\s+/g, ' '));
+    const onHome = cards(home), onWelcome = cards(fs.readFileSync(path.join(ROOT, 'welcome.html'), 'utf8'));
+    assert.ok(onHome.length === 4 && onWelcome.length === 4 && onHome.slice(1).join() === onWelcome.slice(1).join(), 'the homepage cards differ from the welcome page cards');
     /* the foot line: the email sentence is true only on the welcome page (Jacob, 2026-10-07) */
     /* and it sends a newcomer to the Create Profile form (Jacob, 2026-10-12) */
     assert.ok(/<p class="wc-foot">Not sure yet\? <a href="\/register">Register Free &amp; Explore<\/a><\/p>/.test(home) && !/on its way by email/.test(home), 'the homepage foot line is not Not sure yet? Register Free & Explore, linked to /register');
@@ -2177,7 +2185,8 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     const storeSrc2 = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
     const portalSrc3 = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
     const appSrc4 = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
-    for (const [label, href] of [['Free Directory Listing', '/portal#listings'],
+    /* the keywords door leads, straight to the keyword form (2026-10-30) */
+    for (const [label, href] of [['Choose Your Free Directory Keywords', '/join'],
                                  ['Post Free Job', '/portal#hiring'],
                                  ['Post Free Resume', '/portal#seeking']]) {
       assert.ok(new RegExp(`href="${href.replace('#', '#')}"[\\s\\S]{0,900}${label}`).test(wc),

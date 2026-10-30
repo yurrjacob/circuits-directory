@@ -300,6 +300,7 @@ async function initPortal(){
   /* "Get Listed" while signed in sends people to /portal#listings (nav.js);
      inbox notices about recruiting land on /portal#seeking. */
   let tab = (location.hash || '').replace('#', '');
+  PT.tabFromHash = !!tab;   // an address that names a tab always wins
   if(!tab){ try{ tab = localStorage.getItem('cx_pt_tab') || ''; }catch(e){} }   // the tab you were on, when the address carries none
   /* #admin:<group> names an admin sub-tab as well (2026-09-15) */
   const admGroup = tab.startsWith('admin:') ? tab.slice(6) : '';
@@ -699,6 +700,13 @@ async function loadCompany(slug){
   PT.listingsFailed = listings === null;   // an outage is not "no listings yet"
   PT.listings = listings || []; PT.upgrades = upgrades;
   renderReviewStatus();
+  /* an account with no keywords opens on Your Listings, where they are
+     chosen, unless the address named a tab (2026-10-30) */
+  if(!PT.openedOnce){
+    PT.openedOnce = true;
+    const none = !PT.listingsFailed && !PT.listings.some(l => l.keyword && (l.status === 'Approved' || l.status === 'Pending'));
+    if(none && !PT.tabFromHash && !(PT.co && PT.co.kind === 'club')) activateTab('listings');
+  }
   renderProfileForm();
   wireDirtyTracking();
   markClean();
@@ -739,6 +747,13 @@ function renderReviewStatus(){
     note.style.display = '';
     note.innerHTML = '<b>Still under review:</b> ' + kws.join(', ')
       + '. Your live listing' + (live.length > 1 ? 's are' : ' is') + ' unaffected.';
+  } else if(!live.length && PT.slug && !(PT.co && PT.co.kind === 'club')){
+    /* no keywords at all (Jacob, 2026-10-30): most accounts stopped here.
+       Say what is missing and put the way in at the top of every tab. */
+    note.className = 'pt-kw-nudge';
+    note.style.display = '';
+    note.innerHTML = '<div><b>Buyers can\'t find you yet.</b> Pick up to 10 free Directory keywords and your page shows up when people search them.</div>'
+      + '<a class="btn btn-primary" href="/join">Choose Your Free Directory Keywords</a>';
   } else {
     note.style.display = 'none';
   }
