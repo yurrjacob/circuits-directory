@@ -60,7 +60,7 @@ function initHome(){
 function revolveRows(tbody, opts){
   const o = opts || {};
   if(!tbody) return;
-  const every = o.every || 2600;
+  const every = o.every || 5000;   // each order sits for five seconds (Jacob, 2026-10-30: was 2.6)
   const btn = o.button || null;
   const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   let paused = still, hover = false, timer = null;
