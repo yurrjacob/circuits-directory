@@ -1459,6 +1459,60 @@ async function fetchAdminProfiles(){
   if(error){ console.error('fetchAdminProfiles', error); return []; }
   return data || [];
 }
+/* ---- Manage Accounts (Jacob, 2026-10-30) ----
+   Staff only: every function here is refused by the database (or by the
+   auth edge function) for anyone who is not staff. */
+async function fetchAdminAccounts(){
+  if(!sb) return [];
+  const { data, error } = await sb.rpc('admin_accounts');
+  if(error){ console.error('fetchAdminAccounts', error); return []; }
+  return data || [];
+}
+/* a profile-only account gets its page, the way its owner's first save would */
+async function adminEnsurePage(userId){
+  if(!sb) return { error: 'No connection' };
+  const { data, error } = await sb.rpc('admin_ensure_page', { p_user: userId });
+  return error ? { error: error.message } : { slug: data };
+}
+/* live at once; the owner gets one notice, on the site and by email */
+async function adminAddKeywords(userId, keywords){
+  if(!sb) return { error: 'No connection' };
+  const { data, error } = await sb.rpc('admin_add_keywords', { p_user: userId, p_keywords: keywords });
+  return error ? { error: error.message } : (data || {});
+}
+async function adminSetHandle(userId, handle){
+  if(!sb) return 'No connection';
+  const { error } = await sb.rpc('admin_set_handle', { p_user: userId, p_handle: handle });
+  if(!error) return '';
+  const m = error.message || '';
+  return /handle_reserved/.test(m) ? 'That address is reserved for a page of the site.'
+    : /handle_format/.test(m) ? 'Use 3 to 32 letters, numbers, dashes or underscores.'
+    : /handle_(company|profile)/.test(m) ? 'Another account already has that address.' : m;
+}
+async function adminUpdateProfile(userId, fields){
+  if(!sb) return 'No connection';
+  const { data, error } = await sb.from('profiles').update(fields).eq('user_id', userId).select('user_id');
+  if(error) return error.message;
+  return data && data.length ? '' : 'That change was refused.';
+}
+/* the sign-in email lives in Supabase Auth, so the auth edge function changes
+   it, after checking the caller is staff */
+async function adminSetEmail(userId, email){
+  if(!sb) return { error: 'No connection' };
+  const { data: s } = await sb.auth.getSession();
+  const token = s && s.session && s.session.access_token;
+  if(!token) return { error: 'Sign in again first.' };
+  try{
+    const res = await fetch(SUPABASE_URL + '/functions/v1/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ action: 'admin_set_email', user_id: userId, email })
+    });
+    const out = await res.json().catch(() => ({}));
+    if(!res.ok || out.error) return { error: (out && out.error) || 'The change did not go through.' };
+    return out;
+  }catch(e){ return { error: 'Could not reach the server. Try again.' }; }
+}
 async function fetchAllCompanies(){
   if(!sb) return [];
   const { data, error } = await sb.from('companies')

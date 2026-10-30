@@ -608,7 +608,8 @@ async function reloadCompanies(){
   const susp = allProfiles.filter(r => r.suspended_at).length, fresh = allProfiles.filter(r => isNew(r.created_at)).length;
   $('companies-hint').textContent = allProfiles.length + ' profiles' + (fresh ? ', ' + fresh + ' new this week' : '') + (susp ? ', ' + susp + ' suspended' : '')
     + '. Suspend hides without deleting. Delete removes the page and everything it has';
-  $('companies-body').innerHTML = allProfiles.map(r => {
+  /* suspended accounts in their own list below the rest (Jacob, 2026-10-30) */
+  const row = r => {
     const url = r.handle ? `<a href="/${esc(r.handle)}" target="_blank" rel="noopener">circuits.com/${esc(r.handle)}</a>` : '<span class="cell-muted">no username yet</span>';
     const act = r.company_slug
       ? (r.suspended_at ? `<button class="mini-btn green" onclick="setSuspended('${esc(r.company_slug)}', false)">Reinstate</button>`
@@ -623,8 +624,15 @@ async function reloadCompanies(){
       <td>${confirmedCell(r)}</td>
       <td>${r.company_slug ? esc(r.company_name || r.company_slug) : '<span class="cell-muted">profile only</span>'}</td>
       <td>${r.suspended_at ? '<b>Suspended</b><br><span class="cell-muted">' + new Date(r.suspended_at).toLocaleDateString() + '</span>' : 'Active'}</td>
-      <td class="row-actions">${act}</td></tr>`; }).join('');
-  $('companies-empty').style.display = allProfiles.length ? 'none' : 'block';
+      <td class="row-actions">${act}</td></tr>`; };
+  const live = allProfiles.filter(r => !r.suspended_at), off = allProfiles.filter(r => r.suspended_at);
+  $('companies-body').innerHTML = live.map(row).join('');
+  $('companies-empty').style.display = live.length ? 'none' : 'block';
+  if($('companies-susp-body')){
+    $('companies-susp-body').innerHTML = off.map(row).join('');
+    $('companies-susp-empty').style.display = off.length ? 'none' : 'block';
+    $('companies-susp-h').textContent = 'Suspended' + (off.length ? ' \u00b7 ' + off.length : '');
+  }
   /* the same rows, the last 30 days, above Website Applications */
   const recent = allProfiles.filter(r => r.source === 'profile' && r.created_at && (Date.now() - new Date(r.created_at).getTime()) < 30 * 864e5);
   if($('newprof-body')){
@@ -645,6 +653,307 @@ async function setProfileSuspendedUI(handle, suspend){
   if(typeof toast === 'function') toast('circuits.com/' + handle + (suspend ? ' is suspended.' : ' is reinstated.'), true);
   await reloadCompanies();
 }
+/* ---- Manage Accounts (Jacob, 2026-10-30) ----
+   Every account, searchable and filtered to the ones that need a hand. Picking
+   one opens its editor: keywords first (live at once, the owner is told on
+   the site and by email), then profile details, logo and banner, and the
+   account itself (address, sign-in email). The buttons work through data-acc
+   attributes and one listener each, so none of them needs a window export. */
+const ACC = { list: [], filter: 'all', q: '', sel: null, co: null, kws: [], wired: false, busy: false };
+const KW_FREE = 10;
+const ACC_FILTERS = [
+  ['all', 'All', () => true],
+  ['unconfirmed', 'Unconfirmed', a => a.confirmed === false],
+  ['nokw', 'No keywords', a => !a.kw_live],
+  ['under10', 'Under 10 keywords', a => (a.kw_live || 0) < KW_FREE],
+  ['new', 'New this week', a => isNew(a.created_at)],
+  ['suspended', 'Suspended', a => !!a.suspended_at]];
+const accName = a => a.company_name || a.display_name || a.handle || 'No name';
+const accAvatar = a => isLogoUrl(a.logo) ? `<img src="${esc(a.logo)}" alt="">` : esc(accName(a).trim().slice(0, 1).toUpperCase() || '?');
+const accCur = () => ACC.list.find(x => x.user_id === ACC.sel);
+const accVal = id => { const i = $('acc-' + id); return i ? String(i.value || '').trim() : ''; };
+function accTags(a){
+  return [a.suspended_at ? '<span class="acc-tag bad">Suspended</span>' : '',
+    a.confirmed === false ? '<span class="acc-tag warn">Unconfirmed</span>' : '',
+    isNew(a.created_at) ? '<span class="acc-tag new">New</span>' : '',
+    `<span class="acc-tag${a.kw_live ? ' ok' : ''}">${a.kw_live || 0} of ${KW_FREE} keywords</span>`].join('');
+}
+async function loadAccounts(keepSel){
+  const list = $('acc-list'); if(!list) return;
+  wireAccounts();
+  if(!ACC.list.length) list.innerHTML = '<div class="acc-empty">Loading accounts…</div>';
+  ACC.list = await fetchAdminAccounts();
+  renderAccountList();
+  if(keepSel && ACC.sel) await openAccount(ACC.sel);
+}
+/* the filter and the search together; suspended accounts last */
+function accShown(){
+  const f = (ACC_FILTERS.find(x => x[0] === ACC.filter) || ACC_FILTERS[0])[2];
+  const q = ACC.q.trim().toLowerCase();
+  return ACC.list.filter(a => f(a) && (!q || [a.display_name, a.company_name, a.handle, a.signin_email]
+      .some(v => String(v || '').toLowerCase().includes(q))))
+    .sort((a, b) => (a.suspended_at ? 1 : 0) - (b.suspended_at ? 1 : 0));
+}
+function renderAccountList(){
+  const unconf = ACC.list.filter(a => a.confirmed === false && !a.suspended_at && a.signin_email);
+  $('acc-filters').innerHTML = ACC_FILTERS.map(([k, label, f]) =>
+    `<button type="button" class="acc-chip${ACC.filter === k ? ' on' : ''}" data-acc-filter="${k}" aria-pressed="${ACC.filter === k}">${label} <b>${ACC.list.filter(f).length}</b></button>`).join('');
+  const all = $('acc-resend-all');
+  all.hidden = !unconf.length;
+  all.textContent = 'Resend to all unconfirmed (' + unconf.length + ')';
+  const rows = accShown();
+  $('acc-list').innerHTML = rows.length ? rows.map(a => `<button type="button" class="acc-item${a.user_id === ACC.sel ? ' on' : ''}${a.suspended_at ? ' off' : ''}" data-acc-open="${esc(a.user_id)}" role="option" aria-selected="${a.user_id === ACC.sel}">
+      <span class="acc-av">${accAvatar(a)}</span>
+      <span class="acc-who"><b>${esc(accName(a))}</b><span>circuits.com/${esc(a.handle || '')}</span><span class="acc-tags">${accTags(a)}</span></span></button>`).join('')
+    : '<div class="acc-empty">No account matches.</div>';
+  $('acc-hint').textContent = ACC.list.length + ' accounts, ' + unconf.length + ' unconfirmed, '
+    + ACC.list.filter(a => !a.kw_live).length + ' with no keywords';
+}
+async function openAccount(uid){
+  const a = ACC.list.find(x => x.user_id === uid); if(!a) return;
+  ACC.sel = uid; ACC.co = null; ACC.kws = [];
+  renderAccountList();
+  $('acc-editor').innerHTML = '<div class="acc-empty">Loading…</div>';
+  if(a.company_slug){
+    const [co, kws] = await Promise.all([fetchCompany(a.company_slug), fetchMyListings(a.company_slug)]);
+    if(ACC.sel !== uid) return;   // another account was picked meanwhile
+    ACC.co = co; ACC.kws = (kws || []).filter(k => k.keyword && !k.is_club);
+  }
+  renderAccountEditor(a);
+}
+function renderAccountEditor(a){
+  const co = ACC.co || {}, ed = $('acc-editor');
+  const v = (k, fb) => esc(co[k] != null && co[k] !== '' ? co[k] : (fb || ''));
+  const live = ACC.kws.filter(k => k.status === 'Approved'), waiting = ACC.kws.filter(k => k.status === 'Pending');
+  const field = (id, label, val, type) => `<label class="acc-f"><span>${label}</span><input id="acc-${id}" type="${type || 'text'}" value="${val}" autocomplete="off"></label>`;
+  const logo = co.logo || a.logo, cover = co.cover_url;
+  const kwChip = k => {
+    const st = k.status === 'Approved' ? (k.paused ? 'paused' : 'live') : k.status === 'Pending' ? 'wait' : 'off';
+    const label = k.status === 'Approved' ? (k.paused ? 'Paused' : 'Live') : k.status;
+    return `<span class="acc-kw ${st}">${esc(k.keyword)}<i>${esc(label)}</i>`
+      + (k.status === 'Pending' ? `<button type="button" data-acc="approve-kw" data-kw="${esc(k.keyword)}">Make live</button>` : '') + '</span>';
+  };
+  ed.innerHTML = `
+  <div class="acc-head">
+    <span class="acc-av acc-av-lg">${accAvatar(a)}</span>
+    <div class="acc-head-t"><h3>${esc(accName(a))}</h3>
+      <p><a class="web-link" href="/${esc(a.handle)}" target="_blank" rel="noopener">circuits.com/${esc(a.handle)} &#8599;</a></p>
+      <p class="cell-muted">Signs in with ${esc(a.signin_email || 'no email')} &middot; joined ${new Date(a.created_at).toLocaleDateString()}
+        &middot; ${a.last_sign_in ? 'last signed in ' + new Date(a.last_sign_in).toLocaleDateString() : 'never signed in'}</p>
+      <div class="acc-tags">${accTags(a)}</div></div>
+    <div class="acc-head-acts">
+      ${a.confirmed === false ? '<button type="button" class="btn btn-primary" data-acc="resend">Resend confirmation email</button>' : ''}
+      ${a.suspended_at ? '<button type="button" class="mini-btn green" data-acc="reinstate">Reinstate</button>' : '<button type="button" class="mini-btn" data-acc="suspend">Suspend</button>'}
+    </div>
+  </div>
+
+  <section class="acc-card">
+    <h4>Directory Keywords <span class="cell-muted">${live.length} of ${KW_FREE} live${waiting.length ? ', ' + waiting.length + ' waiting' : ''}</span></h4>
+    <div class="acc-kws">${ACC.kws.length ? ACC.kws.map(kwChip).join('') : '<span class="cell-muted">No keywords yet.</span>'}</div>
+    <div class="acc-addkw"><input id="acc-newkw" type="text" placeholder="Add keywords, separated by commas: PCB Assembly, Flex PCB" autocomplete="off" aria-label="Keywords to add">
+      <button type="button" class="btn btn-primary" data-acc="add-kw">Add &amp; make live</button></div>
+    <p class="acc-note">Live in the Directory at once. ${esc(accName(a))} gets an email and a notice on Circuits.com naming what was added.</p>
+  </section>
+
+  <section class="acc-card">
+    <h4>Profile Details${a.company_slug ? '' : ' <span class="cell-muted">profile only: saving makes its page</span>'}</h4>
+    <div class="acc-grid">
+      ${field('name', 'Name (Company, Club or Org) *', v('name', a.display_name))}
+      ${field('contact', 'Contact Person *', v('contact', a.display_name))}
+      ${field('email', 'Public Email', v('email', a.signin_email), 'email')}
+      ${field('phone', 'Public Phone', v('phone'))}
+      ${field('website', 'Website', v('website'))}
+      ${field('address', 'Address (City, Country)', v('address'))}
+      ${field('tagline', 'Tagline', v('tagline'))}
+      ${field('founded', 'Founded', v('founded'))}
+      ${field('employees', 'Employees', v('employees'))}
+      <label class="acc-f"><span>Profile Title</span><select id="acc-title_source">
+        <option value="company"${co.title_source !== 'contact' ? ' selected' : ''}>Use Company Name</option>
+        <option value="contact"${co.title_source === 'contact' ? ' selected' : ''}>Use Contact Person</option></select></label>
+    </div>
+    <label class="acc-f acc-f-wide"><span>About</span><textarea id="acc-description" rows="4">${v('description')}</textarea></label>
+    <div class="acc-save"><button type="button" class="btn btn-primary" data-acc="save-details">Save details</button><span class="acc-msg" id="acc-details-msg" role="status"></span></div>
+  </section>
+
+  <section class="acc-card">
+    <h4>Logo &amp; Banner</h4>
+    <div class="acc-media">
+      <div class="acc-media-one"><div class="acc-logo">${isLogoUrl(logo) ? `<img src="${esc(logo)}" alt="">` : '<span>No logo</span>'}</div>
+        <div class="acc-media-acts"><label class="btn btn-outline cb-file">Choose Logo<input type="file" data-acc-file="logo" accept="image/png,image/jpeg,image/webp"></label>
+          ${isLogoUrl(logo) ? '<button type="button" class="mini-btn" data-acc="rm-logo">Remove</button>' : ''}</div></div>
+      <div class="acc-media-one acc-media-wide"><div class="acc-cover">${isLogoUrl(cover) ? `<img src="${esc(cover)}" alt="">` : '<span>No banner</span>'}</div>
+        <div class="acc-media-acts"><label class="btn btn-outline cb-file">Choose Banner<input type="file" data-acc-file="cover" accept="image/png,image/jpeg,image/webp"></label>
+          ${isLogoUrl(cover) ? '<button type="button" class="mini-btn" data-acc="rm-cover">Remove</button>' : ''}</div></div>
+    </div>
+  </section>
+
+  <section class="acc-card">
+    <h4>Account</h4>
+    <div class="acc-grid acc-grid-2">
+      <label class="acc-f"><span>Circuits.com address</span><span class="acc-handle"><i>circuits.com/</i><input id="acc-handle" type="text" value="${esc(a.handle || '')}" spellcheck="false" autocomplete="off"></span></label>
+      <div class="acc-f-btn"><button type="button" class="btn btn-outline" data-acc="set-handle">Change address</button></div>
+      <label class="acc-f"><span>Sign-in email</span><input id="acc-signin" type="email" value="${esc(a.signin_email || '')}" autocomplete="off"></label>
+      <div class="acc-f-btn"><button type="button" class="btn btn-outline" data-acc="set-email">Change sign-in email</button></div>
+    </div>
+    <p class="acc-note">A new address breaks any link already printed with the old one. A new sign-in email works at once, and the owner is told on the site and by email.</p>
+  </section>`;
+}
+function wireAccounts(){
+  if(ACC.wired) return;
+  ACC.wired = true;
+  const q = $('acc-q');
+  if(q) q.addEventListener('input', () => { ACC.q = q.value; renderAccountList(); });
+  $('acc-filters').addEventListener('click', e => { const b = e.target.closest('[data-acc-filter]'); if(!b) return; ACC.filter = b.dataset.accFilter; renderAccountList(); });
+  $('acc-list').addEventListener('click', e => { const b = e.target.closest('[data-acc-open]'); if(b) openAccount(b.dataset.accOpen); });
+  $('acc-resend-all').addEventListener('click', resendAllUnconfirmed);
+  const ed = $('acc-editor');
+  ed.addEventListener('click', e => { const b = e.target.closest('[data-acc]'); if(b) accAction(b.dataset.acc, b); });
+  ed.addEventListener('change', e => { const i = e.target.closest('[data-acc-file]'); if(i) accUpload(i.dataset.accFile, i); });
+  ed.addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.id === 'acc-newkw'){ e.preventDefault(); accAction('add-kw', null); } });
+}
+/* a profile-only account gets its page the moment staff save something to it */
+async function accSlug(a){
+  if(a.company_slug) return a.company_slug;
+  const r = await adminEnsurePage(a.user_id);
+  if(r.error){ tell('Could not make the page: ' + r.error); return null; }
+  a.company_slug = r.slug;
+  return r.slug;
+}
+const accToast = t => { if(typeof toast === 'function') toast(t, true); };
+async function accAction(act, btn){
+  const a = accCur(); if(!a || ACC.busy) return;
+  ACC.busy = true; if(btn) btn.disabled = true;
+  try{ await accDo(act, a, btn); }
+  finally{ ACC.busy = false; if(btn && btn.isConnected) btn.disabled = false; }
+}
+async function accDo(act, a, btn){
+  const name = accName(a);
+  if(act === 'resend'){
+    const err = await resendConfirmation(a.signin_email);
+    if(err){ tell(err); return; }
+    accToast('Confirmation email sent again to ' + a.signin_email + '.');
+    return;
+  }
+  if(act === 'suspend' || act === 'reinstate'){
+    const off = act === 'suspend';
+    const reason = await askText((off ? 'Suspend ' : 'Reinstate ') + name + '.\n\nWhy? (goes in the permanent audit log)');
+    if(reason === null) return;
+    if(!reason.trim()){ tell('Please give a reason. It goes in the permanent audit log.'); return; }
+    const err = a.company_slug ? await suspendCompany(a.company_slug, off, reason.trim()) : await suspendProfile(a.handle, off, reason.trim());
+    if(err){ tell('Could not do that: ' + err); return; }
+    accToast(name + (off ? ' is suspended.' : ' is reinstated.'));
+    await reloadCompanies(); await loadAccounts(true);
+    return;
+  }
+  if(act === 'add-kw' || act === 'approve-kw'){
+    const kws = act === 'approve-kw' ? [btn.dataset.kw]
+      : accVal('newkw').split(/[,;\n]+/).map(k => k.trim()).filter(k => k.length >= 2);
+    if(!kws.length){ tell('Type at least one keyword, two letters or more. Separate several with commas.'); return; }
+    const live = ACC.kws.filter(k => k.status === 'Approved').length;
+    if(act === 'add-kw' && live + kws.length > KW_FREE
+      && !await askConfirm(name + ' has ' + live + ' live keywords. Adding ' + kws.length + ' more goes past the ' + KW_FREE + ' free ones. Add them anyway?', { danger: false })) return;
+    const r = await adminAddKeywords(a.user_id, kws);
+    if(r.error){ tell('Could not add: ' + r.error); return; }
+    const added = r.added || [], skipped = r.skipped || [];
+    accToast(added.length ? 'Live now: ' + added.join(', ') + '. ' + name + ' has been told.' : 'Nothing new to add.');
+    if(skipped.length) tell('Already live, so left as they were: ' + skipped.join(', ') + '.');
+    await loadAccounts(true);
+    return;
+  }
+  if(act === 'save-details'){
+    const f = {
+      name: accVal('name'), contact: accVal('contact'), email: accVal('email') || null, phone: accVal('phone') || null,
+      website: accVal('website') || null, address: accVal('address') || null, tagline: accVal('tagline') || null,
+      founded: accVal('founded') || null, employees: accVal('employees') || null,
+      description: accVal('description') || null, title_source: accVal('title_source') || 'company' };
+    const bad = !f.name ? 'A name is needed.' : !f.contact ? 'A contact person is needed.'
+      : f.email && !isValidEmail(f.email) ? 'Public Email is not an email address.'
+      : f.phone && !isValidPhone(f.phone) ? 'Public Phone needs at least 10 digits.'
+      : f.website && !isValidWebsite(f.website) ? 'Website needs to be a web address.'
+      : f.founded && !isValidYear(f.founded) ? 'Founded needs to be a 4-digit year.' : '';
+    const msg = $('acc-details-msg');
+    if(bad){ msg.textContent = 'Not saved: ' + bad; msg.className = 'acc-msg bad'; return; }
+    const slug = await accSlug(a); if(!slug) return;
+    const err = await updateCompany(slug, f);
+    if(err){ msg.textContent = 'Not saved: ' + err; msg.className = 'acc-msg bad'; return; }
+    const e2 = await adminUpdateProfile(a.user_id, { display_name: f.contact || f.name });
+    if(e2) console.warn('profile mirror', e2);
+    accToast(name + ' saved.');
+    await loadAccounts(true);
+    const m2 = $('acc-details-msg'); if(m2){ m2.textContent = '✓ Saved'; m2.className = 'acc-msg ok'; }
+    return;
+  }
+  if(act === 'rm-logo' || act === 'rm-cover'){
+    if(!await askConfirm('Remove the ' + (act === 'rm-logo' ? 'logo' : 'banner') + ' from ' + name + '?')) return;
+    const slug = await accSlug(a); if(!slug) return;
+    const err = await updateCompany(slug, act === 'rm-logo' ? { logo: null } : { cover_url: null });
+    if(err){ tell('Could not remove it: ' + err); return; }
+    if(act === 'rm-logo') await adminUpdateProfile(a.user_id, { photo_url: null });
+    accToast('Removed.');
+    await loadAccounts(true);
+    return;
+  }
+  if(act === 'set-handle'){
+    const h = accVal('handle').toLowerCase().replace(/^@/, '').replace(/^(https?:\/\/)?(www\.)?circuits\.com\//, '');
+    if(!h || h === a.handle){ tell('Type the new address first.'); return; }
+    if(!await askConfirm('Move ' + name + ' from circuits.com/' + a.handle + ' to circuits.com/' + h + '? Any link already printed with the old address stops working.', { danger: false })) return;
+    const err = await adminSetHandle(a.user_id, h);
+    if(err){ tell('Address not changed: ' + err); return; }
+    accToast(name + ' is now at circuits.com/' + h + '.');
+    await reloadCompanies(); await loadAccounts(true);
+    return;
+  }
+  if(act === 'set-email'){
+    const e = accVal('signin').toLowerCase();
+    if(!isValidEmail(e)){ tell('That is not an email address.'); return; }
+    if(e === String(a.signin_email || '').toLowerCase()){ tell('That is already the sign-in email.'); return; }
+    if(!await askConfirm(name + ' signs in with ' + a.signin_email + '. Change it to ' + e + '? It works at once; the old email stops working for sign-in.', { danger: false })) return;
+    const r = await adminSetEmail(a.user_id, e);
+    if(r.error){ tell('Sign-in email not changed: ' + r.error); return; }
+    if(r.confirmed === false){
+      const err = await resendConfirmation(e);
+      accToast(err ? 'Changed. The confirmation email could not go yet: ' + err : 'Changed, and the confirmation email went to ' + e + '.');
+    }else accToast('Sign-in email changed to ' + e + '.');
+    await reloadCompanies(); await loadAccounts(true);
+  }
+}
+async function accUpload(kind, input){
+  const a = accCur(); const f = input.files && input.files[0]; input.value = '';
+  if(!a || !f || ACC.busy) return;
+  if(!/^image\/(png|jpeg|webp)$/.test(f.type)){ tell('Use a PNG, JPEG or WebP picture.'); return; }
+  if(f.size > 4 * 1024 * 1024){ tell('That picture is over 4 MB.'); return; }
+  ACC.busy = true;
+  try{
+    const slug = await accSlug(a); if(!slug) return;
+    const url = kind === 'logo' ? await uploadImage(f) : await uploadCover(f);
+    if(!url){ tell('The upload did not go through. Try a smaller picture.'); return; }
+    const err = await updateCompany(slug, kind === 'logo' ? { logo: url } : { cover_url: url });
+    if(err){ tell('Could not save it: ' + err); return; }
+    if(kind === 'logo') await adminUpdateProfile(a.user_id, { photo_url: url });
+    accToast(kind === 'logo' ? 'Logo saved.' : 'Banner saved.');
+  }finally{ ACC.busy = false; }
+  await loadAccounts(true);
+}
+/* one at a time, a little apart, so the mail service does not throttle us */
+async function resendAllUnconfirmed(){
+  const todo = ACC.list.filter(a => a.confirmed === false && !a.suspended_at && a.signin_email);
+  if(!todo.length || ACC.busy) return;
+  if(!await askConfirm('Send the confirmation email again to ' + todo.length + ' unconfirmed account' + (todo.length === 1 ? '' : 's') + '?', { danger: false })) return;
+  const btn = $('acc-resend-all');
+  ACC.busy = true; btn.disabled = true;
+  const failed = [];
+  try{
+    for(const [i, a] of todo.entries()){
+      btn.textContent = 'Sending ' + (i + 1) + ' of ' + todo.length + '…';
+      const err = await resendConfirmation(a.signin_email);
+      if(err) failed.push(a.signin_email + ': ' + err);
+      if(i < todo.length - 1) await new Promise(r => setTimeout(r, 1200));
+    }
+  }finally{ ACC.busy = false; btn.disabled = false; renderAccountList(); }
+  if(failed.length) tell('Sent ' + (todo.length - failed.length) + ' of ' + todo.length + '. Not sent:\n' + failed.join('\n'));
+  else accToast('Confirmation emails sent again to ' + todo.length + ' accounts.');
+}
+
 /* ---- Manage Clubs (Jacob, 2026-10-12): approve and manage club pages ----
    New clubs arrive Pending (the database sets it) and sort first. Approve
    puts the club on the Global Club List and tells its owner; Deny keeps it
@@ -987,6 +1296,7 @@ function showAdminGroup(g, fromClick){
   /* the Website Applications sheet is its own page, framed in; it loads on first open */
   const fr = $('apps-frame');
   if(g === 'applications' && fr && !fr.src) fr.src = '/applications?embed=1';
+  if(g === 'accounts') loadAccounts(true);
   try{ localStorage.setItem('cx_admin_group', g); }catch(e){}
   /* a reload stays on this sub-tab (Jacob, 2026-09-15): it rides in the
      address as #admin:<group>, the way the dashboard tabs do */

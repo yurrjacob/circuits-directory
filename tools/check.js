@@ -239,6 +239,19 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
     assert.ok(/<span class="pf-club-links-k">Links<\/span>/.test(pf) && /\[site, other\]\.filter\(Boolean\)/.test(pf) && !/btn btn-outline" href="\$\{escapeHtml\(site\)\}"[^>]*>Website</.test(pf), 'the club Website is still a button, or the two Links slots are gone');
     assert.ok(/function livePeople\(list\)[\s\S]{0,200}!t\.status \|\| t\.status === 'Approved'/.test(pf), 'people waiting for approval show on the club page');
   }
+  /* Manage Accounts (Jacob, 2026-10-30) and suspended accounts below All Profiles */
+  {
+    const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8'), st = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+    assert.ok(ph.indexOf('id="companies-susp-body"') > ph.indexOf('id="companies-body"') && /const live = allProfiles\.filter\(r => !r\.suspended_at\), off = allProfiles\.filter\(r => r\.suspended_at\);/.test(aj), 'suspended accounts are not in their own list below All Profiles');
+    assert.ok(['acc-q', 'acc-filters', 'acc-resend-all', 'acc-list', 'acc-editor'].every(id => ph.includes(`id="${id}"`)), 'the Manage Accounts panel lost its search, filters, resend-all, list or editor');
+    for(const [k, label] of [['unconfirmed', 'Unconfirmed'], ['nokw', 'No keywords'], ['under10', 'Under 10 keywords'], ['suspended', 'Suspended']])
+      assert.ok(aj.includes(`['${k}', '${label}',`), 'Manage Accounts lost its ' + label + ' filter');
+    for(const act of ['resend', 'add-kw', 'approve-kw', 'save-details', 'rm-logo', 'rm-cover', 'set-handle', 'set-email', 'suspend'])
+      assert.ok(aj.includes(`act === '${act}'`) && (aj.includes(`data-acc="${act}"`) || act === 'suspend'), 'the Manage Accounts ' + act + ' button is not wired');
+    assert.ok(/sb\.rpc\('admin_add_keywords'/.test(st) && /action: 'admin_set_email'/.test(st) && /Authorization: 'Bearer ' \+ token/.test(st), 'Manage Accounts no longer adds keywords through the database or changes the sign-in email through the auth function');
+    const ea = fs.readFileSync(path.join(ROOT, 'tools', 'edge-auth.ts'), 'utf8');
+    assert.ok(/action === "admin_set_email"[\s\S]{0,600}from\("staff"\)[\s\S]{0,120}if \(!st\) return json\(\{ error: "Staff only\." \}, 403\);/.test(ea), 'the auth function changes a sign-in email without checking the caller is staff');
+  }
   /* Club Admin, Club Applications and Projects (Jacob, 2026-10-28) */
   {
     const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
@@ -1959,7 +1972,7 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
 {
   const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
   const tabs = [...ph.matchAll(/class="adm-tab[^"]*" data-adm="([a-z]+)">(?:<svg[\s\S]*?<\/svg>)?([^<]+)</g)].map(m => m[1] + ':' + m[2]);
-  assert.deepStrictEqual(tabs, ['companies:All Profiles', 'listings:Listings', 'applications:Website Applications',
+  assert.deepStrictEqual(tabs, ['companies:All Profiles', 'accounts:Manage Accounts', 'listings:Listings', 'applications:Website Applications',
     'upgrades:Upgrade Applications', 'employment:Recruiting Applications', 'clubs:Club Pages', 'clubkw:Club Keywords', 'clubapps:Club Applications',
     'clubppl:Members &amp; Officers', 'clubproj:Projects', 'clubup:Badges &amp; Upgrades', 'messages:Notifications', 'activity:Activity'],
     'the admin sub-tabs are out of order or renamed: ' + tabs.join(', '));

@@ -1,7 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-/*  Circuits.com — sign-in / reset by username, WITHOUT exposing the email.
+/*  Circuits.com: sign-in / reset by username, WITHOUT exposing the email.
 
     Deployed as the `auth` edge function (Supabase project circuits-com). This
     copy is the record; deploy it with the Supabase MCP or CLI after editing.
@@ -109,8 +109,49 @@ Deno.serve(async (req: Request) => {
         body: JSON.stringify({ email, ...security(payload) })
       }).catch(() => {});
     }
-    /* Always the same answer — existence of the account stays hidden. */
+    /* Always the same answer: existence of the account stays hidden. */
     return json({ ok: true });
+  }
+
+  /* ---------- staff: a new sign-in email for an account (v5, 2026-10-30) ----------
+     Manage Accounts in the admin console. Only a signed-in staff member (the
+     same staff table is_staff() reads) may call it; the account is named by
+     its id, and its owner is told on the site and by email. A confirmed
+     account stays confirmed; an unconfirmed one stays unconfirmed, and the
+     console then resends the confirmation to the new address. */
+  if (action === "admin_set_email") {
+    const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+    const { data: who } = await db.auth.getUser(token);
+    const caller = String(who?.user?.email ?? "").toLowerCase();
+    if (!caller) return json({ error: "Sign in first." }, 401);
+    const { data: st } = await db.from("staff").select("email").ilike("email", caller).maybeSingle();
+    if (!st) return json({ error: "Staff only." }, 403);
+    const uid = String(payload.user_id ?? "");
+    const next = String(payload.email ?? "").trim().toLowerCase();
+    if (!/^[0-9a-f-]{36}$/i.test(uid)) return json({ error: "No such account." }, 400);
+    if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(next)) return json({ error: "That is not an email address." }, 400);
+    const { data: before } = await db.auth.admin.getUserById(uid);
+    if (!before?.user) return json({ error: "No such account." }, 404);
+    const prev = String(before.user.email ?? "").toLowerCase();
+    const confirmed = !!before.user.email_confirmed_at;
+    if (prev === next) return json({ ok: true, email: next, confirmed });
+    const { error } = await db.auth.admin.updateUserById(uid, { email: next, email_confirm: confirmed });
+    if (error) {
+      return json({ error: /already|exists|registered/i.test(error.message) ? "Another account already signs in with that email." : error.message }, 400);
+    }
+    await db.from("profiles").update({ email: next }).eq("user_id", uid);
+    /* the listings this account owns are addressed to its sign-in email */
+    const { data: pages } = await db.from("company_users").select("company_slug").eq("user_id", uid);
+    const slugs = (pages ?? []).map((p: { company_slug: string }) => p.company_slug);
+    if (prev && slugs.length) await db.from("applications").update({ owner_email: next }).in("company_slug", slugs).eq("owner_email", prev);
+    await db.from("security_log").insert({ actor: caller, action: "admin_set_email", target: uid, detail: { from: prev, to: next } });
+    await db.rpc("notify_user", {
+      p_user: uid,
+      p_subject: "Your sign-in email was changed",
+      p_body: `Circuits.com changed the email you sign in with from ${prev || "none"} to ${next}. Your password and your circuits.com address are unchanged. If you did not ask for this, reply through the Contact page.`,
+      p_link: "/portal#account"
+    });
+    return json({ ok: true, email: next, confirmed });
   }
 
   return json({ error: "unknown action" }, 400);
