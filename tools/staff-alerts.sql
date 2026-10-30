@@ -311,3 +311,80 @@ exception when others then
 end $$;
 create trigger file_signup_keywords_trg after update of email_confirmed_at on auth.users
   for each row execute function public.file_signup_keywords();
+
+-- ---- Follow-up emails (Jacob, 2026-10-30) -----------------------------------
+-- Each account gets each nudge once, from an hourly job:
+--   confirm  never confirmed, 24 hours to 7 days after signing up: a fresh
+--            one-time link from the notify function (kind confirm_reminder,
+--            which only acts on a row here and mails the account's own email)
+--   kw1      confirmed 1 to 3 days ago, no Directory keyword asked for yet
+--   kw4      confirmed 4 to 10 days ago, still none
+-- The keyword nudges are inbox notices (bell and email, button to /join).
+create table if not exists public.account_nudges (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  kind text not null check (kind in ('confirm', 'kw1', 'kw4')),
+  created_at timestamptz not null default now(),
+  sent_at timestamptz,
+  unique (user_id, kind)
+);
+alter table public.account_nudges enable row level security;
+create policy account_nudges_staff_read on public.account_nudges for select to authenticated using (public.is_staff());
+
+create or replace function public.account_has_keywords(p_user uuid)
+returns boolean language sql stable security definer set search_path = public, auth as $$
+  select exists (select 1 from applications a join company_users cu on cu.company_slug = a.company_slug
+                  where cu.user_id = p_user and a.is_club = false and a.keyword is not null)
+      or exists (select 1 from applications a join auth.users u on lower(u.email) = a.owner_email
+                  where u.id = p_user and a.is_club = false and a.keyword is not null);
+$$;
+
+create or replace function public.send_account_nudges()
+returns int language plpgsql security definer set search_path = public, auth, extensions as $$
+declare r record; n int := 0; nm text;
+begin
+  for r in
+    insert into account_nudges (user_id, kind)
+    select u.id, 'confirm' from auth.users u join profiles p on p.user_id = u.id
+     where u.email_confirmed_at is null and p.suspended_at is null
+       and u.created_at < now() - interval '24 hours' and u.created_at > now() - interval '7 days'
+    on conflict (user_id, kind) do nothing
+    returning id
+  loop
+    perform net.http_post(
+      url := 'https://ghpruernzhjwsgsezdyn.supabase.co/functions/v1/notify',
+      body := jsonb_build_object('kind', 'confirm_reminder', 'id', r.id),
+      headers := '{"Content-Type": "application/json"}'::jsonb);
+    n := n + 1;
+  end loop;
+  for r in
+    select u.id, p.handle, p.display_name, k.kind
+      from auth.users u join profiles p on p.user_id = u.id
+      cross join (values ('kw1', interval '1 day', interval '3 days'), ('kw4', interval '4 days', interval '10 days')) k(kind, lo, hi)
+     where u.email_confirmed_at is not null and p.suspended_at is null
+       and u.email_confirmed_at < now() - k.lo and u.email_confirmed_at > now() - k.hi
+       and not exists (select 1 from staff s where lower(s.email) = lower(u.email))
+       and not exists (select 1 from account_nudges an where an.user_id = u.id and an.kind = k.kind)
+       and not account_has_keywords(u.id)
+  loop
+    insert into account_nudges (user_id, kind, sent_at) values (r.id, r.kind, now()) on conflict do nothing;
+    nm := coalesce(nullif(r.display_name, ''), 'Your page');
+    if r.kind = 'kw1' then
+      perform notify_user(r.id, 'Choose your free Directory keywords',
+        'Your page at circuits.com/' || r.handle || ' is set up, but buyers cannot find it yet.' || E'\n\n' ||
+        'Pick up to 10 free Circuits-Keywords, the words buyers search, and your listing shows up under them. It takes about a minute.',
+        '/join');
+    else
+      perform notify_user(r.id, 'Buyers still cannot find circuits.com/' || r.handle,
+        'Your page has no Directory keywords yet, so it does not show up when buyers search.' || E'\n\n' ||
+        'Your first 10 are free. Choose them now and we review them within one business day.',
+        '/join');
+    end if;
+    n := n + 1;
+  end loop;
+  return n;
+end $$;
+revoke execute on function public.send_account_nudges() from public, anon, authenticated;
+revoke execute on function public.account_has_keywords(uuid) from public, anon, authenticated;
+
+select cron.schedule('send-account-nudges', '23 * * * *', 'select public.send_account_nudges()');

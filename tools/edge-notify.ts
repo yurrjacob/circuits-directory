@@ -27,6 +27,9 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
     acknowledgement from the claims row, and the sender of a contact message
     only gets a copy when the check verifiably passed, so an address typed
     into the request is never mailed on the request's say-so alone.
+    v19 (2026-10-30): 'confirm_reminder' sends a never-confirmed account a
+    fresh one-time link, once, for a row send_account_nudges() made; inbox
+    notices that link to /join get a Choose Your Free Keywords button.
     v18 (2026-10-12): the welcome mail is back to three green buttons, Free
     Directory Listing (Your Listings), Post Free Job (Hire Talent) and Post
     Free Resume (Search Work), as Jacob's on-boarding list asks.
@@ -196,6 +199,37 @@ Deno.serve(async (req: Request) => {
      mailed at most once. The few notices that already have a richer
      dedicated mail (listing request, listing decision) are skipped here so
      nobody gets the same news twice. */
+  /* ---------- a confirmation reminder (v19, 2026-10-30) ----------
+     Only for a row send_account_nudges() made in account_nudges: an account
+     that never confirmed, a day after signing up. The recipient is that
+     account's own email, read by its id, never taken from the request; a
+     second call for the same row sends nothing. The link is a one-time
+     sign-in link, which also confirms the email, landing on /welcome. */
+  if (kind === "confirm_reminder") {
+    const id = String(payload.id ?? "");
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return json({ error: "id required" }, 400);
+    const { data: rows } = await db.from("account_nudges")
+      .update({ sent_at: new Date().toISOString() })
+      .eq("id", id).eq("kind", "confirm").is("sent_at", null)
+      .select("user_id");
+    const row = rows?.[0];
+    if (!row) return json({ ok: false, error: "nothing_to_send" }, 200);
+    const { data: u } = await db.auth.admin.getUserById(row.user_id);
+    const to = validEmail(u?.user?.email);
+    if (!to || u?.user?.email_confirmed_at) return json({ ok: false, error: "nothing_to_send" }, 200);
+    const { data: made, error } = await db.auth.admin.generateLink({ type: "magiclink", email: to, options: { redirectTo: `${SITE}/welcome` } });
+    const action = made?.properties?.action_link;
+    if (error || !action) return json({ ok: false, error: "no_link" }, 200);
+    const sent = await send(to, "Confirm your email to finish your Circuits.com account", shell(
+      kicker("One step left") +
+      `<h1 style="margin:0 0 12px;font-size:1.25rem">Confirm your email</h1>` +
+      `<p style="margin:0 0 12px;font-size:.95rem;line-height:1.55">You started a Circuits.com account but have not confirmed your email yet. Confirm it to open your dashboard and get your free Directory keywords reviewed.</p>` +
+      `<p style="margin:14px 0 0">${button(action, "Confirm My Email")}</p>` +
+      note("The button works once. If it has expired, sign in at circuits.com/portal and ask for a new link. If you did not sign up for Circuits.com, ignore this email.")
+    ));
+    return json({ ok: sent });
+  }
+
   if (kind === "inbox") {
     const id = String(payload.id ?? "");
     if (!id) return json({ error: "id required" }, 400);
@@ -223,7 +257,7 @@ Deno.serve(async (req: Request) => {
       ? `<p style="margin:14px 0 0">${button(`${SITE}/portal#listings`, "Free Directory Listing")}</p>` +
         `<p style="margin:10px 0 0">${button(`${SITE}/portal#hiring`, "Post Free Job")}</p>` +
         `<p style="margin:10px 0 0">${button(`${SITE}/portal#seeking`, "Post Free Resume")}</p>`
-      : `<p style="margin:14px 0 0">${button(href, "Open on Circuits.com")}</p>`;
+      : `<p style="margin:14px 0 0">${button(href, link === "/join" ? "Choose Your Free Keywords" : "Open on Circuits.com")}</p>`;
     const sent = await send(to, subject, shell(
       kicker(field(n.sender_name, 60) || "Circuits.com") +
       `<h1 style="margin:0 0 12px;font-size:1.25rem">${esc(subject)}</h1>` +

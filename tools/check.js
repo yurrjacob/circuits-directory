@@ -239,6 +239,12 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
     assert.ok(/<span class="pf-club-links-k">Links<\/span>/.test(pf) && /\[site, other\]\.filter\(Boolean\)/.test(pf) && !/btn btn-outline" href="\$\{escapeHtml\(site\)\}"[^>]*>Website</.test(pf), 'the club Website is still a button, or the two Links slots are gone');
     assert.ok(/function livePeople\(list\)[\s\S]{0,200}!t\.status \|\| t\.status === 'Approved'/.test(pf), 'people waiting for approval show on the club page');
   }
+  /* follow-up emails (Jacob, 2026-10-30): the confirm reminder mails only the account behind a nudge row */
+  {
+    const nt = fs.readFileSync(path.join(ROOT, 'tools', 'edge-notify.ts'), 'utf8');
+    const cr = nt.slice(nt.indexOf('if (kind === "confirm_reminder")'), nt.indexOf('if (kind === "inbox")'));
+    assert.ok(/from\("account_nudges"\)[\s\S]*?\.is\("sent_at", null\)/.test(cr) && /getUserById\(row\.user_id\)/.test(cr) && !/payload\.email/.test(cr), 'the confirm reminder could mail an address from the request, or mail twice');
+  }
   /* the free path looks free (Jacob, 2026-10-30): steps 02 to 05 sit folded in one optional section */
   {
     const jn = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
