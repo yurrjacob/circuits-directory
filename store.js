@@ -1489,6 +1489,13 @@ async function fetchAdminAccounts(){
   if(error){ console.error('fetchAdminAccounts', error); return []; }
   return data || [];
 }
+/* staff: everything the Stats page shows, in one call (2026-10-30) */
+async function fetchAdminStats(days){
+  if(!sb) return null;
+  const { data, error } = await sb.rpc('admin_stats', { p_days: days });
+  if(error){ console.error('fetchAdminStats', error); return null; }
+  return data;
+}
 /* staff: the logos of pages, by slug, for the pictures on All Profiles */
 async function fetchCompanyLogos(slugs){
   if(!sb || !slugs || !slugs.length) return {};

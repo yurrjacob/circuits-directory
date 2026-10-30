@@ -388,3 +388,75 @@ revoke execute on function public.send_account_nudges() from public, anon, authe
 revoke execute on function public.account_has_keywords(uuid) from public, anon, authenticated;
 
 select cron.schedule('send-account-nudges', '23 * * * *', 'select public.send_account_nudges()');
+
+-- ---- Stats for the founders (Jacob, 2026-10-30) -----------------------------
+-- One staff-only call for the Admin Dashboard's Stats page. p_days limits the
+-- funnel and the search figures (0 = all time); the weekly series always
+-- covers the last 12 weeks. Staff and suspended accounts are left out.
+create or replace function public.admin_stats(p_days int default 30)
+returns jsonb language plpgsql stable security definer set search_path = public, auth as $$
+declare since timestamptz; out jsonb;
+begin
+  if not is_staff() then raise exception 'staff only' using errcode = 'insufficient_privilege'; end if;
+  since := case when coalesce(p_days, 0) > 0 then now() - make_interval(days => p_days) else '-infinity'::timestamptz end;
+  with acc as (
+    select p.user_id, p.created_at, (u.email_confirmed_at is not null) confirmed,
+           exists (select 1 from company_users cu join companies c on c.slug = cu.company_slug
+                    where cu.user_id = p.user_id and c.kind <> 'club') has_page,
+           exists (select 1 from applications a join company_users cu on cu.company_slug = a.company_slug
+                    where cu.user_id = p.user_id and not a.is_club and a.keyword is not null) asked,
+           exists (select 1 from applications a join company_users cu on cu.company_slug = a.company_slug
+                    where cu.user_id = p.user_id and not a.is_club and a.status = 'Approved' and a.keyword is not null) live
+      from profiles p join auth.users u on u.id = p.user_id
+     where p.suspended_at is null
+       and not exists (select 1 from staff s where lower(s.email) = lower(u.email))
+  ),
+  weeks as (
+    select generate_series(date_trunc('week', now()) - interval '11 weeks', date_trunc('week', now()), interval '1 week') wk
+  )
+  select jsonb_build_object(
+    'days', coalesce(p_days, 0),
+    'funnel', (select jsonb_build_object(
+        'signed_up', count(*), 'confirmed', count(*) filter (where confirmed),
+        'has_page', count(*) filter (where has_page), 'asked', count(*) filter (where asked),
+        'live', count(*) filter (where live)) from acc where created_at >= since),
+    'totals', jsonb_build_object(
+        'accounts', (select count(*) from acc),
+        'confirmed', (select count(*) from acc where confirmed),
+        'accounts_live', (select count(*) from acc where live),
+        'new_in_range', (select count(*) from acc where created_at >= since),
+        'live_keywords', (select count(*) from applications where status = 'Approved' and not is_club and not paused and keyword is not null),
+        'listed_companies', (select count(distinct company_slug) from applications where status = 'Approved' and not is_club and not paused and keyword is not null),
+        'pending_keywords', (select count(*) from applications where status = 'Pending' and keyword is not null),
+        'oldest_pending_days', (select floor(extract(epoch from now() - min(created_at)) / 86400) from applications where status = 'Pending' and keyword is not null),
+        'clubs_approved', (select count(*) from companies where kind = 'club' and club_status = 'Approved'),
+        'clubs_pending', (select count(*) from companies where kind = 'club' and club_status = 'Pending'),
+        'club_people_pending', (select count(*) from companies c, jsonb_array_elements(coalesce(c.team, '[]') || coalesce(c.members, '[]')) e
+                                  where c.kind = 'club' and e->>'status' = 'Pending'),
+        'jobs_live', (select count(*) from jobs where closed_at is null and paid_until > now()),
+        'jobs_waiting', (select count(*) from jobs where closed_at is null and paid_until is null),
+        'talent_listed', (select count(*) from profiles where talent_listed and talent_status = 'Approved' and suspended_at is null),
+        'searches', (select count(*) from searches where at >= since),
+        'searches_missed', (select count(*) from searches where at >= since and hits = 0),
+        'nudges_sent', (select count(*) from account_nudges where sent_at is not null)),
+    'weekly', (select jsonb_agg(jsonb_build_object(
+        'week', to_char(w.wk, 'YYYY-MM-DD'),
+        'signups', (select count(*) from acc where created_at >= w.wk and created_at < w.wk + interval '1 week'),
+        'kw_requests', (select count(*) from applications a where not a.is_club and a.keyword is not null and a.created_at >= w.wk and a.created_at < w.wk + interval '1 week'))
+        order by w.wk) from weeks w),
+    'top_keywords', (select coalesce(jsonb_agg(jsonb_build_object('keyword', k, 'companies', n) order by n desc, k), '[]') from (
+        select min(keyword) k, count(distinct company_slug) n from applications
+         where status = 'Approved' and not is_club and not paused and keyword is not null
+         group by keyword_norm order by count(distinct company_slug) desc, min(keyword) limit 10) t),
+    'backlog', (select jsonb_agg(jsonb_build_object('bucket', b, 'n', n) order by o) from (
+        select o, b, (select count(*) from applications a where a.status = 'Pending' and a.keyword is not null
+                       and a.created_at <= now() - lo and a.created_at > now() - hi) n
+          from (values (1, 'Under 1 day', interval '0', interval '1 day'), (2, '1 to 3 days', interval '1 day', interval '3 days'),
+                       (3, '3 to 7 days', interval '3 days', interval '7 days'), (4, 'Over 7 days', interval '7 days', interval '100 years')) v(o, b, lo, hi)) t),
+    'top_searches', (select coalesce(jsonb_agg(jsonb_build_object('term', term, 'searches', n, 'misses', m) order by n desc), '[]') from (
+        select q_norm term, count(*) n, count(*) filter (where hits = 0) m from searches
+         where at >= since and q_norm is not null and q_norm <> '' group by q_norm order by count(*) desc limit 10) t)
+  ) into out;
+  return out;
+end $$;
+revoke execute on function public.admin_stats(int) from public, anon;

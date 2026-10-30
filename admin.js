@@ -688,6 +688,122 @@ async function setProfileSuspendedUI(handle, suspend){
   if(typeof toast === 'function') toast('circuits.com/' + handle + (suspend ? ' is suspended.' : ' is reinstated.'), true);
   await reloadCompanies();
 }
+/* ---- Stats (Jacob, 2026-10-30) ----
+   The numbers the founders watch, on one page: how far new accounts get,
+   keywords, the review backlog, what buyers search, recruiting and clubs.
+   Charts are plain SVG, one series each in one blue, every bar with a hover
+   readout and the numbers printed beside it, so nothing rests on colour. */
+const ST = { days: 30, wired: false, seq: 0 };
+const fmtN = n => Number(n || 0).toLocaleString();
+const pctOf = (a, b) => b ? Math.round(100 * (a || 0) / b) + '%' : '0%';
+const weekLabel = w => new Date(w + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+const statTile = (label, value, sub) =>
+  `<div class="st-tile"><div class="st-v">${value}</div><div class="st-l">${esc(label)}</div>${sub ? `<div class="st-s">${sub}</div>` : ''}</div>`;
+/* a column chart: one band per point, a 4px rounded top, a hit area the
+   height of the plot, gridlines at 0, half and the top */
+function stColumns(points, unit){
+  const W = 640, H = 220, L = 34, R = 8, T = 14, B = 28, pw = W - L - R, ph = H - T - B;
+  const vals = points.map(p => p.v || 0), peak = Math.max(1, ...vals);
+  const top = peak <= 4 ? 4 : Math.ceil(peak / 4) * 4;
+  const band = pw / points.length, bw = Math.max(6, Math.min(36, band * 0.62));
+  const y = v => T + ph - (v / top) * ph;
+  const grid = [0, top / 2, top].map(g => `<line x1="${L}" x2="${W - R}" y1="${y(g)}" y2="${y(g)}" class="st-grid"/><text x="${L - 6}" y="${y(g) + 4}" class="st-ax" text-anchor="end">${fmtN(g)}</text>`).join('');
+  const peakIdx = vals.lastIndexOf(peak);
+  const bars = points.map((p, i) => {
+    const v = p.v || 0, x = L + band * i + (band - bw) / 2, yv = y(v), base = T + ph, r = Math.min(4, bw / 2, base - yv);
+    const shape = v ? `<path class="st-col" d="M${x},${base} L${x},${yv + r} Q${x},${yv} ${x + r},${yv} L${x + bw - r},${yv} Q${x + bw},${yv} ${x + bw},${yv + r} L${x + bw},${base} Z"/>` : '';
+    const lab = (i === points.length - 1 || i === peakIdx) && v ? `<text x="${x + bw / 2}" y="${yv - 5}" class="st-val" text-anchor="middle">${fmtN(v)}</text>` : '';
+    const xl = points.length <= 8 || i % 2 === points.length % 2 ? `<text x="${L + band * i + band / 2}" y="${H - 8}" class="st-ax" text-anchor="middle">${esc(p.x)}</text>` : '';
+    return `<g tabindex="0" data-tip="${esc(p.tip || (p.x + ': ' + fmtN(v) + ' ' + unit))}"><rect x="${L + band * i}" y="${T}" width="${band}" height="${ph}" class="st-hit"/>${shape}${lab}${xl}</g>`;
+  }).join('');
+  return `<svg class="st-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(unit)} per week">${grid}${bars}</svg>`;
+}
+/* a bar list: label, bar, number; the bar is a share of the largest */
+function stBars(rows, unit){
+  const peak = Math.max(1, ...rows.map(r => r.v || 0));
+  return `<div class="st-bars">${rows.map(r => `<div class="st-brow" tabindex="0" data-tip="${esc(r.label + ': ' + fmtN(r.v) + ' ' + unit)}">
+      <span class="st-blab">${esc(r.label)}</span><span class="st-btrack"><span class="st-bfill" style="width:${Math.max(r.v ? 2 : 0, 100 * (r.v || 0) / peak)}%"></span></span><b class="st-bnum">${fmtN(r.v)}</b></div>`).join('')}</div>`;
+}
+async function loadStats(){
+  const body = $('st-body'); if(!body) return;
+  if(!ST.wired){
+    ST.wired = true;
+    const sel = $('st-days');
+    if(sel) sel.addEventListener('change', () => { ST.days = +sel.value || 0; loadStats(); });
+    /* one readout for every mark, by pointer or keyboard */
+    const tip = document.createElement('div'); tip.className = 'st-tip'; tip.hidden = true; document.body.appendChild(tip);
+    const showTip = (t, x, y) => { tip.textContent = t; tip.hidden = false; tip.style.left = Math.min(window.innerWidth - tip.offsetWidth - 8, x + 12) + 'px'; tip.style.top = (y - tip.offsetHeight - 10) + 'px'; };
+    body.addEventListener('mousemove', e => { const m = e.target.closest('[data-tip]'); if(m) showTip(m.dataset.tip, e.clientX, e.clientY); else tip.hidden = true; });
+    body.addEventListener('mouseleave', () => { tip.hidden = true; });
+    body.addEventListener('focusin', e => { const m = e.target.closest('[data-tip]'); if(!m) return; const r = m.getBoundingClientRect(); showTip(m.dataset.tip, r.left + r.width / 2, r.top); });
+    body.addEventListener('focusout', () => { tip.hidden = true; });
+  }
+  const mine = ++ST.seq;
+  body.classList.add('st-loading');
+  const d = await fetchAdminStats(ST.days);
+  if(mine !== ST.seq) return;   // a newer range was picked meanwhile
+  body.classList.remove('st-loading');
+  if(!d){ body.innerHTML = '<div class="acc-empty">The stats could not be loaded. Reload to try again.</div>'; return; }
+  const t = d.totals || {}, f = d.funnel || {};
+  const span = ST.days ? 'last ' + ST.days + ' days' : 'all time';
+  const steps = [['Signed up', f.signed_up], ['Confirmed their email', f.confirmed], ['Have a page', f.has_page], ['Asked for any keyword', f.asked], ['Have a live keyword', f.live]];
+  const weekly = Array.isArray(d.weekly) ? d.weekly : [];
+  const backlog = Array.isArray(d.backlog) ? d.backlog : [];
+  const kws = Array.isArray(d.top_keywords) ? d.top_keywords : [];
+  const srch = Array.isArray(d.top_searches) ? d.top_searches : [];
+  const waiting = (t.pending_keywords || 0) + (t.clubs_pending || 0) + (t.club_people_pending || 0);
+  body.innerHTML = `
+  <div class="st-tiles">
+    ${statTile('Accounts', fmtN(t.accounts), `+${fmtN(t.new_in_range)} in the ${esc(span)}`)}
+    ${statTile('Confirmed their email', pctOf(t.confirmed, t.accounts), `${fmtN(t.confirmed)} of ${fmtN(t.accounts)} accounts`)}
+    ${statTile('Accounts with a live keyword', pctOf(t.accounts_live, t.accounts), `${fmtN(t.accounts_live)} of ${fmtN(t.accounts)} accounts`)}
+    ${statTile('Live Directory keywords', fmtN(t.live_keywords), `across ${fmtN(t.listed_companies)} companies`)}
+    ${statTile('Waiting for review', fmtN(waiting), t.pending_keywords ? `${fmtN(t.pending_keywords)} keyword${t.pending_keywords === 1 ? '' : 's'}, oldest ${t.oldest_pending_days ? fmtN(t.oldest_pending_days) + ' day' + (t.oldest_pending_days === 1 ? '' : 's') : 'today'}` : 'no keywords waiting')}
+    ${statTile('Searches', fmtN(t.searches), `${pctOf(t.searches_missed, t.searches)} found nothing, ${esc(span)}`)}
+  </div>
+  <div class="st-tiles st-tiles-sm">
+    ${statTile('Clubs', fmtN(t.clubs_approved), `${fmtN(t.clubs_pending)} waiting for approval`)}
+    ${statTile('Club people waiting', fmtN(t.club_people_pending), 'members and officers')}
+    ${statTile('Jobs live', fmtN(t.jobs_live), `${fmtN(t.jobs_waiting)} waiting for approval`)}
+    ${statTile('On the Talent Board', fmtN(t.talent_listed), 'people open to work')}
+    ${statTile('Reminder emails sent', fmtN(t.nudges_sent), 'confirm and keyword reminders')}
+  </div>
+
+  <section class="st-card">
+    <h3>Sign-up to keywords <span class="cell-muted">accounts made in the ${esc(span)}</span></h3>
+    <table class="dash-table st-funnel"><thead><tr><th>Step</th><th>Accounts</th><th>Of sign-ups</th><th>Lost at this step</th><th class="st-fbar-h"><span class="sr-only">Bar</span></th></tr></thead><tbody>
+    ${steps.map(([label, n], i) => `<tr tabindex="0" data-tip="${esc(label + ': ' + fmtN(n) + ' (' + pctOf(n, f.signed_up) + ' of sign-ups)')}"><td><b>${esc(label)}</b></td><td>${fmtN(n)}</td><td>${pctOf(n, f.signed_up)}</td>
+      <td class="cell-muted">${i ? fmtN(Math.max(0, (steps[i - 1][1] || 0) - (n || 0))) : ''}</td>
+      <td class="st-fbar"><span class="st-btrack"><span class="st-bfill" style="width:${f.signed_up ? 100 * (n || 0) / f.signed_up : 0}%"></span></span></td></tr>`).join('')}
+    </tbody></table>
+    <p class="acc-note">Staff and suspended accounts are left out. "Have a page" counts accounts whose own page exists; "asked" counts any Directory keyword request, live or not.</p>
+  </section>
+
+  <div class="st-grid2">
+    <section class="st-card"><h3>Sign-ups per week <span class="cell-muted">last 12 weeks</span></h3>
+      ${stColumns(weekly.map(w => ({ x: weekLabel(w.week), v: w.signups, tip: 'Week of ' + weekLabel(w.week) + ': ' + fmtN(w.signups) + ' sign-ups' })), 'sign-ups')}</section>
+    <section class="st-card"><h3>Keyword requests per week <span class="cell-muted">last 12 weeks</span></h3>
+      ${stColumns(weekly.map(w => ({ x: weekLabel(w.week), v: w.kw_requests, tip: 'Week of ' + weekLabel(w.week) + ': ' + fmtN(w.kw_requests) + ' keyword requests' })), 'keyword requests')}</section>
+  </div>
+
+  <div class="st-grid2">
+    <section class="st-card"><h3>Most-listed keywords <span class="cell-muted">companies live under each</span></h3>
+      ${kws.length ? stBars(kws.map(k => ({ label: k.keyword, v: k.companies })), 'companies') : '<p class="cell-muted">No live keywords yet.</p>'}</section>
+    <section class="st-card"><h3>Review backlog <span class="cell-muted">keyword requests waiting, by age</span></h3>
+      ${stBars(backlog.map(b => ({ label: b.bucket, v: b.n })), 'waiting')}
+      <p class="acc-note">${t.pending_keywords ? 'Approve them under Directory Admin, Listings, or Club Admin, Club Keywords.' : 'Nothing is waiting. Every keyword request has been answered.'}</p></section>
+  </div>
+
+  <section class="st-card"><h3>What buyers search <span class="cell-muted">${esc(span)}</span></h3>
+    ${srch.length ? `<table class="dash-table"><thead><tr><th>Search</th><th>Times</th><th>Found nothing</th><th class="st-fbar-h"><span class="sr-only">Bar</span></th></tr></thead><tbody>
+      ${(() => { const peak = Math.max(1, ...srch.map(r => r.searches || 0)); return srch.map(r => `<tr tabindex="0" data-tip="${esc(r.term + ': searched ' + fmtN(r.searches) + ' times, ' + fmtN(r.misses) + ' with no results')}"><td><b>${esc(r.term)}</b></td><td>${fmtN(r.searches)}</td>
+        <td>${r.misses ? fmtN(r.misses) + ' <span class="cell-muted">(' + pctOf(r.misses, r.searches) + ')</span>' : '<span class="cell-muted">0</span>'}</td>
+        <td class="st-fbar"><span class="st-btrack"><span class="st-bfill" style="width:${100 * (r.searches || 0) / peak}%"></span></span></td></tr>`).join(''); })()}
+    </tbody></table>
+    <p class="acc-note">Searches that found nothing are keywords nobody is listed under yet: the place to invite companies.</p>` : '<p class="cell-muted">No searches in this range.</p>'}
+  </section>`;
+}
+
 /* ---- Manage Accounts (Jacob, 2026-10-30) ----
    Every account, searchable and filtered to the ones that need a hand. Picking
    one opens its editor: keywords first (live at once, the owner is told on
@@ -1313,16 +1429,16 @@ function syncControls(){ document.querySelectorAll('.list-controls').forEach(bar
    Messages / Activity). Data still loads for every panel; only what is on screen changes. */
 /* Profiles Admin / Club Admin (2026-10-19): a sub-tab belongs to one side,
    marked adm-club for the club side. Showing a sub-tab shows its side too. */
-const sideOf = g => { const b = document.querySelector(`.adm-tab[data-adm="${g}"]`); return b && b.classList.contains('adm-club') ? 'clubs' : 'profiles'; };
+const sideOf = g => { const b = document.querySelector(`.adm-tab[data-adm="${g}"]`); return b && b.classList.contains('adm-club') ? 'clubs' : b && b.classList.contains('adm-stats') ? 'stats' : 'profiles'; };
 function showAdminMode(mode){
   document.querySelectorAll('.adm-mode-btn').forEach(b => { const on = b.dataset.mode === mode; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
-  const tab = document.getElementById('tab-admin'); if(tab) tab.classList.toggle('adm-clubs', mode === 'clubs');
+  const tab = document.getElementById('tab-admin'); if(tab){ tab.classList.toggle('adm-clubs', mode === 'clubs'); tab.classList.toggle('adm-stats-mode', mode === 'stats'); }
   if(adminMode !== mode){ adminMode = mode; renderStats(); }
 }
 document.querySelectorAll('.adm-mode-btn').forEach(b => b.addEventListener('click', () => {
   const mode = b.dataset.mode;
   let last = ''; try{ last = localStorage.getItem('cx_admin_group_' + mode) || ''; }catch(e){}
-  const first = document.querySelector(mode === 'clubs' ? '.adm-tab.adm-club' : '.adm-tab:not(.adm-club)');
+  const first = document.querySelector(mode === 'clubs' ? '.adm-tab.adm-club' : mode === 'stats' ? '.adm-tab.adm-stats' : '.adm-tab:not(.adm-club):not(.adm-stats)');
   showAdminGroup(last && sideOf(last) === mode && document.querySelector(`.adm-tab[data-adm="${last}"]`) ? last : first.dataset.adm, true);
 }));
 function showAdminGroup(g, fromClick){
@@ -1334,6 +1450,7 @@ function showAdminGroup(g, fromClick){
   const fr = $('apps-frame');
   if(g === 'applications' && fr && !fr.src) fr.src = '/applications?embed=1';
   if(g === 'accounts') loadAccounts(true);
+  if(g === 'stats') loadStats();
   try{ localStorage.setItem('cx_admin_group', g); }catch(e){}
   /* a reload stays on this sub-tab (Jacob, 2026-09-15): it rides in the
      address as #admin:<group>, the way the dashboard tabs do */

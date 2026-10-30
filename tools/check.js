@@ -260,6 +260,14 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
     assert.ok(/note\.className = 'pt-kw-nudge';/.test(pj) && /if\(none && !PT\.tabFromHash && !\(PT\.co && PT\.co\.kind === 'club'\)\) activateTab\('listings'\);/.test(pj), 'an account with no keywords is no longer sent to Your Listings with the nudge');
     assert.ok(/<li>Register Your Account and Pick Your Free Keywords\.<\/li>/.test(rg), 'the register steps no longer end in picking keywords');
   }
+  /* Stats (Jacob, 2026-10-30): a third side beside Directory Admin and Club Admin */
+  {
+    const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
+    assert.ok(/data-mode="clubs"[^>]*>Club Admin<\/button>[\s\S]{0,200}data-mode="stats"[^>]*>Stats<\/button>/.test(ph) && /<div class="panel stats-panel" data-adm="stats">/.test(ph), 'Stats is not a third option beside Directory Admin and Club Admin');
+    for(const step of ['Signed up', 'Confirmed their email', 'Have a page', 'Asked for any keyword', 'Have a live keyword'])
+      assert.ok(aj.includes(`['${step}', f.`), 'the Stats funnel lost the step ' + step);
+    assert.ok(/sb\.rpc\('admin_stats'/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')) && /data-tip="\$\{esc\(p\.tip/.test(aj), 'the Stats page no longer reads admin_stats, or its charts lost their hover readout');
+  }
   /* Manage Accounts (Jacob, 2026-10-30) and suspended accounts below All Profiles */
   {
     const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8'), st = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
@@ -2015,7 +2023,7 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
 {
   const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
   const tabs = [...ph.matchAll(/class="adm-tab[^"]*" data-adm="([a-z]+)">(?:<svg[\s\S]*?<\/svg>)?([^<]+)</g)].map(m => m[1] + ':' + m[2]);
-  assert.deepStrictEqual(tabs, ['companies:All Profiles', 'accounts:Manage Accounts', 'listings:Listings', 'applications:Website Applications',
+  assert.deepStrictEqual(tabs, ['stats:Stats', 'companies:All Profiles', 'accounts:Manage Accounts', 'listings:Listings', 'applications:Website Applications',
     'upgrades:Upgrade Applications', 'employment:Recruiting Applications', 'clubs:Club Pages', 'clubkw:Club Keywords', 'clubapps:Club Applications',
     'clubppl:Members &amp; Officers', 'clubproj:Projects', 'clubup:Badges &amp; Upgrades', 'messages:Notifications', 'activity:Activity'],
     'the admin sub-tabs are out of order or renamed: ' + tabs.join(', '));
