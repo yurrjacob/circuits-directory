@@ -18,7 +18,7 @@
 <meta name="twitter:image" content="https://circuits.com/assets/og-card.png">
 <link rel="icon" href="assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="styles.css?v=6122dde439">
+<link rel="stylesheet" href="styles.css?v=a74c4ef907">
 <script src="/nav.js?v=89aa4289a6"></script>
 <script async src="/analytics.js?v=70049a2947"></script>
 </head>
@@ -57,15 +57,15 @@
 <div class="reg-next" id="reg-steps" style="margin:0 0 22px">
 <h2 class="pf-sec-h">Steps to Get Listed For Free</h2>
 <ol class="reg-steps">
-<li>Register Your Account.</li>
+<li>Register Your Account and Pick Your Free Keywords.</li>
 <li>Confirm Your Email.</li>
-<li>Open and Explore Your Dashboard <a href="/portal">circuits.com/portal</a>.</li>
+<li>Your Keywords Go Live in the Directory Once Approved.</li>
 </ol>
 </div>
 
 <div id="reg-success" class="success">
 <b>Account Created</b><br>
-Check your inbox to confirm your email address, then sign in at
+Check your inbox to confirm your email address<span id="reg-success-kw"></span>, then sign in at
 <a href="/portal">circuits.com/portal</a>.
 </div>
 
@@ -114,6 +114,21 @@ hyphens or underscores between them.</p>
 </div>
 </div>
 
+<!-- Keywords at sign-up (Jacob, 2026-10-30): most accounts never came back
+     to pick them. They ride with the sign-up and become ordinary requests
+     the moment the email is confirmed. Optional; hidden on a club invite. -->
+<div class="field reg-kw" id="r-kw-box">
+<label for="r-kw">Your Free Directory Keywords <span class="reg-kw-opt">(up to 10)</span></label>
+<p class="field-hint">What do you make, sell or do? Buyers searching these words find you. Add them now and they go in for approval the moment you confirm your email; you can add more later.</p>
+<div class="kw-input-row">
+<input id="r-kw" type="text" list="r-kw-list" maxlength="40" placeholder="e.g. pcb assembly" aria-label="Keyword" autocomplete="off">
+<button type="button" class="mini-btn green" id="r-kw-add">Add</button>
+</div>
+<datalist id="r-kw-list"></datalist>
+<div class="kw-tags" id="r-kw-tags"></div>
+<div class="cat-count" id="r-kw-count"><b>0</b> of 10 keywords</div>
+</div>
+
 <label class="terms" style="margin:14px 0">
 <input id="r-terms" type="checkbox" required>
 <span>I accept the <a href="terms" target="_blank">Terms</a> and
@@ -146,8 +161,8 @@ hyphens or underscores between them.</p>
 </footer>
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
-<script src="/store.js?v=2da20af2c6"></script>
-<script src="/app.js?v=cc3ac9bd49"></script>
+<script src="/store.js?v=3ec51b2c98"></script>
+<script src="/app.js?v=89762093be"></script>
 <script>initRegister();</script>
 </body>
 </html>

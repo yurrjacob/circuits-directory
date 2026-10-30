@@ -2775,3 +2775,9 @@ body.wc-invite .wc-lede,body.wc-invite .wc-wrap-cards{display:none}
 .prof-av{width:36px;height:36px;border-radius:9px;font-size:.95rem}
 .prof-cell-top{align-items:flex-start}
 .acc-item .acc-av{width:36px;height:36px;border-radius:9px}
+
+/* keywords at sign-up (2026-10-30) */
+.reg-kw{margin-top:6px;padding:16px;border:1px solid #cfe9a6;border-radius:12px;background:#f7fcec}
+.reg-kw label{font-weight:700}
+.reg-kw-opt{font-weight:400;color:var(--muted);font-size:.85rem}
+.reg-kw .kw-tags{margin-top:10px}

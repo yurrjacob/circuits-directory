@@ -1452,7 +1452,9 @@ assert.ok(storeReg.includes('handle_taken'),
   const appSrc = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8'), storeSrc = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8'), portalSrc = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
   const reg = appSrc.slice(appSrc.indexOf('function initRegister'), appSrc.indexOf('async function initBrowse'));
   assert.ok(/armSpamTrap\(form\);\s*mountTurnstile\(form\);/.test(reg) && /if\(looksLikeSpam\(form\)\)\{ showCreated\(\); return; \}/.test(reg), 'the register form lost its honeypot and timing trap');
-  assert.ok(/registerProfile\(email, passEl\.value, handle, v\('r-name'\), turnstileToken\(form\), REG_INVITE\)/.test(reg), 'the register form does not send the CAPTCHA token');
+  assert.ok(/registerProfile\(email, passEl\.value, handle, v\('r-name'\), turnstileToken\(form\), REG_INVITE, kws\)/.test(reg), 'the register form does not send the CAPTCHA token (or its keywords)');
+  /* keywords at sign-up (Jacob, 2026-10-30): picked on the register form, carried in the sign-up metadata */
+  assert.ok(/id="r-kw"[^>]*list="r-kw-list"/.test(fs.readFileSync(path.join(ROOT, 'register.html'), 'utf8')) && /keywords: \(keywords \|\| \[\]\)\.map\(cleanKw\)[^\n]*\.slice\(0, 10\)/.test(storeSrc), 'the register form no longer asks for keywords, or does not send them');
   assert.ok(/^const TURNSTILE_SITE_KEY = '[^']*';$/m.test(storeSrc), 'store.js lost TURNSTILE_SITE_KEY');
   assert.ok(/captchaToken: captchaToken \|\| undefined/.test(storeSrc.slice(storeSrc.indexOf('async function registerProfile'))), 'registerProfile() drops the CAPTCHA token');
   assert.ok(/signInWithPassword\(\{ email: id, password, options: \{ captchaToken: captchaToken \|\| undefined \} \}\)/.test(storeSrc) && (storeSrc.match(/captchaToken: captchaToken \|\| undefined/g) || []).length >= 4,

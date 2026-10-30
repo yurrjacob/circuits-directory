@@ -222,3 +222,92 @@ end $$;
 revoke execute on function public.set_contact_hide_mike(boolean) from anon;
 
 insert into public.site_settings (key, value) values ('contact_hide_mike', 'false'::jsonb) on conflict (key) do nothing;
+
+-- ---- Keywords at sign-up (Jacob, 2026-10-30) --------------------------------
+-- The register form carries up to ten keywords in the sign-up metadata. When
+-- the email is confirmed they become ordinary Pending requests on the
+-- account's new page (one statement, so staff get one notice), and the owner
+-- gets the usual "request received" notice. admin_ensure_page now calls the
+-- internal ensure_page_for.
+create or replace function public.ensure_page_for(p_user uuid)
+returns text language plpgsql security definer set search_path = public as $$
+declare p profiles%rowtype; s text; n int := 0;
+begin
+  select * into p from profiles where user_id = p_user;
+  if p.user_id is null then return null; end if;
+  select cu.company_slug into s from company_users cu join companies c on c.slug = cu.company_slug
+   where cu.user_id = p_user and c.kind <> 'club' order by cu.created_at limit 1;
+  if s is not null then return s; end if;
+  s := p.handle;
+  while exists (select 1 from companies c where c.slug = s) loop n := n + 1; s := p.handle || '-' || n; end loop;
+  insert into companies (slug, name, contact, email, phone, logo, published)
+  values (s, coalesce(nullif(p.display_name, ''), p.handle), nullif(p.display_name, ''), p.email, p.phone, p.photo_url, false);
+  insert into company_users (user_id, company_slug, role) values (p.user_id, s, 'owner');
+  update companies set handle = p.handle where slug = s;
+  return s;
+end $$;
+revoke execute on function public.ensure_page_for(uuid) from public, anon, authenticated;
+
+create or replace function public.admin_ensure_page(p_user uuid)
+returns text language plpgsql security definer set search_path = public as $$
+declare s text;
+begin
+  if not is_staff() then raise exception 'staff only' using errcode = 'insufficient_privilege'; end if;
+  s := ensure_page_for(p_user);
+  if s is null then raise exception 'no profile' using errcode = 'no_data_found'; end if;
+  return s;
+end $$;
+
+-- the sign-up keywords pass the owner check (no session inside the trigger)
+create or replace function public.guard_application_insert()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if is_staff() then return new; end if;
+  if current_setting('circuits.signup_kw', true) = 'on' then
+    new.status := 'Pending';
+    new.listing_price := null; new.banner_price := null; new.badge_price := null;
+    new.fee := null; new.locked_position := null; new.paused := false;
+    return new;
+  end if;
+  if new.company_slug is not null and not owns_company(new.company_slug) then
+    raise exception 'That company is not yours to list.' using errcode = 'check_violation';
+  end if;
+  new.status          := 'Pending';
+  new.listing_price   := null;
+  new.banner_price    := null;
+  new.badge_price     := null;
+  new.fee             := null;
+  new.locked_position := null;
+  new.paused          := false;
+  return new;
+end $$;
+
+create or replace function public.file_signup_keywords()
+returns trigger language plpgsql security definer set search_path = public, auth as $$
+declare s text; c companies%rowtype; kws jsonb;
+begin
+  if old.email_confirmed_at is not null or new.email_confirmed_at is null then return new; end if;
+  kws := new.raw_user_meta_data -> 'keywords';
+  if kws is null or jsonb_typeof(kws) <> 'array' or jsonb_array_length(kws) = 0 then return new; end if;
+  s := ensure_page_for(new.id);
+  if s is null then return new; end if;
+  select * into c from companies where slug = s;
+  perform set_config('circuits.signup_kw', 'on', true);
+  insert into applications (company, contact, email, phone, website, logo, keywords, keyword, status, terms, company_slug, company_handle, message)
+  select c.name, c.contact, coalesce(c.email, lower(new.email)), c.phone, c.website, c.logo, array[k.v], k.v, 'Pending', true, s, c.handle, '[Chosen at sign-up]'
+    from (select distinct on (norm_kw(v)) v from (
+            select trim(regexp_replace(regexp_replace(lower(x), '[^a-z0-9 ]', ' ', 'g'), '\s+', ' ', 'g')) v
+              from jsonb_array_elements_text(kws) x limit 20) t
+           where length(v) between 2 and 40
+             and not exists (select 1 from applications a where a.company_slug = s and a.keyword_norm = norm_kw(t.v))
+           limit 10) k;
+  perform set_config('circuits.signup_kw', 'off', true);
+  return new;
+exception when others then
+  -- a confirmation must never fail because of the keywords
+  perform set_config('circuits.signup_kw', 'off', true);
+  raise warning 'file_signup_keywords: %', sqlerrm;
+  return new;
+end $$;
+create trigger file_signup_keywords_trg after update of email_confirmed_at on auth.users
+  for each row execute function public.file_signup_keywords();

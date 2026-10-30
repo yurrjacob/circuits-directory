@@ -1049,7 +1049,7 @@ async function hasTalentAccess(){
    The handle rides along as signup metadata because email confirmation means
    there is no session yet, a trigger turns it into the profile row, so the
    address is held from the moment the account exists. */
-async function registerProfile(email, password, handle, displayName, captchaToken, inviteToken){
+async function registerProfile(email, password, handle, displayName, captchaToken, inviteToken, keywords){
   if(!sb) return 'No connection';
   /* a club invite rides along to the welcome page, which enrols the new
      account once the email is confirmed (Jacob, 2026-10-05) */
@@ -1057,7 +1057,9 @@ async function registerProfile(email, password, handle, displayName, captchaToke
   const { error } = await sb.auth.signUp({
     email, password,
     options: {
-      data: { handle: (handle||'').toLowerCase().trim(), display_name: displayName || '' },
+      /* keywords at sign-up (2026-10-30): filed as requests on confirmation */
+      data: { handle: (handle||'').toLowerCase().trim(), display_name: displayName || '',
+              keywords: (keywords || []).map(cleanKw).filter(k => k && k.length >= 2).slice(0, 10) },
       emailRedirectTo: back,   // confirming lands on the on-boarding page (Jacob, 2026-09-20; was Get Listed from 2026-09-03)
       captchaToken: captchaToken || undefined
     }

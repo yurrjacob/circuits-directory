@@ -491,7 +491,7 @@ async function initInbox(){
     if(!storedSession()) return;
     const add = (src, integrity) => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; if(integrity) t.integrity = integrity; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
     /* the same vendored file, and the same hash, every page carries (audit item 3, 2026-09-21) */
-    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=2da20af2c6'); }catch(e){ return; }
+    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=3ec51b2c98'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;
@@ -1706,6 +1706,32 @@ function initRegister(){
   passEl.addEventListener('input', passwordsMatch);
   pass2El.addEventListener('input', passwordsMatch);
 
+  /* Keywords at sign-up (Jacob, 2026-10-30): up to ten, suggested from the
+     live Directory as you type; they are filed when the email is confirmed */
+  const kws = [], kwIn = el('r-kw'), kwTags = el('r-kw-tags');
+  const drawKws = () => {
+    kwTags.innerHTML = kws.map((k, i) => `<span class="kw-tag">${escapeHtml(k)}<button type="button" data-i="${i}" aria-label="Remove ${escapeHtml(k)}">&times;</button></span>`).join('');
+    el('r-kw-count').innerHTML = `<b>${kws.length}</b> of 10 keywords`;
+  };
+  const addKw = () => {
+    const k = cleanKw(kwIn.value);
+    if(!k || k.length < 2){ kwIn.value = ''; return; }
+    if(kws.length >= 10){ fail('Ten keywords at sign-up. You can add more from your dashboard later.'); return; }
+    if(!kws.some(x => normKw(x) === normKw(k))) kws.push(k);
+    kwIn.value = ''; fail(''); drawKws(); kwIn.focus();
+  };
+  if(kwIn){
+    el('r-kw-add').addEventListener('click', addKw);
+    kwIn.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ','){ e.preventDefault(); addKw(); } });
+    kwTags.addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if(!b) return; kws.splice(+b.dataset.i, 1); drawKws(); });
+    /* suggestions: the keywords already live in the Directory */
+    fetchKeywordIndex().then(idx => {
+      el('r-kw-list').innerHTML = (idx || []).slice(0, 400).map(r => `<option value="${escapeHtml(r.keyword)}"></option>`).join('');
+    }).catch(() => {});
+    /* someone joining a club through an invite is not listing a business */
+    if(new URLSearchParams(location.search).get('club')) el('r-kw-box').hidden = true;
+  }
+
   form.addEventListener('submit', async e => {
     e.preventDefault();
     fail('');
@@ -1734,7 +1760,8 @@ function initRegister(){
       return fail('That address just became unavailable.');
     }
 
-    const err = await registerProfile(email, passEl.value, handle, v('r-name'), turnstileToken(form), REG_INVITE);
+    if(kwIn && kwIn.value.trim()) addKw();   // a keyword typed but not yet added still counts
+    const err = await registerProfile(email, passEl.value, handle, v('r-name'), turnstileToken(form), REG_INVITE, kws);
     if(err){
       submitBtn.disabled = false; submitBtn.textContent = 'Create Profile';
       resetTurnstile(form);
@@ -1743,6 +1770,8 @@ function initRegister(){
         : /captcha/i.test(err) ? TURNSTILE_WAIT
         : err);
     }
+    const sk = el('reg-success-kw');
+    if(sk && kws.length) sk.textContent = '. Your ' + (kws.length === 1 ? 'keyword goes' : kws.length + ' keywords go') + ' in for approval the moment you do';
     showCreated();
   });
 }
