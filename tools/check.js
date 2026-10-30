@@ -239,6 +239,14 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
     assert.ok(/<span class="pf-club-links-k">Links<\/span>/.test(pf) && /\[site, other\]\.filter\(Boolean\)/.test(pf) && !/btn btn-outline" href="\$\{escapeHtml\(site\)\}"[^>]*>Website</.test(pf), 'the club Website is still a button, or the two Links slots are gone');
     assert.ok(/function livePeople\(list\)[\s\S]{0,200}!t\.status \|\| t\.status === 'Approved'/.test(pf), 'people waiting for approval show on the club page');
   }
+  /* the free path looks free (Jacob, 2026-10-30): steps 02 to 05 sit folded in one optional section */
+  {
+    const jn = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
+    const d = jn.indexOf('<details class="join-extras" id="join-extras">'), e = jn.indexOf('</details>', d);
+    assert.ok(d > jn.indexOf('<span class="step-num">01</span>') && ['02', '03', '04', '05'].every(n => { const i = jn.indexOf(`<span class="step-num">${n}</span>`); return i > d && i < e; })
+      && jn.indexOf('<span class="step-num">06</span>') > e, 'the paid upgrades are no longer folded under the optional section between 01 and 06');
+    assert.ok(!/<details class="join-extras"[^>]*\bopen\b/.test(jn), 'the paid upgrades start open');
+  }
   /* keywords are the next step everywhere (Jacob, 2026-10-30) */
   {
     const wc = fs.readFileSync(path.join(ROOT, 'welcome.html'), 'utf8'), pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8'), rg = fs.readFileSync(path.join(ROOT, 'register.html'), 'utf8');

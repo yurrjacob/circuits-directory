@@ -14,7 +14,7 @@
 <meta property="og:image" content="https://circuits.com/assets/og-card.png">
 <link rel="icon" href="assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="styles.css?v=4307487077">
+<link rel="stylesheet" href="styles.css?v=42955966bd">
 <script src="/nav.js?v=89aa4289a6"></script>
 </head>
 <body>
@@ -88,6 +88,11 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
 <div class="cat-count" id="kw-count"><b>0</b> of 10 keywords</div>
 </section>
 
+<!-- the free path looks free (Jacob, 2026-10-30): the paid upgrades sit
+     folded under one optional section; it opens when one is ticked -->
+<details class="join-extras" id="join-extras">
+<summary><span class="join-extras-t">Want more visibility? <b>Optional paid upgrades</b></span>
+<span class="join-extras-s">Sponsor Banner, Trust Badge, Locked Position, with a price estimate. Your keywords above are free either way.</span></summary>
 <section class="step">
 <div class="step-head">
 <span class="step-num">02</span>
@@ -241,6 +246,8 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
 </div>
 </section>
 
+</details>
+
 <section class="step">
 <div class="step-head">
 <span class="step-num">06</span>
@@ -292,7 +299,8 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
     document.title = 'Choose Your Free Club Keywords | Circuits.com';
     document.querySelector('.form-wrap h1').textContent = 'Choose Your Free Club Keywords';
     document.querySelector('.form-wrap .lede').textContent = 'Pick the Circuits-Keywords\u2122 students search to find ' + c.name + '. Club keywords are listed in Search Clubs and on the Global Club List, never in the Directory.';
-    document.querySelectorAll('#join-form > section.step').forEach(s => {
+    el('join-extras').hidden = true;   // no paid upgrades for club keywords
+    document.querySelectorAll('#join-form section.step').forEach(s => {
       const n = (s.querySelector('.step-num') || {}).textContent || '';
       if(n.trim() !== '01' && n.trim() !== '06') s.hidden = true;
     });

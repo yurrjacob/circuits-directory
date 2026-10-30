@@ -2799,3 +2799,14 @@ body.wc-invite .wc-lede,body.wc-invite .wc-wrap-cards{display:none}
 .pt-kw-nudge{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 18px;margin:0 0 16px;
   padding:16px 18px;border:2px solid var(--green);border-radius:14px;background:#f7fcec;color:#1d2e00;font-size:.95rem}
 .pt-kw-nudge .btn{white-space:nowrap}
+
+/* the keyword form's paid upgrades, folded (2026-10-30) */
+.join-extras{margin:0 0 22px;border:1px dashed #c9ced4;border-radius:16px;background:var(--bg-soft)}
+.join-extras>summary{list-style:none;cursor:pointer;display:flex;flex-direction:column;gap:3px;padding:16px 20px 16px 48px;position:relative}
+.join-extras>summary::-webkit-details-marker{display:none}
+.join-extras>summary::before{content:"+";position:absolute;left:18px;top:14px;width:22px;height:22px;border-radius:50%;background:var(--green);color:#0f2a00;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1}
+.join-extras[open]>summary::before{content:"\2212"}
+.join-extras-t{font-size:1rem;color:var(--ink)}
+.join-extras-s{font-size:.84rem;color:var(--muted)}
+.join-extras[open]{background:transparent;border-style:solid}
+.join-extras>.step{margin-left:12px;margin-right:12px}
