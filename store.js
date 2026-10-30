@@ -1459,6 +1459,24 @@ async function fetchAdminProfiles(){
   if(error){ console.error('fetchAdminProfiles', error); return []; }
   return data || [];
 }
+/* ---- site settings (2026-10-30): public, small, changed by the site owner
+   only (Jakes button on the dashboard) ---- */
+async function fetchSiteSetting(key){
+  if(!sb) return null;
+  const { data, error } = await sb.from('site_settings').select('value').eq('key', key).maybeSingle();
+  if(error){ console.warn('fetchSiteSetting', error.message); return null; }
+  return data ? data.value : null;
+}
+async function isSiteOwner(){
+  if(!sb) return false;
+  const { data, error } = await sb.rpc('is_site_owner');
+  return !error && data === true;
+}
+async function setContactHideMike(hide){
+  if(!sb) return 'No connection';
+  const { error } = await sb.rpc('set_contact_hide_mike', { p_hide: !!hide });
+  return error ? error.message : '';
+}
 /* ---- Manage Accounts (Jacob, 2026-10-30) ----
    Staff only: every function here is refused by the database (or by the
    auth edge function) for anyone who is not staff. */

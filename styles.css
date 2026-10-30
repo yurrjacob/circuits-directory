@@ -2590,11 +2590,13 @@ body.club-mode #tab-listings > :not(#pt-club-kw){display:none}
 
 /* the revolving lists (Global Directory List, Global Club List, 2026-10-28):
    the top row fades up and out, then rejoins at the bottom */
-.listings-table tbody tr.rv-out{opacity:0;transform:translateY(-8px);transition:opacity .25s ease,transform .25s ease}
+.listings-table tbody tr.rv-move{transition:transform .55s cubic-bezier(.2,.7,.2,1)}
 .rv-btn{margin-top:2px;padding:4px 12px;font-size:.78rem}
 .dir-table .logo-col{width:56px;padding-right:0}
 .dir-table td.logo-col .co-logo{margin:0}
-@media(prefers-reduced-motion:reduce){.listings-table tbody tr.rv-out{transition:none}}
+@media(prefers-reduced-motion:reduce){.listings-table tbody tr.rv-move{transition:none}}
+/* the home page's Global Directory List and Global Club List links, blue (Jacob, 2026-10-30) */
+.pop-list-link,.pop-list-link:visited{color:#1a5fd0!important;font-weight:700}
 
 /* Profile Title beside the Circuits.com address (2026-10-28) */
 .pt-addr-title{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:flex-start}
@@ -2759,3 +2761,11 @@ body.wc-invite .wc-lede,body.wc-invite .wc-wrap-cards{display:none}
   .acc-head-acts{align-items:flex-start;flex-direction:row;flex-wrap:wrap}
   .acc-resend-all{margin-left:0}
 }
+
+/* Jakes button (2026-10-30) and the contact card it controls */
+.founder-pending{visibility:hidden}
+.jake-card{margin-top:16px}
+.jake-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+.jake-state{font-weight:700;font-size:.9rem}
+.jake-state.on{color:#2f5a00}
+.jake-state.off{color:#b3261e}

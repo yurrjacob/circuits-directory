@@ -248,6 +248,7 @@ async function initPortal(){
   noFill(); new MutationObserver(noFill).observe(el('pt-app'), { childList: true, subtree: true });
   wireTabs();
   await wireAdminTab();
+  renderJakeButton();
   renderAccount(user, 'pt-account-owner', true);
   wireSeeking();
   renderSeeking(me);
@@ -535,6 +536,33 @@ function activateTab(name){
 /* Admin is something an account has, not a separate login. The tab is hidden
    for everyone else, but hiding a tab is presentation, not security: every
    action inside it is refused by the database unless is_staff() is true. */
+/* Jakes button (Jacob, 2026-10-30): shows or hides Mike on the Contact page.
+   Drawn only when the database says this account is the site owner, and the
+   database refuses the change from anyone else. */
+async function renderJakeButton(){
+  const host = el('pt-jake'); if(!host) return;
+  if(!(await isSiteOwner())) return;
+  let hidden = (await fetchSiteSetting('contact_hide_mike')) === true;
+  const draw = () => {
+    host.innerHTML = `<section class="cb-card jake-card">
+        <h3 class="cb-h">Jakes button</h3>
+        <p class="pf-note">Shows or hides Mike on the Contact page. Only your account sees this.</p>
+        <div class="jake-row"><button type="button" class="btn btn-primary" id="jake-btn" aria-pressed="${hidden}">Jakes button</button>
+          <span class="jake-state ${hidden ? 'off' : 'on'}">${hidden ? 'Mike is hidden from the Contact page.' : 'Mike is showing on the Contact page.'}</span>
+          <a class="web-link" href="/contact" target="_blank" rel="noopener">View the Contact page</a></div>
+      </section>`;
+    el('jake-btn').addEventListener('click', async () => {
+      el('jake-btn').disabled = true;
+      const err = await setContactHideMike(!hidden);
+      if(err){ toast('Could not change it: ' + err, false); el('jake-btn').disabled = false; return; }
+      hidden = !hidden;
+      toast(hidden ? 'Mike is now hidden from the Contact page.' : 'Mike is back on the Contact page.', true);
+      draw();
+    });
+  };
+  draw();
+}
+
 async function wireAdminTab(){
   if(!(await checkStaff())) return false;
   show('pt-tab-admin', true);

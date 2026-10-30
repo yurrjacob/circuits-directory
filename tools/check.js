@@ -304,7 +304,16 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   assert.deepStrictEqual([...gl.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map(m => m[1].replace(/<[^>]+>/g, '').replace('Logo', '')), ['#', '', 'Company Name', 'Keyword', 'Circuits URL'], 'the Global Directory List columns are not #, logo, Company Name, Keyword, Circuits URL');
   assert.ok(/revolveRows\(body, \{ button: document\.getElementById\('dir-rv'\) \}\)/.test(gl) && /revolveRows\(body, \{ button: document\.getElementById\('club-rv'\) \}\)/.test(cl), 'a Global list no longer revolves');
   assert.ok(/async function fetchGlobalDirectory\(\)[\s\S]*?\.eq\('is_club', false\)/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')) && !/async function fetchGlobalDirectory\(\)\{[^}]*select\('\*'\)/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')), 'the Global Directory List reads club keywords or uses select(*)');
-  assert.ok(/<a href="\/global">Global Directory List<\/a>/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')), 'the Directory Popular line lost its Global Directory List link');
+  assert.ok(/<a class="pop-list-link" href="\/global">Global Directory List<\/a>/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /\.pop-list-link,\.pop-list-link:visited\{color:#1a5fd0/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the Directory Popular line lost its blue Global Directory List link');
+  assert.ok(/<a class="pop-list-link" href="\/clubs">Global Club List<\/a>/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')), 'the Search Clubs Popular line lost its blue Global Club List link');
+  /* both Global lists scramble, every row a new random place (Jacob, 2026-10-30) */
+  { const ap = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+    const rv = ap.slice(ap.indexOf('function revolveRows('), ap.indexOf('function revolveRows(') + 2500);
+    assert.ok(/Math\.floor\(Math\.random\(\) \* \(i \+ 1\)\)/.test(rv) && /rows\.forEach\(r => tbody\.appendChild\(r\)\)/.test(rv), 'the Global lists no longer reshuffle every row'); }
+  /* Jakes button (Jacob, 2026-10-30): the site owner hides Mike on Contact */
+  { const ct = fs.readFileSync(path.join(ROOT, 'contact.html'), 'utf8'), pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
+    assert.ok(/id="founder-mike"/.test(ct) && /fetchSiteSetting\('contact_hide_mike'\)/.test(ct) && /const fallback = setTimeout\(show, 2000\)/.test(ct), 'the Contact page no longer follows the hide-Mike setting, or could stay hidden when it cannot be read');
+    assert.ok(/if\(!\(await isSiteOwner\(\)\)\) return;/.test(pj) && />Jakes button<\/button>/.test(pj), 'Jakes button is gone, or drawn for accounts that are not the site owner'); }
   assert.ok(/id="club-search"/.test(cl) && /get\('q'\)/.test(cl), 'the Global Club List lost its search');
   const st = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
   assert.ok(/\.eq\('kind', 'club'\)\.eq\('club_status', 'Approved'\)/.test(st), 'fetchClubs lists clubs staff have not approved');

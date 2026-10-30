@@ -17,7 +17,7 @@
 <meta name="twitter:description" content="Contact the Circuits.com team with questions about listings, search, or partnerships in the circuits industry.">
 <meta name="twitter:image" content="https://circuits.com/assets/og-card.png">
 <link rel="icon" href="assets/favicon.png">
-<link rel="stylesheet" href="styles.css?v=0a3c9cc5b4">
+<link rel="stylesheet" href="styles.css?v=a1f122ed29">
 <script src="/nav.js?v=89aa4289a6"></script>
 <script async src="/analytics.js?v=70049a2947"></script>
 </head>
@@ -50,7 +50,7 @@
 <div class="page">
   <div class="contact-grid">
     <section class="founders">
-      <h1 class="contact-h">Contact John &amp; Mike</h1>
+      <h1 class="contact-h" id="founders-h">Contact John &amp; Mike</h1>
 
       <div class="founder-card">
         <div class="founder-head">
@@ -70,7 +70,9 @@
         </a>
       </div>
 
-      <div class="founder-card">
+      <!-- shown unless the site owner hides it from the dashboard (Jakes
+           button, 2026-10-30); held back until the setting is known -->
+      <div class="founder-card founder-pending" id="founder-mike">
         <div class="founder-head">
           <span class="founder-avatar" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5z"/></svg></span>
           <div>
@@ -136,12 +138,29 @@
 </footer>
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
-<script src="store.js?v=00ebd1ef5c"></script>
-<script src="app.js?v=1929516668"></script>
+<script src="store.js?v=4dc4b3943b"></script>
+<script src="app.js?v=44ecc7e1ce"></script>
 <script>
 /* /contact?topic=... prefills the message, for the Request buttons on the
    dashboard's recruiting upgrades (Jacob, 2026-09-09) */
 (function(){ const t = new URLSearchParams(location.search).get('topic'); const m = document.getElementById('c-message'); if(t && m && !m.value) m.value = t; })();
+/* Mike's card follows the contact_hide_mike setting (Jakes button,
+   2026-10-30). Shown if the setting cannot be read, so a slow or failed read
+   never hides him by mistake. */
+let MIKE_HIDDEN = false;
+(async function(){
+  const card = document.getElementById('founder-mike');
+  const show = () => card && card.classList.remove('founder-pending');
+  const fallback = setTimeout(show, 2000);
+  let hide = false;
+  try{ hide = (await fetchSiteSetting('contact_hide_mike')) === true; }catch(e){ hide = false; }
+  clearTimeout(fallback);
+  if(!hide){ show(); return; }
+  MIKE_HIDDEN = true;
+  if(card) card.remove();
+  document.getElementById('founders-h').textContent = 'Contact John';
+  const btn = document.querySelector('#contact-form .submit'); if(btn) btn.textContent = 'Send Message';
+})();
 /* Sent through the notify function since 2026-09-21 (audit item 7), behind
    Cloudflare Turnstile; FormSubmit is gone from this form. */
 armSpamTrap(document.getElementById('contact-form'));
@@ -163,7 +182,7 @@ document.getElementById('contact-form').addEventListener('submit',async function
     name: v('c-name'), company: v('c-company'), email: v('c-email'), phone: phone || '',
     message: v('c-message'), captchaToken: turnstileToken(this)
   });
-  btn.disabled = false; btn.textContent = 'Send to John & Mike';
+  btn.disabled = false; btn.textContent = MIKE_HIDDEN ? 'Send Message' : 'Send to John & Mike';
   resetTurnstile(this);   // a token is single use, whatever happened
   if(out && out.ok){
     document.getElementById('contact-success').classList.add('show');
@@ -171,7 +190,7 @@ document.getElementById('contact-form').addEventListener('submit',async function
   }else if(out && out.error === 'captcha'){
     showErr('The "I am human" check did not pass. Please complete it again and resend.');
   }else{
-    showErr('We couldn’t send your message just now. Please email us directly at john@circuits.com or mike@circuits.com, or try again in a few minutes.');
+    showErr('We couldn’t send your message just now. Please email us directly at john@circuits.com' + (MIKE_HIDDEN ? '' : ' or mike@circuits.com') + ', or try again in a few minutes.');
   }
 });
 </script>

@@ -182,3 +182,43 @@ begin
     execute d;
   end if;
 end $do$;
+
+-- ---- Site settings and Jakes button (Jacob, 2026-10-30) ---------------------
+-- Small public settings the pages read; only the site owner changes them. The
+-- first is contact_hide_mike: Jakes button on the dashboard hides Mike's card
+-- on the Contact page. The contact form still emails every staff address.
+create table if not exists public.site_settings (
+  key text primary key,
+  value jsonb not null,
+  updated_at timestamptz not null default now(),
+  updated_by text
+);
+alter table public.site_settings enable row level security;
+create policy site_settings_read on public.site_settings for select using (true);
+grant select on public.site_settings to anon, authenticated;
+
+-- the site owner is a staff row with site_owner set. The address is set on
+-- the project directly and is deliberately not written here:
+--   update public.staff set site_owner = true where lower(email) = lower('<site owner sign-in email>');
+alter table public.staff add column if not exists site_owner boolean not null default false;
+
+create or replace function public.is_site_owner()
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.staff
+                  where site_owner and lower(email) = lower(coalesce(auth.jwt() ->> 'email', '')));
+$$;
+
+create or replace function public.set_contact_hide_mike(p_hide boolean)
+returns boolean language plpgsql security definer set search_path = public as $$
+begin
+  if not is_site_owner() then raise exception 'site owner only' using errcode = 'insufficient_privilege'; end if;
+  insert into site_settings (key, value, updated_at, updated_by)
+  values ('contact_hide_mike', to_jsonb(coalesce(p_hide, false)), now(), auth_email())
+  on conflict (key) do update set value = excluded.value, updated_at = now(), updated_by = excluded.updated_by;
+  insert into security_log (actor, action, target, detail)
+  values (auth_email(), 'set_contact_hide_mike', 'contact', jsonb_build_object('hide', coalesce(p_hide, false)));
+  return coalesce(p_hide, false);
+end $$;
+revoke execute on function public.set_contact_hide_mike(boolean) from anon;
+
+insert into public.site_settings (key, value) values ('contact_hide_mike', 'false'::jsonb) on conflict (key) do nothing;

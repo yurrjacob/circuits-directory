@@ -51,11 +51,12 @@ function initHome(){
   refresh();
 }
 
-/* ---- a revolving list (Jacob, 2026-10-28: "a fast paced revolving list",
-   the Global Directory List and the Global Club List). Every few seconds the
-   top row slides to the bottom and the numbers follow. It stops while the
-   pointer or keyboard focus is in the table, when the Pause button is
-   pressed, and for anyone who asked their system for less motion. ---- */
+/* ---- a scrambling list (Jacob, 2026-10-28: "a fast paced revolving list";
+   2026-10-30: "constantly scrambling and randomized", not one row moving up).
+   Every few seconds every row takes a new random place and glides there, the
+   numbers following. It stops while the pointer or keyboard focus is in the
+   table, when the Pause button is pressed, while the tab is hidden, and for
+   anyone who asked for reduced motion. ---- */
 function revolveRows(tbody, opts){
   const o = opts || {};
   if(!tbody) return;
@@ -66,15 +67,28 @@ function revolveRows(tbody, opts){
   const renumber = () => [...tbody.rows].forEach((tr, i) => { const c = tr.querySelector('td.rank'); if(c) c.textContent = i + 1; });
   const step = () => {
     if(paused || hover || document.hidden || tbody.rows.length < 2) return;
-    const first = tbody.rows[0];
-    first.classList.add('rv-out');
-    setTimeout(() => { first.classList.remove('rv-out'); tbody.appendChild(first); renumber(); }, 260);
+    const rows = [...tbody.rows];
+    /* FLIP: note where each row is, shuffle, then start each one from its old
+       place and let it slide to the new one */
+    const before = new Map(rows.map(r => [r, r.getBoundingClientRect().top]));
+    for(let i = rows.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [rows[i], rows[j]] = [rows[j], rows[i]]; }
+    rows.forEach(r => tbody.appendChild(r));
+    renumber();
+    rows.forEach(r => {
+      const dy = before.get(r) - r.getBoundingClientRect().top;
+      if(!dy) return;
+      r.classList.remove('rv-move');
+      r.style.transform = 'translateY(' + dy + 'px)';
+    });
+    tbody.getBoundingClientRect();   // commit the start positions before animating
+    rows.forEach(r => { if(r.style.transform){ r.classList.add('rv-move'); r.style.transform = ''; } });
   };
   const sync = () => { if(btn){ btn.textContent = paused ? 'Play' : 'Pause'; btn.setAttribute('aria-pressed', paused ? 'true' : 'false'); } };
   tbody.addEventListener('mouseenter', () => { hover = true; });
   tbody.addEventListener('mouseleave', () => { hover = false; });
   tbody.addEventListener('focusin', () => { hover = true; });
   tbody.addEventListener('focusout', () => { hover = false; });
+  tbody.addEventListener('transitionend', e => { if(e.target.classList) e.target.classList.remove('rv-move'); });
   if(btn){ btn.hidden = still; btn.addEventListener('click', () => { paused = !paused; sync(); }); }
   sync();
   clearInterval(tbody.__rv); timer = setInterval(step, every); tbody.__rv = timer;
@@ -477,7 +491,7 @@ async function initInbox(){
     if(!storedSession()) return;
     const add = (src, integrity) => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; if(integrity) t.integrity = integrity; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
     /* the same vendored file, and the same hash, every page carries (audit item 3, 2026-09-21) */
-    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=00ebd1ef5c'); }catch(e){ return; }
+    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=4dc4b3943b'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;
