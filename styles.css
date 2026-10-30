@@ -2783,15 +2783,16 @@ body.wc-invite .wc-lede,body.wc-invite .wc-wrap-cards{display:none}
 .reg-kw .kw-tags{margin-top:10px}
 
 /* the welcome page leads with keywords (2026-10-30): one wide card on top,
-   the other three in a row under it */
-.wc-cards{grid-template-columns:repeat(3,1fr)}
+   the other three in a row under it. Welcome page only: the home page keeps
+   its four across */
+.wc-cards-lead{grid-template-columns:repeat(3,1fr)}
 .wc-card-main{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr auto;align-items:center;column-gap:18px;
   padding:26px 26px;border:2px solid var(--green);background:linear-gradient(135deg,#f7fcec,#fff 60%)}
 .wc-card-main .wc-card-ico{grid-row:1/3;width:56px;height:56px;margin:0}
 .wc-card-main .wc-card-b{font-size:1.35rem}
 .wc-card-main .wc-card-go{grid-column:3;grid-row:1/3;margin:0;padding:13px 22px;font-size:1rem}
 @media(max-width:860px){
-  .wc-cards{grid-template-columns:1fr}
+  .wc-cards-lead{grid-template-columns:1fr}
   .wc-card-main{grid-template-columns:auto 1fr}
   .wc-card-main .wc-card-go{grid-column:1/-1;grid-row:auto;margin-top:12px;justify-self:start}
 }

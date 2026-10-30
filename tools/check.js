@@ -2225,7 +2225,7 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
         `the welcome page lost the ${label} door, or it no longer opens ${href}`);
     }
     assert.ok(/noindex/.test(wc), 'the welcome page is open to search engines');
-    assert.ok(/class="wc-pill"/.test(wc) && /class="wc-cards"/.test(wc) && /class="wc-card-go"/.test(wc),
+    assert.ok(/class="wc-pill"/.test(wc) && /class="wc-cards[ "]/.test(wc) && /class="wc-card-go"/.test(wc),
       'the welcome page lost its confirmed badge or its three cards');
     assert.ok(/id="wc-copy"/.test(wc) && /clipboard\.writeText\('https:\/\/' \+ url\)/.test(wc),
       'the welcome page no longer offers the new address to copy');
