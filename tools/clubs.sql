@@ -527,3 +527,28 @@ end $$;
 -- The website and one other link sit small on the right of the club page.
 alter table public.companies add column if not exists other_link text
   check (other_link is null or other_link ~* '^https?://[^\s]+$');
+
+-- ---- every account has its own page beside its clubs (2026-10-30) ----------
+-- register_company returns the account's own (non-club) page, making it if
+-- needed; it used to return the first page of any kind, so an account whose
+-- only page was a club had no dashboard of its own to switch back to.
+create or replace function public.register_company()
+returns text language plpgsql security definer set search_path = public as $$
+declare s text;
+begin
+  if not exists (select 1 from profiles where user_id = auth.uid()) then
+    raise exception 'no profile' using errcode = 'no_data_found';
+  end if;
+  s := ensure_page_for(auth.uid());
+  return s;
+end $$;
+
+-- circuits.com/jacob had been switched into a club by the old College Club
+-- toggle. On Jacob's word the test club was dropped and the page is his own
+-- again (applied 2026-10-30; the talent guard paused for the one statement).
+--   alter table public.companies disable trigger companies_talent_guard;
+--   update public.companies set kind = 'company', club_status = 'Approved', team = '[]', members = '[]',
+--          college_name = null, college_logo = null, club_promo = null, club_join_url = null, club_badge = null
+--    where slug = 'jacob' and kind = 'club';
+--   alter table public.companies enable trigger companies_talent_guard;
+--   delete from public.projects where company_slug = 'jacob';

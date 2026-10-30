@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=42955966bd">
+<link rel="stylesheet" href="/styles.css?v=c5fb2feda7">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -88,7 +88,8 @@
       <p id="pt-sub">Everything on Circuits.com: Your Profile, Your Business Listings, Your Work Listings.<b id="pt-name" hidden></b></p>
     </div>
     <div class="console-acts">
-      <select id="pt-company" class="console-pick"></select>
+      <!-- switch between your own dashboard and each club you run (2026-10-30: labelled, so it reads as a switch) -->
+      <label class="console-pick-wrap" id="pt-company-wrap" style="display:none"><span>Viewing</span><select id="pt-company" class="console-pick" aria-label="Switch dashboard"></select></label>
       <a class="btn btn-outline console-view" id="pt-view" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></svg>View public profile</a>
       <button type="button" class="console-signout" id="pt-signout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></svg>Sign out</button>
     </div>
@@ -1068,7 +1069,7 @@
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
 <script src="/store.js?v=3ec51b2c98"></script>
 <script src="/app.js?v=89762093be"></script>
-<script src="/portal.js?v=553e62691b"></script>
+<script src="/portal.js?v=da07d0ee1d"></script>
 <script src="/admin.js?v=03865f1a80"></script>
 <script>
 /* Save profile, Save club and Save members all run the one save. Save club

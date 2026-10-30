@@ -1082,8 +1082,11 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   /* every account gets its companies row on first visit (listings, jobs and
      Talent Access hang off it), and the Profile Details save creates both
      rows for an account that has neither */
-  assert.ok(/if\(!cos\.length && me\)\{\s*const r = await registerCompany\(\)/.test(portalSrc2),
-    'an account with no companies row never gets one (register_company)');
+  /* and since 2026-10-30, an account whose only pages are clubs gets its own
+     page too, so it can switch between its dashboard and its clubs' */
+  assert.ok(/if\(me && !cos\.some\(c => c\.kind !== 'club'\)\)\{\s*const r = await registerCompany\(\)/.test(portalSrc2),
+    'an account with no page of its own (none, or only clubs) never gets one (register_company)');
+  assert.ok(/<label class="console-pick-wrap" id="pt-company-wrap"[^>]*><span>Viewing<\/span><select id="pt-company"/.test(portalHtml2), 'the dashboard switch lost its Viewing label');
   assert.ok(/const e1 = await createMyProfile\(wantHandle, fields\.contact \|\| fields\.name\)/.test(portalSrc2) && /const r = await registerCompany\(\);\s*if\(r\.error\)/.test(portalSrc2),
     'the first Profile Details save does not create the profile and its company row');
   /* the person and the page share picture and address; the person's own name

@@ -208,7 +208,10 @@ async function initPortal(){
     el('pt-app').innerHTML = '<div class="pt-empty" style="margin:40px auto;max-width:560px"><b>Could not load your dashboard</b><p>The connection to Circuits.com dropped. <a href="/portal">Reload to try again.</a></p></div>';
     return;
   }
-  if(!cos.length && me){
+  /* every account has its own page beside any clubs it runs (2026-10-30):
+     an account whose only pages were clubs could never reach its own
+     dashboard, so the picker had nothing to switch to */
+  if(me && !cos.some(c => c.kind !== 'club')){
     const r = await registerCompany();
     if(!r.error) cos = await myPages();
   }
@@ -282,7 +285,7 @@ async function initPortal(){
   PT.pages = cos;
   const picker = el('pt-company');
   picker.innerHTML = pickerOptions(cos);
-  picker.style.display = cos.length > 1 ? '' : 'none';
+  el('pt-company-wrap').style.display = cos.length > 1 ? '' : 'none';
   /* a reload reopens the page you were on (2026-10-28). It used to reopen
      your own page every time, so a club owner who saved the club and came
      back landed on their own Student Club tab, which has no Save Club
@@ -485,7 +488,7 @@ function renderFresh(){
   applyPageMode(PT.co);
   el('pt-name').textContent = PT.user.email || '';
   el('pt-view').style.display = 'none';
-  el('pt-company').style.display = 'none';
+  el('pt-company-wrap').style.display = 'none';
   el('pt-fresh-note').innerHTML = '<p class="pf-note" style="color:#3f6300;margin:0 0 12px">This account has no Circuits.com address yet. Pick one below, add your company, club or organization name and save to create your profile.</p>';
   /* the name typed on Create Your Account Profile is the person's own: it is
      the Contact Person here, not the company name (Jacob, 2026-10-12) */
@@ -1886,7 +1889,7 @@ async function refreshPages(openSlug){
   const picker = el('pt-company');
   if(picker){
     picker.innerHTML = pickerOptions(cos);
-    picker.style.display = cos.length > 1 ? '' : 'none';
+    el('pt-company-wrap').style.display = cos.length > 1 ? '' : 'none';
     if(openSlug) picker.value = openSlug;
   }
   if(openSlug) await loadCompany(openSlug);
