@@ -704,6 +704,9 @@ function setMeta(name, content){
 /* Organization + AggregateRating structured data so the profile can win a
    rich result rather than a plain blue link. */
 function jsonLd(co, avg, count, site){
+  /* a generated page already carries ProfilePage + Organization in its HTML
+     (tools/build-profiles.js); a second Organization would only compete with it */
+  if(document.querySelector('script[data-static-profile]')) return;
   const data = {
     '@context': 'https://schema.org', '@type': 'Organization',
     name: co.name,

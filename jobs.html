@@ -8,7 +8,7 @@
 <link rel="icon" href="assets/favicon.png">
 <link rel="canonical" href="https://circuits.com/jobs">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="styles.css?v=ccec7a4992">
+<link rel="stylesheet" href="styles.css?v=06e49cb43a">
 <script src="/nav.js?v=f09e7934e3"></script>
 <script async src="/analytics.js?v=70049a2947"></script>
 </head>
@@ -137,19 +137,10 @@
         <td class="cell-act"><button type="button" class="btn btn-blue board-view" data-view="${i}" aria-label="View job details and apply for ${escapeHtml(j.title)}">View</button></td></tr>`).join('')}</tbody>
     </table></div></div>`;
 
-  /* structured data for the live posts (audit, 2026-09-15), written with
-     textContent so nothing in a title can close the tag */
-  try{
-    const ld = document.createElement('script'); ld.type = 'application/ld+json';
-    ld.textContent = JSON.stringify(rows.slice(0, 50).map(j => ({
-      '@context': 'https://schema.org', '@type': 'JobPosting', title: j.title,
-      description: j.description || j.title, datePosted: j.created_at, validThrough: j.paid_until,
-      hiringOrganization: { '@type': 'Organization', name: j.company_name, sameAs: j.company_handle ? 'https://circuits.com/' + j.company_handle : undefined },
-      jobLocation: j.location ? { '@type': 'Place', address: j.location } : undefined,
-      employmentType: 'FULL_TIME', directApply: true, url: 'https://circuits.com/jobs?q=' + encodeURIComponent((j.keywords || [])[0] || '')
-    })));
-    document.head.appendChild(ld);
-  }catch(e){}
+  /* No JobPosting structured data here (SEO audit, 2026-11-10). Google wants
+     one JobPosting on the page for that one job, never a list of them on a
+     board, and markup on a list page risks a manual action. It comes back
+     only with a page per job (/jobs/<id>). */
   const table = document.getElementById('board-table'), detail = document.getElementById('board-detail');
   let selected = -1;
   /* selection is only a highlight now: it marks the row whose panel is open */

@@ -81,8 +81,58 @@ assert.strictEqual(safeUrl('https://acme.com/x'), 'https://acme.com/x');
 
 /* --- the generator template needs every placeholder it substitutes --- */
 const tpl = fs.readFileSync(path.join(ROOT, 'company.html'), 'utf8');
-for (const ph of ['{{HANDLE}}', '{{TITLE}}', '{{DESC}}', '{{CANONICAL}}', '{{OGIMAGE}}']) {
+for (const ph of ['{{HANDLE}}', '{{TITLE}}', '{{DESC}}', '{{CANONICAL}}', '{{OGIMAGE}}', '{{BODY}}', '{{JSONLD}}']) {
   assert.ok(tpl.includes(ph), `company.html is missing ${ph}`);
+}
+
+/* --- the generator writes what a crawler needs into each profile page, and
+       keeps every public page in the sitemap (SEO audit, 2026-11-10) --- */
+{
+  const gen = require('./build-profiles.js');
+  /* a hostile name must not break out of the page or the JSON-LD block */
+  const co = { slug: 'acme', handle: 'acme', name: 'Acme </script><b>x</b>', tagline: 'PCB "assembly"', description: 'Boards & more',
+    logo: 'https://x.test/l.png', updated_at: '2026-11-01T00:00:00Z', kind: 'company' };
+  const page = gen.pageFor(tpl, co, ['PCB Assembly', 'Oscillators']);
+  assert.ok(!/\{\{[A-Z]+\}\}/.test(page), 'a generated profile still holds a {{PLACEHOLDER}}');
+  assert.ok(/<h1>Acme &lt;\/script&gt;&lt;b&gt;x&lt;\/b&gt;<\/h1>/.test(page), 'a generated profile no longer carries the company name as an escaped H1 in its HTML');
+  assert.ok(/<a href="\/results\?q=PCB%20Assembly">PCB Assembly<\/a>/.test(page), 'a generated profile no longer lists its keywords as links in its HTML');
+  const ld = page.match(/<script type="application\/ld\+json" data-static-profile>([\s\S]*?)<\/script>/);
+  assert.ok(ld, 'a generated profile lost its static JSON-LD');
+  const ldData = JSON.parse(ld[1]);
+  assert.deepStrictEqual(ldData['@graph'].map(n => n['@type']), ['ProfilePage', 'Organization', 'BreadcrumbList'], 'the profile JSON-LD is not ProfilePage + Organization + BreadcrumbList');
+  assert.strictEqual(ldData['@graph'][1].name, co.name, 'the profile JSON-LD lost the company name');
+  const sample = gen.pageFor(tpl, Object.assign({}, co, { slug: 'sample-acme', handle: 'sample-acme' }), []);
+  assert.ok(/noindex,nofollow/.test(sample) && !/ld\+json/.test(sample), 'a sample profile is indexable or carries structured data');
+  assert.ok(/querySelector\('script\[data-static-profile\]'\)\) return;/.test(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8')),
+    'profile.js would add a second Organization block on top of the static one');
+
+  /* every hand-written page a search engine may index is in STATIC_PAGES,
+     and every one of those is in the sitemap. results.html is left to app.js,
+     which decides per keyword. */
+  const robotsTxt = fs.readFileSync(path.join(ROOT, 'robots.txt'), 'utf8');
+  const blocked = f => new RegExp('^Disallow: /' + f.replace('.html', '').replace(/[.]/g, '\\.') + '(\\.html)?$', 'm').test(robotsTxt);
+  const staticFiles = gen.STATIC_PAGES.map(([, f]) => f);
+  const smap = fs.readFileSync(path.join(ROOT, 'sitemap.xml'), 'utf8');
+  for (const f of fs.readdirSync(ROOT).filter(f => f.endsWith('.html'))) {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    if (f === '404.html' || f === 'results.html' || f === 'company.html' || /<meta name="company-handle"/.test(src)) continue;
+    if (/<meta name="robots" content="[^"]*noindex/.test(src) || blocked(f)) continue;
+    assert.ok(staticFiles.includes(f), `${f} is indexable but missing from STATIC_PAGES in tools/build-profiles.js, the next build would leave it out of the sitemap`);
+  }
+  for (const [loc, f] of gen.STATIC_PAGES) {
+    assert.ok(fs.existsSync(path.join(ROOT, f)), `STATIC_PAGES lists ${f}, which does not exist`);
+    assert.ok(smap.includes(`<loc>https://circuits.com${loc}</loc>`), `sitemap.xml does not list ${loc}`);
+  }
+  assert.ok(!/<priority>/.test(smap), 'sitemap.xml carries <priority> again, Google ignores it');
+  assert.ok(/--force/.test(fs.readFileSync(path.join(ROOT, 'tools/build-profiles.js'), 'utf8')), 'the generator no longer refuses to drop sitemap URLs without --force');
+
+  /* no JobPosting on the board: Google allows it only on a page for one job */
+  assert.ok(!/JobPosting/.test(fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')), 'jobs.html adds JobPosting markup to the list page again');
+
+  /* the homepage search works with no JavaScript, and its H1 is visible */
+  const homeSrc = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  assert.ok(/<form id="home-form"[^>]*action="\/results"[^>]*method="get"/.test(homeSrc) && /<input id="home-search" name="q"/.test(homeSrc), 'the homepage search needs JavaScript again (form action or name="q" missing)');
+  assert.ok(/<h1 class="home-h1">/.test(homeSrc) && !/<h1 class="sr-only"/.test(homeSrc), 'the homepage H1 is hidden again');
 }
 
 /* --- every page that calls store.js/app.js helpers must actually load them --- */

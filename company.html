@@ -16,10 +16,10 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{{TITLE}}">
 <meta name="twitter:description" content="{{DESC}}">
-<meta name="twitter:image" content="{{OGIMAGE}}">
+<meta name="twitter:image" content="{{OGIMAGE}}">{{JSONLD}}
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=ccec7a4992">
+<link rel="stylesheet" href="/styles.css?v=06e49cb43a">
 <script src="/nav.js?v=f09e7934e3"></script>
 <script async src="/analytics.js?v=70049a2947"></script>
 </head>
@@ -53,7 +53,7 @@
   <p class="crumb" style="font-size:.85rem;opacity:.7;margin-bottom:6px">
     <a href="/">&lsaquo; Search Circuits.com</a>
   </p>
-  <div id="profile-body"><div class="empty"><div class="big"><span class="spin" aria-hidden="true"></span>Loading…</div></div></div>
+  <div id="profile-body">{{BODY}}</div>
 </main>
 
 <footer class="footer">
@@ -72,7 +72,7 @@
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
 <script src="/store.js?v=31f75970b2"></script>
 <script src="/app.js?v=ac6263c2af"></script>
-<script src="/profile.js?v=900bdb4c88"></script>
+<script src="/profile.js?v=a0d6dba967"></script>
 <script>initProfile();</script>
 </body>
 </html>
