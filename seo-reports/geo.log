@@ -1,0 +1,31 @@
+The GEO report is written. I scored circuits.com at **32 / 100** for AI search readiness, which agrees with the 34 in today's full audit.
+
+**What it comes down to:** every AI crawler is allowed in, but most of them don't run JavaScript, and to them the site is nearly empty. Listings, jobs, talent, clubs and results pages all show "Showing 0…" or "Loading…" until a script fills them in. Only `/about`, `/register` and `/contact` have real text, and they contain almost no specific facts, numbers or dates. A search for the brand found no mentions on other sites.
+
+**Crawler access needs no change.** The search crawlers (Googlebot, OAI-SearchBot for ChatGPT, Claude-SearchBot, PerplexityBot, Applebot, Bingbot) and the training crawlers (GPTBot, ClaudeBot, Google-Extended, CCBot, Applebot-Extended) are all allowed. The report lists each one separately with what it controls.
+
+**Top 5 changes:**
+1. **Put listings into the page HTML.** Profile pages, keyword pages, and the `/global` and `/clubs` tables should be written into the pages when the site is built, not loaded by script. This is C2 and H1 from the full audit, and the other four changes depend on it.
+2. **Answer "What is a Circuits-Keyword?" on `/about`**, plus a strip of live counts with an "as of" date. Nowhere on the site, or in its structured data, is the brand's own term defined. Draft copy is in the report; check the facts in it before publishing.
+3. **Name the founders, the company and the dates.** The founders appear only on `/contact` and no page carries a date. Draft structured data with `founder`, `legalName` and `sameAs` is in the report, with bracketed blanks for you to fill.
+4. **Get mentioned on other sites:** a LinkedIn company page, links from listed companies' own sites, useful (not promotional) answers in Reddit and IPC forums, trade press, and a short YouTube walkthrough. Circuitnet's long-running supplier directory [is no longer maintained](https://www.circuitnet.com/web/directory.html), so its former users may be looking for a replacement.
+5. **Make search work without JavaScript** (M1 from the full audit), so AI agents can submit the homepage form.
+
+`jobs.html` still has the invalid JobPosting markup from the full audit's H2. Removing it is still the quickest fix on the list.
+
+`llms.txt` is missing. Google says it ignores the file, so it doesn't count toward the score; the report has a ready-made one if you want it anyway.
+
+**Not measured:** I had no AI-visibility tool connected, so I couldn't check actual AI citations. Direct checks of Wikipedia, Wikidata and Reddit were blocked, so the brand-mention findings rest on two web searches.
+
+I didn't commit anything; the whole `seo-reports/` folder is untracked in git. I named the file to match your dated reports rather than the skill's default `GEO-ANALYSIS.md`. A PDF version is available through `/seo google report` if you want one.
+
+Files are in seo-reports:
+- 2026-11-10-geo-analysis.md
+
+Sources: [Circuitnet directory notice](https://www.circuitnet.com/web/directory.html), [Circuit Cellar directories](https://circuitcellar.com/directories/distributors-directory/), [Airframer circuits supply chain](https://www.airframer.com/supply_chain/category/circuits)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Built by agricidaniel. Join the AI Marketing Hub community
+🆓 Free  → https://www.skool.com/ai-marketing-hub
+⚡ Pro   → https://www.skool.com/ai-marketing-hub-pro
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

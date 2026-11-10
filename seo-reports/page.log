@@ -1,0 +1,34 @@
+The homepage scores **58/100**. Nothing on it stops Google from indexing it, but the page gives search engines very little to rank. The live page is identical to `index.html` at commit `7b33ee0`. I checked it with curl and by reading the source. I couldn't measure Core Web Vitals because there's no browser or PageSpeed key here.
+
+```
+On-Page SEO:     52/100  █████░░░░░
+Content Quality: 35/100  ████░░░░░░
+Technical:       72/100  ███████░░░
+Schema:          65/100  ██████░░░░
+Images:          88/100  █████████░
+```
+
+**Most important finding (new, not in this morning's full audit):**
+- **The homepage's main links lead to a page Google is told not to crawl.** The four Start cards, plus Sign In, Dashboard and Admin, all go to `/portal`, and `robots.txt` has `Disallow: /portal`. The fix is to point the cards at the public pages instead: `/join`, `/jobs`, `/talent` and `/clubs`. Those pages are indexable, but `/join`, `/clubs` and `/global` are missing from the live sitemap.
+
+**Other high-priority items (these match H3 in the full audit):**
+- **No visible headings.** The only H1 is hidden (`index.html:85`) and there are no H2s. Showing the H1 and making the four card titles `<h2>` would give the page a real outline.
+- **Too little text.** The page has 233 visible words, below the usual 500 for a homepage. Buyer terms like "PCB assembly" and "distributors" appear only in the meta tags. I suggest adding 250 to 350 words: what the site is, how it works, and live counts with an "as of" date.
+
+**Medium:**
+- **Title.** The current one is 46 characters, says "Circuits" twice and has no search term. A suggested replacement: `Electronics Supplier Directory, Jobs & Talent | Circuits.com` (60 characters). The description ends on "Circuits-Keyword™", which nobody searches for, so the report also suggests a new one.
+- **Search form.** It has no `action` or `name="q"`, so it does nothing without JavaScript.
+- **Stylesheet size.** `styles.css` is 205 KB (48 KB compressed) and every page waits for it to load.
+- **Hero logo.** It's an 85 KB PNG; SVG or WebP would be a few KB.
+
+**Already in good shape:** the canonical tag, robots settings, HTTPS redirects, Open Graph and Twitter tags (with a correctly sized 1200x630 card), alt text and dimensions on every image, and the accessible search tabs.
+
+The full report is in `seo-reports/2026-11-10-homepage.md`. It includes a ready-to-paste Organization JSON-LD block that adds the founders, a contact point and `sameAs`. The registered company name, contact email and LinkedIn URL are left as placeholders because I couldn't verify them. I haven't changed any site files. The first three fixes are HTML-only and take minutes: repoint the cards, add the visible headings with the new title, and give the search form an action.
+
+I can generate a PDF of this report or publish it as a shareable page if you'd like.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Built by agricidaniel. Join the AI Marketing Hub community
+🆓 Free  → https://www.skool.com/ai-marketing-hub
+⚡ Pro   → https://www.skool.com/ai-marketing-hub-pro
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -1,0 +1,49 @@
+Technical and schema results are back. I'm waiting on the other eight agents.
+
+The sitemap result is back. One finding there needs care: running the generator as it stands would remove `/jobs` and `/talent` from the sitemap, and `tools/check.js` would then fail. So far I've received three of ten results: technical, schema and sitemap. I'm waiting for the rest.
+
+Six of ten are back. Backlinks returned no data because both free sources failed in this environment, so the report will mark backlinks as unmeasured rather than guess. Performance couldn't get real Core Web Vitals numbers either (PageSpeed returned 429 and no browser is installed), so its scores are static estimates. I'm still waiting on content, GEO, agentic and SXO.
+
+Seven of ten are back. Agentic found that the homepage search form only works with JavaScript, because the form has no `action` or `method`. That's a small fix. I'm still waiting on content, GEO and SXO.
+
+Content came back with the lowest scores so far: 36 for content quality and 44 for on-page SEO. It agrees with the technical result that crawlers get near-empty pages. I'm waiting on the last two, GEO and SXO.
+
+The content agent is right: both founders are on `/contact`, and `/about` doesn't mention them. I'll use that in the report. I also confirmed that `employmentType` is hardcoded to `FULL_TIME` in `jobs.html:149`. SXO is the only result still outstanding.
+
+Circuits.com scores **49/100** on SEO health. The basics work: HTTPS, redirects, 404 handling, canonicals and robots.txt are all fine. The problem is that search engines get almost nothing to index. Listings, keyword results, jobs and talent are all loaded by JavaScript after the page arrives, so a crawler sees "Loading...", "Showing 0 Results" and "Showing 0 Jobs". The full report, with evidence, how to tell each fix worked, and an order of work, is in `seo-reports/2026-11-10-full-audit.md`.
+
+| Category | Score |
+|---|---|
+| Technical | 58 |
+| Content | 36 |
+| On-page | 44 |
+| Schema | 48 |
+| Performance | 68 (estimated; see the last section) |
+| AI search | 34 |
+| Images | 90 |
+
+**Critical**
+1. **Fix `tools/build-profiles.js` before anyone runs it.** It would remove `/jobs` and `/talent` from the sitemap, which makes `tools/check.js` fail. It also leaves out `/clubs` and `/global` and stamps every page with today's date. Someone hand-edited the live sitemap after its last run.
+2. **No company profile pages exist yet.** The list of generated pages is empty, and `/northbridge` returns a 404. Even once generated, each page body is filled in by JavaScript, so the generator should write the company details and structured data into the HTML.
+
+**High**
+- **Results pages:** `/results?q=` has no robots tag in the HTML, so if the data fetch fails, an empty page can be indexed. A static `noindex, follow` that the script lifts when results arrive is safer. Longer term, static pages per keyword would do better.
+- **Job listings markup:** the job data on `/jobs` breaks Google's rules. Every job points to a search URL, and every job is marked full-time (`jobs.html:149`). I'd delete it now and bring it back with one page per job.
+- **Homepage:** the only H1 is hidden from view, the page has 233 words, and it never uses the terms buyers search for.
+- **Who runs the site:** the founders appear on `/contact` but not on `/about`, in the policies or in the structured data. No legal entity is named anywhere.
+- **`/jacob`:** it's a person's page with the title "Supplier Profile", it's indexable, and it shows nothing without JavaScript.
+
+The quickest safe wins are deleting the job markup and adding the static robots tag to `results.html`. Each takes a few minutes.
+
+**What I couldn't measure**
+- **Real speed numbers:** PageSpeed refused the anonymous requests and no headless browser is installed, so the performance score is an estimate.
+- **Backlinks and brand mentions:** those data sources were blocked from this sandbox.
+- **Live listing count:** I couldn't reach your Supabase project from here. If only a few companies are listed, the profile-page work still matters, but getting listings is the bigger bottleneck.
+
+I haven't changed any site code or committed anything; the report is the only new file. I can make the two quick fixes and the generator fix (running `node tools/check.js` afterwards), or turn this into a shareable page or a PDF.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Built by agricidaniel. Join the AI Marketing Hub community
+🆓 Free  → https://www.skool.com/ai-marketing-hub
+⚡ Pro   → https://www.skool.com/ai-marketing-hub-pro
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

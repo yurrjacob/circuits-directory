@@ -1,0 +1,38 @@
+I gave circuits.com a schema score of **45 / 100**. The homepage markup is fine, but the markup on the Job Board breaks Google's rules, and company profile pages only get schema if JavaScript runs.
+
+The live pages are identical to the files on `main`, so I checked the source directly. The plugin's own page parser wouldn't work through this sandbox's network setup, so I pulled the structured data out with curl and a short script. I couldn't reach Supabase from here, so the markup that `jobs.html` and `profile.js` add after loading data was checked from the code, not from a rendered page.
+
+| Where | Type | Status |
+|---|---|---|
+| `/` | Organization + WebSite (with site search) | ✅ Valid. Organization is thin: no contact point, `sameAs` or founders |
+| `/jobs` | Up to 50 JobPosting, added by JS | ❌ Breaks Google's rules |
+| `/<handle>` profiles | Organization, added by JS only | ⚠️ Valid, but missed if the page's data fetch fails |
+| Other pages | none | No BreadcrumbList anywhere |
+
+No Microdata, RDFa or retired types (HowTo, FAQPage and so on) are in use.
+
+**Fix first:**
+1. **Delete the JobPosting code at `jobs.html:141-152` (critical).** Google allows JobPosting only on a page about one job, and putting it on a list page can get the site a manual penalty. It has other errors too:
+   - every job's link is `/jobs?q=<keyword>`, so several jobs share a URL;
+   - every job is marked `FULL_TIME`, whatever it really is;
+   - the location is free text instead of a proper address;
+   - the company link points to a circuits.com profile that currently returns 404.
+
+   Bring it back once each job has its own `/jobs/<id>` page. This matches H2 in today's full audit.
+2. **Put profile schema into the page HTML (high).** `tools/build-profiles.js` should write ProfilePage + Organization + BreadcrumbList into each generated page. Then the `jsonLd()` function in `profile.js` can go. This depends on fixing the profile generator first (C1 and C2 in the full audit).
+3. **Review ratings, for later (medium).** Buyer reviews are switched off, so no rating is output today. If they come back, the code will output a rating with no individual reviews behind it. Add those reviews to the schema when you switch them back on.
+4. **Fill out the homepage Organization (low).** Add an email and contact point, and founders if you want them named. `contact.html` can hide Mike's card, so decide whether to name him before adding him.
+
+I didn't recommend FAQPage or HowTo, because Google no longer shows rich results for either. A schema list on `/results` would do nothing until those pages show their listings without JavaScript.
+
+I haven't changed any site code. Both files below are new and uncommitted. In the JSON, anything in `[brackets]` is a fact only you can supply, and you should strip the keys starting with an underscore before using it. Edits to the site still need `node tools/stamp.js` and `node tools/check.js`.
+
+Files are in `seo-reports`:
+- 2026-11-10-schema.md
+- 2026-11-10-generated-schema.json
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Built by agricidaniel. Join the AI Marketing Hub community
+🆓 Free  → https://www.skool.com/ai-marketing-hub
+⚡ Pro   → https://www.skool.com/ai-marketing-hub-pro
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -1,0 +1,22 @@
+I ran the local SEO check on circuits.com, and mostly it doesn't apply. Circuits.com is a national online directory for the circuits and electronics industry, not a business with premises customers visit. It has no street address, opening hours, Google Business Profile or Maps embed. A 0 to 100 local score would only record that, so I scored just the parts that apply.
+
+**Where local signals do matter:**
+
+1. **Company listing pages hide their location from Google.** Each listed company has a free-text address, but it only appears after the page loads in the browser (`profile.js:198`, `profile.js:488`, `profile.js:628`). The structured data added at the same point records the address as plain text, with no separate city, state or country (`profile.js:706-723`). And `sitemap.xml` lists only 8 fixed pages, none of the company pages. Together that means the site can't rank for searches like "PCB assembly Massachusetts". The fix fits into the `tools/build-profiles.js` work the full audit already proposed: build each company page with its address in the page itself, broken into city, state and country. That probably needs new columns on `companies`, and per the house rules each one needs a read grant for anonymous visitors or person pages go blank.
+2. **Circuits.com's own details are thin.** The contact page has two Long Island (631) phone numbers and the founders' names. The homepage structured data has no phone, address, contact point or links to official profiles such as LinkedIn. Nothing conflicts; it's just sparse.
+3. **Reviews:** buyer reviews are switched off and the code has no review data, so no star ratings are claimed. That's correct as it stands.
+
+**Recommendations:**
+- **Don't** create a Google Business Profile. An online-only directory isn't eligible and the listing would risk suspension.
+- Claim Bing Places and Apple Business only if you have a real address. Otherwise, LinkedIn, Crunchbase and industry associations such as IPC and SMTA are the listings worth building.
+- Pages per region (for example `/pcb-assembly/massachusetts`) could pick up local searches, but only where real listings back them. Past 30 such pages, each needs mostly unique content, and I'd want your go-ahead before passing 50, or Google treats them as doorway pages.
+
+I couldn't check local search rankings, Google Business Profile data or backlinks; those need paid tools or Search Console access.
+
+The full report, with a check and an early indicator for each action, is in `seo-reports/2026-11-10-local.md`. I haven't committed it.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Built by agricidaniel. Join the AI Marketing Hub community
+🆓 Free  → https://www.skool.com/ai-marketing-hub
+⚡ Pro   → https://www.skool.com/ai-marketing-hub-pro
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
