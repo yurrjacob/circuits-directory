@@ -1200,7 +1200,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   /* Directory, Hire Talent (people on /talent, for employers), Search Jobs
      (roles on /jobs, for people): three plain choices in one pill */
   /* the dashboard's Post Free Job and Post Free Resume doors sit in the homepage footer (Jacob, 2026-11-16) */
-  assert.ok(/<a href="\/portal#hiring">Post Free Job<\/a>/.test(home) && /<a href="\/portal#seeking">Post Free Resume<\/a>/.test(home), 'the homepage footer lost Post Free Job or Post Free Resume');
+  assert.ok(/<a href="\/portal#hiring">Post Free Job<\/a>/.test(home) && /<a href="\/portal#seeking">Post Free Resume<\/a>/.test(home) && /<a href="\/portal#listings">Post Free Listing<\/a>/.test(home) && /<a href="\/portal#club">Post Free Club<\/a>/.test(home), 'the homepage footer lost one of Post Free Listing, Job, Resume or Club');
   for (const t of ['directory', 'recruits', 'jobs', 'clubs']) {
     assert.ok(new RegExp(`class="search-mode"[\\s\\S]*?data-target="${t}"[^>]*role="tab"`).test(home), `the homepage search toggle lost ${t}`);
   }
