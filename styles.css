@@ -162,6 +162,9 @@ img{max-width:100%}
 .footer .flinks{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .footer .flinks a{color:var(--muted);text-decoration:none}
 .footer .flinks a:hover{color:var(--ink)}
+/* the footer's Post Free Listing stands out: a small green pill, like Get Listed (Jacob, 2026-11-16) */
+.footer .flinks a.foot-cta{background:var(--green);color:#0f2a00;font-weight:700;padding:5px 13px;border-radius:999px}
+.footer .flinks a.foot-cta:hover{background:#68a900;color:#0f2a00}
 .footer .avatar{width:30px;height:30px;border-radius:50%;background:var(--green);color:#0f0f0f;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem}
 .footer-mark{width:30px;height:30px;border-radius:7px;display:block}
 

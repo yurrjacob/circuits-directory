@@ -17,7 +17,7 @@
 <meta name="twitter:description" content="Search the circuits and electronics industry: suppliers, distributors, design engineers, semiconductors, PCB assembly and test. Claim your Circuits-Keyword™.">
 <meta name="twitter:image" content="https://circuits.com/assets/og-card.png">
 <link rel="icon" href="assets/favicon.png">
-<link rel="stylesheet" href="styles.css?v=13f3e3b380">
+<link rel="stylesheet" href="styles.css?v=4125122885">
 <script src="/nav.js?v=f09e7934e3"></script>
 <script type="application/ld+json">
 {
@@ -110,9 +110,9 @@
          JavaScript gets. -->
     <div class="popular" data-for="directory">
       Popular:
+      <a href="/results?q=aerospace">Aerospace</a>&middot;
       <a href="/results?q=pcb+design">PCB Design</a>&middot;
       <a href="/results?q=pcb+layout">PCB Layout</a>&middot;
-      <a href="/results?q=aerospace">Aerospace</a>&middot;
       <a href="/results?q=circuit+design">Circuit Design</a>&middot;
       <a class="pop-list-link" href="/global">Global Directory</a>&middot;
       <a href="/results?q=defense">Defense</a>&middot;
@@ -192,7 +192,7 @@
       <a href="/terms">Terms</a>
       <a href="/privacy">Privacy</a>
       <!-- the dashboard's four doors, as small footer links (Jacob, 2026-11-16) -->
-      <a href="/portal#listings">Post Free Listing</a>
+      <a class="foot-cta" href="/portal#listings">Post Free Listing</a>
       <a href="/portal#hiring">Post Free Job</a>
       <a href="/portal#seeking">Post Free Resume</a>
       <a href="/portal#club">Post Free Club</a>
@@ -228,7 +228,12 @@ fetchGlobalDirectory().then(list => {
   const cap = s => s.replace(/\b[a-z]/g, c => c.toUpperCase());
   const a = top.map(k => '<a href="/results?q=' + encodeURIComponent(k).replace(/%20/g, '+') + '">' + escapeHtml(cap(label[k])) + '</a>');
   a.splice(4, 0, '<a class="pop-list-link" href="/global">Global Directory</a>');
-  document.querySelector(".popular[data-for=directory]").innerHTML = 'Popular: ' + a.join('&middot; ');
+  /* the page ships with today's top eight in this same order; only touch the
+     line when the live ones differ, so it never visibly reshuffles on load */
+  const pop = document.querySelector('.popular[data-for=directory]');
+  const now = [...pop.querySelectorAll('a')].map(x => x.getAttribute('href')).join();
+  const want = a.map(x => /href="([^"]+)"/.exec(x)[1]).join();
+  if(now !== want) pop.innerHTML = 'Popular: ' + a.join('&middot; ');
 }).catch(() => { document.getElementById('home-dir').hidden = true; });
 </script>
 </body>
