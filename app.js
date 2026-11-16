@@ -58,7 +58,7 @@ function initHome(){
    table, when the Pause button is pressed, while the tab is hidden, and for
    anyone who asked for reduced motion. ---- */
 /* one Global Directory row: #, logo, Company Name, Keyword, Circuits
-   URL, for /global (Jacob, 2026-11-16). */
+   URL. Shared by /global and the homepage (Jacob, 2026-11-16). */
 function dirRowHtml(r, i){
   const h = String(r.company_handle || '').toLowerCase();
   const logo = isLogoUrl(r.logo) ? `<span class="co-logo"><img src="${escapeHtml(r.logo)}" alt="${escapeHtml(r.company)} logo"></span>`

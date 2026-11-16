@@ -2456,24 +2456,40 @@ a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
 .home-dir-all{margin-left:auto;display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border:1px solid var(--line);border-radius:999px;
   font-size:.84rem;font-weight:700;color:var(--ink);text-decoration:none;background:var(--card);transition:border-color .14s,background .14s}
 .home-dir-all:hover{border-color:var(--green);background:#f1fae0;color:var(--ink)}
-.home-dir-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.hd-card{position:relative;display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card);
-  box-shadow:0 1px 2px rgba(15,15,15,.04);transition:border-color .14s,box-shadow .14s}
-.hd-card:hover{border-color:var(--green);box-shadow:0 8px 22px rgba(15,15,15,.08)}
-.hd-card.rv-move{transition:transform .55s cubic-bezier(.2,.7,.2,1),border-color .14s,box-shadow .14s}
-.hd-logo{flex:none;width:38px;height:38px;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line)}
-.hd-logo img{width:100%;height:100%;object-fit:contain}
-.hd-logo.hd-ph{background:#111;border-color:#111;color:#fff;font-weight:800}
-.hd-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
-.hd-name{font-weight:700;color:var(--ink);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-a.hd-name::after{content:"";position:absolute;inset:0;border-radius:14px}
-a.hd-name:hover{text-decoration:underline}
-.hd-url{font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hd-kw{position:relative;z-index:1;flex:none;max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 11px;border-radius:999px;
-  background:#f1fae0;border:1px solid #cde89a;color:#2f4a00;font-size:.78rem;font-weight:700;text-decoration:none}
-.hd-kw:hover{border-color:var(--green);background:#e6f6c8;color:#2f4a00}
-@media (max-width:700px){.home-dir-grid{grid-template-columns:1fr}.home-dir-count{display:none}}
-@media(prefers-reduced-motion:reduce){.home-dir-live{animation:none}.hd-card.rv-move{transition:none}}
+/* the homepage table: one soft card, quiet header, roomy single-line rows */
+.home-dir-box{border:1px solid var(--line);border-radius:16px;background:var(--card);overflow:hidden;
+  box-shadow:0 1px 2px rgba(15,15,15,.04),0 10px 30px rgba(15,15,15,.06)}
+.home-dir-table{font-size:.92rem}
+.home-dir-table thead th{background:#fafbfc;padding:8px 14px;font-size:.7rem;letter-spacing:.08em;font-weight:700}
+.home-dir-table td{padding:5px 14px;height:40px;box-sizing:border-box;border-bottom:1px solid #eef0f2}
+.home-dir-table tbody tr:last-child td{border-bottom:0}
+.home-dir-table tbody tr:hover td{background:#f8fcf0}
+.home-dir-table .rank{color:#9aa0a6;font-size:.8rem;font-variant-numeric:tabular-nums}
+.home-dir-table .co-logo{width:26px;height:26px;border-radius:7px;font-size:.8rem}
+.home-dir-table td b a{color:var(--ink);text-decoration:none}
+.home-dir-table td b a:hover{text-decoration:underline}
+.home-dir-table .kw-tag.kw-mini{padding:3px 10px;font-size:.76rem;border-color:#cde89a;background:#f1fae0}
+.home-dir-table .kw-tag.kw-mini:hover{border-color:var(--green)}
+.home-dir-table .web-link{color:var(--muted);text-decoration:none;font-size:.86rem}
+.home-dir-table .web-link:hover{color:#1a5fd0;text-decoration:underline}
+.home-dir-table .cell-muted{color:#b0b5ba;font-size:.86rem}
+/* phones: one slim line per listing (logo, company, keyword) instead of the
+   site's stacked cards, so ten rows stay short */
+@media (max-width:760px){
+  .home-dir-count{display:none}
+  .home-dir-table thead{display:none}
+  .home-dir-table tbody{display:block}
+  .home-dir-table tbody tr{display:flex;align-items:center;gap:10px;margin:0;padding:8px 12px;border:0;border-bottom:1px solid #eef0f2;border-radius:0}
+  .home-dir-table tbody tr:last-child{border-bottom:0}
+  .home-dir-table tbody td{display:block;width:auto;height:auto;padding:0;border:0}
+  .home-dir-table tbody td[data-label]::before{content:none}
+  .home-dir-table td.rank,.home-dir-table td[data-label="Circuits URL"]{display:none}
+  .home-dir-table td.logo-col{width:auto}
+  .home-dir-table td[data-label="Company Name"]{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .home-dir-table td[data-label="Keyword"]{flex:none;max-width:48%;overflow:hidden}
+  .home-dir-table .kw-tag.kw-mini{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
+}
+@media(prefers-reduced-motion:reduce){.home-dir-live{animation:none}}
 
 /* Hyperlink blue, underlined (Jacob, 2026-10-12): the Website link on every
    Directory listing, social links on profiles, the Global Club List address */
@@ -2574,19 +2590,19 @@ body.club-mode .pt-tab[data-tab="admin"]{order:6}
   .home-page .search-pill{padding:9px 18px}
   .home-page .logo-hero{height:clamp(44px,8vh,72px)}
 }
-/* shorter windows show eight, six or four of the ten cards; the shuffle
-   brings the others in turn by turn */
+/* shorter windows show fewer of the ten rows; the shuffle brings the
+   others in turn by turn */
 @media (min-width:861px) and (min-height:520px) and (max-height:960px){
-  .home-page .hd-card:nth-child(n+9){display:none}
+  .home-page .home-dir-table tbody tr:nth-child(n+8){display:none}
 }
-@media (min-width:861px) and (min-height:520px) and (max-height:820px){
-  .home-page .hd-card:nth-child(n+7){display:none}
-  .home-page .hd-card{padding:8px 12px}
-  .home-page .hd-logo{width:32px;height:32px}
+@media (min-width:861px) and (min-height:520px) and (max-height:800px){
+  .home-page .home-dir-table tbody tr:nth-child(n+6){display:none}
+}
+@media (min-width:861px) and (min-height:520px) and (max-height:740px){
+  .home-page .home-dir-table tbody tr:nth-child(n+5){display:none}
 }
 @media (min-width:861px) and (min-height:520px) and (max-height:640px){
-  .home-page .hd-card:nth-child(n+5){display:none}
-  .home-page .hd-url{display:none}
+  .home-page .home-dir-table tbody tr:nth-child(n+4){display:none}
 }
 /* a very short window: the four doors keep their titles and buttons */
 @media (min-width:861px) and (min-height:520px) and (max-height:620px){
