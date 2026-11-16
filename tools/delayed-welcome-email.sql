@@ -74,3 +74,12 @@
 --   'Post Free Job: post an open role under Hire Talent. It goes on the Job Board.'
 --   'Post Free Resume: add your resume and Circuits-Keywords™ under Search Work and list yourself on the Talent Board.'
 -- Everything else (subject, link, the ten minute email_after) is unchanged.
+
+-- 2026-11-16 fix, applied as notification_email_claim_in_function: no inbox
+-- email had gone out since this file was applied. Both functions above set
+-- emailed_at in the same transaction as net.http_post, and pg_net only sends
+-- after commit, so the notify function always found the row already marked
+-- and answered nothing_to_send. Both functions now only post; the notify
+-- function's own "update ... where emailed_at is null" claims the row, so a
+-- notice still goes out at most once even if the trigger and the sweeper both
+-- post it. The one-day close-off in the sweeper is unchanged.
