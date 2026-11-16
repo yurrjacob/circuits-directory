@@ -201,14 +201,14 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
      default, Hire Talent and Search Jobs are hidden until chosen. Every item
      runs a search on the matching page, never opens a page. */
   const pops = [...home.matchAll(/<div class="popular" data-for="([a-z]+)"( hidden)?>([\s\S]*?)<\/div>/g)];
-  assert.deepStrictEqual(pops.map(m => m[1]), ['directory', 'recruits', 'jobs', 'clubs'], 'the homepage should carry Popular lines for directory, recruits, jobs and clubs, in that order');
-  assert.ok(!pops[0][2] && pops[1][2] && pops[2][2] && pops[3][2], 'only the Directory Popular line may show before a choice is made');
+  assert.deepStrictEqual(pops.map(m => m[1]), ['directory', 'clubs'], 'the homepage should carry Popular lines for directory and clubs, in that order');
+  assert.ok(!pops[0][2] && pops[1][2], 'only the Directory Popular line may show before a choice is made');
   const pagesFor = { directory: 'results', recruits: 'talent', jobs: 'jobs', clubs: 'clubs' };
   /* the four least searched Directory terms went (Jacob, 2026-10-12) */
   const minFor = { directory: 8, recruits: 9, jobs: 6, clubs: 5 };
   assert.ok(!/RF Transceivers|IC Packaging|Clock Generators|Motion Control ICs/.test(pops[0][3]), 'a removed Directory Popular term is back');
   /* Search Clubs: Global Club List in the centre of five (Jacob, 2026-10-12) */
-  assert.deepStrictEqual((pops[3][3].match(/>([^<]+)<\/a>/g) || []).map(x => x.slice(1, -4)), ['Electronics Clubs', 'Robotics Clubs', 'Global Club List', 'Aerospace Clubs', 'AI Clubs'], 'the Search Clubs Popular line is not the five club terms with the Global Club List in the middle');
+  assert.deepStrictEqual((pops[1][3].match(/>([^<]+)<\/a>/g) || []).map(x => x.slice(1, -4)), ['Electronics Clubs', 'Robotics Clubs', 'Global Club List', 'Aerospace Clubs', 'AI Clubs'], 'the Search Clubs Popular line is not the five club terms with the Global Club List in the middle');
   for (const [, index, , strip] of pops) {
     const links = strip.match(/href="([^"]+)"/g) || [];
     assert.ok(links.length >= minFor[index], `the ${index} Popular line lost some of its suggestions (${links.length})`);
@@ -1199,11 +1199,13 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   assert.ok(!/Coming Soon/i.test(home), 'Coming Soon is back on the homepage');
   /* Directory, Hire Talent (people on /talent, for employers), Search Jobs
      (roles on /jobs, for people): three plain choices in one pill */
-  for (const t of ['directory', 'recruits', 'jobs', 'clubs']) {
+  /* Hire Talent and Search Work left the tabs for the footer (Jacob, 2026-11-16) */
+  assert.ok(/<a href="\/talent">Hire Talent<\/a>/.test(home) && /<a href="\/jobs">Search Work<\/a>/.test(home), 'the homepage footer lost Hire Talent or Search Work');
+  for (const t of ['directory', 'clubs']) {
     assert.ok(new RegExp(`class="search-mode"[\\s\\S]*?data-target="${t}"[^>]*role="tab"`).test(home), `the homepage search toggle lost ${t}`);
   }
   /* the tabs read Directory, Hire Talent, Search Work, Search Clubs (Jacob, 2026-10-12) */
-  assert.deepStrictEqual([...home.matchAll(/data-target="[a-z]+" role="tab"[^>]*>([^<]+)</g)].map(m => m[1]), ['Directory', 'Hire Talent', 'Search Work', 'Search Clubs'], 'the homepage search tabs are not Directory, Hire Talent, Search Work, Search Clubs');
+  assert.deepStrictEqual([...home.matchAll(/data-target="[a-z]+" role="tab"[^>]*>([^<]+)</g)].map(m => m[1]), ['Directory', 'Search Clubs'], 'the homepage search tabs are not Directory, Search Clubs');
   assert.ok(!/search-group|search-side|data-mode=|data-target="hiring"|data-target="seeking"/.test(home), 'an old homepage toggle layout is back');
   /* the four doors under it are the welcome page's cards (Jacob, 2026-10-07).
      Since 2026-10-30 the welcome page's first card leads with Choose Your
