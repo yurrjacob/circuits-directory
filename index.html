@@ -17,7 +17,7 @@
 <meta name="twitter:description" content="Search the circuits and electronics industry: suppliers, distributors, design engineers, semiconductors, PCB assembly and test. Claim your Circuits-Keyword™.">
 <meta name="twitter:image" content="https://circuits.com/assets/og-card.png">
 <link rel="icon" href="assets/favicon.png">
-<link rel="stylesheet" href="styles.css?v=eb8d4849f7">
+<link rel="stylesheet" href="styles.css?v=5898e98c5e">
 <script src="/nav.js?v=f09e7934e3"></script>
 <script type="application/ld+json">
 {
@@ -159,7 +159,6 @@
     <section class="home-dir" id="home-dir" aria-labelledby="home-dir-h" hidden>
       <div class="home-dir-head">
         <h2 id="home-dir-h"><span class="home-dir-live" aria-hidden="true"></span>Global Directory</h2>
-        <span class="home-dir-count" id="home-dir-count"></span>
         <a class="home-dir-all" href="/global">See all<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5.5 18.5 12 12 18.5"/></svg></a>
       </div>
       <div class="home-dir-box">
@@ -201,8 +200,6 @@ fetchGlobalDirectory().then(list => {
   for(let i = list.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
   const body = document.getElementById('home-dir-rows');
   body.innerHTML = list.slice(0, 10).map(dirRowHtml).join('');
-  const total = new Set(list.map(r => r.company_slug || r.company)).size;
-  document.getElementById('home-dir-count').textContent = list.length + ' ' + (list.length === 1 ? 'listing' : 'listings') + ' from ' + total + ' ' + (total === 1 ? 'company' : 'companies');
   document.getElementById('home-dir').hidden = !list.length;
   revolveRows(body);
   /* the Directory Popular line: the eight most listed keywords, counted

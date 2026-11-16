@@ -2452,7 +2452,6 @@ a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
 .home-dir-head h2{display:flex;align-items:center;gap:9px;margin:0;font-size:1.05rem;font-weight:800;letter-spacing:-.01em;color:var(--ink)}
 .home-dir-live{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(118,192,0,.5);animation:hd-pulse 2.4s infinite}
 @keyframes hd-pulse{70%{box-shadow:0 0 0 7px rgba(118,192,0,0)}100%{box-shadow:0 0 0 0 rgba(118,192,0,0)}}
-.home-dir-count{font-size:.84rem;color:var(--muted)}
 .home-dir-all{margin-left:auto;display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border:1px solid var(--line);border-radius:999px;
   font-size:.84rem;font-weight:700;color:var(--ink);text-decoration:none;background:var(--card);transition:border-color .14s,background .14s}
 .home-dir-all:hover{border-color:var(--green);background:#f1fae0;color:var(--ink)}
@@ -2476,7 +2475,6 @@ a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
 /* phones: one slim line per listing (logo, company, keyword) instead of the
    site's stacked cards, so ten rows stay short */
 @media (max-width:760px){
-  .home-dir-count{display:none}
   .home-dir-table thead{display:none}
   .home-dir-table tbody{display:block}
   .home-dir-table tbody tr{display:flex;align-items:center;gap:10px;margin:0;padding:8px 12px;border:0;border-bottom:1px solid #eef0f2;border-radius:0}
