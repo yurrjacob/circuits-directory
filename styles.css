@@ -2472,6 +2472,10 @@ a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
 .home-dir-table .web-link{color:var(--muted);text-decoration:none;font-size:.86rem}
 .home-dir-table .web-link:hover{color:#1a5fd0;text-decoration:underline}
 .home-dir-table .cell-muted{color:#b0b5ba;font-size:.86rem}
+.home-dir-table .hd-skel td i{display:block;height:10px;width:62%;border-radius:6px;background:#eef0f2;animation:hd-skel 1.2s ease-in-out infinite alternate}
+.home-dir-table .hd-skel .co-logo{display:block;background:#eef0f2}
+@keyframes hd-skel{to{opacity:.45}}
+@media(prefers-reduced-motion:reduce){.home-dir-table .hd-skel td i{animation:none}}
 /* phones: one slim line per listing (logo, company, keyword) instead of the
    site's stacked cards, so ten rows stay short */
 @media (max-width:760px){

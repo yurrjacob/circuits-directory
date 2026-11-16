@@ -17,7 +17,7 @@
 <meta name="twitter:description" content="Search the circuits and electronics industry: suppliers, distributors, design engineers, semiconductors, PCB assembly and test. Claim your Circuits-Keyword™.">
 <meta name="twitter:image" content="https://circuits.com/assets/og-card.png">
 <link rel="icon" href="assets/favicon.png">
-<link rel="stylesheet" href="styles.css?v=096eccfc59">
+<link rel="stylesheet" href="styles.css?v=13f3e3b380">
 <script src="/nav.js?v=f09e7934e3"></script>
 <script type="application/ld+json">
 {
@@ -156,7 +156,7 @@
     <!-- Ten random listings from the Global Directory, revolving like
          /global does. They replaced the four Start cards (Jacob, 2026-11-16). -->
     <div class="wc-wrap wc-wrap-cards wc-home">
-    <section class="home-dir" id="home-dir" aria-labelledby="home-dir-h" hidden>
+    <section class="home-dir" id="home-dir" aria-labelledby="home-dir-h" aria-busy="true">
       <div class="home-dir-head">
         <h2 id="home-dir-h"><span class="home-dir-live" aria-hidden="true"></span>Global Directory</h2>
         <a class="home-dir-all" href="/global">See all<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5.5 18.5 12 12 18.5"/></svg></a>
@@ -164,7 +164,20 @@
       <div class="home-dir-box">
         <table class="listings-table club-table dir-table home-dir-table">
           <thead><tr><th class="rank">#</th><th class="logo-col"><span class="sr-only">Logo</span></th><th>Company Name</th><th>Keyword</th><th>Circuits URL</th></tr></thead>
-          <tbody id="home-dir-rows"></tbody>
+          <!-- placeholder rows hold the table's place until the listings
+               arrive, so the page does not jump when they do -->
+          <tbody id="home-dir-rows">
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+          </tbody>
         </table>
       </div>
     </section>
@@ -195,12 +208,14 @@
 <script src="app.js?v=cf2bb92c16"></script>
 <script>
 initHome();
-/* ten random Global Directory rows; the list stays hidden if it cannot load */
+/* ten random Global Directory rows; the section goes away if it cannot load */
 fetchGlobalDirectory().then(list => {
   for(let i = list.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
   const body = document.getElementById('home-dir-rows');
   body.innerHTML = list.slice(0, 10).map(dirRowHtml).join('');
-  document.getElementById('home-dir').hidden = !list.length;
+  const sec = document.getElementById('home-dir');
+  sec.removeAttribute('aria-busy');
+  if(!list.length){ sec.hidden = true; return; }
   revolveRows(body);
   /* the Directory Popular line: the eight most listed keywords, counted
      without regard to case, with the Global Directory link in the middle */
@@ -212,7 +227,7 @@ fetchGlobalDirectory().then(list => {
   const a = top.map(k => '<a href="/results?q=' + encodeURIComponent(k).replace(/%20/g, '+') + '">' + escapeHtml(cap(label[k])) + '</a>');
   a.splice(4, 0, '<a class="pop-list-link" href="/global">Global Directory</a>');
   document.querySelector(".popular[data-for=directory]").innerHTML = 'Popular: ' + a.join('&middot; ');
-}).catch(() => {});
+}).catch(() => { document.getElementById('home-dir').hidden = true; });
 </script>
 </body>
 </html>
