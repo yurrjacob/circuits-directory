@@ -2445,6 +2445,12 @@ a.pf-tag:hover{border-color:var(--green);color:var(--green-dark)}
 .home-top{width:100%;display:flex;flex-direction:column;align-items:center;padding:clamp(40px,15vh,150px) 0 48px;box-sizing:border-box}
 .home-main .wc-home{width:100%;padding:0 0 10px}
 .home-main .wc-home .wc-foot{margin-top:22px}
+/* the ten revolving Global Directory List rows under the search (2026-11-16):
+   compact rows, and on a locked one-screen window the box scrolls inside
+   itself rather than push the footer off */
+.home-dir-head{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 8px;font-size:.95rem}
+.home-dir .listings-table td{padding:6px 14px}
+.home-dir .listings-table .co-logo{width:28px;height:28px;border-radius:7px}
 
 /* Hyperlink blue, underlined (Jacob, 2026-10-12): the Website link on every
    Directory listing, social links on profiles, the Global Club List address */
@@ -2527,6 +2533,9 @@ body.club-mode .pt-tab[data-tab="admin"]{order:6}
   .home-page .home-top{padding:0}
   .home-page .logo-hero{height:clamp(48px,9vh,84px);margin-bottom:clamp(14px,3.2vh,36px)}
   .home-page .wc-wrap-cards{padding-top:0;padding-bottom:0}
+  .home-page .wc-home{flex:0 1 auto;min-height:0;display:flex;flex-direction:column}
+  .home-page .home-dir:not([hidden]){min-height:0;display:flex;flex-direction:column}
+  .home-page .home-dir .table-wrap{min-height:0;overflow:auto}
   .home-page .wc-card{padding:clamp(12px,2.2vh,22px) 18px clamp(10px,1.8vh,18px);gap:6px}
   .home-page .wc-card-ico{width:clamp(32px,4.6vh,44px);height:clamp(32px,4.6vh,44px);margin-bottom:2px}
   .home-page .wc-card-b{font-size:clamp(.98rem,1.9vh,1.1rem)}

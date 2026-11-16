@@ -57,6 +57,22 @@ function initHome(){
    numbers following. It stops while the pointer or keyboard focus is in the
    table, when the Pause button is pressed, while the tab is hidden, and for
    anyone who asked for reduced motion. ---- */
+/* one Global Directory List row: #, logo, Company Name, Keyword, Circuits
+   URL. Shared by /global and the homepage (Jacob, 2026-11-16). */
+function dirRowHtml(r, i){
+  const h = String(r.company_handle || '').toLowerCase();
+  const logo = isLogoUrl(r.logo) ? `<span class="co-logo"><img src="${escapeHtml(r.logo)}" alt="${escapeHtml(r.company)} logo"></span>`
+    : `<span class="co-logo club-logo-ph">${escapeHtml(String(r.company || 'C').slice(0, 1).toUpperCase())}</span>`;
+  const name = h ? `<a href="/${encodeURIComponent(h)}">${escapeHtml(r.company)}</a>` : escapeHtml(r.company);
+  return `<tr>
+    <td class="rank" data-label="#">${i + 1}</td>
+    <td class="logo-col">${h ? `<a class="co-logo-link" href="/${encodeURIComponent(h)}" aria-label="${escapeHtml(r.company)} profile">${logo}</a>` : logo}</td>
+    <td data-label="Company Name"><b>${name}</b></td>
+    <td data-label="Keyword"><a class="kw-tag kw-mini" href="/results?q=${encodeURIComponent(r.keyword)}${r.company_slug ? '&hl=' + encodeURIComponent(r.company_slug) : ''}">${escapeHtml(r.keyword)}</a></td>
+    <td data-label="Circuits URL">${h ? `<a class="web-link" href="/${encodeURIComponent(h)}">circuits.com/${escapeHtml(h)}</a>` : '<span class="cell-muted">none yet</span>'}</td>
+  </tr>`;
+}
+
 function revolveRows(tbody, opts){
   const o = opts || {};
   if(!tbody) return;

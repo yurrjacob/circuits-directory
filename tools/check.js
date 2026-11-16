@@ -1211,7 +1211,9 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   {
     const cards = src => [...src.matchAll(/<a class="wc-card[^"]*"[^>]*>[\s\S]*?<\/a>/g)].map(m => m[0].replace(/\s+/g, ' '));
     const onHome = cards(home), onWelcome = cards(fs.readFileSync(path.join(ROOT, 'welcome.html'), 'utf8'));
-    assert.ok(onHome.length === 4 && onWelcome.length === 4 && onHome.slice(1).join() === onWelcome.slice(1).join(), 'the homepage cards differ from the welcome page cards');
+    /* since 2026-11-16 the homepage shows ten revolving Global Directory List rows instead */
+    assert.ok(onHome.length === 0 && onWelcome.length === 4, 'the Start cards are back on the homepage, or the welcome page lost its cards');
+    assert.ok(/id="home-dir-rows"/.test(home) && /list\.slice\(0, 10\)\.map\(dirRowHtml\)/.test(home) && /revolveRows\(body\)/.test(home), 'the homepage lost its ten revolving Global Directory List rows');
     /* the foot line: the email sentence is true only on the welcome page (Jacob, 2026-10-07) */
     /* and it sends a newcomer to the Create Profile form (Jacob, 2026-10-12) */
     assert.ok(/<p class="wc-foot">Not sure yet\? <a href="\/register">Register Free &amp; Explore<\/a><\/p>/.test(home) && !/on its way by email/.test(home), 'the homepage foot line is not Not sure yet? Register Free & Explore, linked to /register');

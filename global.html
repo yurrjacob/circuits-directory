@@ -18,7 +18,7 @@
 <meta name="twitter:image" content="https://circuits.com/assets/og-card.png">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=ccec7a4992">
+<link rel="stylesheet" href="/styles.css?v=1610688b21">
 <script src="/nav.js?v=f09e7934e3"></script>
 <script async src="/analytics.js?v=70049a2947"></script>
 </head>
@@ -95,7 +95,7 @@
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
 <script src="store.js?v=31f75970b2"></script>
-<script src="app.js?v=ac6263c2af"></script>
+<script src="app.js?v=accaaacc1d"></script>
 <script>
 (async function initGlobalDirectory(){
   const body = document.getElementById('dir-rows'), empty = document.getElementById('dir-empty');
@@ -114,19 +114,7 @@
     const rows = ws.length ? list.filter(r => { const h = hay(r); return ws.every(w => h.includes(' ' + w)); }) : list;
     const companies = new Set(rows.map(r => r.company_slug || r.company)).size;
     count.innerHTML = 'Showing <b>' + rows.length + '</b> ' + (rows.length === 1 ? 'listing' : 'listings') + ' from <b>' + companies + '</b> ' + (companies === 1 ? 'company' : 'companies') + (q ? ' for <b>' + escapeHtml(q) + '</b>' : '');
-    body.innerHTML = rows.map((r, i) => {
-      const h = String(r.company_handle || '').toLowerCase();
-      const logo = isLogoUrl(r.logo) ? `<span class="co-logo"><img src="${escapeHtml(r.logo)}" alt="${escapeHtml(r.company)} logo"></span>`
-        : `<span class="co-logo club-logo-ph">${escapeHtml(String(r.company || 'C').slice(0, 1).toUpperCase())}</span>`;
-      const name = h ? `<a href="/${encodeURIComponent(h)}">${escapeHtml(r.company)}</a>` : escapeHtml(r.company);
-      return `<tr>
-        <td class="rank" data-label="#">${i + 1}</td>
-        <td class="logo-col">${h ? `<a class="co-logo-link" href="/${encodeURIComponent(h)}" aria-label="${escapeHtml(r.company)} profile">${logo}</a>` : logo}</td>
-        <td data-label="Company Name"><b>${name}</b></td>
-        <td data-label="Keyword"><a class="kw-tag kw-mini" href="/results?q=${encodeURIComponent(r.keyword)}${r.company_slug ? '&hl=' + encodeURIComponent(r.company_slug) : ''}">${escapeHtml(r.keyword)}</a></td>
-        <td data-label="Circuits URL">${h ? `<a class="web-link" href="/${encodeURIComponent(h)}">circuits.com/${escapeHtml(h)}</a>` : '<span class="cell-muted">none yet</span>'}</td>
-      </tr>`;
-    }).join('');
+    body.innerHTML = rows.map(dirRowHtml).join('');
     empty.hidden = !!rows.length;
     empty.textContent = list.length ? 'Nothing matches that search. Clear it to see the whole Global Directory List.' : 'No live listings yet.';
   }
