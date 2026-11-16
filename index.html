@@ -85,11 +85,16 @@
     <h1 class="sr-only">Circuits.com: The Circuits Industry Directory for Suppliers, Parts and Engineers</h1>
     <a href="/" class="hero-link"><img class="logo-hero" src="assets/logo-home.png" alt="Circuits.com" width="1108" height="185" fetchpriority="high"><span class="beta-tag">BETA</span></a>
 
-    <!-- One search box, two indexes: Directory is parts, services and
-         companies; Search Clubs is the Global Club List on /clubs. Hire
-         Talent and Search Work moved to the footer (Jacob, 2026-11-16). -->
+    <!-- One search box, four indexes (Jacob, 2026-09-03; Search Clubs
+         2026-10-12). Directory is parts, services and companies; Hire Talent
+         is the people seeking employment on /talent, for employers; Search
+         Work is the open roles on /jobs, for people; Search Clubs is the
+         Global Club List on /clubs. The buttons only change where the query
+         goes. -->
     <div class="search-mode" role="tablist" aria-label="What to search">
       <button type="button" class="on" data-target="directory" role="tab" aria-selected="true">Directory</button>
+      <button type="button" data-target="recruits" role="tab" aria-selected="false">Hire Talent</button>
+      <button type="button" data-target="jobs" role="tab" aria-selected="false">Search Work</button>
       <button type="button" data-target="clubs" role="tab" aria-selected="false">Search Clubs</button>
     </div>
     <form id="home-form" class="searchbox" autocomplete="off" data-target="directory">
@@ -114,6 +119,27 @@
       <a href="/results?q=semiconductor">Semiconductor</a>&middot;
       <a href="/results?q=automotive">Automotive</a>&middot;
       <a href="/results?q=connectors">Connectors</a>
+    </div>
+    <div class="popular" data-for="recruits" hidden>
+      Popular:
+      <a href="/talent?q=pcb+layout">PCB Layout</a>&middot;
+      <a href="/talent?q=microcontroller">Microcontroller</a>&middot;
+      <a href="/talent?q=rf+engineer">RF Engineer</a>&middot;
+      <a href="/talent?q=digital+design">Digital Design</a>&middot;
+      <a href="/talent?q=electronics+engineer">Electronics Engineer</a>&middot;
+      <a href="/talent?q=verification">Verification</a>&middot;
+      <a href="/talent?q=firmware+engineer">Firmware Engineer</a>&middot;
+      <a href="/talent?q=verilog">Verilog</a>&middot;
+      <a href="/talent?q=electrical+engineer">Electrical Engineer</a>
+    </div>
+    <div class="popular" data-for="jobs" hidden>
+      Popular:
+      <a href="/jobs?q=hardware+design+engineer">Hardware Design Engineer</a>&middot;
+      <a href="/jobs?q=pcb+design+engineer">PCB Design Engineer</a>&middot;
+      <a href="/jobs?q=embedded+systems+engineer">Embedded Systems Engineer</a>&middot;
+      <a href="/jobs?q=asic+design+engineer">ASIC Design Engineer</a>&middot;
+      <a href="/jobs?q=analog+engineer">Analog Engineer</a>&middot;
+      <a href="/jobs?q=hardware+test+engineer">Hardware Test Engineer</a>
     </div>
     <!-- Search Clubs (Jacob, 2026-10-12): the Global Club List sits in the
          centre of its line -->
@@ -153,9 +179,9 @@
       <div class="flinks">
       <a href="/terms">Terms</a>
       <a href="/privacy">Privacy</a>
-      <!-- Hiring and job hunting moved off the search tabs into the footer (Jacob, 2026-11-16) -->
-      <a href="/talent">Hire Talent</a>
-      <a href="/jobs">Search Work</a>
+      <!-- the dashboard's hiring and job-hunting doors, as small footer links (Jacob, 2026-11-16) -->
+      <a href="/portal#hiring">Post Free Job</a>
+      <a href="/portal#seeking">Post Free Resume</a>
     </div>
       <div style="display:flex;align-items:center;gap:14px">
         <span>© 2026 Circuits.com</span>
