@@ -327,13 +327,13 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
     assert.ok(/if\(a\.checked\) b\.checked = false/.test(pj) && /if\(b\.checked\) a\.checked = false/.test(pj), 'both Profile Title boxes can be ticked at once');
     assert.ok(/co\.title_source === 'contact'/.test(pf) && /<h1>\$\{escapeHtml\(heading\)\}<\/h1>/.test(pf), 'the public profile heading ignores the Profile Title');
   }
-  /* the Global Directory List (Jacob, 2026-10-28): the club list's format for every live Directory keyword, revolving */
+  /* the Global Directory (Jacob, 2026-10-28): the club list's format for every live Directory keyword, revolving */
   const gl = fs.readFileSync(path.join(ROOT, 'global.html'), 'utf8');
-  assert.ok(/<title>Global Directory List \| Circuits\.com<\/title>/.test(gl), '/global is not titled Global Directory List');
-  assert.deepStrictEqual([...gl.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map(m => m[1].replace(/<[^>]+>/g, '').replace('Logo', '')), ['#', '', 'Company Name', 'Keyword', 'Circuits URL'], 'the Global Directory List columns are not #, logo, Company Name, Keyword, Circuits URL');
+  assert.ok(/<title>Global Directory \| Circuits\.com<\/title>/.test(gl), '/global is not titled Global Directory');
+  assert.deepStrictEqual([...gl.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map(m => m[1].replace(/<[^>]+>/g, '').replace('Logo', '')), ['#', '', 'Company Name', 'Keyword', 'Circuits URL'], 'the Global Directory columns are not #, logo, Company Name, Keyword, Circuits URL');
   assert.ok(/revolveRows\(body, \{ button: document\.getElementById\('dir-rv'\) \}\)/.test(gl) && /revolveRows\(body, \{ button: document\.getElementById\('club-rv'\) \}\)/.test(cl), 'a Global list no longer revolves');
-  assert.ok(/async function fetchGlobalDirectory\(\)[\s\S]*?\.eq\('is_club', false\)/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')) && !/async function fetchGlobalDirectory\(\)\{[^}]*select\('\*'\)/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')), 'the Global Directory List reads club keywords or uses select(*)');
-  assert.ok(/<a class="pop-list-link" href="\/global">Global Directory List<\/a>/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /\.pop-list-link,\.pop-list-link:visited\{color:#1a5fd0/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the Directory Popular line lost its blue Global Directory List link');
+  assert.ok(/async function fetchGlobalDirectory\(\)[\s\S]*?\.eq\('is_club', false\)/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')) && !/async function fetchGlobalDirectory\(\)\{[^}]*select\('\*'\)/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')), 'the Global Directory reads club keywords or uses select(*)');
+  assert.ok(/<a class="pop-list-link" href="\/global">Global Directory<\/a>/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /\.pop-list-link,\.pop-list-link:visited\{color:#1a5fd0/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the Directory Popular line lost its blue Global Directory link');
   assert.ok(/<a class="pop-list-link" href="\/clubs">Global Club List<\/a>/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')), 'the Search Clubs Popular line lost its blue Global Club List link');
   /* both Global lists scramble, every row a new random place (Jacob, 2026-10-30) */
   { const ap = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
@@ -1211,9 +1211,9 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   {
     const cards = src => [...src.matchAll(/<a class="wc-card[^"]*"[^>]*>[\s\S]*?<\/a>/g)].map(m => m[0].replace(/\s+/g, ' '));
     const onHome = cards(home), onWelcome = cards(fs.readFileSync(path.join(ROOT, 'welcome.html'), 'utf8'));
-    /* since 2026-11-16 the homepage shows ten revolving Global Directory List rows instead */
+    /* since 2026-11-16 the homepage shows ten revolving Global Directory rows instead */
     assert.ok(onHome.length === 0 && onWelcome.length === 4, 'the Start cards are back on the homepage, or the welcome page lost its cards');
-    assert.ok(/id="home-dir-rows"/.test(home) && /list\.slice\(0, 10\)\.map\(dirRowHtml\)/.test(home) && /revolveRows\(body\)/.test(home), 'the homepage lost its ten revolving Global Directory List rows');
+    assert.ok(/id="home-dir-rows"/.test(home) && /list\.slice\(0, 10\)\.map\(/.test(home) && /revolveRows\(body\)/.test(home), 'the homepage lost its ten revolving Global Directory rows');
     /* the foot line: the email sentence is true only on the welcome page (Jacob, 2026-10-07) */
     /* and it sends a newcomer to the Create Profile form (Jacob, 2026-10-12) */
     assert.ok(/<p class="wc-foot">Not sure yet\? <a href="\/register">Register Free &amp; Explore<\/a><\/p>/.test(home) && !/on its way by email/.test(home), 'the homepage foot line is not Not sure yet? Register Free & Explore, linked to /register');

@@ -57,8 +57,8 @@ function initHome(){
    numbers following. It stops while the pointer or keyboard focus is in the
    table, when the Pause button is pressed, while the tab is hidden, and for
    anyone who asked for reduced motion. ---- */
-/* one Global Directory List row: #, logo, Company Name, Keyword, Circuits
-   URL. Shared by /global and the homepage (Jacob, 2026-11-16). */
+/* one Global Directory row: #, logo, Company Name, Keyword, Circuits
+   URL, for /global (Jacob, 2026-11-16). */
 function dirRowHtml(r, i){
   const h = String(r.company_handle || '').toLowerCase();
   const logo = isLogoUrl(r.logo) ? `<span class="co-logo"><img src="${escapeHtml(r.logo)}" alt="${escapeHtml(r.company)} logo"></span>`
@@ -80,21 +80,26 @@ function revolveRows(tbody, opts){
   const btn = o.button || null;
   const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   let paused = still, hover = false, timer = null;
-  const renumber = () => [...tbody.rows].forEach((tr, i) => { const c = tr.querySelector('td.rank'); if(c) c.textContent = i + 1; });
+  const renumber = () => [...tbody.children].forEach((tr, i) => { const c = tr.querySelector('td.rank'); if(c) c.textContent = i + 1; });
   const step = () => {
-    if(paused || hover || document.hidden || tbody.rows.length < 2) return;
-    const rows = [...tbody.rows];
+    if(paused || hover || document.hidden || tbody.children.length < 2) return;
+    const rows = [...tbody.children];
     /* FLIP: note where each row is, shuffle, then start each one from its old
-       place and let it slide to the new one */
-    const before = new Map(rows.map(r => [r, r.getBoundingClientRect().top]));
+       place and let it slide to the new one. Works for table rows and for the
+       homepage's grid of cards, which also move sideways; anything hidden
+       (zero size) just appears in place. */
+    const at = r => { const b = r.getBoundingClientRect(); return b.width ? b : null; };
+    const before = new Map(rows.map(r => [r, at(r)]));
     for(let i = rows.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [rows[i], rows[j]] = [rows[j], rows[i]]; }
     rows.forEach(r => tbody.appendChild(r));
     renumber();
     rows.forEach(r => {
-      const dy = before.get(r) - r.getBoundingClientRect().top;
-      if(!dy) return;
+      const b = before.get(r), n = at(r);
+      if(!b || !n) return;
+      const dx = b.left - n.left, dy = b.top - n.top;
+      if(!dx && !dy) return;
       r.classList.remove('rv-move');
-      r.style.transform = 'translateY(' + dy + 'px)';
+      r.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
     });
     tbody.getBoundingClientRect();   // commit the start positions before animating
     rows.forEach(r => { if(r.style.transform){ r.classList.add('rv-move'); r.style.transform = ''; } });
