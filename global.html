@@ -112,8 +112,7 @@
   function draw(){
     const ws = words(q);
     const rows = ws.length ? list.filter(r => { const h = hay(r); return ws.every(w => h.includes(' ' + w)); }) : list;
-    const companies = new Set(rows.map(r => r.company_slug || r.company)).size;
-    count.innerHTML = 'Showing <b>' + rows.length + '</b> ' + (rows.length === 1 ? 'listing' : 'listings') + ' from <b>' + companies + '</b> ' + (companies === 1 ? 'company' : 'companies') + (q ? ' for <b>' + escapeHtml(q) + '</b>' : '');
+    count.textContent = '';   // no running total (Jacob, 2026-11-16); the line only says Loading or that the load failed
     body.innerHTML = rows.map(dirRowHtml).join('');
     empty.hidden = !!rows.length;
     empty.textContent = list.length ? 'Nothing matches that search. Clear it to see the whole Global Directory.' : 'No live listings yet.';
