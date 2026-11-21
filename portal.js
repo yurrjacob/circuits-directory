@@ -1500,7 +1500,7 @@ function progressItems(){
     { label: 'Add a phone number', done: has(c.phone), tab: 'profile', focus: 'f-phone' },
     { label: 'Add your address', done: has(c.address), tab: 'profile', focus: 'f-address' },
     { label: 'Link a social profile', done: Object.values(soc).some(has), tab: 'profile', focus: 's-linkedin' },
-    { label: 'Get listed under a keyword', done: live, tab: 'listings', focus: '' }
+    { label: 'Get listed under a keyword', done: live, href: '/join' }   // the keyword picker (Jacob, 2026-11-21)
   ];
 }
 function renderProgress(){
@@ -1529,6 +1529,7 @@ function renderProgress(){
   };
   box.querySelectorAll('[data-pg]').forEach(b => b.addEventListener('click', () => {
     const t = todo[+b.dataset.pg]; if(!t) return;
+    if(t.href){ location.href = t.href; return; }
     activateTab(t.tab);
     const f = t.focus && el(t.focus);
     if(f){ f.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { try{ f.focus({ preventScroll: true }); }catch(e){} }, 350); }
