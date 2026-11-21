@@ -1519,6 +1519,9 @@ select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{
 .quote-total{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding-top:12px;font-weight:700}
 .quote-total b{font-size:1.35rem;color:var(--green-dark)}
 
+/* signed-out prompts (Register Free & Explore) vanish for a signed-in account; nav.js sets .signed-in */
+.signed-in .guest-only{display:none !important}
+
 /* A field filled in from the company the signed-in supplier already owns.
    Readable, obviously not editable, and not greyed into illegibility. */
 .is-locked{background:var(--bg-soft);color:var(--muted);cursor:default}

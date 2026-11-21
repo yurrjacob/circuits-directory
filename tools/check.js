@@ -1218,7 +1218,8 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     assert.ok(/id="home-dir-rows"/.test(home) && /list\.slice\(0, 10\)\.map\(/.test(home) && /revolveRows\(body\)/.test(home), 'the homepage lost its ten revolving Global Directory rows');
     /* the foot line: the email sentence is true only on the welcome page (Jacob, 2026-10-07) */
     /* and it sends a newcomer to the Create Profile form (Jacob, 2026-10-12) */
-    assert.ok(/<p class="wc-foot">Not sure yet\? <a href="\/register">Register Free &amp; Explore<\/a><\/p>/.test(home) && !/on its way by email/.test(home), 'the homepage foot line is not Not sure yet? Register Free & Explore, linked to /register');
+    assert.ok(/<p class="wc-foot guest-only">Not sure yet\? <a href="\/register">Register Free &amp; Explore<\/a><\/p>/.test(home) && !/on its way by email/.test(home), 'the homepage foot line is not Not sure yet? Register Free & Explore, linked to /register and hidden when signed in');
+    assert.ok(/classList.add\('signed-in'\)/.test(fs.readFileSync(path.join(ROOT, 'nav.js'), 'utf8')) && /\.signed-in \.guest-only\{display:none/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'signed-out prompts no longer hide for a signed-in account');
     /* the search keeps the first screen to itself, centred, cards under the fold */
     assert.ok(/<div class="home-top">/.test(home) && /\.home-top\{width:100%;display:flex;flex-direction:column;align-items:center;padding:clamp\(40px,15vh,150px\) 0 48px/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the homepage search lost its place near the middle of the first screen');
     assert.ok(!/claim-cta-row/.test(home) && !/claim-cta-row/.test(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')), 'the old three-door row is back on the homepage');

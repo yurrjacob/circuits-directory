@@ -49,6 +49,10 @@
 
   if(!signedIn()) return;
 
+  /* lets any page hide signed-out prompts in CSS with .guest-only, set here
+     in the head so they never flash in (Jacob, 2026-11-21) */
+  document.documentElement.classList.add('signed-in');
+
   /* Signed in, Dashboard takes the Sign In slot and Get Listed stays put
      (Jacob, 2026-09-03). Both links are already in every header, so this only
      chooses which of the two is shown, and it happens here in <head> before
