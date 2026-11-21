@@ -3122,7 +3122,6 @@ function renderPromote(){
       <button type="button" data-style="light" class="${KIT_STYLE === 'light' ? 'on' : ''}">Light</button>
       <button type="button" data-style="dark" class="${KIT_STYLE === 'dark' ? 'on' : ''}">Dark</button>
     </div>
-    <span class="kit-bar-note">Dark uses more ink but stands out on a busy counter.</span>
   </div>
 
   ${ITEMS.map(([id, title, size, why, art, page, w, h, s]) => `
