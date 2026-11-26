@@ -7,40 +7,38 @@ function gotoSearch(term){
   window.location.href = '/results?q=' + encodeURIComponent(q);
 }
 
-/* Home page search wiring (Jacob, 2026-09-03). Three indexes: Directory
-   searches the supplier directory; Hire Talent is the people seeking
-   employment on /talent, for employers; Search Work is the open roles on
-   /jobs, for people; Search Clubs is the Global Club List on /clubs. Choosing one also picks the Popular line and the door
-   below that go with it. */
+/* Home page search wiring (Jacob, 2026-09-03; cut to three tabs 2026-11-26).
+   Directory searches the supplier directory; Parts runs the same Directory
+   search until parts exist (every account will get 10 free parts); Projects
+   (data-target "clubs") is the Global Club List on /clubs. Hire Talent
+   (/talent) and Search Work (/jobs) are off the home page, but their entries
+   stay below so a tab can come back with its button alone. The one-line hint
+   above the box was removed for every tab the same day. */
 const HOME_PLACEHOLDER = {
   directory: 'Search products, services, companies, part numbers, or keywords...',
+  parts:     'Search parts by part number, product or keyword...',
   recruits:  'Search new recruits by job title, or keywords...',
   jobs:      'Search open jobs by title or keyword...',
   clubs:     'Search student clubs by name, university or keyword...'
 };
-const HOME_HINT = {
-  directory: 'Directory: companies, products and services, listed by their Circuits-Keywords\u2122.',
-  recruits:  'Hire Talent: people seeking employment, listed by their Circuits-Keywords\u2122.',
-  jobs:      'Search Work: open roles posted by companies on Circuits.com.',
-  clubs:     'Search Clubs: student clubs on the Global Club List, by name, university and Circuits-Keywords\u2122.'
-};
+/* the Popular line each tab shows; Parts borrows the Directory's */
+const HOME_POPULAR = { parts: 'directory' };
 function homeTarget(form){ return form.dataset.target || 'directory'; }
 function initHome(){
   const input = document.getElementById('home-search');
   const form  = document.getElementById('home-form');
   if(!form) return;
-  const hint = document.getElementById('search-hint');
   function refresh(){
     const t = homeTarget(form);
     input.placeholder = HOME_PLACEHOLDER[t];
-    if(hint){ hint.textContent = HOME_HINT[t] || ''; hint.hidden = !HOME_HINT[t]; }
     /* the Popular line for this index */
-    document.querySelectorAll('.popular[data-for]').forEach(p => { p.hidden = p.dataset.for !== t; });
+    const pop = HOME_POPULAR[t] || t;
+    document.querySelectorAll('.popular[data-for]').forEach(p => { p.hidden = p.dataset.for !== pop; });
   }
   form.addEventListener('submit', e => {
     e.preventDefault();
     const t = homeTarget(form), q = (input.value || '').trim();
-    if(t === 'directory'){ gotoSearch(q); return; }
+    if(t === 'directory' || t === 'parts'){ gotoSearch(q); return; }   // Parts: the Directory until parts exist
     location.href = (t === 'recruits' ? '/talent' : t === 'clubs' ? '/clubs' : '/jobs') + (q ? '?q=' + encodeURIComponent(q) : '');
   });
   document.querySelectorAll('.search-mode [data-target]').forEach(b => b.addEventListener('click', () => {

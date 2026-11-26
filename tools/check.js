@@ -201,14 +201,16 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
      default, Hire Talent and Search Jobs are hidden until chosen. Every item
      runs a search on the matching page, never opens a page. */
   const pops = [...home.matchAll(/<div class="popular" data-for="([a-z]+)"( hidden)?>([\s\S]*?)<\/div>/g)];
-  assert.deepStrictEqual(pops.map(m => m[1]), ['directory', 'recruits', 'jobs', 'clubs'], 'the homepage should carry Popular lines for directory, recruits, jobs and clubs, in that order');
-  assert.ok(!pops[0][2] && pops[1][2] && pops[2][2] && pops[3][2], 'only the Directory Popular line may show before a choice is made');
+  /* since 2026-11-26 only Directory (which Parts borrows) and Projects (the
+     club list) are on the home page; Hire Talent and Search Work went */
+  assert.deepStrictEqual(pops.map(m => m[1]), ['directory', 'clubs'], 'the homepage should carry Popular lines for directory and clubs (Projects), in that order');
+  assert.ok(!pops[0][2] && pops[1][2], 'only the Directory Popular line may show before a choice is made');
   const pagesFor = { directory: 'results', recruits: 'talent', jobs: 'jobs', clubs: 'clubs' };
   /* the four least searched Directory terms went (Jacob, 2026-10-12) */
   const minFor = { directory: 8, recruits: 9, jobs: 6, clubs: 5 };
   assert.ok(!/RF Transceivers|IC Packaging|Clock Generators|Motion Control ICs/.test(pops[0][3]), 'a removed Directory Popular term is back');
   /* Search Clubs: Global Club List in the centre of five (Jacob, 2026-10-12) */
-  assert.deepStrictEqual((pops[3][3].match(/>([^<]+)<\/a>/g) || []).map(x => x.slice(1, -4)), ['Electronics Clubs', 'Robotics Clubs', 'Global Club List', 'Aerospace Clubs', 'AI Clubs'], 'the Search Clubs Popular line is not the five club terms with the Global Club List in the middle');
+  assert.deepStrictEqual((pops[1][3].match(/>([^<]+)<\/a>/g) || []).map(x => x.slice(1, -4)), ['Electronics Clubs', 'Robotics Clubs', 'Global Club List', 'Aerospace Clubs', 'AI Clubs'], 'the Search Clubs Popular line is not the five club terms with the Global Club List in the middle');
   for (const [, index, , strip] of pops) {
     const links = strip.match(/href="([^"]+)"/g) || [];
     assert.ok(links.length >= minFor[index], `the ${index} Popular line lost some of its suggestions (${links.length})`);
@@ -1201,11 +1203,16 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
      (roles on /jobs, for people): three plain choices in one pill */
   /* the dashboard's Post Free Job and Post Free Resume doors sit in the homepage footer (Jacob, 2026-11-16) */
   assert.ok(/<a href="\/portal#hiring">Post Free Job<\/a>/.test(home) && /<a href="\/portal#seeking">Post Free Resume<\/a>/.test(home) && /<a class="foot-cta" href="\/portal#listings">Post Free Listing<\/a>/.test(home) && /<a href="\/portal#club">Post Free Club<\/a>/.test(home), 'the homepage footer lost one of Post Free Listing, Job, Resume or Club');
-  for (const t of ['directory', 'recruits', 'jobs', 'clubs']) {
-    assert.ok(new RegExp(`class="search-mode"[\\s\\S]*?data-target="${t}"[^>]*role="tab"`).test(home), `the homepage search toggle lost ${t}`);
+  /* the tabs read Directory, Parts, Projects (Jacob, 2026-11-26); Projects
+     keeps the clubs target, Hire Talent and Search Work are off the home page */
+  assert.deepStrictEqual([...home.matchAll(/data-target="([a-z]+)" role="tab"[^>]*>([^<]+)</g)].map(m => m[1] + ':' + m[2]), ['directory:Directory', 'parts:Parts', 'clubs:Projects'], 'the homepage search tabs are not Directory, Parts, Projects');
+  assert.ok(!/data-target="recruits"|data-target="jobs"/.test(home), 'Hire Talent or Search Work is back on the homepage');
+  /* the green nav button reads Post Free Listing on every page (Jacob, 2026-11-26) */
+  for (const f of fs.readdirSync(ROOT).filter(f => f.endsWith('.html'))) {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    assert.ok(!/class="(?:active )?cta" href="\/join">Get Listed</.test(src), `${f} still says Get Listed on the nav button`);
   }
-  /* the tabs read Directory, Hire Talent, Search Work, Search Clubs (Jacob, 2026-10-12) */
-  assert.deepStrictEqual([...home.matchAll(/data-target="[a-z]+" role="tab"[^>]*>([^<]+)</g)].map(m => m[1]), ['Directory', 'Hire Talent', 'Search Work', 'Search Clubs'], 'the homepage search tabs are not Directory, Hire Talent, Search Work, Search Clubs');
+  assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'version-1-home-2026-11-26', 'index.html')), 'the Version 1 home page backup is missing');
   assert.ok(!/search-group|search-side|data-mode=|data-target="hiring"|data-target="seeking"/.test(home), 'an old homepage toggle layout is back');
   /* the four doors under it are the welcome page's cards (Jacob, 2026-10-07).
      Since 2026-10-30 the welcome page's first card leads with Choose Your
@@ -1228,13 +1235,8 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   /* every mode says in one line what it searches, Directory included (Jacob,
      2026-09-03); the static page carries the Directory line, since that is
      the mode a reader with no JavaScript gets */
-  const hintBlock = (fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8').match(/const HOME_HINT = \{[\s\S]*?\};/) || [''])[0];
-  for (const k of ['directory', 'recruits', 'jobs', 'clubs']) assert.ok(new RegExp(`^  ${k}:\\s+'`, 'm').test(hintBlock), `HOME_HINT lost its ${k} line`);
-  assert.ok(/<p class="search-hint" id="search-hint">Directory: companies, products and services, listed by their Circuits-Keywords&trade;\.<\/p>/.test(home),
-    'the homepage no longer carries the Directory line by the search box');
-  /* the line sits ABOVE the search pill (Jacob, 2026-09-11) */
-  assert.ok(home.indexOf('id="search-hint"') < home.indexOf('class="search-pill"') && home.indexOf('id="search-hint"') > home.indexOf('id="home-form"'),
-    'the Directory line is no longer above the search pill');
+  /* the one-line hint above the box went for every tab (Jacob, 2026-11-26) */
+  assert.ok(!/search-hint|HOME_HINT/.test(home + fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')), 'the hint line above the homepage search is back');
   assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'recruiting-2026-09-03', 'about-recruiting-section.html')), 'the archived About recruiting section is missing');
   /* Recruiting is live and free: the section is back on About (Jacob, 2026-09-14),
      renamed The Workplace, with the Global Student Network under it (2026-10-08) */
@@ -1242,8 +1244,8 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     assert.ok(/<h2 class="section-title">The Workplace on Circuits\.com/.test(ab) && /Post a Free Resume:<\/b>/.test(ab), 'the Workplace section is missing from About');
     assert.ok(/<h2 class="section-title">Global Student Network/.test(ab) && /href="\/portal#club">Post Free Student Club</.test(ab), 'the Global Student Network section is missing from About'); }
   const appHome = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
-  assert.ok(/t === 'recruits' \? '\/talent' : t === 'clubs' \? '\/clubs' : '\/jobs'/.test(appHome) && /if\(t === 'directory'\)\{ gotoSearch\(q\); return; \}/.test(appHome),
-    'the homepage search does not route Directory to /results, Hire Talent to /talent and Search Jobs to /jobs');
+  assert.ok(/t === 'recruits' \? '\/talent' : t === 'clubs' \? '\/clubs' : '\/jobs'/.test(appHome) && /if\(t === 'directory' \|\| t === 'parts'\)\{ gotoSearch\(q\); return; \}/.test(appHome),
+    'the homepage search does not route Directory and Parts to /results and Projects to /clubs');
   assert.ok(/<title>Job Board \| Circuits\.com<\/title>/.test(fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8')) && /class="board-sub">Free to Post Job</.test(fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8')), '/jobs is not titled Job Board, Free to Post Job');
   assert.ok(/<title>Talent Board \| Circuits\.com<\/title>/.test(fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8')) && /class="board-sub">Free to Post Resume</.test(fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8')), '/talent is not titled Talent Board, Free to Post Resume');
   for (const f of ['jobs.html', 'talent.html']) {
