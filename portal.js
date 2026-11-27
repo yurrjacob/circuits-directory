@@ -239,7 +239,7 @@ async function initPortal(){
     el('pt-pending-resend').addEventListener('click', async () => {
       const m = el('pt-pending-resend-msg');
       m.textContent = 'Sending…';
-      const err = await resendConfirmation(user.email);
+      const err = await resendConfirmation(user.email, { self: true });
       m.textContent = err || 'Sent. Give it a minute.';
     });
   }
@@ -515,13 +515,20 @@ function tabLabel(tab, text){
 function applyPageMode(co){
   const club = !!(co && co.kind === 'club');
   document.body.classList.toggle('club-mode', club);
-  tabLabel('club', club ? 'Club Details' : 'Student Club');
-  tabLabel('listings', club ? 'Club Keywords' : 'Your Listings');
-  const h = el('pt-club-h'); if(h) h.textContent = club ? 'Club Details' : 'Student Club';
+  /* Club became Project across the site (2026-11-23 list); the data stays kind='club' */
+  tabLabel('club', club ? 'Project Details' : 'Projects');
+  tabLabel('listings', club ? 'Project Keywords' : 'Your Listings');
+  const h = el('pt-club-h'); if(h) h.textContent = club ? 'Project Details' : 'Your Project';
   const intro = el('pt-club-intro');
   if(intro) intro.textContent = club
-    ? 'Everything on your club\'s page: its name, contact, logo and about, the college, the Join Club link, the promo hub and the project showcase. Only you can edit it. Officers and members are on the Members & Officers tab.'
-    : 'Run a student club? Create its page here. It gets a public page of its own: your college\'s logo beside the club\'s, a Join Club button, a pitch for new members, alumni and employers, your officers and members, and a showcase of what the club has built. Officers get a Leadership badge, members a Member badge, each on their own profile.';
+    ? 'Everything on your project\'s page: its name, about, organization, contact person, team members, logo, Join link, promo hub and project showcase. Only you can edit it. Team Members are added on the Team Members tab.'
+    : 'This is the complete Profile Page for Your Project, and includes the: Project\u2019s Title, Organization, Logo, Contact Person, About, a Promo Hub, and the Project Showcase. Only you, the creator, can edit it. Team members can be added and invited on the Team Members tab.';
+  /* labels that read differently on a project page carry data-club-text */
+  document.querySelectorAll('[data-club-text]').forEach(n => {
+    if(!('personText' in n.dataset)) n.dataset.personText = n.innerHTML;
+    n.innerHTML = club ? n.dataset.clubText : n.dataset.personText;
+    n.hidden = club && !n.dataset.clubText;
+  });
   /* the details form lives on Profile Details for a person and on Club Details for a club */
   const form = document.querySelector('#tab-profile > .pf-form, #pt-club-details-host > .pf-form');
   const host = club ? el('pt-club-details-host') : el('tab-profile');
@@ -614,8 +621,11 @@ function wireAuth(){
             + '<span id="pt-auth-resend-msg"></span></span>';
           el('pt-auth-resend').addEventListener('click', async () => {
             const m = el('pt-auth-resend-msg');
+            const f = el('pt-auth-form'), wait = turnstileProblem(f);
+            if(wait){ m.textContent = wait; return; }   // the check has to pass again after the refused sign-in
             m.textContent = 'Sending…';
-            const err2 = await resendConfirmation(val('pt-email'));
+            const err2 = await resendConfirmation(val('pt-email'), { captchaToken: turnstileToken(f) });
+            resetTurnstile(f);   // a token works once
             m.textContent = err2 || 'Sent. Check spam too.';
           });
           el('pt-auth-submit').disabled = false;
@@ -642,7 +652,20 @@ function markDirty(){
 }
 function markClean(){ PT_DIRTY = false; }
 function wireDirtyTracking(){
-  /* the whole public profile is one tab (2026-09-02) */
+  /* the whole public profile is one tab (2026-09-02); on a project page the
+     same form moves into Project Details, and the Team Members tab saves with
+     it, so those count too. They did not before, so a project's changes
+     raised no unsaved warning and an old "Profile Saved" stayed up after them
+     (2026-11-23 list: "the data did not save"). The Add a Project box saves
+     with its own button and stays out. */
+  ['tab-club', 'tab-members', 'tab-branding'].forEach(id => {
+    const p = el(id);
+    if(!p || p.__dirtyWired) return;
+    p.__dirtyWired = true;
+    const mark = e => { if(!e.target.closest('#pt-club-showcase, #pt-club-create')) markDirty(); };
+    p.addEventListener('input', mark);
+    p.addEventListener('change', mark);
+  });
   const panel = el('tab-profile');
   if(panel && !panel.__dirtyWired){
     panel.__dirtyWired = true;
@@ -1746,7 +1769,7 @@ function wireClubFields(c){
   el('f-join').value = c.club_join_url || '';
   if(el('f-other-link')) el('f-other-link').value = c.other_link || '';
   el('f-promo-members').value = promo.members || '';
-  el('f-promo-alumni').value = promo.alumni || '';
+  el('f-promo-sponsors').value = promo.sponsors || '';
   el('f-promo-employers').value = promo.employers || '';
   /* the college logo: no crop, shown as given */
   const prev = el('pt-college-prev'), inp = el('pt-college-logo'), rm = el('pt-college-rm');
@@ -1894,7 +1917,7 @@ function wireClubCreate(){
     say('Created. Opening the club\'s page settings…', false);
     await refreshPages(r.slug);
     activateTab('club');
-    toast('Club page created at circuits.com/' + handle + '. Fill in the rest and press Save club.', true);
+    toast('Project page created at circuits.com/' + handle + '. Fill in the rest and press Save Project.', true);
   });
 }
 /* the picker learns a new page and the dashboard opens it */
@@ -1904,7 +1927,7 @@ function pickerLabel(c){
   return c.kind === 'club' ? (c.name || c.handle || c.slug) : (c.contact || (ME && ME.display_name) || c.name || c.slug);
 }
 function pickerOptions(cos){
-  return (cos || []).map(c => `<option value="${escapeHtml(c.slug)}">${escapeHtml(pickerLabel(c))}${c.kind === 'club' ? ' (club)' : ''}</option>`).join('');
+  return (cos || []).map(c => `<option value="${escapeHtml(c.slug)}">${escapeHtml(pickerLabel(c))}${c.kind === 'club' ? ' (project)' : ''}</option>`).join('');
 }
 async function refreshPages(openSlug){
   let cos = [];
@@ -2047,7 +2070,7 @@ async function saveProfile(){
   if(!val('f-contact')){ btn.disabled = false; saveNote('Not saved: a contact person is needed. It is who buyers see on your listings.', false); el('f-contact').focus(); return; }
   if(!val('f-email')){ btn.disabled = false; saveNote('Not saved: a public email is needed. It is how buyers reach you from your listings.', false); el('f-email').focus(); return; }
   const clubPage = PT.co && PT.co.kind === 'club';
-  if(!clubPage && !titleSource()){ btn.disabled = false; markMissing(); saveNote('Not saved: pick a Profile Title. Tick Use Company Name for a business, or Use Contact Person for a student.', false); el('f-title-company').focus(); return; }
+  if(!clubPage && !titleSource()){ btn.disabled = false; markMissing(); saveNote('Not saved: pick a Profile Title. Tick Use Company Name for a business, or Use Contact Person for a project team member.', false); el('f-title-company').focus(); return; }
   if(handleChanged && wantHandle){
     const why = await handleAvailable(wantHandle, PT.slug, PT.user && PT.user.id);
     if(why){ btn.disabled = false; saveNote('Address not saved: ' + why + ' Your other changes were not saved either. Fix the address or put the old one back.', false); return; }
@@ -2087,12 +2110,15 @@ async function saveProfile(){
     if(clubOn()){
       fields.college_name = val('f-college') || null;
       const join = val('f-join');
-      if(join && !isValidWebsite(join)){ btn.disabled = false; saveNote('Not saved: the Join Club link does not look like a web address.', false); return; }
+      if(join && !isValidWebsite(join)){ btn.disabled = false; saveNote('Not saved: the Join Link does not look like a web address.', false); return; }
       fields.club_join_url = join ? (/^https?:\/\//i.test(join) ? join : 'https://' + join) : null;
       const other = val('f-other-link');
       if(other && !isValidWebsite(other)){ btn.disabled = false; saveNote('Not saved: the Other link does not look like a web address.', false); return; }
       fields.other_link = other ? (/^https?:\/\//i.test(other) ? other : 'https://' + other) : null;
-      fields.club_promo = { members: val('f-promo-members') || '', alumni: val('f-promo-alumni') || '', employers: val('f-promo-employers') || '' };
+      /* Alumni came off the form (2026-11-23 list); an old alumni pitch is kept
+         in the row, just no longer shown. Sponsor the Project is new. */
+      const prevPromo = PT.co && PT.co.club_promo && typeof PT.co.club_promo === 'object' ? PT.co.club_promo : {};
+      fields.club_promo = { members: val('f-promo-members') || '', alumni: prevPromo.alumni || '', employers: val('f-promo-employers') || '', sponsors: val('f-promo-sponsors') || '' };
       const officers = collectPeople('officers');
       const tp = peopleProblem(officers, 'officer');
       if(tp){ btn.disabled = false; saveNote('Not saved: ' + tp, false); return; }
@@ -2171,7 +2197,7 @@ async function saveProfile(){
   ME = (await myProfile()) || ME;
   el('pt-name').textContent = PT.co.name;
   const opt = el('pt-company') && el('pt-company').querySelector(`option[value="${PT.slug}"]`);
-  if(opt) opt.textContent = pickerLabel(PT.co) + (PT.co.kind === 'club' ? ' (club)' : '');
+  if(opt) opt.textContent = pickerLabel(PT.co) + (PT.co.kind === 'club' ? ' (project)' : '');
   renderProfileForm();
   renderPromote();
   renderRecruitingListings();   // Resumes Posted reads the refreshed profile
@@ -2206,22 +2232,22 @@ function renderClubKeywords(){
     : `<p class="pf-note pt-ckw-empty">${empty}</p>`;
   host.innerHTML = `
     <div class="pt-empty pt-getlisted">
-      <div><b>Choose Your Free Club Keywords</b><p>Add Up to 10 Circuits-Keywords&trade;</p></div>
-      <div class="pt-getlisted-btns"><a class="btn btn-primary" href="/join?club=${encodeURIComponent(PT.co.slug)}">Select Club Keywords</a></div>
+      <div><b>Choose Your Free Project Keywords</b><p>Add Up to 10 Circuits-Keywords&trade;</p></div>
+      <div class="pt-getlisted-btns"><a class="btn btn-primary" href="/join?club=${encodeURIComponent(PT.co.slug)}">Select Project Keywords</a></div>
     </div>
-    <section class="cb-card pt-ckw-box"><h3 class="cb-h">Pending Club Keywords</h3>
-      ${table(['Club', 'Keyword', 'Email', 'Asked', 'Status'], pend.map(l => `<tr><td>${club}</td><td class="kw"><b>${escapeHtml(l.keyword || '')}</b></td>
+    <section class="cb-card pt-ckw-box"><h3 class="cb-h">Pending Project Keywords</h3>
+      ${table(['Project', 'Keyword', 'Email', 'Asked', 'Status'], pend.map(l => `<tr><td>${club}</td><td class="kw"><b>${escapeHtml(l.keyword || '')}</b></td>
         <td class="cell-muted">${escapeHtml(l.email || '')}</td><td class="cell-muted">${when(l.created_at)}</td>
         <td><span class="badge ${l.status === 'Pending' ? 'pending' : ''}">${l.status === 'Pending' ? 'Waiting for approval' : escapeHtml(l.status || '')}</span></td></tr>`),
-        'No club keywords waiting. Pick some with Select Club Keywords.')}
+        'No Project keywords waiting.')}
     </section>
-    <section class="cb-card pt-ckw-box"><h3 class="cb-h">Live Club Keywords</h3>
-      ${table(['Club', 'Keyword', 'Banner', 'Badge', 'Lock', 'Status'], live.map(l => `<tr><td>${club}</td>
+    <section class="cb-card pt-ckw-box"><h3 class="cb-h">Live Project Keywords</h3>
+      ${table(['Project', 'Keyword', 'Banner', 'Badge', 'Lock', 'Status'], live.map(l => `<tr><td>${club}</td>
         <td class="kw"><a href="/clubs?q=${encodeURIComponent(l.keyword || '')}" target="_blank" rel="noopener"><b>${escapeHtml(l.keyword || '')}</b></a></td>
         <td>${l.banner ? TICK : DASH}</td><td>${l.badge ? `<span class="lb" style="${badgeStyle(l.badge.color)}">${escapeHtml(l.badge.text)}</span>` : DASH}</td>
         <td>${l.locked_position ? '#' + escapeHtml(String(l.locked_position)) : DASH}</td>
-        <td><span class="badge ${l.paused ? '' : 'live'}">${l.paused ? 'Paused' : 'Live in Search Clubs'}</span></td></tr>`),
-        'No live club keywords yet. Approved ones appear here and in Search Clubs.')}
+        <td><span class="badge ${l.paused ? '' : 'live'}">${l.paused ? 'Paused' : 'Live in Projects'}</span></td></tr>`),
+        'No live Project keywords yet. Approved keywords appear here and live in the Projects database and on the Global Projects List.')}
     </section>`;
 }
 

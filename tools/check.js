@@ -201,14 +201,16 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
      default, Hire Talent and Search Jobs are hidden until chosen. Every item
      runs a search on the matching page, never opens a page. */
   const pops = [...home.matchAll(/<div class="popular" data-for="([a-z]+)"( hidden)?>([\s\S]*?)<\/div>/g)];
-  assert.deepStrictEqual(pops.map(m => m[1]), ['directory', 'recruits', 'jobs', 'clubs'], 'the homepage should carry Popular lines for directory, recruits, jobs and clubs, in that order');
-  assert.ok(!pops[0][2] && pops[1][2] && pops[2][2] && pops[3][2], 'only the Directory Popular line may show before a choice is made');
+  /* since 2026-11-26 only Directory (which Parts borrows) and Projects (the
+     club list) are on the home page; Hire Talent and Search Work went */
+  assert.deepStrictEqual(pops.map(m => m[1]), ['directory', 'clubs'], 'the homepage should carry Popular lines for directory and clubs (Projects), in that order');
+  assert.ok(!pops[0][2] && pops[1][2], 'only the Directory Popular line may show before a choice is made');
   const pagesFor = { directory: 'results', recruits: 'talent', jobs: 'jobs', clubs: 'clubs' };
   /* the four least searched Directory terms went (Jacob, 2026-10-12) */
   const minFor = { directory: 8, recruits: 9, jobs: 6, clubs: 5 };
   assert.ok(!/RF Transceivers|IC Packaging|Clock Generators|Motion Control ICs/.test(pops[0][3]), 'a removed Directory Popular term is back');
   /* Search Clubs: Global Club List in the centre of five (Jacob, 2026-10-12) */
-  assert.deepStrictEqual((pops[3][3].match(/>([^<]+)<\/a>/g) || []).map(x => x.slice(1, -4)), ['Electronics Clubs', 'Robotics Clubs', 'Global Club List', 'Aerospace Clubs', 'AI Clubs'], 'the Search Clubs Popular line is not the five club terms with the Global Club List in the middle');
+  assert.deepStrictEqual((pops[1][3].match(/>([^<]+)<\/a>/g) || []).map(x => x.slice(1, -4)), ['Electronics Projects', 'Robotics Projects', 'Global Projects', 'Aerospace Projects', 'AI Projects'], 'the Projects Popular line is not the five project terms with Global Projects in the middle');
   for (const [, index, , strip] of pops) {
     const links = strip.match(/href="([^"]+)"/g) || [];
     assert.ok(links.length >= minFor[index], `the ${index} Popular line lost some of its suggestions (${links.length})`);
@@ -229,8 +231,10 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
    /clubs, in the Directory's table format, approved clubs only */
 {
   const cl = fs.readFileSync(path.join(ROOT, 'clubs.html'), 'utf8');
-  assert.ok(/<title>Global Club List \| Circuits\.com<\/title>/.test(cl), '/clubs is not titled Global Club List');
-  assert.deepStrictEqual([...cl.matchAll(/<th[^>]*>([^<]+)<\/th>/g)].map(m => m[1]), ['#', 'Club Name', 'University Name', 'Circuits URL', 'Club Email Address'], 'the Global Club List columns are not #, Club Name, University Name, Circuits URL, Club Email Address');
+  /* Global Projects, formerly the Global Club List (2026-11-23 list) */
+  assert.ok(/<title>Global Projects \| Circuits\.com<\/title>/.test(cl), '/clubs is not titled Global Projects');
+  assert.deepStrictEqual([...cl.matchAll(/<th[^>]*>([^<]*(?:<span class="sr-only">[^<]*<\/span>)?)<\/th>/g)].map(m => m[1].replace(/<[^>]+>/g, '')), ['#', 'Logo', 'Project Title', 'Organization Name', 'Keywords', 'Circuits URL'], 'the Global Projects columns are not #, logo, Project Title, Organization Name, Keywords, Circuits URL');
+  assert.ok(/count\.textContent = '';/.test(cl) && !/'Showing <b>'/.test(cl), 'Global Projects shows internal statistics above the list again');
   /* the club page (Jacob, 2026-10-28) */
   {
     const pf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
@@ -256,14 +260,14 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   /* keywords are the next step everywhere (Jacob, 2026-10-30) */
   {
     const wc = fs.readFileSync(path.join(ROOT, 'welcome.html'), 'utf8'), pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8'), rg = fs.readFileSync(path.join(ROOT, 'register.html'), 'utf8');
-    assert.ok(/<a class="wc-card wc-card-main" href="\/join" id="wc-kw-card">/.test(wc) && wc.indexOf('wc-card-main') < wc.indexOf('href="/portal#hiring"'), 'the welcome page no longer leads with Choose Your Free Directory Keywords');
+    assert.ok(/<a class="wc-card wc-card-main" href="\/join" id="wc-kw-card">/.test(wc) && wc.indexOf('wc-card-main') < wc.indexOf('id="wc-parts-card"'), 'the welcome page no longer leads with Choose Your Free Directory Keywords');
     assert.ok(/note\.className = 'pt-kw-nudge';/.test(pj) && /if\(none && !PT\.tabFromHash && !\(PT\.co && PT\.co\.kind === 'club'\)\) activateTab\('listings'\);/.test(pj), 'an account with no keywords is no longer sent to Your Listings with the nudge');
     assert.ok(/<li>Register Your Account and Pick Your Free Keywords\.<\/li>/.test(rg), 'the register steps no longer end in picking keywords');
   }
   /* Stats (Jacob, 2026-10-30): a third side beside Directory Admin and Club Admin */
   {
     const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
-    assert.ok(/data-mode="clubs"[^>]*>Club Admin<\/button>[\s\S]{0,200}data-mode="stats"[^>]*>Stats<\/button>/.test(ph) && /<div class="panel stats-panel" data-adm="stats">/.test(ph), 'Stats is not a third option beside Directory Admin and Club Admin');
+    assert.ok(/data-mode="clubs"[^>]*>Project Admin<\/button>[\s\S]{0,200}data-mode="stats"[^>]*>Stats<\/button>/.test(ph) && /<div class="panel stats-panel" data-adm="stats">/.test(ph), 'Stats is not a third option beside Directory Admin and Project Admin');
     for(const step of ['Signed up', 'Confirmed their email', 'Have a page', 'Asked for any keyword', 'Have a live keyword'])
       assert.ok(aj.includes(`['${step}', f.`), 'the Stats funnel lost the step ' + step);
     assert.ok(/sb\.rpc\('admin_stats'/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')) && /data-tip="\$\{esc\(p\.tip/.test(aj), 'the Stats page no longer reads admin_stats, or its charts lost their hover readout');
@@ -284,10 +288,12 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   /* Club Admin, Club Applications and Projects (Jacob, 2026-10-28) */
   {
     const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
-    const head = (ph.match(/<thead><tr><th>Club<\/th><th>University<\/th><th>Circuits URL<\/th>[\s\S]*?<\/tr><\/thead>/) || [''])[0];
-    assert.ok(/<th>Club Badge<\/th>/.test(head) && !/Price|Keyword|Banner|Trust Badge/.test(head) && /id="ca-pending-body"/.test(ph) && /id="ca-body"/.test(ph), 'Club Applications is not pending and approved boxes with a Club Badge column and no pricing, keyword or banner columns');
-    assert.ok(/const text = \(b\.text \|\| ''\)\.trim\(\) \|\| c\.name \|\| '';/.test(aj), 'the Club Badge no longer starts as the club name');
-    assert.ok(/<th>Project Name<\/th><th>Club Name<\/th><th>College or University Name<\/th><th># of Products Listed<\/th>/.test(ph), 'the Projects columns are not Project Name, Club Name, College or University Name, # of Products Listed');
+    const head = (ph.match(/<thead><tr><th>Organization<\/th><th>Circuits URL<\/th>[\s\S]*?<\/tr><\/thead>/) || [''])[0];
+    assert.ok(/<th>Project Badge<\/th>/.test(head) && !/Price|Keyword|Banner|Trust Badge|University/.test(head) && /id="ca-pending-body"/.test(ph) && /id="ca-body"/.test(ph), 'Project Applications is not pending and approved boxes with a Project Badge column and no university, pricing, keyword or banner columns');
+    /* the Project Badge starts blank; staff type it (2026-11-23 list), and the page shows none until they do */
+    assert.ok(/const text = \(b\.text \|\| ''\)\.trim\(\);/.test(aj) && /co\.club_status === 'Approved' && cbText \?/.test(fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8')), 'the Project Badge is pre-filled again, or shows without text');
+    assert.ok(/onclick="savePersonBadgeUI\('\$\{k\}'\)">Save Badge<\/button><button class="mini-btn" onclick="denyPersonUI/.test(aj) && /function badgePreview\(inp\)/.test(aj), 'waiting team members have no Save Badge button, or the badge preview does not follow the inputs');
+    assert.ok(/<th>Build Name<\/th><th>Project Title<\/th><th>Organization or University Name<\/th><th># of Parts Listed<\/th>/.test(ph), 'the Showcase columns are not Build Name, Project Title, Organization or University Name, # of Parts Listed');
   }
   /* Members & Officers (Jacob, 2026-10-28) */
   {
@@ -297,9 +303,9 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
     /* emails are private: never in the public team or members lists */
     assert.ok(/fields\.team = officers\.map\(\(\{ email, \.\.\.p \}\) => p\);/.test(pj) && /fields\.members = members\.map\(\(\{ email, \.\.\.p \}\) => p\);/.test(pj) && /saveClubEmails\(PT\.slug, PT\.peopleEmails\)/.test(pj), 'member or officer emails would be written onto the public club page');
     assert.ok(/from\('club_emails'\)/.test(st) && !/club_emails'\)\.select\('\*'\)/.test(st), 'club emails are not read from club_emails, or with select(*)');
-    assert.ok(/id="wc-pill-t"/.test(wc) && /'Officer Confirmed' : 'Membership Confirmed'/.test(wc) && /'Welcome ' \+ info\.name/.test(wc) && /class="wc-club-go wc-club-link" href=[^>]*>View Club Page</.test(wc), 'the invite landing is not Membership Confirmed, Welcome <club>, View Club Page');
+    assert.ok(/id="wc-pill-t"/.test(wc) && /'Officer Confirmed' : 'Team Membership Confirmed'/.test(wc) && /'Welcome ' \+ info\.name/.test(wc) && /class="wc-club-go wc-club-link" href=[^>]*>View Project Page</.test(wc), 'the invite landing is not Team Membership Confirmed, Welcome <project>, View Project Page');
     assert.ok(/if\(t\)\{ sub\.hidden = true; await acceptPendingInvite\(user, t, info\); return; \}/.test(wc) && /body\.wc-invite \.wc-lede,body\.wc-invite \.wc-wrap-cards\{display:none\}/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the invite landing still shows the address line, the free line or the start cards');
-    assert.ok(/id="cp-pending-body"/.test(ph) && /id="cp-body"/.test(ph) && (ph.match(/<th>Club<\/th><th>Name<\/th><th>Role<\/th><th>Email<\/th><th>Profile URL<\/th><th>Confirmed<\/th><th>Badge<\/th><th>Actions<\/th>/g) || []).length === 2, 'Club Admin Members & Officers is not waiting and live boxes with a Badge column');
+    assert.ok(/id="cp-pending-body"/.test(ph) && /id="cp-body"/.test(ph) && (ph.match(/<th>Organization<\/th><th>Name<\/th><th>Role<\/th><th>Email<\/th><th>Profile URL<\/th><th>Confirmed<\/th><th>Badge<\/th><th>Actions<\/th>/g) || []).length === 2, 'Project Admin Team Members is not waiting and live boxes with a Badge column');
     assert.ok(/function personBadgeDefault\(r\)\{ return r\.list === 'team' \? \(r\.p\.role \|\| 'Officer'\) : \(r\.c\.name \|\| 'Member'\); \}/.test(aj), 'a badge no longer defaults to the officer title or the club name');
     assert.ok(/const live = p => p && \(!p\.status \|\| p\.status === 'Approved'\);/.test(st), 'a person waiting for approval would carry a badge');
     assert.ok(/r\.badge \|\| r\.role \|\| 'Officer'/.test(pf), 'the officer badge ignores the badge staff set');
@@ -317,12 +323,12 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
     assert.ok(/PROJECT_COLS = '[^']*\bparts\b/.test(st) && /team: p\.team \|\| \[\], parts: p\.parts \|\| \[\]/.test(st), 'project parts are not read or written');
     assert.ok(/sec\('Project Parts', partsTableHtml\(p\.parts\)\)/.test(pf) && /href="\/results\?q=\$\{encodeURIComponent\(p\.name\.trim\(\)\)\}">Directory<\/a>/.test(pf), 'the project card does not show its parts with Directory links');
     assert.ok(/UPLOADED_VIDEO_RE\.test\(u\)\) return `<video class="pf-video"/.test(pf) && /UPLOADED_VIDEO_RE = \/\^https:\\\/\\\/ghpruernzhjwsgsezdyn\\\.supabase\\\.co/.test(st), 'uploaded project videos do not play, or any URL is trusted in a video tag');
-    assert.ok(/>Members &amp; Officers<\/button>/.test(ph) && /<h2>Members &amp; Officers<\/h2>/.test(ph), 'the club tab is not called Members & Officers');
+    assert.ok(/data-tab="members">(?:<svg[\s\S]*?<\/svg>)?Team Members<\/button>/.test(ph) && /<h2>Team Members<\/h2>/.test(ph), 'the project tab is not called Team Members');
   }
   /* Profile Title (Jacob, 2026-10-28): two boxes beside the address, exactly one required, and the public heading follows it */
   {
     const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8'), pf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
-    assert.ok(/<div class="pt-addr-title">[\s\S]*?id="f-handle"[\s\S]*?Profile Title <span class="req">\*<\/span>[\s\S]*?Use Company Name \(For Businesses\)[\s\S]*?Use Contact Person \(For Students\)[\s\S]*?id="f-title-show"/.test(ph), 'the Profile Title field is not beside the Circuits.com address with its two boxes');
+    assert.ok(/<div class="pt-addr-title">[\s\S]*?id="f-handle"[\s\S]*?Profile Title <span class="req">\*<\/span>[\s\S]*?Use Company Name \(For Businesses\)[\s\S]*?Use Contact Person \(For Project Team Members\)[\s\S]*?id="f-title-show"/.test(ph), 'the Profile Title field is not beside the Circuits.com address with its two boxes');
     assert.ok(/!clubPage && !titleSource\(\)\)\{[^\n]*Not saved: pick a Profile Title/.test(pj) && /fields\.title_source = titleSource\(\)/.test(pj), 'the dashboard saves without a Profile Title');
     assert.ok(/if\(a\.checked\) b\.checked = false/.test(pj) && /if\(b\.checked\) a\.checked = false/.test(pj), 'both Profile Title boxes can be ticked at once');
     assert.ok(/co\.title_source === 'contact'/.test(pf) && /<h1>\$\{escapeHtml\(heading\)\}<\/h1>/.test(pf), 'the public profile heading ignores the Profile Title');
@@ -334,7 +340,7 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   assert.ok(/revolveRows\(body, \{ button: document\.getElementById\('dir-rv'\) \}\)/.test(gl) && /revolveRows\(body, \{ button: document\.getElementById\('club-rv'\) \}\)/.test(cl), 'a Global list no longer revolves');
   assert.ok(/async function fetchGlobalDirectory\(\)[\s\S]*?\.eq\('is_club', false\)/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')) && !/async function fetchGlobalDirectory\(\)\{[^}]*select\('\*'\)/.test(fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8')), 'the Global Directory reads club keywords or uses select(*)');
   assert.ok(/<a class="pop-list-link" href="\/global">Global Directory<\/a>/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) && /\.pop-list-link,\.pop-list-link:visited\{color:#1a5fd0/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the Directory Popular line lost its blue Global Directory link');
-  assert.ok(/<a class="pop-list-link" href="\/clubs">Global Club List<\/a>/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')), 'the Search Clubs Popular line lost its blue Global Club List link');
+  assert.ok(/<a class="pop-list-link" href="\/clubs">Global Projects<\/a>/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')), 'the Projects Popular line lost its blue Global Projects link');
   /* both Global lists scramble, every row a new random place (Jacob, 2026-10-30) */
   { const ap = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
     const rv = ap.slice(ap.indexOf('function revolveRows('), ap.indexOf('function revolveRows(') + 2500);
@@ -411,7 +417,7 @@ assert.ok(/<body class="home-page">/.test(fs.readFileSync(path.join(ROOT, 'index
   assert.ok(/get\('club'\)/.test(jn) && /cos\.find\(c => c\.slug === wantClub && c\.kind === 'club'\)/.test(jn) && /cos\.find\(c => c\.kind !== 'club'\)/.test(jn), 'the Get Listed form can file keywords under the wrong page');
   assert.ok(/if\(n\.trim\(\) !== '01' && n\.trim\(\) !== '06'\) s\.hidden = true;/.test(jn), 'the club keyword form shows more than sections 01 and 06');
   const pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
-  assert.ok(/<b>Choose Your Free Club Keywords<\/b>/.test(pj) && />Select Club Keywords<\/a>/.test(pj) && /Pending Club Keywords<\/h3>/.test(pj) && /Live Club Keywords<\/h3>/.test(pj) && /href="\/join\?club=/.test(pj), 'the Club Keywords tab lost its three boxes or its Select Club Keywords link');
+  assert.ok(/<b>Choose Your Free Project Keywords<\/b>/.test(pj) && />Select Project Keywords<\/a>/.test(pj) && /Pending Project Keywords<\/h3>/.test(pj) && /Live Project Keywords<\/h3>/.test(pj) && /href="\/join\?club=/.test(pj), 'the Project Keywords tab lost its three boxes or its Select Project Keywords link');
 }
 
 /* How It Works was merged into About; the old URL must still point somewhere */
@@ -735,7 +741,7 @@ for (const [f, needle] of [['app.js', 'loadErrorHtml('], ['profile.js', 'loadErr
 }
 // the results page in particular must not fall through to the sales pitch
 const resultsSrc = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
-const catchBlock = resultsSrc.slice(resultsSrc.indexOf('listings = await fetchApprovedByKeyword'));
+const catchBlock = resultsSrc.slice(resultsSrc.indexOf('await Promise.all([fetchApprovedByKeyword(q)'));
 const catchBody = catchBlock.slice(catchBlock.indexOf('catch'), catchBlock.indexOf('const countEl'));
 assert.ok(/loadErrorHtml/.test(catchBody) && /return;/.test(catchBody),
   'a failed keyword search still falls through to the "this keyword is available" pitch');
@@ -971,15 +977,15 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     assert.ok(/<meta name="robots" content="noindex, nofollow">/.test(rs) && /window\.print\(\)/.test(rs) && /@media print/.test(rd('styles.css')),
       'resume.html must be noindex, print through the browser and carry a print stylesheet');
     assert.ok(/myProfile\(\)/.test(rs) && !/resume_path/.test(rs), 'the resume page must take contact details from my_profile only, never from a public read');
-    for (const id of ['f-club', 'f-college', 'pt-college-logo', 'f-join', 'f-promo-members', 'f-promo-alumni', 'f-promo-employers', 'f-officers',
+    for (const id of ['f-club', 'f-college', 'pt-college-logo', 'f-join', 'f-promo-members', 'f-promo-sponsors', 'f-promo-employers', 'f-officers',
                       'pj-title', 'pj-pics', 'pj-docs', 'pj-videos', 'pj-other', 'f-pjteam', 'pj-save', 'pt-project-list'])
       assert.ok(ph.includes(`id="${id}"`), `the dashboard lost ${id}`);
     assert.ok(/id="me-skills"/.test(pj) && /id="me-show-clubs"/.test(pj) && /skills,\s*\n?\s*show_clubs:/.test(pj), 'Post a Resume lost the skills field or the privacy switch');
     assert.ok(/function teamProblem/.test(pj) && /cleanHandle/.test(pj), 'team addresses are saved unvalidated');
     assert.ok(/data-del-pj/.test(pj) && /confirm\(/.test(pj.slice(pj.indexOf('function wireProjects'))), 'a project can be deleted without a confirmation');
     /* the sketch of 2026-10-01: logos flank the name, Join Club, thumbnails that open a project card */
-    assert.ok(/function clubHeroHtml/.test(pf) && /Join Club/.test(pf) && /function openProjectCard/.test(pf) && /class="pf-tile"/.test(pf),
-      'the club page lost its hero, Join Club button, thumbnail grid or project card');
+    assert.ok(/function clubHeroHtml/.test(pf) && />Join<\/a>/.test(pf) && /function openProjectCard/.test(pf) && /class="pf-tile"/.test(pf),
+      'the project page lost its hero, Join button, thumbnail grid or project card');
     assert.ok(/youtube-nocookie\.com\/embed\//.test(pf) && /player\.vimeo\.com\/video\//.test(pf) && !/<iframe src="\$\{escapeHtml\(safeUrl\(/.test(pf),
       'videos must embed only recognised YouTube or Vimeo ids, never an arbitrary URL in an iframe');
     assert.ok(/videos, other_docs/.test(st) || /other_docs/.test(st.slice(st.indexOf('const PROJECT_COLS'), st.indexOf('const PROJECT_COLS') + 200)), 'store.js does not read a project\'s videos and other documents');
@@ -1055,22 +1061,22 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
      paid extras are switched on. */
   /* Projects (2026-09-29) sits after Branding and is shown only to a club page */
   assert.deepStrictEqual(tabs, ['profile', 'listings', 'upgrades', 'hiring', 'seeking', 'club', 'members', 'branding', 'account', 'admin'],
-    'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Hire Talent / Search Work / Student Club / Members / Branding / Account Settings / Admin');
-  assert.ok(/data-tab="club">(?:<svg[\s\S]*?<\/svg>)?Student Club</.test(portalHtml2) && portalHtml2.includes('id="tab-club"') && portalHtml2.includes('class="btn btn-primary pt-save-club cb-cta"'),
-    'the Student Club tab, or its own Save button, is missing');
+    'the dashboard tabs are not Profile Details / Your Listings / Upgrades / Hire Talent / Search Work / Projects / Team Members / Branding / Account Settings / Admin');
+  assert.ok(/data-tab="club">(?:<svg[\s\S]*?<\/svg>)?Projects</.test(portalHtml2) && portalHtml2.includes('id="tab-club"') && portalHtml2.includes('class="btn btn-primary pt-save-club cb-cta"'),
+    'the Projects tab, or its own Save button, is missing');
   /* club mode (Jacob, 2026-10-12): a club page's tabs are Club Details, Club
      Keywords, Members, Branding, Account Settings, in that order; the person's
      own tabs are hidden; one owner adds officers, so only member invite links */
   { const css = fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8');
     const order = ['club', 'listings', 'members', 'branding', 'account'].map(t => (css.match(new RegExp(`body\\.club-mode \\.pt-tab\\[data-tab="${t}"\\]\\{order:(\\d)\\}`)) || [])[1]);
-    assert.deepStrictEqual(order, ['1', '2', '3', '4', '5'], 'club mode tabs are not in the order Club Details, Club Keywords, Members, Branding, Account Settings');
+    assert.deepStrictEqual(order, ['1', '2', '3', '4', '5'], 'project mode tabs are not in the order Project Details, Project Keywords, Team Members, Branding, Account Settings');
     assert.ok(/body\.club-mode \.pt-tab\[data-tab="profile"\],body\.club-mode \.pt-tab\[data-tab="upgrades"\],\s*body\.club-mode \.pt-tab\[data-tab="hiring"\],body\.club-mode \.pt-tab\[data-tab="seeking"\]\{display:none\}/.test(css), 'club mode still shows Profile Details, Upgrades, Hire Talent or Search Work');
-    assert.ok(/tabLabel\('club', club \? 'Club Details' : 'Student Club'\);/.test(portalSrc2) && /tabLabel\('listings', club \? 'Club Keywords' : 'Your Listings'\);/.test(portalSrc2), 'club mode does not rename Club Details and Club Keywords');
+    assert.ok(/tabLabel\('club', club \? 'Project Details' : 'Projects'\);/.test(portalSrc2) && /tabLabel\('listings', club \? 'Project Keywords' : 'Your Listings'\);/.test(portalSrc2), 'project mode does not rename Project Details and Project Keywords');
     /* officers are back on invite links, in their own box (Jacob, 2026-10-28) */
     assert.ok(/\['officer', 'Officers', [^\]]*'pt-officer-invites'\], \['member', 'Members', [^\]]*'pt-club-invites'\]/.test(portalSrc2), 'the Officer and Member invite links are not both drawn');
     const tm = portalHtml2.indexOf('id="tab-members"'), tb = portalHtml2.indexOf('id="tab-club"');
-    assert.ok(['f-officers', 'pt-officer-invites', 'f-members', 'pt-club-invites'].every(id => { const i = portalHtml2.indexOf(`id="${id}"`); return i > tm && i < tb; }), 'Officers, Officer Invite Link, Members and Member Invite Link are not all on the Members & Officers tab');
-    assert.ok(/<label for="nc-name">Club Name <span class="req">\*<\/span><\/label>/.test(portalHtml2) && /<label for="nc-college">College or University <span class="req">\*<\/span><\/label>/.test(portalHtml2) && /The Club's Circuits\.com address <span class="req">\*<\/span>/.test(portalHtml2), 'the create-club fields are not marked required');
+    assert.ok(['f-officers', 'pt-officer-invites', 'f-members', 'pt-club-invites'].every(id => { const i = portalHtml2.indexOf(`id="${id}"`); return i > tm && i < tb; }), 'Officers, Officer Invite Link, Team Members and Team Members Invite Link are not all on the Team Members tab');
+    assert.ok(/<label for="nc-name">Project Name <span class="req">\*<\/span><\/label>/.test(portalHtml2) && /<label for="nc-college">Organization or University Name <span class="req">\*<\/span><\/label>/.test(portalHtml2) && /Your Project&rsquo;s Circuits\.com URL <span class="req">\*<\/span>/.test(portalHtml2), 'the create-project fields are not marked required');
     assert.ok(/if\(!isClubPage\)\{\s*const mine = /.test(portalSrc2), 'saving a club page writes the club onto the owner\'s own profile');
     assert.ok(/document\.querySelectorAll\('\.pt-save, \.pt-save-club'\)\.forEach\(b => b\.addEventListener\('click', saveProfile\)\);/.test(portalHtml2), 'Save club and Save members are not wired to the save');
     assert.ok(/function pickerLabel\(c\)\{\s*return c\.kind === 'club' \? \(c\.name/.test(portalSrc2), 'the picker no longer names the person by their contact name and each club by its name'); }
@@ -1200,12 +1206,46 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   /* Directory, Hire Talent (people on /talent, for employers), Search Jobs
      (roles on /jobs, for people): three plain choices in one pill */
   /* the dashboard's Post Free Job and Post Free Resume doors sit in the homepage footer (Jacob, 2026-11-16) */
-  assert.ok(/<a href="\/portal#hiring">Post Free Job<\/a>/.test(home) && /<a href="\/portal#seeking">Post Free Resume<\/a>/.test(home) && /<a class="foot-cta" href="\/portal#listings">Post Free Listing<\/a>/.test(home) && /<a href="\/portal#club">Post Free Club<\/a>/.test(home), 'the homepage footer lost one of Post Free Listing, Job, Resume or Club');
-  for (const t of ['directory', 'recruits', 'jobs', 'clubs']) {
-    assert.ok(new RegExp(`class="search-mode"[\\s\\S]*?data-target="${t}"[^>]*role="tab"`).test(home), `the homepage search toggle lost ${t}`);
+  assert.ok(/<a href="\/portal#hiring">Post Free Job<\/a>/.test(home) && /<a href="\/portal#seeking">Post Free Resume<\/a>/.test(home) && /<a class="foot-cta" href="\/portal#listings">Post Free Listing<\/a>/.test(home) && /<a href="\/portal#club">Post Free Project<\/a>/.test(home), 'the homepage footer lost one of Post Free Listing, Job, Resume or Project');
+  /* the tabs read Directory, Parts, Projects (Jacob, 2026-11-26); Projects
+     keeps the clubs target, Hire Talent and Search Work are off the home page */
+  assert.deepStrictEqual([...home.matchAll(/data-target="([a-z]+)" role="tab"[^>]*>([^<]+)</g)].map(m => m[1] + ':' + m[2]), ['directory:Directory', 'parts:Parts', 'clubs:Projects'], 'the homepage search tabs are not Directory, Parts, Projects');
+  assert.ok(!/data-target="recruits"|data-target="jobs"/.test(home), 'Hire Talent or Search Work is back on the homepage');
+  /* 2026-11-23 list: green Pause on both revolving lists, the Part Numbers
+     box under the keywords box, both at the top of Your Listings */
+  for (const f of ['global.html', 'clubs.html']) assert.ok(/class="mini-btn green rv-btn"/.test(fs.readFileSync(path.join(ROOT, f), 'utf8')), `${f} lost its green Pause button`);
+  { const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
+    assert.ok(ph.indexOf('id="pt-getlisted"') < ph.indexOf('id="pt-getparts"') && ph.indexOf('id="pt-getparts"') < ph.indexOf('>Directory Listings</h3>') && /Choose Your Free Part Numbers<\/b>/.test(ph),
+      'Your Listings does not open with Choose Your Free Directory Keywords, then Choose Your Free Part Numbers'); }
+  /* singular and plural meet (2026-11-23 list). normKw in store.js is the
+     twin of norm_kw in tools/search-plurals.sql; this table is what the live
+     database returned after the 2026-11-27 migration, so a change to one
+     side without the other fails here */
+  { const stSrc = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+    const sandbox = {}; new Function('out', stSrc.slice(stSrc.indexOf('function singularize'), stSrc.indexOf('/* Approval-level cleanup')) + '; out.normKw = normKw;')(sandbox);
+    const table = { circuits: 'circuit', circuit: 'circuit', ICs: 'ic', IC: 'ic', lenses: 'len', lens: 'len', processes: 'process', process: 'process',
+      caches: 'cach', cache: 'cach', Defense: 'defen', defenses: 'defen', connectors: 'connector', batteries: 'battery', switches: 'switch',
+      'PCB Boards': 'pcbboard', sample: 'sample', wireless: 'wireless', '': '' };
+    for (const [k, v] of Object.entries(table)) assert.strictEqual(sandbox.normKw(k), v, `normKw("${k}") is "${sandbox.normKw(k)}", the database says "${v}"`);
+    const sql = fs.readFileSync(path.join(ROOT, 'tools', 'search-plurals.sql'), 'utf8');
+    assert.ok(/create or replace function public\.search_listing_ids/.test(sql) && /security invoker/.test(sql), 'the all-words search function is not recorded under tools/');
+    assert.ok(/sb\.rpc\('search_listing_ids'/.test(stSrc) && /select\(APP_PUBLIC_COLS\)\.in\('id'/.test(stSrc), 'the main search does not use the all-words search, or reads rows without the column list');
+    const ap = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+    assert.ok(/function matchesAllWords\(qKeys, text\)/.test(ap) && ['global.html', 'clubs.html'].every(f => /matchesAllWords\(ws, /.test(fs.readFileSync(path.join(ROOT, f), 'utf8'))), '/global or /clubs does not match singular and plural alike');
+    assert.ok(/companyPageFor\(q\)/.test(ap) && ['global.html', 'clubs.html', 'jobs.html', 'talent.html'].every(f => /goUnlessCompany\(/.test(fs.readFileSync(path.join(ROOT, f), 'utf8'))), 'a search bar does not send an exact company name to its page'); }
+  /* a project page's changes count as unsaved, like a profile's (2026-11-23 list) */
+  assert.ok(/\['tab-club', 'tab-members', 'tab-branding'\]\.forEach\(id => \{/.test(fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8')), 'edits on a project page no longer count as unsaved changes');
+  /* a logo staff set in Website Applications reaches the profile */
+  assert.ok(/logo    = case when new\.logo    is distinct from old\.logo/.test(fs.readFileSync(path.join(ROOT, 'tools', 'profile-sync.sql'), 'utf8')), 'the listing-to-profile mirror no longer carries the logo');
+  /* Website Applications: the Trust Badge is a typed text box with Save Badge, nothing pre-filled (2026-11-23 list) */
+  { const ah = fs.readFileSync(path.join(ROOT, 'applications.html'), 'utf8');
+    assert.ok(/<input type="text" data-badge="text"/.test(ah) && /data-act="savebadge">Save Badge</.test(ah) && !/text:'Authorized'/.test(ah) && !/data-badge="on"/.test(ah), 'the Website Applications trust badge is pre-filled again, or lost its text box or Save Badge'); }
+  /* the green nav button reads Post Free Listing on every page (Jacob, 2026-11-26) */
+  for (const f of fs.readdirSync(ROOT).filter(f => f.endsWith('.html'))) {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    assert.ok(!/class="(?:active )?cta" href="\/join">Get Listed</.test(src), `${f} still says Get Listed on the nav button`);
   }
-  /* the tabs read Directory, Hire Talent, Search Work, Search Clubs (Jacob, 2026-10-12) */
-  assert.deepStrictEqual([...home.matchAll(/data-target="[a-z]+" role="tab"[^>]*>([^<]+)</g)].map(m => m[1]), ['Directory', 'Hire Talent', 'Search Work', 'Search Clubs'], 'the homepage search tabs are not Directory, Hire Talent, Search Work, Search Clubs');
+  assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'version-1-home-2026-11-26', 'index.html')), 'the Version 1 home page backup is missing');
   assert.ok(!/search-group|search-side|data-mode=|data-target="hiring"|data-target="seeking"/.test(home), 'an old homepage toggle layout is back');
   /* the four doors under it are the welcome page's cards (Jacob, 2026-10-07).
      Since 2026-10-30 the welcome page's first card leads with Choose Your
@@ -1214,7 +1254,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     const cards = src => [...src.matchAll(/<a class="wc-card[^"]*"[^>]*>[\s\S]*?<\/a>/g)].map(m => m[0].replace(/\s+/g, ' '));
     const onHome = cards(home), onWelcome = cards(fs.readFileSync(path.join(ROOT, 'welcome.html'), 'utf8'));
     /* since 2026-11-16 the homepage shows ten revolving Global Directory rows instead */
-    assert.ok(onHome.length === 0 && onWelcome.length === 4, 'the Start cards are back on the homepage, or the welcome page lost its cards');
+    assert.ok(onHome.length === 0 && onWelcome.length === 3, 'the Start cards are back on the homepage, or the welcome page lost its cards');
     assert.ok(/id="home-dir-rows"/.test(home) && /list\.slice\(0, 10\)\.map\(/.test(home) && /revolveRows\(body\)/.test(home), 'the homepage lost its ten revolving Global Directory rows');
     /* the foot line: the email sentence is true only on the welcome page (Jacob, 2026-10-07) */
     /* and it sends a newcomer to the Create Profile form (Jacob, 2026-10-12) */
@@ -1228,13 +1268,8 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   /* every mode says in one line what it searches, Directory included (Jacob,
      2026-09-03); the static page carries the Directory line, since that is
      the mode a reader with no JavaScript gets */
-  const hintBlock = (fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8').match(/const HOME_HINT = \{[\s\S]*?\};/) || [''])[0];
-  for (const k of ['directory', 'recruits', 'jobs', 'clubs']) assert.ok(new RegExp(`^  ${k}:\\s+'`, 'm').test(hintBlock), `HOME_HINT lost its ${k} line`);
-  assert.ok(/<p class="search-hint" id="search-hint">Directory: companies, products and services, listed by their Circuits-Keywords&trade;\.<\/p>/.test(home),
-    'the homepage no longer carries the Directory line by the search box');
-  /* the line sits ABOVE the search pill (Jacob, 2026-09-11) */
-  assert.ok(home.indexOf('id="search-hint"') < home.indexOf('class="search-pill"') && home.indexOf('id="search-hint"') > home.indexOf('id="home-form"'),
-    'the Directory line is no longer above the search pill');
+  /* the one-line hint above the box went for every tab (Jacob, 2026-11-26) */
+  assert.ok(!/search-hint|HOME_HINT/.test(home + fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8')), 'the hint line above the homepage search is back');
   assert.ok(fs.existsSync(path.join(ROOT, 'backups', 'recruiting-2026-09-03', 'about-recruiting-section.html')), 'the archived About recruiting section is missing');
   /* Recruiting is live and free: the section is back on About (Jacob, 2026-09-14),
      renamed The Workplace, with the Global Student Network under it (2026-10-08) */
@@ -1242,8 +1277,8 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     assert.ok(/<h2 class="section-title">The Workplace on Circuits\.com/.test(ab) && /Post a Free Resume:<\/b>/.test(ab), 'the Workplace section is missing from About');
     assert.ok(/<h2 class="section-title">Global Student Network/.test(ab) && /href="\/portal#club">Post Free Student Club</.test(ab), 'the Global Student Network section is missing from About'); }
   const appHome = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
-  assert.ok(/t === 'recruits' \? '\/talent' : t === 'clubs' \? '\/clubs' : '\/jobs'/.test(appHome) && /if\(t === 'directory'\)\{ gotoSearch\(q\); return; \}/.test(appHome),
-    'the homepage search does not route Directory to /results, Hire Talent to /talent and Search Jobs to /jobs');
+  assert.ok(/t === 'recruits' \? '\/talent' : t === 'clubs' \? '\/clubs' : '\/jobs'/.test(appHome) && /if\(t === 'directory' \|\| t === 'parts'\)\{ gotoSearch\(q\); return; \}/.test(appHome),
+    'the homepage search does not route Directory and Parts to /results and Projects to /clubs');
   assert.ok(/<title>Job Board \| Circuits\.com<\/title>/.test(fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8')) && /class="board-sub">Free to Post Job</.test(fs.readFileSync(path.join(ROOT, 'jobs.html'), 'utf8')), '/jobs is not titled Job Board, Free to Post Job');
   assert.ok(/<title>Talent Board \| Circuits\.com<\/title>/.test(fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8')) && /class="board-sub">Free to Post Resume</.test(fs.readFileSync(path.join(ROOT, 'talent.html'), 'utf8')), '/talent is not titled Talent Board, Free to Post Resume');
   for (const f of ['jobs.html', 'talent.html']) {
@@ -2029,13 +2064,13 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
   const tabs = [...ph.matchAll(/class="adm-tab[^"]*" data-adm="([a-z]+)">(?:<svg[\s\S]*?<\/svg>)?([^<]+)</g)].map(m => m[1] + ':' + m[2]);
   assert.deepStrictEqual(tabs, ['stats:Stats', 'companies:All Profiles', 'accounts:Manage Accounts', 'listings:Listings', 'applications:Website Applications',
-    'upgrades:Upgrade Applications', 'employment:Recruiting Applications', 'clubs:Club Pages', 'clubkw:Club Keywords', 'clubapps:Club Applications',
-    'clubppl:Members &amp; Officers', 'clubproj:Projects', 'clubup:Badges &amp; Upgrades', 'messages:Notifications', 'activity:Activity'],
+    'upgrades:Upgrade Applications', 'employment:Recruiting Applications', 'clubs:Projects', 'clubkw:Project Keywords', 'clubapps:Project Applications',
+    'clubppl:Team Members', 'clubproj:Showcase', 'clubup:Badges &amp; Upgrades', 'messages:Notifications', 'activity:Activity'],
     'the admin sub-tabs are out of order or renamed: ' + tabs.join(', '));
   /* Profiles Admin / Club Admin (Jacob, 2026-10-19): a switch, and the five
      club sub-tabs marked adm-club so they show only under Club Admin */
-  assert.ok(/data-mode="profiles"[^>]*>Directory Admin<\/button>/.test(ph) && /data-mode="clubs"[^>]*>Club Admin<\/button>/.test(ph), 'the Directory Admin / Club Admin switch is gone');
-  assert.deepStrictEqual([...ph.matchAll(/class="adm-tab adm-club" data-adm="([a-z]+)"/g)].map(m => m[1]), ['clubs', 'clubkw', 'clubapps', 'clubppl', 'clubproj', 'clubup'], 'Club Admin is not Club Pages, Club Keywords, Club Applications, Members & Officers, Projects (then Badges & Upgrades)');
+  assert.ok(/data-mode="profiles"[^>]*>Directory Admin<\/button>/.test(ph) && /data-mode="clubs"[^>]*>Project Admin<\/button>/.test(ph), 'the Directory Admin / Project Admin switch is gone');
+  assert.deepStrictEqual([...ph.matchAll(/class="adm-tab adm-club" data-adm="([a-z]+)"/g)].map(m => m[1]), ['clubs', 'clubkw', 'clubapps', 'clubppl', 'clubproj', 'clubup'], 'Project Admin is not Projects, Project Keywords, Project Applications, Team Members, Showcase (then Badges & Upgrades)');
   { const aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
     assert.ok(/const approved = \(\) => allApps\.filter\(a=>a\.status==='Approved' && !isClubApp\(a\)\);/.test(aj) && /const clubApproved = /.test(aj), 'club listings are not split from Profiles Admin');
     assert.ok(/lb\.innerHTML = live\.map\(extrasRow\)\.join\(''\);/.test(aj) && /const extrasRow = l => [\s\S]*?\$\{actionsCell\(l\)\}/.test(aj), 'Club Keywords lost the Edit, Badge, Lock, Pause and Remove actions');
@@ -2058,7 +2093,7 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
   }
   assert.ok(/#pt-tab-admin\{margin-left:auto/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the Admin tab no longer sits apart from the account tabs');
   /* Manage Clubs (Jacob, 2026-10-12): every club page with an Approve button */
-  assert.ok(/data-adm="clubs"[\s\S]*?<th>Club<\/th><th>University<\/th><th>Contact<\/th><th>Email<\/th><th>Members<\/th><th>Club Keywords<\/th>/.test(ph), 'the Manage Clubs panel lost its columns');
+  assert.ok(/data-adm="clubs"[\s\S]*?<th>Project Title<\/th><th>Organization or University Name<\/th><th>Contact<\/th><th>Email<\/th><th>Team Members<\/th><th>Project Keywords<\/th><th># of Parts Listed<\/th>/.test(ph), 'the Projects admin panel lost its columns');
   { const ajc = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
     assert.ok(/setClubStatusUI\('\$\{esc\(c\.slug\)\}', 'Approved'\)">Approve</.test(ajc) && /reloadClubs\(\);/.test(ajc), 'Manage Clubs rows have no Approve button, or the panel never loads'); }
   /* Recruiting Applications shows the Circuits-Keywords and who has not switched
@@ -2223,15 +2258,20 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     const portalSrc3 = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
     const appSrc4 = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
     /* the keywords door leads, straight to the keyword form (2026-10-30) */
+    /* since the 2026-11-23 list: Keywords, Post Parts, Post Free Projects */
     for (const [label, href] of [['Choose Your Free Directory Keywords', '/join'],
-                                 ['Post Free Job', '/portal#hiring'],
-                                 ['Post Free Resume', '/portal#seeking']]) {
+                                 ['Post Parts', '/join'],
+                                 ['Post Free Projects', '/portal#club']]) {
       assert.ok(new RegExp(`href="${href.replace('#', '#')}"[\\s\\S]{0,900}${label}`).test(wc),
         `the welcome page lost the ${label} door, or it no longer opens ${href}`);
     }
     assert.ok(/noindex/.test(wc), 'the welcome page is open to search engines');
     assert.ok(/class="wc-pill"/.test(wc) && /class="wc-cards[ "]/.test(wc) && /class="wc-card-go"/.test(wc),
       'the welcome page lost its confirmed badge or its three cards');
+    assert.ok(!/Post Free Job|Post Free Resume|Set Up a Student Club/.test(wc.replace(/<!--[\s\S]*?-->/g, '')), 'a removed card (Job, Resume, Student Club) is back on the welcome page');
+    { const jn = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
+      assert.ok(/<h2>Claim Your Circuits-Keywords™ or Part Numbers<\/h2>\s*<p>Choose Up To 10 Keywords for Free\.<\/p>\s*<p>Add Your Inventory by Part Number\.<\/p>/.test(jn) && !/Listed as <b id="j-company">/.test(jn),
+        '/join section 01 is not Claim Your Circuits-Keywords or Part Numbers with its two lines'); }
     assert.ok(/id="wc-copy"/.test(wc) && /clipboard\.writeText\('https:\/\/' \+ url\)/.test(wc),
       'the welcome page no longer offers the new address to copy');
     assert.ok((storeSrc2.match(/location\.origin \+ '\/welcome'/g) || []).length >= 2 && /emailRedirectTo: back,/.test(storeSrc2) && !/emailRedirectTo: location\.origin \+ '\/join'/.test(storeSrc2),
@@ -2244,10 +2284,20 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     const notifySrc = fs.readFileSync(path.join(ROOT, 'tools', 'edge-notify.ts'), 'utf8');
     assert.ok(/const welcome = subject === "Welcome to Circuits\.com"/.test(notifySrc) && /Free Directory Listing/.test(notifySrc),
       'the welcome email lost its three buttons, it is the second net behind the landing page');
-    /* exactly three green buttons (Jacob, 2026-10-12): Your Listings, Hire Talent, Search Work */
+    /* exactly three green buttons; since the 2026-11-23 list: Free Directory
+       Listing (Your Listings), Post Parts for Free (/join), Post Projects for
+       Free (the Projects tab) */
     { const wb = (notifySrc.match(/const buttons = welcome\s*\?([\s\S]*?)\s*:\s*`<p style="margin:14px 0 0">\$\{button\(href/) || ['', ''])[1];
-      assert.deepStrictEqual([...wb.matchAll(/button\(`\$\{SITE\}\/portal#([a-z]+)`, "([^"]+)"\)/g)].map(m => m[1] + ':' + m[2]),
-        ['listings:Free Directory Listing', 'hiring:Post Free Job', 'seeking:Post Free Resume'], 'the welcome email is not the three buttons Free Directory Listing, Post Free Job, Post Free Resume'); }
+      assert.deepStrictEqual([...wb.matchAll(/button\(`\$\{SITE\}(\/[a-z#]+)`, "([^"]+)"\)/g)].map(m => m[1] + ':' + m[2]),
+        ['/portal#listings:Free Directory Listing', '/join:Post Parts for Free', '/portal#club:Post Projects for Free'], 'the welcome email is not the three buttons Free Directory Listing, Post Parts for Free, Post Projects for Free'); }
+    /* re-send confirmation (2026-11-23 list): staff and the owner go through
+       the notify function, whose recipient is the account's own email; a
+       visitor's resend carries the Turnstile token */
+    { const cr = notifySrc.slice(notifySrc.indexOf('if (kind === "confirm_resend")'), notifySrc.indexOf('if (kind === "confirm_reminder")'));
+      assert.ok(/isStaff\(db, me\)/.test(cr) && /getUserById\(uid\)/.test(cr) && !/payload\.email/.test(cr) && /security_log/.test(cr), 'confirm_resend could mail an address from the request, skip the staff check, or send without the one-a-minute limit');
+      const stj = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8'), adj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
+      assert.ok(/kind: 'confirm_resend'/.test(stj) && /captchaToken: opts\.captchaToken \|\| undefined/.test(stj), 'resendConfirmation does not use the notify function or pass the Turnstile token');
+      assert.ok(!/resendConfirmation\([^)]*\)(?![^;]*userId)/.test(adj.replace(/resendConfirmation\([^)]*\{ userId: a\.user_id \}\)/g, '')), 'an admin resend still goes the way Turnstile refuses'); }
   }
   /* The contact form and the access request go through the notify function
      behind Cloudflare Turnstile, not FormSubmit (audit item 7, 2026-09-21). */

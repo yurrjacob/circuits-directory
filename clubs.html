@@ -3,22 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Global Club List | Circuits.com</title>
-<meta name="description" content="The Global Club List: student clubs in the circuits industry on Circuits.com, with their university, Circuits.com address and club email.">
+<title>Global Projects | Circuits.com</title>
+<meta name="description" content="Global Projects: hardware projects in the circuits industry on Circuits.com, with their organization, keywords and Circuits.com address.">
 <link rel="canonical" href="https://circuits.com/clubs">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Circuits.com">
-<meta property="og:title" content="Global Club List | Circuits.com">
+<meta property="og:title" content="Global Projects | Circuits.com">
 <meta property="og:description" content="Student clubs in the circuits industry, with their university, Circuits.com address and club email.">
 <meta property="og:url" content="https://circuits.com/clubs">
 <meta property="og:image" content="https://circuits.com/assets/og-card.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Global Club List | Circuits.com">
+<meta name="twitter:title" content="Global Projects | Circuits.com">
 <meta name="twitter:description" content="Student clubs in the circuits industry, with their university, Circuits.com address and club email.">
 <meta name="twitter:image" content="https://circuits.com/assets/og-card.png">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=5aa6cfd14e">
+<link rel="stylesheet" href="/styles.css?v=de6f4f9f9b">
 <script src="/nav.js?v=0e4f71b722"></script>
 <script async src="/analytics.js?v=70049a2947"></script>
 </head>
@@ -34,7 +34,7 @@
       <a class="nav-auth nav-signin" href="/portal">Sign In</a>
       <a class="nav-auth nav-dash" href="/portal">Dashboard</a>
       <a class="nav-auth nav-admin" href="/portal#admin"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5 20 6v6c0 5-3.4 8.6-8 9.5C7.4 20.6 4 17 4 12V6z"/><path d="m9 12 2 2 4-4"/></svg>Admin</a>
-      <a class="cta" href="/join">Get Listed</a>
+      <a class="cta" href="/join">Post Free Listing</a>
     </nav>
       <!-- The bell ships in the markup and starts hidden; nav.js shows it in
            <head> when somebody is signed in, and app.js only fills it in. It
@@ -49,34 +49,34 @@
 </header>
 
 <main id="content">
-<!-- The Global Club List (Jacob, 2026-10-12): Search Clubs is its own index,
-     in the same format as the Directory listings. Columns left to right: #,
-     Club Name, University Name, Circuits Website Address, Club Email Address.
-     Only clubs staff have approved (Admin, Manage Clubs) are listed, and the
-     order is shuffled on every visit, like the Directory. -->
-<h1 class="sr-only">Global Club List</h1>
+<!-- Global Projects, formerly the Global Club List (Jacob, 2026-10-12;
+     renamed 2026-11-23 list). The rows are still the approved club pages
+     (kind 'club'). Columns left to right: #, logo, Project Title,
+     Organization Name, Keywords, Circuits URL. No running total, like the
+     Global Directory. Shuffled on every visit, then it revolves. -->
+<h1 class="sr-only">Global Projects</h1>
 <div class="subbar">
   <div class="inner subbar-inner">
     <form id="club-form" class="mini-search" autocomplete="off">
-      <input id="club-search" type="text" placeholder="Search clubs by name, university or keyword" aria-label="Search clubs" autocomplete="off">
+      <input id="club-search" type="text" placeholder="Search projects, organizations or keywords" aria-label="Search projects" autocomplete="off">
       <button type="submit" class="search-go mini" aria-label="Search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
     </form>
     <div class="subbar-meta">
-      <span class="kw-line"><b>Global Club List</b></span>
-      <span class="count-line" id="club-count">Loading clubs&hellip;</span>
-      <button type="button" class="mini-btn rv-btn" id="club-rv" aria-pressed="false">Pause</button>
+      <span class="kw-line"><b>Global Projects</b></span>
+      <span class="count-line" id="club-count">Loading projects&hellip;</span>
+      <button type="button" class="mini-btn green rv-btn" id="club-rv" aria-pressed="false">Pause</button>
     </div>
   </div>
 </div>
 <div class="listings">
   <div class="table-wrap">
     <table class="listings-table club-table">
-      <thead><tr><th class="rank">#</th><th>Club Name</th><th>University Name</th><th>Circuits URL</th><th>Club Email Address</th></tr></thead>
+      <thead><tr><th class="rank">#</th><th class="logo-col"><span class="sr-only">Logo</span></th><th>Project Title</th><th>Organization Name</th><th>Keywords</th><th>Circuits URL</th></tr></thead>
       <tbody id="clubs"></tbody>
     </table>
   </div>
   <div class="clubs-empty" id="clubs-empty" hidden></div>
-  <p class="club-list-cta">Run a student club? <a href="/portal#club">Create its page from your dashboard</a>. Circuits.com approves it, then it appears here.</p>
+  <p class="club-list-cta">Building something? <a href="/portal#club">Create your project&rsquo;s page from your dashboard</a>. Circuits.com approves it, then it appears here.</p>
 </div>
 </main>
 
@@ -94,8 +94,8 @@
 </footer>
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
-<script src="store.js?v=31f75970b2"></script>
-<script src="app.js?v=cf2bb92c16"></script>
+<script src="store.js?v=d588b8de44"></script>
+<script src="app.js?v=ff3203e2ca"></script>
 <script>
 (async function initClubs(){
   const body = document.getElementById('clubs'), empty = document.getElementById('clubs-empty');
@@ -107,33 +107,36 @@
   try{ list = await fetchClubs(); }catch(e){ list = []; }
   /* shuffled once per visit, like the Directory listings */
   for(let i = list.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
-  /* "robotics clubs" finds robotics: the word club is dropped, every other word must match */
-  const words = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').split(' ').filter(w => w && !/^clubs?$/.test(w));
-  const hay = c => ' ' + [c.name, c.college_name, c.tagline, c.description, (c.keywords || []).join(' ')].join(' ').toLowerCase().replace(/[^a-z0-9]+/g, ' ') + ' ';
+  /* "robotics clubs" finds robotics: the words club and project are dropped, every other word must match */
+  const words = s => searchKeys(String(s || '').replace(/\b(clubs?|projects?)\b/gi, ' '));
+  const hay = c => [c.name, c.college_name, c.tagline, c.description, (c.keywords || []).join(' ')].join(' ');
   function draw(){
     const ws = words(q);
-    const rows = ws.length ? list.filter(c => { const h = hay(c); return ws.every(w => h.includes(' ' + w)); }) : list;
-    count.innerHTML = 'Showing <b>' + rows.length + '</b> ' + (rows.length === 1 ? 'Club' : 'Clubs') + (q ? ' for <b>' + escapeHtml(q) + '</b>' : '');
+    const rows = ws.length ? list.filter(c => matchesAllWords(ws, hay(c))) : list;
+    count.textContent = '';   // no internal statistics above the list (2026-11-23 list)
     body.innerHTML = rows.map((c, i) => {
       const h = String(c.handle || c.slug).toLowerCase();
       const logo = isLogoUrl(c.logo) ? `<span class="co-logo"><img src="${escapeHtml(c.logo)}" alt="${escapeHtml(c.name)} logo"></span>`
         : `<span class="co-logo club-logo-ph">${escapeHtml(String(c.name || 'C').slice(0, 1).toUpperCase())}</span>`;
+      const kws = (c.keywords || []).map(k => `<a class="kw-tag kw-mini" href="/clubs?q=${encodeURIComponent(k)}">${escapeHtml(k)}</a>`).join(' ');
       return `<tr>
         <td class="rank" data-label="#">${i + 1}</td>
-        <td data-label="Club Name"><div class="co"><a class="co-logo-link" href="/${encodeURIComponent(h)}" aria-label="${escapeHtml(c.name)} page">${logo}</a><a href="/${encodeURIComponent(h)}">${escapeHtml(c.name)}</a></div></td>
-        <td class="cell-muted" data-label="University Name">${escapeHtml(c.college_name || '')}</td>
+        <td class="logo-col"><a class="co-logo-link" href="/${encodeURIComponent(h)}" aria-label="${escapeHtml(c.name)} page">${logo}</a></td>
+        <td data-label="Project Title"><b><a href="/${encodeURIComponent(h)}">${escapeHtml(c.name)}</a></b></td>
+        <td class="cell-muted" data-label="Organization Name">${escapeHtml(c.college_name || '')}</td>
+        <td data-label="Keywords">${kws || '<span class="cell-muted">none yet</span>'}</td>
         <td data-label="Circuits URL"><a class="web-link" href="/${encodeURIComponent(h)}">circuits.com/${escapeHtml(h)}</a></td>
-        <td class="cell-muted" data-label="Club Email Address">${c.email ? `<a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>` : ''}</td>
       </tr>`;
     }).join('');
     empty.hidden = !!rows.length;
-    empty.textContent = list.length ? 'No club matches that search yet. Clear it to see the whole Global Club List.' : 'No clubs on the Global Club List yet. The first approved club appears here.';
+    empty.textContent = list.length ? 'No project matches that search yet. Clear it to see all of Global Projects.' : 'No projects on Global Projects yet. The first approved project appears here.';
   }
   draw();
   revolveRows(body, { button: document.getElementById('club-rv') });
-  document.getElementById('club-form').addEventListener('submit', e => {
+  document.getElementById('club-form').addEventListener('submit', async e => {
     e.preventDefault();
     q = input.value.trim();
+    if(await goUnlessCompany(q, 'club')) return;   // a project's exact name opens its page
     history.replaceState(null, '', q ? '?q=' + encodeURIComponent(q) : location.pathname);
     draw();
   });

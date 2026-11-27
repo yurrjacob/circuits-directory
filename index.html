@@ -17,7 +17,7 @@
 <meta name="twitter:description" content="Search the circuits and electronics industry: suppliers, distributors, design engineers, semiconductors, PCB assembly and test. Claim your Circuits-Keyword™.">
 <meta name="twitter:image" content="https://circuits.com/assets/og-card.png">
 <link rel="icon" href="assets/favicon.png">
-<link rel="stylesheet" href="styles.css?v=5aa6cfd14e">
+<link rel="stylesheet" href="styles.css?v=de6f4f9f9b">
 <script src="/nav.js?v=0e4f71b722"></script>
 <script type="application/ld+json">
 {
@@ -64,7 +64,7 @@
       <a class="nav-auth nav-signin" href="/portal">Sign In</a>
       <a class="nav-auth nav-dash" href="/portal">Dashboard</a>
       <a class="nav-auth nav-admin" href="/portal#admin"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5 20 6v6c0 5-3.4 8.6-8 9.5C7.4 20.6 4 17 4 12V6z"/><path d="m9 12 2 2 4-4"/></svg>Admin</a>
-      <a class="cta" href="/join">Get Listed</a>
+      <a class="cta" href="/join">Post Free Listing</a>
     </nav>
       <!-- The bell ships in the markup and starts hidden; nav.js shows it in
            <head> when somebody is signed in, and app.js only fills it in. It
@@ -85,22 +85,20 @@
     <h1 class="sr-only">Circuits.com: The Circuits Industry Directory for Suppliers, Parts and Engineers</h1>
     <a href="/" class="hero-link"><img class="logo-hero" src="assets/logo-home.png" alt="Circuits.com" width="1108" height="185" fetchpriority="high"><span class="beta-tag">BETA</span></a>
 
-    <!-- One search box, four indexes (Jacob, 2026-09-03; Search Clubs
-         2026-10-12). Directory is parts, services and companies; Hire Talent
-         is the people seeking employment on /talent, for employers; Search
-         Work is the open roles on /jobs, for people; Search Clubs is the
-         Global Club List on /clubs. The buttons only change where the query
-         goes. -->
+    <!-- One search box, three tabs (Jacob, 2026-11-26). Directory is
+         companies, products and services; Parts searches the same Directory
+         until parts arrive (every account will get 10 free parts); Projects
+         is the Global Club List on /clubs. Hire Talent and Search Work came
+         off the home page that day; /talent and /jobs stay as they were.
+         The old four-tab version is in backups/version-1-home-2026-11-26. -->
     <div class="search-mode" role="tablist" aria-label="What to search">
       <button type="button" class="on" data-target="directory" role="tab" aria-selected="true">Directory</button>
-      <button type="button" data-target="recruits" role="tab" aria-selected="false">Hire Talent</button>
-      <button type="button" data-target="jobs" role="tab" aria-selected="false">Search Work</button>
-      <button type="button" data-target="clubs" role="tab" aria-selected="false">Search Clubs</button>
+      <button type="button" data-target="parts" role="tab" aria-selected="false">Parts</button>
+      <button type="button" data-target="clubs" role="tab" aria-selected="false">Projects</button>
     </div>
     <form id="home-form" class="searchbox" autocomplete="off" data-target="directory">
-      <p class="search-hint" id="search-hint">Directory: companies, products and services, listed by their Circuits-Keywords&trade;.</p>
       <div class="search-pill">
-        <input id="home-search" type="text" placeholder="Search products, services, companies, part numbers, or keywords..." aria-label="Search" autocomplete="off">
+        <input id="home-search" type="text" placeholder="Search products, services, companies or keywords..." aria-label="Search" autocomplete="off">
         <button type="submit" class="search-go" aria-label="Search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
       </div>
     </form>
@@ -120,36 +118,16 @@
       <a href="/results?q=automotive">Automotive</a>&middot;
       <a href="/results?q=connectors">Connectors</a>
     </div>
-    <div class="popular" data-for="recruits" hidden>
-      Popular:
-      <a href="/talent?q=pcb+layout">PCB Layout</a>&middot;
-      <a href="/talent?q=microcontroller">Microcontroller</a>&middot;
-      <a href="/talent?q=rf+engineer">RF Engineer</a>&middot;
-      <a href="/talent?q=digital+design">Digital Design</a>&middot;
-      <a href="/talent?q=electronics+engineer">Electronics Engineer</a>&middot;
-      <a href="/talent?q=verification">Verification</a>&middot;
-      <a href="/talent?q=firmware+engineer">Firmware Engineer</a>&middot;
-      <a href="/talent?q=verilog">Verilog</a>&middot;
-      <a href="/talent?q=electrical+engineer">Electrical Engineer</a>
-    </div>
-    <div class="popular" data-for="jobs" hidden>
-      Popular:
-      <a href="/jobs?q=hardware+design+engineer">Hardware Design Engineer</a>&middot;
-      <a href="/jobs?q=pcb+design+engineer">PCB Design Engineer</a>&middot;
-      <a href="/jobs?q=embedded+systems+engineer">Embedded Systems Engineer</a>&middot;
-      <a href="/jobs?q=asic+design+engineer">ASIC Design Engineer</a>&middot;
-      <a href="/jobs?q=analog+engineer">Analog Engineer</a>&middot;
-      <a href="/jobs?q=hardware+test+engineer">Hardware Test Engineer</a>
-    </div>
-    <!-- Search Clubs (Jacob, 2026-10-12): the Global Club List sits in the
+    <!-- Projects, formerly Search Clubs (Jacob, 2026-10-12; renamed
+         2026-11-26): the Global Club List sits in the
          centre of its line -->
     <div class="popular" data-for="clubs" hidden>
       Popular:
-      <a href="/clubs?q=electronics">Electronics Clubs</a>&middot;
-      <a href="/clubs?q=robotics">Robotics Clubs</a>&middot;
-      <a class="pop-list-link" href="/clubs">Global Club List</a>&middot;
-      <a href="/clubs?q=aerospace">Aerospace Clubs</a>&middot;
-      <a href="/clubs?q=ai">AI Clubs</a>
+      <a href="/clubs?q=electronics">Electronics Projects</a>&middot;
+      <a href="/clubs?q=robotics">Robotics Projects</a>&middot;
+      <a class="pop-list-link" href="/clubs">Global Projects</a>&middot;
+      <a href="/clubs?q=aerospace">Aerospace Projects</a>&middot;
+      <a href="/clubs?q=ai">AI Projects</a>
     </div>
     </div>
 
@@ -195,7 +173,7 @@
       <a class="foot-cta" href="/portal#listings">Post Free Listing</a>
       <a href="/portal#hiring">Post Free Job</a>
       <a href="/portal#seeking">Post Free Resume</a>
-      <a href="/portal#club">Post Free Club</a>
+      <a href="/portal#club">Post Free Project</a>
     </div>
       <div style="display:flex;align-items:center;gap:14px">
         <span>© 2026 Circuits.com</span>
@@ -206,8 +184,8 @@
 
 </div>
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
-<script src="store.js?v=31f75970b2"></script>
-<script src="app.js?v=cf2bb92c16"></script>
+<script src="store.js?v=d588b8de44"></script>
+<script src="app.js?v=ff3203e2ca"></script>
 <script>
 initHome();
 /* ten random Global Directory rows; the section goes away if it cannot load */

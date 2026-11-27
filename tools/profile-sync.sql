@@ -94,3 +94,36 @@ where c.slug = a.company_slug and c.contact is null;
 -- extra grant.
 alter table public.companies add column if not exists title_source text
   check (title_source in ('company', 'contact'));
+
+-- 2026-11-27, applied as mirror_logo_to_profile. The 2026-11-23 list: details
+-- staff changed in Website Applications showed in the directory but not on
+-- the public profile. Contact, email, phone and website already followed;
+-- the logo did not, so a logo staff set stayed off the profile. It follows
+-- now, under the same rules (only when it changed, never a blank). The
+-- listing description is per keyword and deliberately does not overwrite the
+-- profile's About.
+create or replace function public.applications_mirror_company()
+ returns trigger
+ language plpgsql
+ security definer
+ set search_path to 'public'
+as $function$
+begin
+  if new.company_slug is null then return new; end if;
+  update companies c set
+    name    = case when new.company is distinct from old.company and nullif(btrim(new.company), '') is not null then btrim(new.company) else c.name end,
+    contact = case when new.contact is distinct from old.contact and nullif(btrim(new.contact), '') is not null then btrim(new.contact) else c.contact end,
+    email   = case when new.email   is distinct from old.email   and nullif(btrim(new.email),   '') is not null then lower(btrim(new.email)) else c.email end,
+    phone   = case when new.phone   is distinct from old.phone   and nullif(btrim(new.phone),   '') is not null then btrim(new.phone) else c.phone end,
+    website = case when new.website is distinct from old.website and nullif(btrim(new.website), '') is not null then btrim(new.website) else c.website end,
+    logo    = case when new.logo    is distinct from old.logo    and nullif(btrim(new.logo),    '') is not null then btrim(new.logo) else c.logo end,
+    updated_at = now()
+  where c.slug = new.company_slug
+    and (new.company is distinct from old.company or new.contact is distinct from old.contact
+      or new.email is distinct from old.email or new.phone is distinct from old.phone
+      or new.website is distinct from old.website or new.logo is distinct from old.logo);
+  return new;
+end $function$;
+drop trigger if exists applications_mirror_company_trg on public.applications;
+create trigger applications_mirror_company_trg after update of company, contact, email, phone, website, logo on public.applications
+  for each row execute function applications_mirror_company();

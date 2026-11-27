@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="styles.css?v=5aa6cfd14e">
+<link rel="stylesheet" href="styles.css?v=de6f4f9f9b">
 <script>if(new URLSearchParams(location.search).has('embed')) document.documentElement.classList.add('embed');</script>
 </head>
 <body>
@@ -88,7 +88,7 @@
 </footer>
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
-<script src="store.js?v=31f75970b2"></script>
+<script src="store.js?v=d588b8de44"></script>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -172,12 +172,14 @@ function rowHtml(a){
       <div class="co-sub" title="Paid fixed placement: the spot this listing holds on the keyword list. Blank = shuffled with everyone else.">Lock #<span class="ce" contenteditable data-field="locked_position" data-ph="none">${a.locked_position||''}</span></div>
     </td>
     <td><label class="cbx"><input type="checkbox" data-field="banner" ${a.banner?'checked':''}> Yes</label>${conflict?' <span class="warn-flag" title="This keyword already has a live Exclusive Sponsor banner">⚠</span>':''} <span class="ce price" contenteditable data-price="banner_price" data-cell="bannerprice" data-ph="${a.banner?money(BANNER_FEE):''}">${a.banner?money(effPrice(a.banner_price,BANNER_FEE)):''}</span></td>
+    <!-- Trust Badge (2026-11-23 list): a text box on every row, like Live
+         Team Members in Project Admin. Nothing is pre-filled; typed text plus
+         Save Badge puts the badge on, an empty box takes it off. -->
     <td class="badge-cell">
-      <label class="cbx" title="Trust badge on/off"><input type="checkbox" data-badge="on" ${a.badge?'checked':''}> Yes</label>
-      ${a.badge ? `
-      <span class="ce" contenteditable data-badge="text" data-ph="none">${esc(a.badge.text)}</span>
-      <input type="color" class="badge-color" data-badge="color" value="${esc(a.badge.color||'#c9a227')}" autocomplete="off">
-      <span class="ce price" contenteditable data-price="badge_price" data-cell="badgeprice" data-ph="${money(BADGE_FEE)}">${money(effPrice(a.badge_price,BADGE_FEE))}</span>` : ''}
+      <span class="adm-badge-edit"><input type="text" data-badge="text" value="${esc(a.badge ? a.badge.text : '')}" placeholder="Badge text" maxlength="40" aria-label="Trust badge text" autocomplete="off"><input type="color" class="badge-color" data-badge="color" value="${esc((a.badge && a.badge.color) || '#c9a227')}" aria-label="Trust badge colour" autocomplete="off"></span>
+      <span class="adm-badge-prev" style="color:${esc((a.badge && a.badge.color) || '#c9a227')}">${esc(a.badge ? a.badge.text : '')}</span>
+      <button type="button" class="mini-btn green" data-act="savebadge">Save Badge</button>
+      ${a.badge ? `<span class="ce price" contenteditable data-price="badge_price" data-cell="badgeprice" data-ph="${money(BADGE_FEE)}">${money(effPrice(a.badge_price,BADGE_FEE))}</span>` : ''}
     </td>
     <td class="msg-cell"><span class="ce" contenteditable data-field="description" data-maxlen="300" data-ph="Add description…" title="Shown on the listing's Exclusive Sponsor banner once entered (max 300 characters)">${esc(a.description)}</span></td>
     <td class="nowrap" data-cell="total"><b>$${totalPrice(a)}/mo</b><div class="co-sub">$${appPriceYear(a)}/yr</div></td>
@@ -254,12 +256,13 @@ async function saveBadge(tr){
   const textEl = tr.querySelector('[data-badge="text"]');
   const colorEl = tr.querySelector('[data-badge="color"]');
   if(!textEl || !colorEl) return;
-  const text = textEl.textContent.trim();
+  const text = textEl.value.trim();
   const badge = text ? { text, color: colorEl.value } : null;
+  const had = !!a.badge;
   const err = await updateApplication(id, { badge });
   if(err){ alert(errMsg(err)); return; }
   a.badge = badge;
-  if(!badge) draw(); else redrawPriceCells(tr, a);
+  if(had !== !!badge) draw(); else redrawPriceCells(tr, a);   // the price appears or goes with the badge
 }
 
 /* hand-entered prices: "$120", "120", "99.50" all work; blank = back to default */
@@ -292,10 +295,16 @@ body.addEventListener('focusout', async e=>{
     if(max && val.length > max){ val = val.slice(0, max); el.textContent = val; }
     await saveField(tr.dataset.id, el.dataset.field, val);
   }
-  else if(el.dataset.badge==='text') await saveBadge(tr);
 });
 
 /* live character cap for cells with data-maxlen (e.g. profile description, 300) */
+/* the badge preview follows the typing before Save Badge */
+body.addEventListener('input', e=>{
+  const inp = e.target.closest('input[data-badge]'); if(!inp) return;
+  const td = inp.closest('td'), prev = td && td.querySelector('.adm-badge-prev'); if(!prev) return;
+  prev.textContent = td.querySelector('input[data-badge="text"]').value.trim();
+  prev.style.color = td.querySelector('input[data-badge="color"]').value;
+});
 body.addEventListener('input', e=>{
   const el = e.target.closest('[contenteditable][data-maxlen]'); if(!el) return;
   const max = parseInt(el.dataset.maxlen, 10);
@@ -338,20 +347,13 @@ body.addEventListener('change', async e=>{
     const err = await updateApplication(id, { paused });
     if(err){ el.checked = paused; alert(errMsg(err)); return; }
     a.paused = paused;
-  } else if(el.matches('input[data-badge="on"]')){
-    const badge = el.checked ? ((originals[id] && originals[id].badge) || { text:'Authorized', color:'#c9a227' }) : null;
-    const err = await updateApplication(id, { badge });
-    if(err){ el.checked = !el.checked; alert(errMsg(err)); return; }
-    a.badge = badge;
-    draw();
-  } else if(el.matches('input[data-badge="color"]')){
-    await saveBadge(tr);
   }
 });
 
 body.addEventListener('click', async e=>{
   const btn = e.target.closest('button[data-act]'); if(!btn) return;
   const id = btn.closest('tr').dataset.id;
+  if(btn.dataset.act==='savebadge'){ await saveBadge(btn.closest('tr')); return; }
   if(btn.dataset.act==='clearlogo'){
     if(!confirm('Remove this logo from the company?')) return;
     const err = await updateApplication(id, { logo: null });

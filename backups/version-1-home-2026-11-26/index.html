@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Circuits.com | The Circuits Industry Directory</title>
+<meta name="description" content="Search the circuits and electronics industry: suppliers, distributors, design engineers, semiconductors, PCB assembly and test. Claim your Circuits-Keyword™.">
+<link rel="canonical" href="https://circuits.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Circuits.com">
+<meta property="og:title" content="Circuits.com | The Circuits Industry Directory">
+<meta property="og:description" content="Search the circuits and electronics industry: suppliers, distributors, design engineers, semiconductors, PCB assembly and test. Claim your Circuits-Keyword™.">
+<meta property="og:url" content="https://circuits.com/">
+<meta property="og:image" content="https://circuits.com/assets/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Circuits.com | The Circuits Industry Directory">
+<meta name="twitter:description" content="Search the circuits and electronics industry: suppliers, distributors, design engineers, semiconductors, PCB assembly and test. Claim your Circuits-Keyword™.">
+<meta name="twitter:image" content="https://circuits.com/assets/og-card.png">
+<link rel="icon" href="assets/favicon.png">
+<link rel="stylesheet" href="styles.css?v=5aa6cfd14e">
+<script src="/nav.js?v=0e4f71b722"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://circuits.com/#org",
+      "name": "Circuits.com",
+      "url": "https://circuits.com/",
+      "logo": "https://circuits.com/assets/logo-home.png",
+      "description": "The circuits industry directory connecting suppliers, distributors, design engineers and manufacturers."
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://circuits.com/#website",
+      "url": "https://circuits.com/",
+      "name": "Circuits.com",
+      "publisher": {"@id": "https://circuits.com/#org"},
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://circuits.com/results?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+  ]
+}
+</script>
+<script async src="/analytics.js?v=70049a2947"></script>
+</head>
+<body class="home-page">
+<div class="home">
+
+  <header class="topbar">
+    <div class="inner">
+      <div class="brand"><a href="/"><img class="logo-nav" src="assets/logo-bar.png" alt="Circuits.com" width="389" height="64"></a><span class="brand-slogan">Free Circuits Directory Marketplace</span></div>
+    <nav class="nav">
+      <a class="active" href="/">Home</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+      <a class="nav-auth nav-signin" href="/portal">Sign In</a>
+      <a class="nav-auth nav-dash" href="/portal">Dashboard</a>
+      <a class="nav-auth nav-admin" href="/portal#admin"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5 20 6v6c0 5-3.4 8.6-8 9.5C7.4 20.6 4 17 4 12V6z"/><path d="m9 12 2 2 4-4"/></svg>Admin</a>
+      <a class="cta" href="/join">Get Listed</a>
+    </nav>
+      <!-- The bell ships in the markup and starts hidden; nav.js shows it in
+           <head> when somebody is signed in, and app.js only fills it in. It
+           used to be built and inserted at DOMContentLoaded, after an async
+           currentUser() call, so it landed well after first paint and shoved
+           the whole header sideways on every load (Jacob, 2026-09-03). -->
+      <button type="button" class="inbox-btn" aria-label="Notifications" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span class="inbox-n" hidden></span>
+      </button>
+    </div>
+  </header>
+
+  <main class="home-main">
+    <!-- The search stays centred in the first screen as it always was; the
+         four cards wait under the fold (Jacob, 2026-10-07). -->
+    <div class="home-top">
+    <h1 class="sr-only">Circuits.com: The Circuits Industry Directory for Suppliers, Parts and Engineers</h1>
+    <a href="/" class="hero-link"><img class="logo-hero" src="assets/logo-home.png" alt="Circuits.com" width="1108" height="185" fetchpriority="high"><span class="beta-tag">BETA</span></a>
+
+    <!-- One search box, four indexes (Jacob, 2026-09-03; Search Clubs
+         2026-10-12). Directory is parts, services and companies; Hire Talent
+         is the people seeking employment on /talent, for employers; Search
+         Work is the open roles on /jobs, for people; Search Clubs is the
+         Global Club List on /clubs. The buttons only change where the query
+         goes. -->
+    <div class="search-mode" role="tablist" aria-label="What to search">
+      <button type="button" class="on" data-target="directory" role="tab" aria-selected="true">Directory</button>
+      <button type="button" data-target="recruits" role="tab" aria-selected="false">Hire Talent</button>
+      <button type="button" data-target="jobs" role="tab" aria-selected="false">Search Work</button>
+      <button type="button" data-target="clubs" role="tab" aria-selected="false">Search Clubs</button>
+    </div>
+    <form id="home-form" class="searchbox" autocomplete="off" data-target="directory">
+      <p class="search-hint" id="search-hint">Directory: companies, products and services, listed by their Circuits-Keywords&trade;.</p>
+      <div class="search-pill">
+        <input id="home-search" type="text" placeholder="Search products, services, companies, part numbers, or keywords..." aria-label="Search" autocomplete="off">
+        <button type="submit" class="search-go" aria-label="Search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+      </div>
+    </form>
+
+    <!-- One Popular line per index; the one that matches the search shows.
+         Directory is the default, so it is the one a reader with no
+         JavaScript gets. -->
+    <div class="popular" data-for="directory">
+      Popular:
+      <a href="/results?q=aerospace">Aerospace</a>&middot;
+      <a href="/results?q=pcb+design">PCB Design</a>&middot;
+      <a href="/results?q=pcb+layout">PCB Layout</a>&middot;
+      <a href="/results?q=circuit+design">Circuit Design</a>&middot;
+      <a class="pop-list-link" href="/global">Global Directory</a>&middot;
+      <a href="/results?q=defense">Defense</a>&middot;
+      <a href="/results?q=semiconductor">Semiconductor</a>&middot;
+      <a href="/results?q=automotive">Automotive</a>&middot;
+      <a href="/results?q=connectors">Connectors</a>
+    </div>
+    <div class="popular" data-for="recruits" hidden>
+      Popular:
+      <a href="/talent?q=pcb+layout">PCB Layout</a>&middot;
+      <a href="/talent?q=microcontroller">Microcontroller</a>&middot;
+      <a href="/talent?q=rf+engineer">RF Engineer</a>&middot;
+      <a href="/talent?q=digital+design">Digital Design</a>&middot;
+      <a href="/talent?q=electronics+engineer">Electronics Engineer</a>&middot;
+      <a href="/talent?q=verification">Verification</a>&middot;
+      <a href="/talent?q=firmware+engineer">Firmware Engineer</a>&middot;
+      <a href="/talent?q=verilog">Verilog</a>&middot;
+      <a href="/talent?q=electrical+engineer">Electrical Engineer</a>
+    </div>
+    <div class="popular" data-for="jobs" hidden>
+      Popular:
+      <a href="/jobs?q=hardware+design+engineer">Hardware Design Engineer</a>&middot;
+      <a href="/jobs?q=pcb+design+engineer">PCB Design Engineer</a>&middot;
+      <a href="/jobs?q=embedded+systems+engineer">Embedded Systems Engineer</a>&middot;
+      <a href="/jobs?q=asic+design+engineer">ASIC Design Engineer</a>&middot;
+      <a href="/jobs?q=analog+engineer">Analog Engineer</a>&middot;
+      <a href="/jobs?q=hardware+test+engineer">Hardware Test Engineer</a>
+    </div>
+    <!-- Search Clubs (Jacob, 2026-10-12): the Global Club List sits in the
+         centre of its line -->
+    <div class="popular" data-for="clubs" hidden>
+      Popular:
+      <a href="/clubs?q=electronics">Electronics Clubs</a>&middot;
+      <a href="/clubs?q=robotics">Robotics Clubs</a>&middot;
+      <a class="pop-list-link" href="/clubs">Global Club List</a>&middot;
+      <a href="/clubs?q=aerospace">Aerospace Clubs</a>&middot;
+      <a href="/clubs?q=ai">AI Clubs</a>
+    </div>
+    </div>
+
+    <!-- Ten random listings from the Global Directory, revolving like
+         /global does. They replaced the four Start cards (Jacob, 2026-11-16). -->
+    <div class="wc-wrap wc-wrap-cards wc-home">
+    <section class="home-dir" id="home-dir" aria-labelledby="home-dir-h" aria-busy="true">
+      <div class="home-dir-head">
+        <h2 id="home-dir-h"><span class="home-dir-live" aria-hidden="true"></span>Global Directory</h2>
+        <a class="home-dir-all" href="/global">See all<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5.5 18.5 12 12 18.5"/></svg></a>
+      </div>
+      <div class="home-dir-box">
+        <table class="listings-table club-table dir-table home-dir-table">
+          <thead><tr><th class="rank">#</th><th class="logo-col"><span class="sr-only">Logo</span></th><th>Company Name</th><th>Keyword</th><th>Circuits URL</th></tr></thead>
+          <!-- placeholder rows hold the table's place until the listings
+               arrive, so the page does not jump when they do -->
+          <tbody id="home-dir-rows">
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+            <tr class="hd-skel" aria-hidden="true"><td class="rank"></td><td class="logo-col"><span class="co-logo"></span></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="wc-foot guest-only">Not sure yet? <a href="/register">Register Free &amp; Explore</a></p>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="inner">
+      <div class="flinks">
+      <a href="/terms">Terms</a>
+      <a href="/privacy">Privacy</a>
+      <!-- the dashboard's four doors, as small footer links (Jacob, 2026-11-16) -->
+      <a class="foot-cta" href="/portal#listings">Post Free Listing</a>
+      <a href="/portal#hiring">Post Free Job</a>
+      <a href="/portal#seeking">Post Free Resume</a>
+      <a href="/portal#club">Post Free Club</a>
+    </div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <span>© 2026 Circuits.com</span>
+        <span class="footer-brand"><img class="footer-mark" src="assets/favicon.png" alt="" width="64" height="64"></span>
+      </div>
+    </div>
+  </footer>
+
+</div>
+<script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
+<script src="store.js?v=31f75970b2"></script>
+<script src="app.js?v=cf2bb92c16"></script>
+<script>
+initHome();
+/* ten random Global Directory rows; the section goes away if it cannot load */
+fetchGlobalDirectory().then(list => {
+  for(let i = list.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
+  const body = document.getElementById('home-dir-rows');
+  body.innerHTML = list.slice(0, 10).map(dirRowHtml).join('');
+  const sec = document.getElementById('home-dir');
+  sec.removeAttribute('aria-busy');
+  if(!list.length){ sec.hidden = true; return; }
+  revolveRows(body);
+  /* the Directory Popular line: the eight most listed keywords, counted
+     without regard to case, with the Global Directory link in the middle */
+  const n = {}, label = {};
+  list.forEach(r => { const k = r.keyword.trim().toLowerCase(); n[k] = (n[k] || 0) + 1; if(!label[k] || /[A-Z]/.test(r.keyword) && !/[A-Z]/.test(label[k])) label[k] = r.keyword.trim(); });
+  const top = Object.keys(n).sort((a, b) => n[b] - n[a] || a.localeCompare(b)).slice(0, 8);
+  if(top.length < 8) return;
+  const cap = s => s.replace(/\b[a-z]/g, c => c.toUpperCase());
+  const a = top.map(k => '<a href="/results?q=' + encodeURIComponent(k).replace(/%20/g, '+') + '">' + escapeHtml(cap(label[k])) + '</a>');
+  a.splice(4, 0, '<a class="pop-list-link" href="/global">Global Directory</a>');
+  /* the page ships with today's top eight in this same order; only touch the
+     line when the live ones differ, so it never visibly reshuffles on load */
+  const pop = document.querySelector('.popular[data-for=directory]');
+  const now = [...pop.querySelectorAll('a')].map(x => x.getAttribute('href')).join();
+  const want = a.map(x => /href="([^"]+)"/.exec(x)[1]).join();
+  if(now !== want) pop.innerHTML = 'Popular: ' + a.join('&middot; ');
+}).catch(() => { document.getElementById('home-dir').hidden = true; });
+</script>
+</body>
+</html>

@@ -311,8 +311,8 @@ function renderClubKeywords(){
   $('ck-pending-empty').style.display = pend.length ? 'none' : 'block';
   lb.innerHTML = live.map(extrasRow).join('');
   $('ck-live-empty').style.display = live.length ? 'none' : 'block';
-  $('ck-hint').textContent = pend.length ? pend.length + (pend.length === 1 ? ' club keyword waiting for approval' : ' club keywords waiting for approval')
-    : live.length + (live.length === 1 ? ' live club keyword' : ' live club keywords');
+  $('ck-hint').textContent = pend.length ? pend.length + (pend.length === 1 ? ' project keyword waiting for approval' : ' project keywords waiting for approval')
+    : live.length + (live.length === 1 ? ' live project keyword' : ' live project keywords');
 }
 function renderClubUpgrades(){
   const rb = $('cu-req-body'), lb = $('cu-live-body'); if(!rb || !lb) return;
@@ -347,11 +347,11 @@ function personRow(r, pending){
       <td class="cell-muted">${clubEmails[r.c.slug + ':' + p.id] ? `<a href="mailto:${esc(clubEmails[r.c.slug + ':' + p.id])}">${esc(clubEmails[r.c.slug + ':' + p.id])}</a>` : 'none'}</td>
       <td>${p.handle ? `<a href="/${esc(p.handle)}" target="_blank" rel="noopener">circuits.com/${esc(p.handle)}</a>` : '<span class="cell-muted">none, named only</span>'}</td>
       <td>${p.confirmed ? '<b>Yes</b>' : '<span class="cell-muted">No</span>'}</td>
-      <td><span class="adm-badge-edit"><input type="text" id="pb-t-${k}" value="${esc(b.text || personBadgeDefault(r))}" maxlength="40" aria-label="Badge text"><input type="color" id="pb-c-${k}" value="${esc(color)}" aria-label="Badge colour"></span>
+      <td><span class="adm-badge-edit"><input type="text" id="pb-t-${k}" value="${esc(b.text || '')}" placeholder="${esc(personBadgeDefault(r))}" data-fallback maxlength="40" aria-label="Badge text" oninput="badgePreview(this)"><input type="color" id="pb-c-${k}" value="${esc(color)}" aria-label="Badge colour" oninput="badgePreview(this)"></span>
         <span class="adm-badge-prev" style="color:${esc(color)}">${esc(b.text || personBadgeDefault(r))}</span></td>
       <td class="row-actions">
-        ${pending ? `<button class="mini-btn green" onclick="approvePersonUI('${k}')">Approve</button><button class="mini-btn" onclick="denyPersonUI('${k}')">Deny</button>`
-          : `<button class="mini-btn green" onclick="savePersonBadgeUI('${k}')">Save badge</button><button class="mini-btn" onclick="denyPersonUI('${k}')">Unapprove</button>`}
+        ${pending ? `<button class="mini-btn green" onclick="approvePersonUI('${k}')">Approve</button><button class="mini-btn" onclick="savePersonBadgeUI('${k}')">Save Badge</button><button class="mini-btn" onclick="denyPersonUI('${k}')">Deny</button>`
+          : `<button class="mini-btn green" onclick="savePersonBadgeUI('${k}')">Save Badge</button><button class="mini-btn" onclick="denyPersonUI('${k}')">Unapprove</button>`}
         <button class="mini-btn danger" onclick="removePersonUI('${k}')">Remove</button></td></tr>`;
 }
 async function renderClubPeople(){
@@ -366,15 +366,15 @@ async function renderClubPeople(){
   $('cp-pending-empty').style.display = waiting.length ? 'none' : 'block';
   $('cp-empty').style.display = live.length ? 'none' : 'block';
   const n = waiting.filter(r => r.p.status === 'Pending').length;
-  $('cp-hint').textContent = n ? `${n} ${n === 1 ? 'person' : 'people'} waiting for approval` : 'Everyone Listed On A Club Page. Approve Puts Their Badge On Their Own Profile';
+  $('cp-hint').textContent = n ? `${n} ${n === 1 ? 'person' : 'people'} waiting for approval` : 'Everyone Listed On A Project Page';
 }
 /* one change to one person, written back as the club's whole list */
 async function changePerson(key, fn, done){
   const [slug, list, id] = String(key).split('|');
   const c = allClubs.find(x => x.slug === slug);
-  if(!c || !PERSON_LIST[list]) return;
+  if(!c || !PERSON_LIST[list]){ tell('That project is no longer on the list. Reload and try again.'); return; }
   const arr = (Array.isArray(c[list]) ? c[list] : []).map(x => Object.assign({}, x));
-  const i = arr.findIndex(x => x && x.id === id); if(i < 0) return;
+  const i = arr.findIndex(x => x && x.id === id); if(i < 0){ tell('That person is no longer on the list. Reload and try again.'); return; }
   const next = fn(arr[i], arr, i);
   if(next === false) return;
   const err = await updateClubPeople(slug, { [list]: arr.filter(Boolean) });
@@ -416,21 +416,20 @@ async function removePersonUI(key){
 function clubAppRow(c, pending){
   const s = esc(c.slug), b = c.club_badge || {};
   const color = /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : '#3f6300';
-  const text = (b.text || '').trim() || c.name || '';
+  const text = (b.text || '').trim();   // no pre-filled badge text (2026-11-23 list)
   const cell = (f, v, type) => `<td><input class="adm-cell-in" type="${type || 'text'}" id="ca-${f}-${s}" value="${esc(v || '')}" aria-label="${f}"></td>`;
   return `<tr class="${pending ? 'row-waiting' : ''}">
-      ${whoCell(c.name, `<a href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener"><b>${esc(c.name)}</b></a>`, '', [c.handle, c.slug], c.logo)}
-      <td>${esc(c.college_name || 'none')}</td>
+      ${whoCell(c.name, `<input class="adm-cell-in" type="text" id="ca-name-${s}" value="${esc(c.name || '')}" aria-label="Project title"><br><input class="adm-cell-in" type="text" id="ca-college_name-${s}" value="${esc(c.college_name || '')}" placeholder="Organization or university" aria-label="Organization"> <a href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener">open</a>`, '', [c.handle, c.slug], c.logo)}
       <td><a class="web-link" href="/${esc(c.handle || c.slug)}" target="_blank" rel="noopener">circuits.com/${esc(c.handle || c.slug)}</a></td>
       ${cell('contact', c.contact)}${cell('email', c.email, 'email')}${cell('phone', c.phone)}${cell('website', c.website)}
       <td class="cell-muted">${new Date(c.created_at).toLocaleDateString()}</td>
-      <td><span class="adm-badge-edit"><input type="text" id="cb-t-${s}" value="${esc(text)}" maxlength="40" aria-label="Club badge text"><input type="color" id="cb-c-${s}" value="${esc(color)}" aria-label="Club badge colour"></span>
+      <td><span class="adm-badge-edit"><input type="text" id="cb-t-${s}" value="${esc(text)}" placeholder="Badge text" maxlength="40" aria-label="Project badge text" oninput="badgePreview(this)"><input type="color" id="cb-c-${s}" value="${esc(color)}" aria-label="Project badge colour" oninput="badgePreview(this)"></span>
         <span class="adm-badge-prev" style="color:${esc(color)}">${esc(text)}</span></td>
       <td>${c.suspended_at ? '<b>Suspended</b>' : c.club_status === 'Pending' ? '<b>Pending</b>' : esc(c.club_status || 'Pending')}</td>
       <td class="row-actions">
         ${c.club_status !== 'Approved' ? `<button class="mini-btn green" onclick="approveClubAppUI('${s}')">Approve</button>` : ''}
         ${c.club_status !== 'Denied' ? `<button class="mini-btn" onclick="setClubStatusUI('${s}', 'Denied')">Deny</button>` : ''}
-        <button class="mini-btn" onclick="saveClubAppUI('${s}')">Save</button>
+        <button class="mini-btn green" onclick="saveClubAppUI('${s}')">Save Badge</button>
         <button class="mini-btn danger" onclick="deleteCompanyUI('${s}')">Delete</button></td></tr>`;
 }
 function renderClubApps(){
@@ -441,7 +440,7 @@ function renderClubApps(){
   $('ca-pending-empty').style.display = waiting.length ? 'none' : 'block';
   $('ca-empty').style.display = live.length ? 'none' : 'block';
   const n = allClubs.filter(c => c.club_status === 'Pending').length;
-  $('ca-hint').textContent = n ? `${n} club application${n === 1 ? '' : 's'} waiting` : 'Every Club That Asked For A Page. Approve Or Deny New Ones; Edit Details And The Club Badge In Place';
+  $('ca-hint').textContent = n ? `${n} project application${n === 1 ? '' : 's'} waiting` : 'Every Project That Asked For A Profile URL Page. Approve Or Deny New Ones; Edit Details Old Ones.';
 }
 /* the row as staff left it: contact details and the Club Badge */
 function clubAppFields(slug){
@@ -449,6 +448,8 @@ function clubAppFields(slug){
   const t = document.getElementById('cb-t-' + slug), c = document.getElementById('cb-c-' + slug);
   const fields = {};
   for(const f of ['contact', 'email', 'phone', 'website']){ const x = v(f); if(x !== null) fields[f] = x || null; }
+  /* every prefilled field can be changed, title and organization too (2026-11-23 list) */
+  { const nm = v('name'); if(nm) fields.name = nm; const cn = v('college_name'); if(cn !== null) fields.college_name = cn || null; }
   if(fields.email && !isValidEmail(fields.email)) return { error: '"' + fields.email + '" is not an email address.' };
   if(t){ const text = t.value.trim(); fields.club_badge = text ? { text, color: c && /^#[0-9a-f]{6}$/i.test(c.value) ? c.value : '#3f6300' } : null; }
   return { fields };
@@ -458,7 +459,7 @@ async function saveClubAppUI(slug){
   const r = clubAppFields(slug); if(r.error){ tell(r.error); return; }
   const err = await updateClubPeople(slug, r.fields);
   if(err){ tell('Could not save: ' + err); return; }
-  if(typeof toast === 'function') toast(c.name + ' saved.', true);
+  if(typeof toast === 'function') toast((r.fields.name || c.name) + ' saved.', true);
   await reloadClubs();
 }
 async function approveClubAppUI(slug){
@@ -487,6 +488,19 @@ async function reloadClubProjects(){
       <td class="row-actions"><button class="mini-btn" onclick="toggleProjectUI('${esc(String(p.id))}')">${p.published === false ? 'Show' : 'Hide'}</button>
         <button class="mini-btn danger" onclick="deleteProjectUI('${esc(String(p.id))}')">Delete</button></td></tr>`; }).join('');
   $('cj-empty').style.display = allProjects.length ? 'none' : 'block';
+  /* # of Parts Listed on the Projects tab: every Project Parts row across a page's showcase */
+  document.querySelectorAll('[data-parts-for]').forEach(td => {
+    td.textContent = String(allProjects.filter(p => p.company_slug === td.dataset.partsFor)
+      .reduce((n, p) => n + (Array.isArray(p.parts) ? p.parts : []).filter(x => x && (x.name || '').trim()).length, 0));
+  });
+}
+/* the badge beside the inputs follows what is typed, before Save (2026-11-23 list: it looked like Save did nothing) */
+function badgePreview(inp){
+  const wrap = inp.closest('td'); if(!wrap) return;
+  const t = wrap.querySelector('input[type=text]'), c = wrap.querySelector('input[type=color]'), prev = wrap.querySelector('.adm-badge-prev');
+  if(!prev) return;
+  prev.textContent = t ? (t.value.trim() || ('fallback' in t.dataset ? t.placeholder : '')) : '';
+  if(c) prev.style.color = c.value;
 }
 async function toggleProjectUI(id){
   const p = allProjects.find(x => String(x.id) === id); if(!p) return;
@@ -980,7 +994,7 @@ async function accAction(act, btn){
 async function accDo(act, a, btn){
   const name = accName(a);
   if(act === 'resend'){
-    const err = await resendConfirmation(a.signin_email);
+    const err = await resendConfirmation(a.signin_email, { userId: a.user_id });
     if(err){ tell(err); return; }
     accToast('Confirmation email sent again to ' + a.signin_email + '.');
     return;
@@ -1062,7 +1076,7 @@ async function accDo(act, a, btn){
     const r = await adminSetEmail(a.user_id, e);
     if(r.error){ tell('Sign-in email not changed: ' + r.error); return; }
     if(r.confirmed === false){
-      const err = await resendConfirmation(e);
+      const err = await resendConfirmation(e, { userId: a.user_id });
       accToast(err ? 'Changed. The confirmation email could not go yet: ' + err : 'Changed, and the confirmation email went to ' + e + '.');
     }else accToast('Sign-in email changed to ' + e + '.');
     await reloadCompanies(); await loadAccounts(true);
@@ -1096,7 +1110,7 @@ async function resendAllUnconfirmed(){
   try{
     for(const [i, a] of todo.entries()){
       btn.textContent = 'Sending ' + (i + 1) + ' of ' + todo.length + '…';
-      const err = await resendConfirmation(a.signin_email);
+      const err = await resendConfirmation(a.signin_email, { userId: a.user_id });
       if(err) failed.push(a.signin_email + ': ' + err);
       if(i < todo.length - 1) await new Promise(r => setTimeout(r, 1200));
     }
@@ -1119,8 +1133,8 @@ async function reloadClubs(){
   allClubs.sort((a, b) => (order[a.club_status] ?? 9) - (order[b.club_status] ?? 9));
   const waiting = allClubs.filter(c => c.club_status === 'Pending').length;
   $('clubs-hint').textContent = waiting
-    ? waiting + (waiting === 1 ? ' club waiting for approval' : ' clubs waiting for approval')
-    : 'Every Student Club Page. Approve To Put A Club On The Global Club List, Deny To Keep It Off';
+    ? waiting + (waiting === 1 ? ' project waiting for approval' : ' projects waiting for approval')
+    : 'Every Project Page. Approve To Put A Project On The Global Projects List, Deny To Keep It Off';
   const n = a => (Array.isArray(a) ? a : []).filter(x => x && ((x.name || '').trim() || (x.handle || '').trim())).length;
   body.innerHTML = allClubs.map(c => `
     <tr class="${c.club_status === 'Pending' ? 'row-waiting' : ''}">
@@ -1128,8 +1142,9 @@ async function reloadClubs(){
       <td>${esc(c.college_name || 'none')}</td>
       <td>${esc(c.contact || 'none')}${c.phone ? '<br><span class="cell-muted">' + esc(c.phone) + '</span>' : ''}</td>
       <td class="cell-muted">${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : 'none'}</td>
-      <td class="cell-muted">${n(c.members)} members<br>${n(c.team)} officers</td>
+      <td class="cell-muted">${n(c.members)} team members<br>${n(c.team)} officers</td>
       <td>${(c.keywords || []).length ? c.keywords.map(k => `<span class="kw-tag${k.status === 'Approved' ? '' : ' kw-off'}" title="${esc(k.status)}">${esc(k.keyword)}</span>`).join(' ') : '<span class="cell-muted">none yet</span>'}</td>
+      <td data-parts-for="${esc(c.slug)}" class="cell-muted">0</td>
       <td class="cell-muted">${new Date(c.created_at).toLocaleDateString()}</td>
       <td>${c.suspended_at ? '<b>Suspended</b>' : c.club_status === 'Pending' ? '<b>Pending</b>' : esc(c.club_status)}</td>
       <td class="row-actions">
@@ -1483,6 +1498,7 @@ window.initAdmin = async function(){
    published deliberately; everything else stays private to this file.
    tools/check.js fails if a new onclick appears without being listed here. */
 Object.assign(window, {
+  badgePreview,
   editListing, editBadge, removeListing, togglePause, lockListing,
   approveApp, rejectApp, setSuspended, approveJob, closeJob, approveUpgrade, denyUpgrade, sendNotificationUI, notifyAudienceUI, setRecruitStatus, deleteCompanyUI, setClubStatusUI, toggleProjectUI, deleteProjectUI, setProfileSuspendedUI,
   approvePersonUI, denyPersonUI, savePersonBadgeUI, removePersonUI, saveClubAppUI, approveClubAppUI

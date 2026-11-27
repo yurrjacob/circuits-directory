@@ -1,46 +1,60 @@
 /* ===== Circuits.com, shared front-end behavior ===== */
 
 
+/* The Global Directory rule, for the lists filtered in the browser (/global,
+   /clubs): every typed word must start a word of the row, singular and
+   plural alike (normKw folds both, 2026-11-23 list). */
+function searchKeys(s){ return String(s || '').split(/[^A-Za-z0-9]+/).filter(Boolean).map(normKw).filter(Boolean); }
+function matchesAllWords(qKeys, text){
+  const hay = searchKeys(text);
+  return qKeys.every(w => hay.some(h => h.startsWith(w)));
+}
+/* any search bar: an approved company's (or, with kind 'club', project's)
+   exact name opens its circuits.com page instead of searching (2026-11-23 list) */
+async function goUnlessCompany(q, kind, href){
+  const h = q && typeof companyPageFor === 'function' ? await companyPageFor(q, kind) : '';
+  if(h){ location.href = '/' + encodeURIComponent(h); return true; }
+  if(href) location.href = href;
+  return false;
+}
 function gotoSearch(term){
   const q = (term||'').trim();
   if(!q) return;
   window.location.href = '/results?q=' + encodeURIComponent(q);
 }
 
-/* Home page search wiring (Jacob, 2026-09-03). Three indexes: Directory
-   searches the supplier directory; Hire Talent is the people seeking
-   employment on /talent, for employers; Search Work is the open roles on
-   /jobs, for people; Search Clubs is the Global Club List on /clubs. Choosing one also picks the Popular line and the door
-   below that go with it. */
+/* Home page search wiring (Jacob, 2026-09-03; cut to three tabs 2026-11-26).
+   Directory searches the supplier directory; Parts runs the same Directory
+   search until parts exist (every account will get 10 free parts); Projects
+   (data-target "clubs") is the Global Club List on /clubs. Hire Talent
+   (/talent) and Search Work (/jobs) are off the home page, but their entries
+   stay below so a tab can come back with its button alone. The one-line hint
+   above the box was removed for every tab the same day. */
 const HOME_PLACEHOLDER = {
-  directory: 'Search products, services, companies, part numbers, or keywords...',
+  directory: 'Search products, services, companies or keywords...',
+  parts:     'Search part numbers, components, suppliers or keywords...',
   recruits:  'Search new recruits by job title, or keywords...',
   jobs:      'Search open jobs by title or keyword...',
-  clubs:     'Search student clubs by name, university or keyword...'
+  clubs:     'Search projects, design builds, hardware integration, or keywords...'
 };
-const HOME_HINT = {
-  directory: 'Directory: companies, products and services, listed by their Circuits-Keywords\u2122.',
-  recruits:  'Hire Talent: people seeking employment, listed by their Circuits-Keywords\u2122.',
-  jobs:      'Search Work: open roles posted by companies on Circuits.com.',
-  clubs:     'Search Clubs: student clubs on the Global Club List, by name, university and Circuits-Keywords\u2122.'
-};
+/* the Popular line each tab shows; Parts borrows the Directory's */
+const HOME_POPULAR = { parts: 'directory' };
 function homeTarget(form){ return form.dataset.target || 'directory'; }
 function initHome(){
   const input = document.getElementById('home-search');
   const form  = document.getElementById('home-form');
   if(!form) return;
-  const hint = document.getElementById('search-hint');
   function refresh(){
     const t = homeTarget(form);
     input.placeholder = HOME_PLACEHOLDER[t];
-    if(hint){ hint.textContent = HOME_HINT[t] || ''; hint.hidden = !HOME_HINT[t]; }
     /* the Popular line for this index */
-    document.querySelectorAll('.popular[data-for]').forEach(p => { p.hidden = p.dataset.for !== t; });
+    const pop = HOME_POPULAR[t] || t;
+    document.querySelectorAll('.popular[data-for]').forEach(p => { p.hidden = p.dataset.for !== pop; });
   }
   form.addEventListener('submit', e => {
     e.preventDefault();
     const t = homeTarget(form), q = (input.value || '').trim();
-    if(t === 'directory'){ gotoSearch(q); return; }
+    if(t === 'directory' || t === 'parts'){ gotoSearch(q); return; }   // Parts: the Directory until parts exist
     location.href = (t === 'recruits' ? '/talent' : t === 'clubs' ? '/clubs' : '/jobs') + (q ? '?q=' + encodeURIComponent(q) : '');
   });
   document.querySelectorAll('.search-mode [data-target]').forEach(b => b.addEventListener('click', () => {
@@ -512,7 +526,7 @@ async function initInbox(){
     if(!storedSession()) return;
     const add = (src, integrity) => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; if(integrity) t.integrity = integrity; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
     /* the same vendored file, and the same hash, every page carries (audit item 3, 2026-09-21) */
-    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=31f75970b2'); }catch(e){ return; }
+    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=d588b8de44'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;
@@ -773,6 +787,12 @@ function renderSavedStrip(){
     btn.addEventListener('click', () => { removeSaved(btn.dataset.unsave); renderSavedStrip(); }));
 }
 
+/* The Exclusive Sponsor Banner is archived (2026-11-23 list: "remove it on all
+   keywords, save it for later, probably in two months"). Off hides the sample
+   banner on unsold keywords, a paid sponsor's card and the Get Listed For
+   button; the data and admin are untouched. backups/sponsor-banner-2026-11-27
+   says how to bring it back: set this to true. */
+const SPONSOR_BANNERS = false;
 async function initResults(forcedTerm){
   const params = new URLSearchParams(location.search);
   const q = forcedTerm || params.get('q') || '';
@@ -800,7 +820,12 @@ async function initResults(forcedTerm){
 
   let listings = [];
   try {
-    listings = await fetchApprovedByKeyword(q);
+    /* an approved company's exact name goes straight to its page (2026-11-23
+       list), asked alongside the listings so it costs no extra wait */
+    const [found, page] = await Promise.all([fetchApprovedByKeyword(q),
+      typeof companyPageFor === 'function' ? companyPageFor(q) : '']);
+    if(page){ location.replace('/' + encodeURIComponent(page)); return; }
+    listings = found;
   } catch(e){
     /* Do NOT fall through to the "this keyword is available" pitch. We do not
        know that it is available, we only know we could not ask. */
@@ -825,7 +850,9 @@ async function initResults(forcedTerm){
      somewhere. "View Docs" and the "This Banner is Available" line went on
      2026-09-03. The keyword is capitalised by CSS (.tc), the same way the
      subbar shows it. */
-  const exampleBanner = (term, extra = '') => `
+  const exampleBanner = (term, extra = '') => !SPONSOR_BANNERS
+    ? `${extra ? `<div class="empty" style="margin-bottom:4px">${extra}</div>` : ''}<div class="empty"><div class="big">No company is listed under &ldquo;<span class="tc">${term}</span>&rdquo; yet.</div></div>`
+    : `
     ${extra ? `<div class="empty" style="margin-bottom:4px">${extra}</div>` : ''}
     <div class="premium"><div class="premium-card">
       <span class="premium-badge">Exclusive Sponsor</span>
@@ -843,7 +870,7 @@ async function initResults(forcedTerm){
         </div>
       </div>
     </div></div>`;
-  const listCta = (term) => `
+  const listCta = (term) => !SPONSOR_BANNERS ? '' : `
     <div class="empty" style="margin:10px auto 26px">
       <a class="btn btn-primary" href="/join" style="padding:14px 28px;font-size:1rem;display:inline-block;font-weight:700">Get Listed For <span class="tc">${term}</span></a>
     </div>`;
@@ -891,15 +918,25 @@ async function initResults(forcedTerm){
 
   /* Real listings make this page worth indexing; the sample fixture and an
      empty page are not Google's business. */
-  setResultsMeta(q, listings.some(l => !/^sample-/.test(l.company_slug || '')));
+  /* only listings under the keyword itself make the page worth indexing:
+     word matches are a convenience, not a page Google should hold */
+  setResultsMeta(q, listings.some(l => l.exact !== false && !/^sample-/.test(l.company_slug || '')));
 
   /* The Exclusive Sponsor is the banner AND a row in the list (Jacob,
      2026-09-03: "users should still be listed on the main list if they have a
      banner"). The banner is the paid placement above the results; the row is
      the free listing every company keeps, so a sponsor is not dropped from
      the list they paid to stand above. */
-  const featured = listings.find(l => l.banner);
-  const listed = listings.slice();
+  const featured = SPONSOR_BANNERS ? listings.find(l => l.banner) : null;
+  /* listings under the searched keyword itself first, then every other
+     listing whose name or keyword matches all the words (2026-11-23 list);
+     each group is dealt at random, and locked spots belong to the keyword */
+  const listed = listings.filter(l => l.exact !== false);
+  const wordHits = listings.filter(l => l.exact === false);
+  for(let i = wordHits.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [wordHits[i], wordHits[j]] = [wordHits[j], wordHits[i]];
+  }
   /* Every load deals the list in a fresh random order (Jacob, 2026-09-01), the "#" is just the row's place today, not a rank. Fisher-Yates, because
      sort(() => Math.random() - .5) is biased. */
   for(let i = listed.length - 1; i > 0; i--){
@@ -916,13 +953,13 @@ async function initResults(forcedTerm){
     while(ordered.length < l.locked_position - 1 && free.length) ordered.push(free.shift());
     ordered.push(l);
   }
-  ordered.push(...free);
+  ordered.push(...free, ...wordHits);
   const lockHtml = (n, kw) => `<span class="lock" tabindex="0" aria-label="Position locked">`
     + `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`
     + `<span class="lock-tip"><b>Position locked.</b> This company holds #${n} for &ldquo;${escapeHtml(kw)}&rdquo;. <a href="/contact">Lock yours &rarr;</a></span></span>`;
   let html = '';
   if(!featured){
-    html += exampleBanner(escapeHtml(q));
+    if(SPONSOR_BANNERS) html += exampleBanner(escapeHtml(q));
   } else {
     const fLogo = isLogoUrl(featured.logo)
       ? `<img src="${escapeHtml(featured.logo)}" alt="${escapeHtml(featured.company)} logo">`
