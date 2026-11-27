@@ -83,3 +83,26 @@
 -- function's own "update ... where emailed_at is null" claims the row, so a
 -- notice still goes out at most once even if the trigger and the sweeper both
 -- post it. The one-day close-off in the sweeper is unchanged.
+
+-- 2026-11-27, applied as welcome_parts_projects. The 2026-11-23 change list:
+-- the welcome's Post Free Job and Post Free Resume lines become Parts and
+-- Projects, matching the email's new buttons (tools/edge-notify.ts v20).
+create or replace function public.welcome_notification(p_user uuid, p_name text)
+ returns void
+ language sql
+ security definer
+ set search_path to 'public'
+as $function$
+  insert into notifications (user_id, sender_name, sender_avatar, subject, body, link, email_after)
+  select p_user, 'Circuits.com', 'https://circuits.com/assets/favicon.png',
+         'Welcome to Circuits.com',
+         'Hi ' || coalesce(nullif(p_name, ''), 'there') || ', and welcome to Circuits.com, the directory that connects the circuits industry.' || E'\n\n' ||
+         'Your dashboard is where everything happens. Pick where to start:' || E'\n\n' ||
+         'Free Directory Listing: choose up to 10 free Circuits-Keywords™ under Your Listings and be found by everyone searching them.' || E'\n\n' ||
+         'Post Parts and Part Numbers for Free. They appear live in the Global Directory and in Parts Keyword Searches.' || E'\n\n' ||
+         'Post Your Projects for Free. They appear live in the Global Projects Directory and in Projects Keyword Searches.' || E'\n\n' ||
+         'Questions? Ask through the Contact page and a person answers.',
+         '/portal#listings',
+         now() + interval '10 minutes'
+   where not exists (select 1 from notifications n where n.user_id = p_user and n.subject = 'Welcome to Circuits.com')
+$function$;

@@ -1233,6 +1233,10 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     const ap = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
     assert.ok(/function matchesAllWords\(qKeys, text\)/.test(ap) && ['global.html', 'clubs.html'].every(f => /matchesAllWords\(ws, /.test(fs.readFileSync(path.join(ROOT, f), 'utf8'))), '/global or /clubs does not match singular and plural alike');
     assert.ok(/companyPageFor\(q\)/.test(ap) && ['global.html', 'clubs.html', 'jobs.html', 'talent.html'].every(f => /goUnlessCompany\(/.test(fs.readFileSync(path.join(ROOT, f), 'utf8'))), 'a search bar does not send an exact company name to its page'); }
+  /* a project page's changes count as unsaved, like a profile's (2026-11-23 list) */
+  assert.ok(/\['tab-club', 'tab-members', 'tab-branding'\]\.forEach\(id => \{/.test(fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8')), 'edits on a project page no longer count as unsaved changes');
+  /* a logo staff set in Website Applications reaches the profile */
+  assert.ok(/logo    = case when new\.logo    is distinct from old\.logo/.test(fs.readFileSync(path.join(ROOT, 'tools', 'profile-sync.sql'), 'utf8')), 'the listing-to-profile mirror no longer carries the logo');
   /* the green nav button reads Post Free Listing on every page (Jacob, 2026-11-26) */
   for (const f of fs.readdirSync(ROOT).filter(f => f.endsWith('.html'))) {
     const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
@@ -2277,10 +2281,20 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     const notifySrc = fs.readFileSync(path.join(ROOT, 'tools', 'edge-notify.ts'), 'utf8');
     assert.ok(/const welcome = subject === "Welcome to Circuits\.com"/.test(notifySrc) && /Free Directory Listing/.test(notifySrc),
       'the welcome email lost its three buttons, it is the second net behind the landing page');
-    /* exactly three green buttons (Jacob, 2026-10-12): Your Listings, Hire Talent, Search Work */
+    /* exactly three green buttons; since the 2026-11-23 list: Free Directory
+       Listing (Your Listings), Post Parts for Free (/join), Post Projects for
+       Free (the Projects tab) */
     { const wb = (notifySrc.match(/const buttons = welcome\s*\?([\s\S]*?)\s*:\s*`<p style="margin:14px 0 0">\$\{button\(href/) || ['', ''])[1];
-      assert.deepStrictEqual([...wb.matchAll(/button\(`\$\{SITE\}\/portal#([a-z]+)`, "([^"]+)"\)/g)].map(m => m[1] + ':' + m[2]),
-        ['listings:Free Directory Listing', 'hiring:Post Free Job', 'seeking:Post Free Resume'], 'the welcome email is not the three buttons Free Directory Listing, Post Free Job, Post Free Resume'); }
+      assert.deepStrictEqual([...wb.matchAll(/button\(`\$\{SITE\}(\/[a-z#]+)`, "([^"]+)"\)/g)].map(m => m[1] + ':' + m[2]),
+        ['/portal#listings:Free Directory Listing', '/join:Post Parts for Free', '/portal#club:Post Projects for Free'], 'the welcome email is not the three buttons Free Directory Listing, Post Parts for Free, Post Projects for Free'); }
+    /* re-send confirmation (2026-11-23 list): staff and the owner go through
+       the notify function, whose recipient is the account's own email; a
+       visitor's resend carries the Turnstile token */
+    { const cr = notifySrc.slice(notifySrc.indexOf('if (kind === "confirm_resend")'), notifySrc.indexOf('if (kind === "confirm_reminder")'));
+      assert.ok(/isStaff\(db, me\)/.test(cr) && /getUserById\(uid\)/.test(cr) && !/payload\.email/.test(cr) && /security_log/.test(cr), 'confirm_resend could mail an address from the request, skip the staff check, or send without the one-a-minute limit');
+      const stj = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8'), adj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
+      assert.ok(/kind: 'confirm_resend'/.test(stj) && /captchaToken: opts\.captchaToken \|\| undefined/.test(stj), 'resendConfirmation does not use the notify function or pass the Turnstile token');
+      assert.ok(!/resendConfirmation\([^)]*\)(?![^;]*userId)/.test(adj.replace(/resendConfirmation\([^)]*\{ userId: a\.user_id \}\)/g, '')), 'an admin resend still goes the way Turnstile refuses'); }
   }
   /* The contact form and the access request go through the notify function
      behind Cloudflare Turnstile, not FormSubmit (audit item 7, 2026-09-21). */

@@ -994,7 +994,7 @@ async function accAction(act, btn){
 async function accDo(act, a, btn){
   const name = accName(a);
   if(act === 'resend'){
-    const err = await resendConfirmation(a.signin_email);
+    const err = await resendConfirmation(a.signin_email, { userId: a.user_id });
     if(err){ tell(err); return; }
     accToast('Confirmation email sent again to ' + a.signin_email + '.');
     return;
@@ -1076,7 +1076,7 @@ async function accDo(act, a, btn){
     const r = await adminSetEmail(a.user_id, e);
     if(r.error){ tell('Sign-in email not changed: ' + r.error); return; }
     if(r.confirmed === false){
-      const err = await resendConfirmation(e);
+      const err = await resendConfirmation(e, { userId: a.user_id });
       accToast(err ? 'Changed. The confirmation email could not go yet: ' + err : 'Changed, and the confirmation email went to ' + e + '.');
     }else accToast('Sign-in email changed to ' + e + '.');
     await reloadCompanies(); await loadAccounts(true);
@@ -1110,7 +1110,7 @@ async function resendAllUnconfirmed(){
   try{
     for(const [i, a] of todo.entries()){
       btn.textContent = 'Sending ' + (i + 1) + ' of ' + todo.length + '…';
-      const err = await resendConfirmation(a.signin_email);
+      const err = await resendConfirmation(a.signin_email, { userId: a.user_id });
       if(err) failed.push(a.signin_email + ': ' + err);
       if(i < todo.length - 1) await new Promise(r => setTimeout(r, 1200));
     }

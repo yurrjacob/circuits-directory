@@ -239,7 +239,7 @@ async function initPortal(){
     el('pt-pending-resend').addEventListener('click', async () => {
       const m = el('pt-pending-resend-msg');
       m.textContent = 'Sending…';
-      const err = await resendConfirmation(user.email);
+      const err = await resendConfirmation(user.email, { self: true });
       m.textContent = err || 'Sent. Give it a minute.';
     });
   }
@@ -621,8 +621,11 @@ function wireAuth(){
             + '<span id="pt-auth-resend-msg"></span></span>';
           el('pt-auth-resend').addEventListener('click', async () => {
             const m = el('pt-auth-resend-msg');
+            const f = el('pt-auth-form'), wait = turnstileProblem(f);
+            if(wait){ m.textContent = wait; return; }   // the check has to pass again after the refused sign-in
             m.textContent = 'Sending…';
-            const err2 = await resendConfirmation(val('pt-email'));
+            const err2 = await resendConfirmation(val('pt-email'), { captchaToken: turnstileToken(f) });
+            resetTurnstile(f);   // a token works once
             m.textContent = err2 || 'Sent. Check spam too.';
           });
           el('pt-auth-submit').disabled = false;
@@ -649,7 +652,20 @@ function markDirty(){
 }
 function markClean(){ PT_DIRTY = false; }
 function wireDirtyTracking(){
-  /* the whole public profile is one tab (2026-09-02) */
+  /* the whole public profile is one tab (2026-09-02); on a project page the
+     same form moves into Project Details, and the Team Members tab saves with
+     it, so those count too. They did not before, so a project's changes
+     raised no unsaved warning and an old "Profile Saved" stayed up after them
+     (2026-11-23 list: "the data did not save"). The Add a Project box saves
+     with its own button and stays out. */
+  ['tab-club', 'tab-members', 'tab-branding'].forEach(id => {
+    const p = el(id);
+    if(!p || p.__dirtyWired) return;
+    p.__dirtyWired = true;
+    const mark = e => { if(!e.target.closest('#pt-club-showcase, #pt-club-create')) markDirty(); };
+    p.addEventListener('input', mark);
+    p.addEventListener('change', mark);
+  });
   const panel = el('tab-profile');
   if(panel && !panel.__dirtyWired){
     panel.__dirtyWired = true;

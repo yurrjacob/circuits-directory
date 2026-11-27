@@ -27,6 +27,14 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
     acknowledgement from the claims row, and the sender of a contact message
     only gets a copy when the check verifiably passed, so an address typed
     into the request is never mailed on the request's say-so alone.
+    v20 (2026-11-27): 'confirm_resend' sends a fresh one-time confirmation
+    link on request, for staff (by account id, Manage Accounts) or for the
+    signed-in owner of the account. Supabase's own resend refused every call
+    that carried no CAPTCHA token once Turnstile was switched on, which is
+    why "re-send confirmation" sent nothing. Same mail as the reminder, one
+    per account per minute. The welcome mail's buttons are now Free
+    Directory Listing, Post Parts for Free (/join) and Post Projects for Free
+    (the dashboard's Projects tab), from the 2026-11-23 change list.
     v19 (2026-10-30): 'confirm_reminder' sends a never-confirmed account a
     fresh one-time link, once, for a row send_account_nudges() made; inbox
     notices that link to /join get a Choose Your Free Keywords button.
@@ -174,6 +182,15 @@ async function humanCheck(token: unknown, req: Request): Promise<Human> {
 }
 const UNVERIFIED_NOTE = "Not verified as a person: TURNSTILE_SECRET is not set on the notify function. Set it in the function's secrets and this line goes away.";
 
+/* the confirmation mail: the reminder and the on-request resend send the same one */
+const confirmMail = (action: string) => shell(
+  kicker("One step left") +
+  `<h1 style="margin:0 0 12px;font-size:1.25rem">Confirm your email</h1>` +
+  `<p style="margin:0 0 12px;font-size:.95rem;line-height:1.55">You started a Circuits.com account but have not confirmed your email yet. Confirm it to open your dashboard and get your free Directory keywords reviewed.</p>` +
+  `<p style="margin:14px 0 0">${button(action, "Confirm My Email")}</p>` +
+  note("The button works once. If it has expired, sign in at circuits.com/portal and ask for a new link. If you did not sign up for Circuits.com, ignore this email.")
+);
+
 /* Every staff address, for the alerts that used to go through FormSubmit. */
 async function staffEmails(db: any): Promise<string[]> {
   const { data } = await db.from("staff").select("email");
@@ -205,6 +222,36 @@ Deno.serve(async (req: Request) => {
      account's own email, read by its id, never taken from the request; a
      second call for the same row sends nothing. The link is a one-time
      sign-in link, which also confirms the email, landing on /welcome. */
+  /* ---------- a confirmation link on request (v20, 2026-11-27) ----------
+     The recipient is always the account's own email, read by its id: staff
+     name the account by id, anyone else may only ask for their own signed-in
+     account. One mail per account per minute (security_log). */
+  if (kind === "confirm_resend") {
+    const me = await caller(db, req);
+    if (!me) return json({ ok: false, error: "sign_in_required" }, 401);
+    const want = String(payload.user_id ?? "");
+    let uid = "";
+    if (want && want !== me.id) {
+      if (!(await isStaff(db, me))) return json({ ok: false, error: "staff_only" }, 403);
+      if (!/^[0-9a-f-]{36}$/i.test(want)) return json({ ok: false, error: "no_such_account" }, 400);
+      uid = want;
+    } else uid = me.id;
+    const since = new Date(Date.now() - 60 * 1000).toISOString();
+    const { count } = await db.from("security_log").select("id", { count: "exact", head: true })
+      .eq("action", "confirm_resend").eq("target", uid).gte("at", since);
+    if (count) return json({ ok: false, error: "wait" }, 200);
+    const { data: u } = await db.auth.admin.getUserById(uid);
+    const to = validEmail(u?.user?.email);
+    if (!to) return json({ ok: false, error: "no_such_account" }, 200);
+    if (u?.user?.email_confirmed_at) return json({ ok: false, error: "already_confirmed" }, 200);
+    const { data: made, error } = await db.auth.admin.generateLink({ type: "magiclink", email: to, options: { redirectTo: `${SITE}/welcome` } });
+    const action = made?.properties?.action_link;
+    if (error || !action) return json({ ok: false, error: "no_link" }, 200);
+    await db.from("security_log").insert({ actor: String(me.email ?? me.id), action: "confirm_resend", target: uid, detail: {} });
+    const sent = await send(to, "Confirm your email to finish your Circuits.com account", confirmMail(action));
+    return json({ ok: sent });
+  }
+
   if (kind === "confirm_reminder") {
     const id = String(payload.id ?? "");
     if (!/^[0-9a-f-]{36}$/i.test(id)) return json({ error: "id required" }, 400);
@@ -220,13 +267,7 @@ Deno.serve(async (req: Request) => {
     const { data: made, error } = await db.auth.admin.generateLink({ type: "magiclink", email: to, options: { redirectTo: `${SITE}/welcome` } });
     const action = made?.properties?.action_link;
     if (error || !action) return json({ ok: false, error: "no_link" }, 200);
-    const sent = await send(to, "Confirm your email to finish your Circuits.com account", shell(
-      kicker("One step left") +
-      `<h1 style="margin:0 0 12px;font-size:1.25rem">Confirm your email</h1>` +
-      `<p style="margin:0 0 12px;font-size:.95rem;line-height:1.55">You started a Circuits.com account but have not confirmed your email yet. Confirm it to open your dashboard and get your free Directory keywords reviewed.</p>` +
-      `<p style="margin:14px 0 0">${button(action, "Confirm My Email")}</p>` +
-      note("The button works once. If it has expired, sign in at circuits.com/portal and ask for a new link. If you did not sign up for Circuits.com, ignore this email.")
-    ));
+    const sent = await send(to, "Confirm your email to finish your Circuits.com account", confirmMail(action));
     return json({ ok: sent });
   }
 
@@ -250,13 +291,15 @@ Deno.serve(async (req: Request) => {
     const href = !link ? `${SITE}/portal` : /^https?:\/\//.test(link) ? link : SITE + link;
     const paras = String(n.body ?? "").split(/\n{2,}/).map(p => `<p style="margin:0 0 12px;font-size:.95rem;line-height:1.55">${esc(p).replace(/\n/g, "<br>")}</p>`).join("");
     /* the welcome is the on-boarding page (Jacob, 2026-09-16): three green
-       buttons, one per thing a new account can do, each straight into the
-       right dashboard tab */
+       buttons, one per thing a new account can do. Since the 2026-11-23
+       change list: Free Directory Listing, Post Parts for Free (/join, where
+       part numbers go in as keywords for now) and Post Projects for Free
+       (the dashboard's Projects tab) */
     const welcome = subject === "Welcome to Circuits.com";
     const buttons = welcome
       ? `<p style="margin:14px 0 0">${button(`${SITE}/portal#listings`, "Free Directory Listing")}</p>` +
-        `<p style="margin:10px 0 0">${button(`${SITE}/portal#hiring`, "Post Free Job")}</p>` +
-        `<p style="margin:10px 0 0">${button(`${SITE}/portal#seeking`, "Post Free Resume")}</p>`
+        `<p style="margin:10px 0 0">${button(`${SITE}/join`, "Post Parts for Free")}</p>` +
+        `<p style="margin:10px 0 0">${button(`${SITE}/portal#club`, "Post Projects for Free")}</p>`
       : `<p style="margin:14px 0 0">${button(href, link === "/join" ? "Choose Your Free Keywords" : "Open on Circuits.com")}</p>`;
     const sent = await send(to, subject, shell(
       kicker(field(n.sender_name, 60) || "Circuits.com") +

@@ -1720,12 +1720,37 @@ async function fetchKeywordIndex(){
 /* The confirmation email goes out once at sign-up; a typo or a spam filter
    used to be a dead end. Always reports success the same way, whether an
    account exists behind an address is not this button's to reveal. */
-async function resendConfirmation(email){
+/* 2026-11-27: with Turnstile switched on, Supabase refused every resend that
+   carried no CAPTCHA token, so "send it again" quietly sent nothing (2026-11-23
+   list). Now: staff (opts.userId) and a signed-in owner (opts.self) go through
+   the notify function, which mails the account's own address a one-time link;
+   a visitor on the sign-in form sends the form's Turnstile token along. */
+async function resendConfirmation(email, opts){
   if(!sb) return 'No connection';
+  opts = opts || {};
+  if(opts.userId || opts.self){
+    try{
+      const { data: s } = await sb.auth.getSession();
+      const jwt = s && s.session && s.session.access_token;
+      if(!jwt) return 'Sign in first, then try again.';
+      const res = await fetch(SUPABASE_URL + '/functions/v1/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + jwt },
+        body: JSON.stringify({ kind: 'confirm_resend', user_id: opts.userId || undefined })
+      });
+      const out = await res.json().catch(() => null);
+      if(out && out.ok) return '';
+      const e = out && out.error;
+      if(e === 'already_confirmed') return 'That email is already confirmed. Just sign in.';
+      if(e === 'wait') return 'An email was sent a moment ago. You can ask for another in a minute.';
+      if(e === 'staff_only') return 'Only Circuits.com staff can send that.';
+      return 'We could not send the email just now. Please try again in a few minutes.';
+    }catch(err){ console.warn('resendConfirmation', err); return 'We could not send the email just now. Please try again in a few minutes.'; }
+  }
   const addr = (email || '').trim();
   if(!addr.includes('@')) return 'That does not look like an email address.';
   const { error } = await sb.auth.resend({ type: 'signup', email: addr,
-    options: { emailRedirectTo: location.origin + '/welcome' } });   // the same landing as the first email
+    options: { emailRedirectTo: location.origin + '/welcome', captchaToken: opts.captchaToken || undefined } });   // the same landing as the first email
   if(error){
     console.warn('resendConfirmation', error.message);
     const secs = (/after (\d+) seconds?/i.exec(error.message || '') || [])[1];
@@ -1735,6 +1760,7 @@ async function resendConfirmation(email){
     }
     /* "already confirmed" arrives as an error, but it is good news */
     if(/already confirmed/i.test(error.message || '')) return 'That email is already confirmed. Just sign in.';
+    if(/captcha/i.test(error.message || '')) return 'Please finish the check above the Sign In button, then send it again.';
     return 'We could not send the email just now. Please try again in a few minutes.';
   }
   return '';
