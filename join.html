@@ -66,16 +66,13 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
 <div class="step-head">
 <span class="step-num">01</span>
 <div>
-<h2>Claim Your Circuits-Keywords™</h2>
-<p>Choose up to 10 keywords to be Listed Under… For Free! Listed as <b id="j-company"></b>; change the details under <a href="/portal">Dashboard</a>.</p>
+<h2>Claim Your Circuits-Keywords™ or Part Numbers</h2>
+<p>Choose Up To 10 Keywords for Free.</p>
+<p>Add Your Inventory by Part Number.</p>
 </div>
 </div>
-<p class="benefits-h">Benefits</p>
-<ul class="promo-benefits" style="margin:0 0 20px">
-<li>Get Found By Buyers Searching Your Keyword</li>
-<li>Create Lasting Digital Real Estate</li>
-<li>Establish Your Presence Where The Circuits Industry Connects</li>
-</ul>
+<!-- the Benefits heading and its three bullets came off section 01
+     (2026-11-23 list); sections 02 to 05 keep theirs -->
 <div class="field">
 <div class="kw-input-row">
 <input id="kw-input" type="text" placeholder="e.g. semiconductors" maxlength="40" aria-label="Keyword" autocomplete="off">
@@ -297,18 +294,16 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
      against Search Clubs rather than the Directory (Jacob, 2026-10-28) */
   function clubMode(c){
     document.body.classList.add('join-club');
-    document.title = 'Choose Your Free Club Keywords | Circuits.com';
-    document.querySelector('.form-wrap h1').textContent = 'Choose Your Free Club Keywords';
-    document.querySelector('.form-wrap .lede').textContent = 'Pick the Circuits-Keywords\u2122 students search to find ' + c.name + '. Club keywords are listed in Search Clubs and on the Global Club List, never in the Directory.';
+    document.title = 'Choose Your Free Project Keywords | Circuits.com';
+    document.querySelector('.form-wrap h1').textContent = 'Choose Your Free Project Keywords';
+    document.querySelector('.form-wrap .lede').textContent = 'Pick the Circuits-Keywords\u2122 people search to find ' + c.name + '. Project keywords are listed in the Projects search and on the Global Projects List, never in the Directory.';
     el('join-extras').hidden = true;   // no paid upgrades for club keywords
     document.querySelectorAll('#join-form section.step').forEach(s => {
       const n = (s.querySelector('.step-num') || {}).textContent || '';
       if(n.trim() !== '01' && n.trim() !== '06') s.hidden = true;
     });
-    const h = document.querySelector('#join-form > section.step .step-head h2'); if(h) h.textContent = 'Claim Your Club Keywords';
-    const ben = document.querySelector('#join-form .benefits-h'); if(ben) ben.hidden = true;
-    const bl = document.querySelector('#join-form .promo-benefits'); if(bl) bl.hidden = true;
-    el('success').innerHTML = '<b>Request received.</b> Circuits.com reviews every club keyword. Each one shows under <b>Pending Club Keywords</b> on the <a href="/portal#listings">Club Keywords</a> tab until it is approved, then it goes live in Search Clubs.';
+    const h = document.querySelector('#join-form > section.step .step-head h2'); if(h) h.textContent = 'Claim Your Project Keywords';
+    el('success').innerHTML = '<b>Request received.</b> Circuits.com reviews every project keyword. Each one shows under <b>Pending Project Keywords</b> on the <a href="/portal#listings">Project Keywords</a> tab until it is approved, then it goes live in the Projects search and on the Global Projects List.';
   }
   const user = await currentUser();
   if(!user){ location.replace('/register'); return; }
@@ -330,7 +325,7 @@ Each keyword shows as Pending under <a href="/portal#listings">Your Listings</a>
   const mine = await fetchMyListings(co.slug);
   el('join-load').style.display = 'none';
   el('join-form').style.display = '';
-  el('j-company').textContent = co.name;
+  /* "Listed as <company>" came off section 01 (2026-11-23 list) */
   /* both previews draw from the account, so what you see is what goes live */
   const logo = isLogoUrl(co.logo) ? `<img src="${escapeHtml(co.logo)}" alt="">` : avatarSvg();
   el('preview-name').textContent = co.name;

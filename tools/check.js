@@ -258,7 +258,7 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   /* keywords are the next step everywhere (Jacob, 2026-10-30) */
   {
     const wc = fs.readFileSync(path.join(ROOT, 'welcome.html'), 'utf8'), pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8'), rg = fs.readFileSync(path.join(ROOT, 'register.html'), 'utf8');
-    assert.ok(/<a class="wc-card wc-card-main" href="\/join" id="wc-kw-card">/.test(wc) && wc.indexOf('wc-card-main') < wc.indexOf('href="/portal#hiring"'), 'the welcome page no longer leads with Choose Your Free Directory Keywords');
+    assert.ok(/<a class="wc-card wc-card-main" href="\/join" id="wc-kw-card">/.test(wc) && wc.indexOf('wc-card-main') < wc.indexOf('id="wc-parts-card"'), 'the welcome page no longer leads with Choose Your Free Directory Keywords');
     assert.ok(/note\.className = 'pt-kw-nudge';/.test(pj) && /if\(none && !PT\.tabFromHash && !\(PT\.co && PT\.co\.kind === 'club'\)\) activateTab\('listings'\);/.test(pj), 'an account with no keywords is no longer sent to Your Listings with the nudge');
     assert.ok(/<li>Register Your Account and Pick Your Free Keywords\.<\/li>/.test(rg), 'the register steps no longer end in picking keywords');
   }
@@ -1227,7 +1227,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     const cards = src => [...src.matchAll(/<a class="wc-card[^"]*"[^>]*>[\s\S]*?<\/a>/g)].map(m => m[0].replace(/\s+/g, ' '));
     const onHome = cards(home), onWelcome = cards(fs.readFileSync(path.join(ROOT, 'welcome.html'), 'utf8'));
     /* since 2026-11-16 the homepage shows ten revolving Global Directory rows instead */
-    assert.ok(onHome.length === 0 && onWelcome.length === 4, 'the Start cards are back on the homepage, or the welcome page lost its cards');
+    assert.ok(onHome.length === 0 && onWelcome.length === 3, 'the Start cards are back on the homepage, or the welcome page lost its cards');
     assert.ok(/id="home-dir-rows"/.test(home) && /list\.slice\(0, 10\)\.map\(/.test(home) && /revolveRows\(body\)/.test(home), 'the homepage lost its ten revolving Global Directory rows');
     /* the foot line: the email sentence is true only on the welcome page (Jacob, 2026-10-07) */
     /* and it sends a newcomer to the Create Profile form (Jacob, 2026-10-12) */
@@ -2231,15 +2231,20 @@ assert.ok(/appPriceYear\(a\)/.test(fs.readFileSync(path.join(ROOT, 'applications
     const portalSrc3 = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
     const appSrc4 = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
     /* the keywords door leads, straight to the keyword form (2026-10-30) */
+    /* since the 2026-11-23 list: Keywords, Post Parts, Post Free Projects */
     for (const [label, href] of [['Choose Your Free Directory Keywords', '/join'],
-                                 ['Post Free Job', '/portal#hiring'],
-                                 ['Post Free Resume', '/portal#seeking']]) {
+                                 ['Post Parts', '/join'],
+                                 ['Post Free Projects', '/portal#club']]) {
       assert.ok(new RegExp(`href="${href.replace('#', '#')}"[\\s\\S]{0,900}${label}`).test(wc),
         `the welcome page lost the ${label} door, or it no longer opens ${href}`);
     }
     assert.ok(/noindex/.test(wc), 'the welcome page is open to search engines');
     assert.ok(/class="wc-pill"/.test(wc) && /class="wc-cards[ "]/.test(wc) && /class="wc-card-go"/.test(wc),
       'the welcome page lost its confirmed badge or its three cards');
+    assert.ok(!/Post Free Job|Post Free Resume|Set Up a Student Club/.test(wc.replace(/<!--[\s\S]*?-->/g, '')), 'a removed card (Job, Resume, Student Club) is back on the welcome page');
+    { const jn = fs.readFileSync(path.join(ROOT, 'join.html'), 'utf8');
+      assert.ok(/<h2>Claim Your Circuits-Keywords™ or Part Numbers<\/h2>\s*<p>Choose Up To 10 Keywords for Free\.<\/p>\s*<p>Add Your Inventory by Part Number\.<\/p>/.test(jn) && !/Listed as <b id="j-company">/.test(jn),
+        '/join section 01 is not Claim Your Circuits-Keywords or Part Numbers with its two lines'); }
     assert.ok(/id="wc-copy"/.test(wc) && /clipboard\.writeText\('https:\/\/' \+ url\)/.test(wc),
       'the welcome page no longer offers the new address to copy');
     assert.ok((storeSrc2.match(/location\.origin \+ '\/welcome'/g) || []).length >= 2 && /emailRedirectTo: back,/.test(storeSrc2) && !/emailRedirectTo: location\.origin \+ '\/join'/.test(storeSrc2),
