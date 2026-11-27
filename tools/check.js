@@ -399,10 +399,10 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   { const ap = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
     const rv = ap.slice(ap.indexOf('function revolveRows('), ap.indexOf('function revolveRows(') + 2500);
     assert.ok(/Math\.floor\(Math\.random\(\) \* \(i \+ 1\)\)/.test(rv) && /rows\.forEach\(r => tbody\.appendChild\(r\)\)/.test(rv), 'the Global lists no longer reshuffle every row'); }
-  /* Jakes button (Jacob, 2026-10-30): the site owner hides Mike on Contact */
+  /* Jakes button removed (2026-11-27): Mike always shows on Contact */
   { const ct = fs.readFileSync(path.join(ROOT, 'contact.html'), 'utf8'), pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8');
-    assert.ok(/id="founder-mike"/.test(ct) && /fetchSiteSetting\('contact_hide_mike'\)/.test(ct) && /const fallback = setTimeout\(show, 2000\)/.test(ct), 'the Contact page no longer follows the hide-Mike setting, or could stay hidden when it cannot be read');
-    assert.ok(/if\(!\(await isSiteOwner\(\)\)\) return;/.test(pj) && />Jakes button<\/button>/.test(pj), 'Jakes button is gone, or drawn for accounts that are not the site owner'); }
+    assert.ok(/id="founder-mike"/.test(ct) && !/founder-pending|contact_hide_mike/.test(ct), 'the Contact page can hide Mike again');
+    assert.ok(!/Jakes button|renderJakeButton/.test(pj), 'Jakes button is back on the dashboard'); }
   assert.ok(/id="club-search"/.test(cl) && /get\('q'\)/.test(cl), 'the Global Club List lost its search');
   const st = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
   assert.ok(/\.eq\('kind', 'club'\)\.eq\('club_status', 'Approved'\)/.test(st), 'fetchClubs lists clubs staff have not approved');
