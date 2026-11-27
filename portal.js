@@ -2047,7 +2047,7 @@ async function saveProfile(){
   if(!val('f-contact')){ btn.disabled = false; saveNote('Not saved: a contact person is needed. It is who buyers see on your listings.', false); el('f-contact').focus(); return; }
   if(!val('f-email')){ btn.disabled = false; saveNote('Not saved: a public email is needed. It is how buyers reach you from your listings.', false); el('f-email').focus(); return; }
   const clubPage = PT.co && PT.co.kind === 'club';
-  if(!clubPage && !titleSource()){ btn.disabled = false; markMissing(); saveNote('Not saved: pick a Profile Title. Tick Use Company Name for a business, or Use Contact Person for a student.', false); el('f-title-company').focus(); return; }
+  if(!clubPage && !titleSource()){ btn.disabled = false; markMissing(); saveNote('Not saved: pick a Profile Title. Tick Use Company Name for a business, or Use Contact Person for a project team member.', false); el('f-title-company').focus(); return; }
   if(handleChanged && wantHandle){
     const why = await handleAvailable(wantHandle, PT.slug, PT.user && PT.user.id);
     if(why){ btn.disabled = false; saveNote('Address not saved: ' + why + ' Your other changes were not saved either. Fix the address or put the old one back.', false); return; }

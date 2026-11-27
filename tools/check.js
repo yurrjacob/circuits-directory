@@ -324,7 +324,7 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   /* Profile Title (Jacob, 2026-10-28): two boxes beside the address, exactly one required, and the public heading follows it */
   {
     const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8'), pf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
-    assert.ok(/<div class="pt-addr-title">[\s\S]*?id="f-handle"[\s\S]*?Profile Title <span class="req">\*<\/span>[\s\S]*?Use Company Name \(For Businesses\)[\s\S]*?Use Contact Person \(For Students\)[\s\S]*?id="f-title-show"/.test(ph), 'the Profile Title field is not beside the Circuits.com address with its two boxes');
+    assert.ok(/<div class="pt-addr-title">[\s\S]*?id="f-handle"[\s\S]*?Profile Title <span class="req">\*<\/span>[\s\S]*?Use Company Name \(For Businesses\)[\s\S]*?Use Contact Person \(For Project Team Members\)[\s\S]*?id="f-title-show"/.test(ph), 'the Profile Title field is not beside the Circuits.com address with its two boxes');
     assert.ok(/!clubPage && !titleSource\(\)\)\{[^\n]*Not saved: pick a Profile Title/.test(pj) && /fields\.title_source = titleSource\(\)/.test(pj), 'the dashboard saves without a Profile Title');
     assert.ok(/if\(a\.checked\) b\.checked = false/.test(pj) && /if\(b\.checked\) a\.checked = false/.test(pj), 'both Profile Title boxes can be ticked at once');
     assert.ok(/co\.title_source === 'contact'/.test(pf) && /<h1>\$\{escapeHtml\(heading\)\}<\/h1>/.test(pf), 'the public profile heading ignores the Profile Title');
@@ -1202,11 +1202,17 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   /* Directory, Hire Talent (people on /talent, for employers), Search Jobs
      (roles on /jobs, for people): three plain choices in one pill */
   /* the dashboard's Post Free Job and Post Free Resume doors sit in the homepage footer (Jacob, 2026-11-16) */
-  assert.ok(/<a href="\/portal#hiring">Post Free Job<\/a>/.test(home) && /<a href="\/portal#seeking">Post Free Resume<\/a>/.test(home) && /<a class="foot-cta" href="\/portal#listings">Post Free Listing<\/a>/.test(home) && /<a href="\/portal#club">Post Free Club<\/a>/.test(home), 'the homepage footer lost one of Post Free Listing, Job, Resume or Club');
+  assert.ok(/<a href="\/portal#hiring">Post Free Job<\/a>/.test(home) && /<a href="\/portal#seeking">Post Free Resume<\/a>/.test(home) && /<a class="foot-cta" href="\/portal#listings">Post Free Listing<\/a>/.test(home) && /<a href="\/portal#club">Post Free Project<\/a>/.test(home), 'the homepage footer lost one of Post Free Listing, Job, Resume or Project');
   /* the tabs read Directory, Parts, Projects (Jacob, 2026-11-26); Projects
      keeps the clubs target, Hire Talent and Search Work are off the home page */
   assert.deepStrictEqual([...home.matchAll(/data-target="([a-z]+)" role="tab"[^>]*>([^<]+)</g)].map(m => m[1] + ':' + m[2]), ['directory:Directory', 'parts:Parts', 'clubs:Projects'], 'the homepage search tabs are not Directory, Parts, Projects');
   assert.ok(!/data-target="recruits"|data-target="jobs"/.test(home), 'Hire Talent or Search Work is back on the homepage');
+  /* 2026-11-23 list: green Pause on both revolving lists, the Part Numbers
+     box under the keywords box, both at the top of Your Listings */
+  for (const f of ['global.html', 'clubs.html']) assert.ok(/class="mini-btn green rv-btn"/.test(fs.readFileSync(path.join(ROOT, f), 'utf8')), `${f} lost its green Pause button`);
+  { const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
+    assert.ok(ph.indexOf('id="pt-getlisted"') < ph.indexOf('id="pt-getparts"') && ph.indexOf('id="pt-getparts"') < ph.indexOf('>Directory Listings</h3>') && /Choose Your Free Part Numbers<\/b>/.test(ph),
+      'Your Listings does not open with Choose Your Free Directory Keywords, then Choose Your Free Part Numbers'); }
   /* the green nav button reads Post Free Listing on every page (Jacob, 2026-11-26) */
   for (const f of fs.readdirSync(ROOT).filter(f => f.endsWith('.html'))) {
     const src = fs.readFileSync(path.join(ROOT, f), 'utf8');

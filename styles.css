@@ -2708,7 +2708,8 @@ body.club-mode .handle-line .handle-row{flex:0 1 380px}
 .pj-parts td.pj-qty input{min-width:56px;width:70px}
 .pj-links{display:flex;flex-direction:column;gap:2px;white-space:nowrap}
 .pj-links .web-link,.pj-links .cell-muted{font-size:.84rem}
-.pj-ds-up{position:relative;overflow:hidden;cursor:pointer;color:var(--muted);text-decoration:underline dotted;font-size:.8rem}
+/* a blue link like Directory beside it (2026-11-23 list) */
+.pj-ds-up{position:relative;overflow:hidden;cursor:pointer;color:#1a5fd0;text-decoration:underline;font-size:.8rem}
 .pj-ds-up input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .pj-part-x{border:0;background:none;cursor:pointer;color:var(--muted);font-size:1rem;line-height:1;padding:0 2px}
 #pj-part-add{margin:0 0 18px}

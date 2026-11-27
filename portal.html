@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/assets/favicon.png">
 <link rel="preconnect" href="https://ghpruernzhjwsgsezdyn.supabase.co">
-<link rel="stylesheet" href="/styles.css?v=d83a4034dd">
+<link rel="stylesheet" href="/styles.css?v=4c43c4fdd6">
 <!-- A confirmation link is meant for /welcome, the on-boarding page. If the
      project's redirect allow list sends it here instead, forward it before
      supabase-js reads the tokens out of the address bar, hash and all, so the
@@ -189,7 +189,7 @@
         <div class="pt-title-line">
           <div class="pt-title-opts" role="group" aria-label="Profile Title">
             <label class="terms"><input type="checkbox" id="f-title-company" value="company" autocomplete="off"> <span>Use Company Name (For Businesses)</span></label>
-            <label class="terms"><input type="checkbox" id="f-title-contact" value="contact" autocomplete="off"> <span>Use Contact Person (For Students)</span></label>
+            <label class="terms"><input type="checkbox" id="f-title-contact" value="contact" autocomplete="off"> <span>Use Contact Person (For Project Team Members)</span></label>
           </div>
           <input id="f-title-show" type="text" readonly tabindex="-1" placeholder="Tick one" autocomplete="off">
         </div>
@@ -349,9 +349,8 @@
       </div>
       <button type="button" class="btn btn-upgrade" id="pt-go-upgrades">Upgrade &rarr;</button>
     </div>
-    <h3 class="pt-sub-h cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1.3" fill="currentColor" stroke="none"/></svg>Directory Listings</h3>
-    <div class="pt-list" id="pt-listings"></div>
-    <!-- with no keyword yet this one box carries the empty state too (Jacob, 2026-09-14) -->
+    <!-- with no keyword yet this one box carries the empty state too (Jacob, 2026-09-14);
+         moved to the top under the blue box (2026-11-23 list) -->
     <div class="pt-empty pt-getlisted" id="pt-getlisted">
       <div>
         <b id="pt-getlisted-h">Choose Your Free Directory Keywords</b>
@@ -361,6 +360,20 @@
         <a class="btn btn-primary" href="/join">Get Listed For Free</a>
       </div>
     </div>
+    <!-- Choose Your Free Part Numbers (2026-11-23 list): the second door,
+         right under the keywords box. Part numbers go in through /join as
+         directory keywords until a parts inventory is built. -->
+    <div class="pt-empty pt-getlisted" id="pt-getparts">
+      <div>
+        <b>Choose Your Free Part Numbers</b>
+        <p>No Listings Yet. Add 10 Free Part Numbers</p>
+      </div>
+      <div class="pt-getlisted-btns">
+        <a class="btn btn-primary" href="/join">Add Part Numbers</a>
+      </div>
+    </div>
+    <h3 class="pt-sub-h cb-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1.3" fill="currentColor" stroke="none"/></svg>Directory Listings</h3>
+    <div class="pt-list" id="pt-listings"></div>
     <!-- Both sides of Recruiting, back here (Jacob, 2026-09-13): the jobs a
          company posted and the position a person wants, each at a glance.
          Edit leads to the tab that changes it. -->
@@ -540,7 +553,7 @@
         <h4 class="cb-h cb-h-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>Project Parts <span class="pf-note" id="pj-parts-n"></span></h4>
         <p class="pf-note" style="margin:0 0 10px">Up to 10 parts. Directory searches Circuits.com for the part name; attach a datasheet to link it too.</p>
         <div class="pj-parts-wrap"><table class="pj-parts">
-          <thead><tr><th>Part Name</th><th>What It Does</th><th>Quantity</th><th>Links</th><th><span class="sr-only">Remove</span></th></tr></thead>
+          <thead><tr><th>Part Name</th><th>What It Does</th><th>Quantity</th><th>Links</th><th>Remove Part</th></tr></thead>
           <tbody id="pj-parts"></tbody>
         </table></div>
         <button type="button" class="mini-btn green" id="pj-part-add">+ Add part</button>
@@ -1089,7 +1102,7 @@
 <script src="/vendor/qrcode-generator-1.4.4.js" integrity="sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k"></script>
 <script src="/store.js?v=31f75970b2"></script>
 <script src="/app.js?v=ea344eb59a"></script>
-<script src="/portal.js?v=9e6a187ff4"></script>
+<script src="/portal.js?v=650b1629a6"></script>
 <script src="/admin.js?v=a2a9f35072"></script>
 <script>
 /* Save profile, Save club and Save members all run the one save. Save club
