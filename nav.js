@@ -14,6 +14,17 @@
 (function(){
   'use strict';
 
+  /* One address per page (2026-11-27): Google had indexed /results.html?q=
+     beside /results?q=, splitting each page in two. GitHub Pages cannot
+     redirect, so the .html form forwards to the clean one here, before
+     anything draws; Google follows a script redirect like this. Not inside an
+     iframe (the dashboard frames applications.html) and not on the 404 page. */
+  var path = location.pathname;
+  if(/\.html$/.test(path) && window.top === window.self && !/\/404\.html$/.test(path)){
+    location.replace(path.replace(/(^|\/)index\.html$/, '$1').replace(/\.html$/, '') + location.search + location.hash);
+    return;
+  }
+
   /* supabase-js v2 keeps the session under sb-<project-ref>-auth-token. Found
      by pattern rather than hardcoded so it survives a project change. */
   function signedIn(){
