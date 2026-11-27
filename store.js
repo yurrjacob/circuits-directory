@@ -850,12 +850,8 @@ async function fetchClubRoles(handle){
   const color = p => (p && p.badge && /^#[0-9a-f]{6}$/i.test(p.badge.color || '')) ? p.badge.color : '';
   const find = (list, k) => (Array.isArray(list) ? list : []).find(t => t && String(t.handle || '').toLowerCase() === k);
   const out = new Map();
-  for(const c of (a.data || [])){
-    const me = find(c.team, h);
-    if(!live(me)) continue;
-    out.set(c.handle, { name: c.name, handle: c.handle, logo: c.logo, college_name: c.college_name, kind: 'lead', role: me.role || 'Officer',
-      badge: (me.badge && String(me.badge.text || '').trim()) || me.role || 'Officer', color: color(me) });
-  }
+  /* officers (team) and their Leadership badges are gone since 2026-11-27:
+     a project has Team Members only */
   for(const c of (b.data || [])){
     const me = find(c.members, h);
     if(out.has(c.handle) || !live(me)) continue;

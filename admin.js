@@ -328,22 +328,22 @@ function renderClubUpgrades(){
    badge (the database keeps an owner's hands off all three). A badge starts
    as the club's name for a member and the officer's title for an officer. */
 let clubEmails = {};
-const PERSON_LIST = { team: 'Officer', members: 'Member' };
+const PERSON_LIST = { members: 'Team Member' };   // officers removed 2026-11-27
 function clubPeopleRows(){
   const rows = [];
-  for(const c of allClubs) for(const list of ['team', 'members'])
+  for(const c of allClubs) for(const list of ['members'])
     for(const p of (Array.isArray(c[list]) ? c[list] : []))
       if(p && p.id && (p.name || p.handle)) rows.push({ c, list, p, key: c.slug + '|' + list + '|' + p.id });
   return rows;
 }
-function personBadgeDefault(r){ return r.list === 'team' ? (r.p.role || 'Officer') : (r.c.name || 'Member'); }
+function personBadgeDefault(r){ return r.c.name || 'Team Member'; }
 function personRow(r, pending){
   const p = r.p, b = p.badge || {}, k = esc(r.key);
   const color = /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : '#3f6300';
   return `<tr class="${pending ? 'row-waiting' : ''}">
       <td><a href="/${esc(r.c.handle || r.c.slug)}" target="_blank" rel="noopener">${esc(r.c.name)}</a><br><span class="cell-muted">${esc(r.c.college_name || '')}</span></td>
       ${whoCell(p.name || p.handle, '<b>' + esc(p.name || p.handle) + '</b>', '', [p.handle])}
-      <td>${r.list === 'team' ? esc(p.role || 'Officer') + ' <span class="cell-muted">(Officer)</span>' : 'Member'}</td>
+      <td>Team Member</td>
       <td class="cell-muted">${clubEmails[r.c.slug + ':' + p.id] ? `<a href="mailto:${esc(clubEmails[r.c.slug + ':' + p.id])}">${esc(clubEmails[r.c.slug + ':' + p.id])}</a>` : 'none'}</td>
       <td>${p.handle ? `<a href="/${esc(p.handle)}" target="_blank" rel="noopener">circuits.com/${esc(p.handle)}</a>` : '<span class="cell-muted">none, named only</span>'}</td>
       <td>${p.confirmed ? '<b>Yes</b>' : '<span class="cell-muted">No</span>'}</td>
@@ -777,7 +777,7 @@ async function loadStats(){
   </div>
   <div class="st-tiles st-tiles-sm">
     ${statTile('Clubs', fmtN(t.clubs_approved), `${fmtN(t.clubs_pending)} waiting for approval`)}
-    ${statTile('Club people waiting', fmtN(t.club_people_pending), 'members and officers')}
+    ${statTile('Club people waiting', fmtN(t.club_people_pending), 'project team members')}
     ${statTile('Jobs live', fmtN(t.jobs_live), `${fmtN(t.jobs_waiting)} waiting for approval`)}
     ${statTile('On the Talent Board', fmtN(t.talent_listed), 'people open to work')}
     ${statTile('Reminder emails sent', fmtN(t.nudges_sent), 'confirm and keyword reminders')}
@@ -1142,7 +1142,7 @@ async function reloadClubs(){
       <td>${esc(c.college_name || 'none')}</td>
       <td>${esc(c.contact || 'none')}${c.phone ? '<br><span class="cell-muted">' + esc(c.phone) + '</span>' : ''}</td>
       <td class="cell-muted">${c.email ? `<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : 'none'}</td>
-      <td class="cell-muted">${n(c.members)} team members<br>${n(c.team)} officers</td>
+      <td class="cell-muted">${n(c.members)} team members</td>
       <td>${(c.keywords || []).length ? c.keywords.map(k => `<span class="kw-tag${k.status === 'Approved' ? '' : ' kw-off'}" title="${esc(k.status)}">${esc(k.keyword)}</span>`).join(' ') : '<span class="cell-muted">none yet</span>'}</td>
       <td data-parts-for="${esc(c.slug)}" class="cell-muted">0</td>
       <td class="cell-muted">${new Date(c.created_at).toLocaleDateString()}</td>

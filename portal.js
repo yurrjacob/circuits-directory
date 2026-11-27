@@ -1796,7 +1796,6 @@ const PEOPLE = { emails: {} };
 function newPersonId(){ return [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join(''); }
 async function loadPeople(c){
   try{ PEOPLE.emails = await fetchClubEmails([c.slug]); }catch(e){ PEOPLE.emails = {}; }
-  renderPeople('officers', c.team, c.slug);
   renderPeople('members', c.members, c.slug);
 }
 function peopleState(p){
@@ -1806,17 +1805,16 @@ function peopleState(p){
 }
 function renderPeople(key, items, slug){
   const box = el('f-' + key); if(!box) return;
-  const officer = key === 'officers', L = officer ? 'Officer' : 'Member';
+  const L = 'Team Member';   // Team Members only since 2026-11-27; officers are gone
   const list = (Array.isArray(items) ? items : []).filter(x => x && typeof x === 'object')
     .map(x => Object.assign({}, x, { saved: true, email: (x.id && PEOPLE.emails[slug + ':' + x.id]) || '' }));
   box.__list = list;
   const draw = () => {
-    box.innerHTML = (list.length ? `<div class="pp-wrap"><table class="pp-table"><thead><tr><th>${L} Name</th><th>${L} Email Address</th><th>${L} Profile URL</th>${officer ? '<th>Officer Title</th>' : ''}<th>Confirmed</th><th><span class="sr-only">Remove</span></th></tr></thead><tbody>`
+    box.innerHTML = (list.length ? `<div class="pp-wrap"><table class="pp-table"><thead><tr><th>${L} Name</th><th>${L} Email Address</th><th>${L} Profile URL</th><th>Confirmed</th><th><span class="sr-only">Remove</span></th></tr></thead><tbody>`
       + list.map((p, i) => `<tr>
         <td><input type="text" data-i="${i}" data-f="name" maxlength="120" value="${escapeHtml(p.name || '')}" placeholder="Jane Doe" aria-label="${L} name ${i + 1}" autocomplete="off"></td>
         <td><input type="email" data-i="${i}" data-f="email" maxlength="200" value="${escapeHtml(p.email || '')}" placeholder="jane@college.edu" aria-label="${L} email address ${i + 1}" autocomplete="off"></td>
         <td><span class="pp-url"><span>circuits.com/</span><input type="text" data-i="${i}" data-f="handle" maxlength="40" value="${escapeHtml(p.handle || '')}" placeholder="jane" aria-label="${L} profile URL ${i + 1}" autocomplete="off" spellcheck="false"></span></td>
-        ${officer ? `<td><input type="text" data-i="${i}" data-f="role" maxlength="60" value="${escapeHtml(p.role || '')}" placeholder="President" aria-label="Officer title ${i + 1}" autocomplete="off"></td>` : ''}
         <td class="pp-state">${peopleState(p)}</td>
         <td><button type="button" class="mini-btn" data-del="${i}">Remove</button></td></tr>`).join('') + '</tbody></table></div>'
       : `<p class="cb-empty">No ${L.toLowerCase()}s yet. Add one here, or send the ${L} Invite Link.</p>`)
@@ -1832,11 +1830,9 @@ function renderPeople(key, items, slug){
 }
 /* the lists as the owner left them, each with its id, ready to save */
 function collectPeople(key){
-  const officer = key === 'officers';
   return ((el('f-' + key) && el('f-' + key).__list) || []).map(p => {
     if(!p.id) p.id = newPersonId();
     const out = { id: p.id, handle: cleanHandle(p.handle), name: String(p.name || '').trim(), email: String(p.email || '').trim() };
-    if(officer) out.role = String(p.role || '').trim();
     return out;
   }).filter(p => p.handle || p.name || p.email);
 }
@@ -1851,8 +1847,8 @@ function peopleProblem(list, L){
    up through one is added to the club when their email is confirmed. Reset
    makes a fresh link and the old one stops working. */
 async function renderInvites(c){
-  /* officers have a link again (Jacob, 2026-10-28), in a box of its own */
-  for(const [role, label, what, hostId] of [['officer', 'Officers', 'added to the Officers list, Confirmed', 'pt-officer-invites'], ['member', 'Members', 'added to the Members list, Confirmed', 'pt-club-invites']]){
+  /* Team Members only (2026-11-27): the officer link and box are gone */
+  for(const [role, label, what, hostId] of [['member', 'Team Members', 'added to the Team Members list, Confirmed', 'pt-club-invites']]){
     const host = el(hostId); if(!host) continue;
     host.innerHTML = '<p class="pf-note">Preparing your invite link…</p>';
     const r = await clubInviteLink(c.slug, role);
@@ -2119,15 +2115,13 @@ async function saveProfile(){
          in the row, just no longer shown. Sponsor the Project is new. */
       const prevPromo = PT.co && PT.co.club_promo && typeof PT.co.club_promo === 'object' ? PT.co.club_promo : {};
       fields.club_promo = { members: val('f-promo-members') || '', alumni: prevPromo.alumni || '', employers: val('f-promo-employers') || '', sponsors: val('f-promo-sponsors') || '' };
-      const officers = collectPeople('officers');
-      const tp = peopleProblem(officers, 'officer');
-      if(tp){ btn.disabled = false; saveNote('Not saved: ' + tp, false); return; }
+      /* Team Members only (2026-11-27): officers are gone, and the team
+         list (companies.team) is no longer written */
       const members = collectPeople('members');
-      const mp = peopleProblem(members, 'member');
+      const mp = peopleProblem(members, 'team member');
       if(mp){ btn.disabled = false; saveNote('Not saved: ' + mp, false); return; }
       /* emails stay private: off the public lists, into club_emails below */
-      PT.peopleEmails = [...officers, ...members].map(p => ({ person_id: p.id, email: p.email }));
-      fields.team = officers.map(({ email, ...p }) => p);
+      PT.peopleEmails = members.map(p => ({ person_id: p.id, email: p.email }));
       fields.members = members.map(({ email, ...p }) => p);
       if(PT.collegeFile){
         const url = await uploadLogo(PT.collegeFile);
@@ -2170,7 +2164,7 @@ async function saveProfile(){
   if(err){ toast('Could not save: ' + err, false); return; }
   if(fields.team && PT.peopleEmails){
     const e3 = await saveClubEmails(PT.slug, PT.peopleEmails);
-    if(e3){ saveNote('Saved, but the member and officer emails were not: ' + e3, false); return; }
+    if(e3){ saveNote('Saved, but the team member emails were not: ' + e3, false); return; }
   }
   /* the person behind the account shares the picture and the address, so
      recruiters and the public page agree. Their own name is the Contact

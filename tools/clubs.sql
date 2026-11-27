@@ -572,3 +572,81 @@ begin
     '/portal#admin');
   return new;
 end $function$;
+
+-- 2026-11-27, applied as team_members_only. Officers are gone: a project has
+-- Team Members only. Every invite link, old officer links included, now adds
+-- the person to Team Members, and the one officer on record moved into Team
+-- Members (their title kept in the row, no longer shown). companies.team is
+-- left in place, empty, so nothing that reads it breaks.
+create or replace function public.club_invite_link(p_slug text, p_role text default 'member'::text)
+ returns text
+ language plpgsql
+ security definer
+ set search_path to 'public'
+as $function$
+declare t text;
+begin
+  if auth.uid() is null or not owns_company(p_slug) then raise exception 'not_yours' using errcode = 'insufficient_privilege'; end if;
+  if not exists (select 1 from companies c where c.slug = p_slug and c.kind = 'club') then raise exception 'not_a_club' using errcode = 'check_violation'; end if;
+  p_role := 'member';   -- team members only (2026-11-27)
+  select token into t from club_invites where company_slug = p_slug and role = p_role and revoked_at is null order by created_at desc limit 1;
+  if t is null then
+    t := replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', '');
+    insert into club_invites (token, company_slug, role, created_by) values (t, p_slug, p_role, auth.uid());
+  end if;
+  return t;
+end $function$;
+
+create or replace function public.accept_club_invite(p_token text)
+ returns text
+ language plpgsql
+ security definer
+ set search_path to 'public'
+as $function$
+declare inv club_invites%rowtype; p profiles%rowtype; c companies%rowtype;
+        lst jsonb; idx int; e jsonb; pid text; em text;
+begin
+  select * into p from profiles where user_id = auth.uid();
+  if p.user_id is null or p.handle is null then raise exception 'no_profile' using errcode = 'no_data_found'; end if;
+  select * into inv from club_invites where token = p_token and revoked_at is null;
+  if inv.token is null then raise exception 'bad_invite' using errcode = 'no_data_found'; end if;
+  select * into c from companies where slug = inv.company_slug and kind = 'club' and suspended_at is null;
+  if c.slug is null then raise exception 'bad_invite' using errcode = 'no_data_found'; end if;
+  -- every link, an old officer link too, adds to Team Members (2026-11-27)
+  em := lower(coalesce(nullif(auth.jwt()->>'email', ''), (select email from auth.users where id = auth.uid()), ''));
+  lst := coalesce(c.members, '[]'::jsonb);
+  select (x.o - 1)::int into idx from jsonb_array_elements(lst) with ordinality as x(v, o)
+   where lower(coalesce(x.v->>'handle', '')) = lower(p.handle)
+      or (em <> '' and exists (select 1 from club_emails ce where ce.company_slug = c.slug and ce.person_id = x.v->>'id' and lower(ce.email) = em))
+   order by x.o limit 1;
+  if idx is not null then
+    e := lst->idx;
+    e := e || jsonb_build_object('handle', p.handle, 'confirmed', true);
+    if coalesce(e->>'name', '') = '' then e := e || jsonb_build_object('name', coalesce(nullif(p.display_name, ''), p.handle)); end if;
+    lst := jsonb_set(lst, array[idx::text], e);
+  else
+    pid := replace(gen_random_uuid()::text, '-', '');
+    e := jsonb_build_object('id', pid, 'handle', p.handle, 'name', coalesce(nullif(p.display_name, ''), p.handle), 'confirmed', true, 'status', 'Pending');
+    lst := lst || jsonb_build_array(e);
+    if em <> '' then insert into club_emails (company_slug, person_id, email) values (c.slug, pid, em) on conflict do nothing; end if;
+  end if;
+  perform set_config('circuits.club_invite', 'on', true);
+  update companies set members = lst, updated_at = now() where slug = c.slug;
+  perform set_config('circuits.club_invite', 'off', true);
+  update club_invites set uses = uses + 1 where token = inv.token;
+  if idx is null or coalesce(lst->idx->>'status', '') = 'Pending' then
+    perform notify_staff('New project team member to approve: ' || c.name,
+      coalesce(nullif(p.display_name, ''), p.handle) || ' (circuits.com/' || p.handle || ') joined ' || c.name || ' through its team member invite link and confirmed their email.',
+      '/portal#admin:clubppl');
+  end if;
+  return c.handle;
+end $function$;
+
+-- the officers on record join Team Members (no one is lost)
+do $$
+begin
+  perform set_config('circuits.club_invite', 'on', true);
+  update companies set members = coalesce(members, '[]'::jsonb) || team, team = '[]'::jsonb, updated_at = now()
+   where kind = 'club' and jsonb_typeof(team) = 'array' and jsonb_array_length(team) > 0;
+  perform set_config('circuits.club_invite', 'off', true);
+end $$;
