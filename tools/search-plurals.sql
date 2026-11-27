@@ -4,7 +4,15 @@
 -- Directory rule (every typed word matches a company name or keyword)
 -- instead of an exact keyword match.
 --
--- Applied to the project as the migration search_plurals_all_words.
+-- DEPLOY ORDER. Steps 1 and 2 change the stored keys, and the live site's
+-- store.js normKw() must compute the same keys, or a search such as
+-- "Defense" finds nothing. So steps 1 and 2 go on in the same minute the
+-- branch carrying the new normKw() reaches main, never before.
+-- History: applied 2026-11-27 as search_plurals_all_words, then rolled back
+-- minutes later as search_plurals_hold_until_merge (old norm_kw restored,
+-- keys recomputed) because main still had the old normKw(). Step 3,
+-- search_listing_ids, stayed: it is unused until the merge and works with
+-- either norm_kw.
 -- Dry run before applying: of 296 listing and 23 talent keywords only three
 -- keys changed (defense -> defen twice, fuse -> fus), no two keywords merged,
 -- and no unique index (banner per keyword, locked position, one keyword per
