@@ -771,6 +771,12 @@ function renderSavedStrip(){
     btn.addEventListener('click', () => { removeSaved(btn.dataset.unsave); renderSavedStrip(); }));
 }
 
+/* The Exclusive Sponsor Banner is archived (2026-11-23 list: "remove it on all
+   keywords, save it for later, probably in two months"). Off hides the sample
+   banner on unsold keywords, a paid sponsor's card and the Get Listed For
+   button; the data and admin are untouched. backups/sponsor-banner-2026-11-27
+   says how to bring it back: set this to true. */
+const SPONSOR_BANNERS = false;
 async function initResults(forcedTerm){
   const params = new URLSearchParams(location.search);
   const q = forcedTerm || params.get('q') || '';
@@ -823,7 +829,9 @@ async function initResults(forcedTerm){
      somewhere. "View Docs" and the "This Banner is Available" line went on
      2026-09-03. The keyword is capitalised by CSS (.tc), the same way the
      subbar shows it. */
-  const exampleBanner = (term, extra = '') => `
+  const exampleBanner = (term, extra = '') => !SPONSOR_BANNERS
+    ? `${extra ? `<div class="empty" style="margin-bottom:4px">${extra}</div>` : ''}<div class="empty"><div class="big">No company is listed under &ldquo;<span class="tc">${term}</span>&rdquo; yet.</div></div>`
+    : `
     ${extra ? `<div class="empty" style="margin-bottom:4px">${extra}</div>` : ''}
     <div class="premium"><div class="premium-card">
       <span class="premium-badge">Exclusive Sponsor</span>
@@ -841,7 +849,7 @@ async function initResults(forcedTerm){
         </div>
       </div>
     </div></div>`;
-  const listCta = (term) => `
+  const listCta = (term) => !SPONSOR_BANNERS ? '' : `
     <div class="empty" style="margin:10px auto 26px">
       <a class="btn btn-primary" href="/join" style="padding:14px 28px;font-size:1rem;display:inline-block;font-weight:700">Get Listed For <span class="tc">${term}</span></a>
     </div>`;
@@ -896,7 +904,7 @@ async function initResults(forcedTerm){
      banner"). The banner is the paid placement above the results; the row is
      the free listing every company keeps, so a sponsor is not dropped from
      the list they paid to stand above. */
-  const featured = listings.find(l => l.banner);
+  const featured = SPONSOR_BANNERS ? listings.find(l => l.banner) : null;
   const listed = listings.slice();
   /* Every load deals the list in a fresh random order (Jacob, 2026-09-01), the "#" is just the row's place today, not a rank. Fisher-Yates, because
      sort(() => Math.random() - .5) is biased. */
@@ -920,7 +928,7 @@ async function initResults(forcedTerm){
     + `<span class="lock-tip"><b>Position locked.</b> This company holds #${n} for &ldquo;${escapeHtml(kw)}&rdquo;. <a href="/contact">Lock yours &rarr;</a></span></span>`;
   let html = '';
   if(!featured){
-    html += exampleBanner(escapeHtml(q));
+    if(SPONSOR_BANNERS) html += exampleBanner(escapeHtml(q));
   } else {
     const fLogo = isLogoUrl(featured.logo)
       ? `<img src="${escapeHtml(featured.logo)}" alt="${escapeHtml(featured.company)} logo">`
