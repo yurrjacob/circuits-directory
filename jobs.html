@@ -77,8 +77,8 @@
 </footer>
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
-<script src="store.js?v=31f75970b2"></script>
-<script src="app.js?v=e77c7ce6b8"></script>
+<script src="store.js?v=3d3b3b9e46"></script>
+<script src="app.js?v=151bb12cfc"></script>
 <script>
 /* The Job Board, a table (Jacob, 2026-09-13): Job Title, Location, Company,
    Years Experience, Circuits-Keywords. Pick a row, then View Job Details &
@@ -94,7 +94,8 @@
   const mini = document.getElementById('mini-search');
   mini.value = q;
   document.getElementById('mini-form').addEventListener('submit', e => {
-    e.preventDefault(); location.href = '/jobs' + (mini.value.trim() ? '?q=' + encodeURIComponent(mini.value.trim()) : '');
+    e.preventDefault(); const v = mini.value.trim();
+    goUnlessCompany(v, '', '/jobs' + (v ? '?q=' + encodeURIComponent(v) : ''));
   });
   document.querySelectorAll('[data-term]').forEach(el => el.textContent = q || 'everything');
 

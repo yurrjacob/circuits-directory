@@ -94,8 +94,8 @@
 </footer>
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
-<script src="store.js?v=31f75970b2"></script>
-<script src="app.js?v=e77c7ce6b8"></script>
+<script src="store.js?v=3d3b3b9e46"></script>
+<script src="app.js?v=151bb12cfc"></script>
 <script>
 (async function initGlobalDirectory(){
   const body = document.getElementById('dir-rows'), empty = document.getElementById('dir-empty');
@@ -107,11 +107,10 @@
   catch(e){ count.textContent = 'Could not load the directory just now.'; empty.hidden = false; empty.textContent = 'The connection to Circuits.com dropped. Reload to try again.'; return; }
   /* shuffled once per visit, then it revolves */
   for(let i = list.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
-  const words = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').split(' ').filter(Boolean);
-  const hay = r => ' ' + [r.company, r.keyword].join(' ').toLowerCase().replace(/[^a-z0-9]+/g, ' ') + ' ';
+  /* every word must start a word of the company or keyword, singular and plural alike */
   function draw(){
-    const ws = words(q);
-    const rows = ws.length ? list.filter(r => { const h = hay(r); return ws.every(w => h.includes(' ' + w)); }) : list;
+    const ws = searchKeys(q);
+    const rows = ws.length ? list.filter(r => matchesAllWords(ws, r.company + ' ' + r.keyword)) : list;
     count.textContent = '';   // no running total (Jacob, 2026-11-16); the line only says Loading or that the load failed
     body.innerHTML = rows.map(dirRowHtml).join('');
     empty.hidden = !!rows.length;
@@ -119,9 +118,10 @@
   }
   draw();
   revolveRows(body, { button: document.getElementById('dir-rv') });
-  document.getElementById('dir-form').addEventListener('submit', e => {
+  document.getElementById('dir-form').addEventListener('submit', async e => {
     e.preventDefault();
     q = input.value.trim();
+    if(await goUnlessCompany(q, '')) return;   // a company's exact name opens its page
     history.replaceState(null, '', q ? '?q=' + encodeURIComponent(q) : location.pathname);
     draw();
   });

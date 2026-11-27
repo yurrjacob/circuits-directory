@@ -741,7 +741,7 @@ for (const [f, needle] of [['app.js', 'loadErrorHtml('], ['profile.js', 'loadErr
 }
 // the results page in particular must not fall through to the sales pitch
 const resultsSrc = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
-const catchBlock = resultsSrc.slice(resultsSrc.indexOf('listings = await fetchApprovedByKeyword'));
+const catchBlock = resultsSrc.slice(resultsSrc.indexOf('await Promise.all([fetchApprovedByKeyword(q)'));
 const catchBody = catchBlock.slice(catchBlock.indexOf('catch'), catchBlock.indexOf('const countEl'));
 assert.ok(/loadErrorHtml/.test(catchBody) && /return;/.test(catchBody),
   'a failed keyword search still falls through to the "this keyword is available" pitch');
@@ -1217,6 +1217,22 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   { const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8');
     assert.ok(ph.indexOf('id="pt-getlisted"') < ph.indexOf('id="pt-getparts"') && ph.indexOf('id="pt-getparts"') < ph.indexOf('>Directory Listings</h3>') && /Choose Your Free Part Numbers<\/b>/.test(ph),
       'Your Listings does not open with Choose Your Free Directory Keywords, then Choose Your Free Part Numbers'); }
+  /* singular and plural meet (2026-11-23 list). normKw in store.js is the
+     twin of norm_kw in tools/search-plurals.sql; this table is what the live
+     database returned after the 2026-11-27 migration, so a change to one
+     side without the other fails here */
+  { const stSrc = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8');
+    const sandbox = {}; new Function('out', stSrc.slice(stSrc.indexOf('function singularize'), stSrc.indexOf('/* Approval-level cleanup')) + '; out.normKw = normKw;')(sandbox);
+    const table = { circuits: 'circuit', circuit: 'circuit', ICs: 'ic', IC: 'ic', lenses: 'len', lens: 'len', processes: 'process', process: 'process',
+      caches: 'cach', cache: 'cach', Defense: 'defen', defenses: 'defen', connectors: 'connector', batteries: 'battery', switches: 'switch',
+      'PCB Boards': 'pcbboard', sample: 'sample', wireless: 'wireless', '': '' };
+    for (const [k, v] of Object.entries(table)) assert.strictEqual(sandbox.normKw(k), v, `normKw("${k}") is "${sandbox.normKw(k)}", the database says "${v}"`);
+    const sql = fs.readFileSync(path.join(ROOT, 'tools', 'search-plurals.sql'), 'utf8');
+    assert.ok(/create or replace function public\.search_listing_ids/.test(sql) && /security invoker/.test(sql), 'the all-words search function is not recorded under tools/');
+    assert.ok(/sb\.rpc\('search_listing_ids'/.test(stSrc) && /select\(APP_PUBLIC_COLS\)\.in\('id'/.test(stSrc), 'the main search does not use the all-words search, or reads rows without the column list');
+    const ap = fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8');
+    assert.ok(/function matchesAllWords\(qKeys, text\)/.test(ap) && ['global.html', 'clubs.html'].every(f => /matchesAllWords\(ws, /.test(fs.readFileSync(path.join(ROOT, f), 'utf8'))), '/global or /clubs does not match singular and plural alike');
+    assert.ok(/companyPageFor\(q\)/.test(ap) && ['global.html', 'clubs.html', 'jobs.html', 'talent.html'].every(f => /goUnlessCompany\(/.test(fs.readFileSync(path.join(ROOT, f), 'utf8'))), 'a search bar does not send an exact company name to its page'); }
   /* the green nav button reads Post Free Listing on every page (Jacob, 2026-11-26) */
   for (const f of fs.readdirSync(ROOT).filter(f => f.endsWith('.html'))) {
     const src = fs.readFileSync(path.join(ROOT, f), 'utf8');

@@ -1,6 +1,22 @@
 /* ===== Circuits.com, shared front-end behavior ===== */
 
 
+/* The Global Directory rule, for the lists filtered in the browser (/global,
+   /clubs): every typed word must start a word of the row, singular and
+   plural alike (normKw folds both, 2026-11-23 list). */
+function searchKeys(s){ return String(s || '').split(/[^A-Za-z0-9]+/).filter(Boolean).map(normKw).filter(Boolean); }
+function matchesAllWords(qKeys, text){
+  const hay = searchKeys(text);
+  return qKeys.every(w => hay.some(h => h.startsWith(w)));
+}
+/* any search bar: an approved company's (or, with kind 'club', project's)
+   exact name opens its circuits.com page instead of searching (2026-11-23 list) */
+async function goUnlessCompany(q, kind, href){
+  const h = q && typeof companyPageFor === 'function' ? await companyPageFor(q, kind) : '';
+  if(h){ location.href = '/' + encodeURIComponent(h); return true; }
+  if(href) location.href = href;
+  return false;
+}
 function gotoSearch(term){
   const q = (term||'').trim();
   if(!q) return;
@@ -510,7 +526,7 @@ async function initInbox(){
     if(!storedSession()) return;
     const add = (src, integrity) => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; if(integrity) t.integrity = integrity; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
     /* the same vendored file, and the same hash, every page carries (audit item 3, 2026-09-21) */
-    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=31f75970b2'); }catch(e){ return; }
+    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=3d3b3b9e46'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;
@@ -804,7 +820,12 @@ async function initResults(forcedTerm){
 
   let listings = [];
   try {
-    listings = await fetchApprovedByKeyword(q);
+    /* an approved company's exact name goes straight to its page (2026-11-23
+       list), asked alongside the listings so it costs no extra wait */
+    const [found, page] = await Promise.all([fetchApprovedByKeyword(q),
+      typeof companyPageFor === 'function' ? companyPageFor(q) : '']);
+    if(page){ location.replace('/' + encodeURIComponent(page)); return; }
+    listings = found;
   } catch(e){
     /* Do NOT fall through to the "this keyword is available" pitch. We do not
        know that it is available, we only know we could not ask. */
@@ -897,7 +918,9 @@ async function initResults(forcedTerm){
 
   /* Real listings make this page worth indexing; the sample fixture and an
      empty page are not Google's business. */
-  setResultsMeta(q, listings.some(l => !/^sample-/.test(l.company_slug || '')));
+  /* only listings under the keyword itself make the page worth indexing:
+     word matches are a convenience, not a page Google should hold */
+  setResultsMeta(q, listings.some(l => l.exact !== false && !/^sample-/.test(l.company_slug || '')));
 
   /* The Exclusive Sponsor is the banner AND a row in the list (Jacob,
      2026-09-03: "users should still be listed on the main list if they have a
@@ -905,7 +928,15 @@ async function initResults(forcedTerm){
      the free listing every company keeps, so a sponsor is not dropped from
      the list they paid to stand above. */
   const featured = SPONSOR_BANNERS ? listings.find(l => l.banner) : null;
-  const listed = listings.slice();
+  /* listings under the searched keyword itself first, then every other
+     listing whose name or keyword matches all the words (2026-11-23 list);
+     each group is dealt at random, and locked spots belong to the keyword */
+  const listed = listings.filter(l => l.exact !== false);
+  const wordHits = listings.filter(l => l.exact === false);
+  for(let i = wordHits.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [wordHits[i], wordHits[j]] = [wordHits[j], wordHits[i]];
+  }
   /* Every load deals the list in a fresh random order (Jacob, 2026-09-01), the "#" is just the row's place today, not a rank. Fisher-Yates, because
      sort(() => Math.random() - .5) is biased. */
   for(let i = listed.length - 1; i > 0; i--){
@@ -922,7 +953,7 @@ async function initResults(forcedTerm){
     while(ordered.length < l.locked_position - 1 && free.length) ordered.push(free.shift());
     ordered.push(l);
   }
-  ordered.push(...free);
+  ordered.push(...free, ...wordHits);
   const lockHtml = (n, kw) => `<span class="lock" tabindex="0" aria-label="Position locked">`
     + `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`
     + `<span class="lock-tip"><b>Position locked.</b> This company holds #${n} for &ldquo;${escapeHtml(kw)}&rdquo;. <a href="/contact">Lock yours &rarr;</a></span></span>`;

@@ -94,8 +94,8 @@
 </footer>
 
 <script src="/vendor/supabase-js-2.116.0.js" integrity="sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP"></script>
-<script src="store.js?v=31f75970b2"></script>
-<script src="app.js?v=e77c7ce6b8"></script>
+<script src="store.js?v=3d3b3b9e46"></script>
+<script src="app.js?v=151bb12cfc"></script>
 <script>
 (async function initClubs(){
   const body = document.getElementById('clubs'), empty = document.getElementById('clubs-empty');
@@ -108,11 +108,11 @@
   /* shuffled once per visit, like the Directory listings */
   for(let i = list.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; }
   /* "robotics clubs" finds robotics: the words club and project are dropped, every other word must match */
-  const words = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').split(' ').filter(w => w && !/^(clubs?|projects?)$/.test(w));
-  const hay = c => ' ' + [c.name, c.college_name, c.tagline, c.description, (c.keywords || []).join(' ')].join(' ').toLowerCase().replace(/[^a-z0-9]+/g, ' ') + ' ';
+  const words = s => searchKeys(String(s || '').replace(/\b(clubs?|projects?)\b/gi, ' '));
+  const hay = c => [c.name, c.college_name, c.tagline, c.description, (c.keywords || []).join(' ')].join(' ');
   function draw(){
     const ws = words(q);
-    const rows = ws.length ? list.filter(c => { const h = hay(c); return ws.every(w => h.includes(' ' + w)); }) : list;
+    const rows = ws.length ? list.filter(c => matchesAllWords(ws, hay(c))) : list;
     count.textContent = '';   // no internal statistics above the list (2026-11-23 list)
     body.innerHTML = rows.map((c, i) => {
       const h = String(c.handle || c.slug).toLowerCase();
@@ -133,9 +133,10 @@
   }
   draw();
   revolveRows(body, { button: document.getElementById('club-rv') });
-  document.getElementById('club-form').addEventListener('submit', e => {
+  document.getElementById('club-form').addEventListener('submit', async e => {
     e.preventDefault();
     q = input.value.trim();
+    if(await goUnlessCompany(q, 'club')) return;   // a project's exact name opens its page
     history.replaceState(null, '', q ? '?q=' + encodeURIComponent(q) : location.pathname);
     draw();
   });

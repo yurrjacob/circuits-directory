@@ -17,7 +17,7 @@ security decides everything. There is no build step.
 - Database changes: apply to the project, then record the SQL under tools/
   (audit-hardening.sql, recruiting-free.sql, bot-signup-guard.sql,
   grouped-listing-notifications.sql, profile-sync.sql, clubs.sql,
-  staff-alerts.sql). Edge functions live at
+  staff-alerts.sql, search-plurals.sql). Edge functions live at
   tools/edge-auth.ts and tools/edge-notify.ts; deploy after editing.
 - The Ideas panel, notifications and every email derive their recipient from
   a database row, never from the request.
