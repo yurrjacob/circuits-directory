@@ -1237,6 +1237,9 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
   assert.ok(/\['tab-club', 'tab-members', 'tab-branding'\]\.forEach\(id => \{/.test(fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8')), 'edits on a project page no longer count as unsaved changes');
   /* a logo staff set in Website Applications reaches the profile */
   assert.ok(/logo    = case when new\.logo    is distinct from old\.logo/.test(fs.readFileSync(path.join(ROOT, 'tools', 'profile-sync.sql'), 'utf8')), 'the listing-to-profile mirror no longer carries the logo');
+  /* Website Applications: the Trust Badge is a typed text box with Save Badge, nothing pre-filled (2026-11-23 list) */
+  { const ah = fs.readFileSync(path.join(ROOT, 'applications.html'), 'utf8');
+    assert.ok(/<input type="text" data-badge="text"/.test(ah) && /data-act="savebadge">Save Badge</.test(ah) && !/text:'Authorized'/.test(ah) && !/data-badge="on"/.test(ah), 'the Website Applications trust badge is pre-filled again, or lost its text box or Save Badge'); }
   /* the green nav button reads Post Free Listing on every page (Jacob, 2026-11-26) */
   for (const f of fs.readdirSync(ROOT).filter(f => f.endsWith('.html'))) {
     const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
