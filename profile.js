@@ -171,10 +171,13 @@ function clubHeroHtml(co){
   const short = u => u.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '').slice(0, 40);
   const links = [site, other].filter(Boolean);
   const linksHtml = links.length ? `<div class="pf-club-links"><span class="pf-club-links-k">Links</span>${links.map(u => `<a class="web-link" href="${escapeHtml(u)}" target="_blank" rel="noopener nofollow">${escapeHtml(short(u))}</a>`).join('')}</div>` : '';
-  /* the Club Badge staff set in Club Admin; the club name until they do */
+  /* the Project Badge staff type in Project Admin. No text, no badge: it used
+     to fall back to the page's own name, which only repeated the heading
+     beside it (2026-11-23 list) */
   const cb = co.club_badge && typeof co.club_badge === 'object' ? co.club_badge : {};
   const cbColor = /^#[0-9a-f]{6}$/i.test(cb.color || '') ? cb.color : '';
-  const badge = co.club_status === 'Approved' ? `<span class="pf-club-badge"${cbColor ? ` style="background:${cbColor}"` : ''}>${escapeHtml((cb.text || '').trim() || co.name)}</span>` : '';
+  const cbText = (cb.text || '').trim();
+  const badge = co.club_status === 'Approved' && cbText ? `<span class="pf-club-badge"${cbColor ? ` style="background:${cbColor}"` : ''}>${escapeHtml(cbText)}</span>` : '';
   const logoBox = (url, alt, fallback) => `<div class="pf-club-logo">${isLogoUrl(url) ? `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}">` : `<span class="pf-club-logo-ph">${escapeHtml(fallback)}</span>`}</div>`;
   return `<div class="pf-club-head">
     ${logoBox(co.college_logo, (college || 'College') + ' logo', (college || 'C').slice(0, 1).toUpperCase())}
@@ -184,7 +187,7 @@ function clubHeroHtml(co){
       ${college ? `<p class="pf-club-college">${escapeHtml(college)}</p>` : ''}
       ${desc ? `<p class="pf-club-desc">${escapeHtml(desc)}</p>` : ''}
       <div class="pf-club-acts">
-        ${join ? `<a class="btn btn-primary" href="${escapeHtml(join)}"${/^https?:/i.test(join) ? ' target="_blank" rel="noopener nofollow"' : ''}>Join Club</a>` : ''}
+        ${join ? `<a class="btn btn-primary" href="${escapeHtml(join)}"${/^https?:/i.test(join) ? ' target="_blank" rel="noopener nofollow"' : ''}>Join</a>` : ''}
       </div>
       ${(() => {
         const n = CLUB_PROJECTS.filter(p => p && p.title && p.published !== false).length;
@@ -207,8 +210,9 @@ function clubHeroHtml(co){
 }
 const PROMO_KEYS = [
   ['members', 'New members', 'Thinking of joining?', '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/><path d="M19 8h4M21 6v4"/>'],
-  ['alumni', 'Alumni', 'Stay connected.', '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/><path d="M22 9v6"/>'],
-  ['employers', 'Employers', 'Hire from the club.', '<rect x="3" y="7.5" width="18" height="12.5" rx="2"/><path d="M8.5 7.5V5.8A1.8 1.8 0 0 1 10.3 4h3.4a1.8 1.8 0 0 1 1.8 1.8v1.7"/><path d="M3 12.5h18"/>']];
+  /* Alumni came off (2026-11-23 list); Sponsor the Project is new */
+  ['employers', 'Employers', 'Hire from the Project.', '<rect x="3" y="7.5" width="18" height="12.5" rx="2"/><path d="M8.5 7.5V5.8A1.8 1.8 0 0 1 10.3 4h3.4a1.8 1.8 0 0 1 1.8 1.8v1.7"/><path d="M3 12.5h18"/>'],
+  ['sponsors', 'Sponsor the Project', 'Back this build.', '<path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z"/>']];
 function promoHubHtml(co){
   const promo = co.club_promo && typeof co.club_promo === 'object' ? co.club_promo : {};
   const cards = PROMO_KEYS.filter(([k]) => (promo[k] || '').trim()).map(([k, title, kicker, icon]) =>
@@ -356,7 +360,7 @@ function personClubSections(p){
       const me = (Array.isArray(x.team) ? x.team : []).find(t => t && String(t.handle || '').toLowerCase() === String(p.handle || '').toLowerCase()) || {};
       return `<a class="pf-badge pf-badge-proj" href="${handleLink(c.handle)}#project-${escapeHtml(String(x.id))}"><span class="pf-badge-k">${badgeIcon('proj')}Project</span><b>${escapeHtml(x.title)}</b><span>${escapeHtml(me.role || '')}${me.role && c.name ? ' at ' : ''}${escapeHtml(c.name || '')}</span></a>`;
     }));
-  if(pills.length) html += section('Badges', `<div class="pf-badges">${pills.join('')}</div><p class="pf-note">Badges are awarded by the club pages that list this person, not written here.</p>`);
+  if(pills.length) html += section('Badges', `<div class="pf-badges">${pills.join('')}</div><p class="pf-note">Badges are awarded by the project pages that list this person, not written here.</p>`);
   if(projects.length) html += section('Projects', `<div class="pf-showcase pf-showcase-mini">${projects.map(x => {
       const c = Object(x.companies);   // no brace literal: tools/check.js scans braces inside templates
       const cover = safeUrl(x.cover_url);
@@ -520,7 +524,7 @@ async function initProfile(){
   const anyBanner = kws.some(k => k.banner);
   /* a club's keywords live in the club search (2026-10-28) */
   const kwHref = k => isClub ? '/clubs?q=' + encodeURIComponent(k.keyword) : `/results?q=${encodeURIComponent(k.keyword)}&hl=${encodeURIComponent(slug)}`;
-  html += section(isClub ? 'Club Keywords' : 'Keyword Listings', kws.length
+  html += section(isClub ? 'Project Keywords' : 'Keyword Listings', kws.length
     ? `<div class="kw-tags pf-kws">${kws.map(k =>
         `<a class="kw-tag${k.banner ? ' kw-sponsored' : ''}" href="${kwHref(k)}"${k.banner ? ` title="${SPONSOR_TITLE}"` : ''}>${escapeHtml(k.keyword)}${k.banner ? starHtml() : ''}`
         + badgeHtml(k.badge, 'kw-lb')
@@ -613,7 +617,7 @@ async function initProfile(){
   /* ---- sidebar: one place for everything a buyer needs to act ---- */
   html += `</div><aside class="pf-side">
     <div class="pf-side-card">
-      <h2 class="pf-sec-h">${isClub ? 'Contact the club' : 'Get in touch'}</h2>
+      <h2 class="pf-sec-h">${isClub ? 'Contact the project' : 'Get in touch'}</h2>
       ${looksEmail(co.email)
         ? `<a class="btn btn-primary pf-cta" id="pf-email-cta"
              href="mailto:${escapeHtml(co.email.trim())}?subject=${encodeURIComponent('Enquiry via Circuits.com: ' + co.name)}">Email ${escapeHtml(co.name)}</a>`
