@@ -720,22 +720,29 @@ async function fetchTalentKeywords(userId){
   return (data || []).map(r => r.keyword);
 }
 /* ---- notifications inbox: the bell in the header ---- */
+/* Profile and Admin (2026-11-27): audience says whose news a notice is. The
+   staff queue is 'admin' (notify_staff marks it); everything else, an admin's
+   own account included, is 'profile'. Each audience gets its own latest 50,
+   so hundreds of staff alerts never push a person's own notices out. */
 async function fetchNotifications(){
   if(!sb) return [];
-  const { data, error } = await sb.from('notifications')
-    .select('id, sender_name, sender_avatar, subject, body, link, read_at, created_at')
-    .order('created_at', { ascending: false }).limit(50);
-  if(error){ console.error('fetchNotifications', error); return []; }
-  return data || [];
+  const q = aud => sb.from('notifications')
+    .select('id, sender_name, sender_avatar, subject, body, link, read_at, created_at, audience')
+    .eq('audience', aud).order('created_at', { ascending: false }).limit(50);
+  const [p, a] = await Promise.all([q('profile'), q('admin')]);
+  if(p.error || a.error){ console.error('fetchNotifications', p.error || a.error); return []; }
+  return [...(p.data || []), ...(a.data || [])].sort((x, y) => String(y.created_at).localeCompare(String(x.created_at)));
 }
 async function markNotificationRead(id){
   if(!sb) return;
   const { error } = await sb.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', id).is('read_at', null);
   if(error) console.error('markNotificationRead', error);
 }
-async function markAllNotificationsRead(){
+async function markAllNotificationsRead(audience){
   if(!sb) return;   // RLS scopes this to the signed-in user's own rows
-  const { error } = await sb.from('notifications').update({ read_at: new Date().toISOString() }).is('read_at', null);
+  let q = sb.from('notifications').update({ read_at: new Date().toISOString() }).is('read_at', null);
+  if(audience) q = q.eq('audience', audience);   // Mark all read acts on the open tab only
+  const { error } = await q;
   if(error) console.error('markAllNotificationsRead', error);
 }
 async function deleteNotification(id){

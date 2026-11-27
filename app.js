@@ -526,7 +526,7 @@ async function initInbox(){
     if(!storedSession()) return;
     const add = (src, integrity) => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; if(integrity) t.integrity = integrity; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
     /* the same vendored file, and the same hash, every page carries (audit item 3, 2026-09-21) */
-    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=4296a7924a'); }catch(e){ return; }
+    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=195b56bc32'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;
@@ -540,7 +540,7 @@ async function initInbox(){
   panel.className = 'inbox-panel'; panel.hidden = true; panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Notifications');
   document.body.appendChild(panel);
 
-  let items = null, open = null, isStaff = false;
+  let items = null, open = null, isStaff = false, tab = 'profile';
   /* Every notice carries a time, not just a day (Jacob, 2026-09-17). The list
      stays short: the clock today, the weekday and clock this week, then the
      date. The full local date and time is always in the tooltip, and the
@@ -593,11 +593,18 @@ async function initInbox(){
      copy; the company's own copy reads "Upgrade request received:" and must
      not be marked, which is why this anchors on the colon.
      ponytail: a staff_queue column on notifications would end the word test. */
-  const STAFF_QUEUE = /^(New listing request:|Upgrade request:|New job post:|Recruit waiting for approval:|New profile confirmed:|New club page:|New club keyword request:)/i;
-  /* Belt and braces: even if a subject collided, a company is never told one of
-     its own notices is admin work, because the badge needs a staff reader. */
-  const adminBadge = n => (isStaff && STAFF_QUEUE.test(n.subject || ''))
+  /* Since 2026-11-27 the database says it: notifications.audience is 'admin'
+     for the staff queue (notify_staff), 'profile' for everything else. An
+     admin account sees two tabs, Profile and Admin; everybody else sees only
+     their own notices, as before. */
+  const adminBadge = n => (isStaff && n.audience === 'admin')
     ? '<span class="inbox-admin" title="Staff queue: this is for the Circuits.com team, not for your own account.">Admin</span>' : '';
+  const shown = () => (items || []).filter(x => (x.audience || 'profile') === (isStaff ? tab : 'profile'));
+  const unreadIn = aud => (items || []).filter(x => !x.read_at && (x.audience || 'profile') === aud).length;
+  const tabsHtml = () => !isStaff ? '' : `<div class="inbox-tabs" role="tablist" aria-label="Which notifications">${[['profile', 'Profile'], ['admin', 'Admin']].map(([k, l]) => {
+      const u = unreadIn(k);
+      return `<button type="button" class="inbox-tab${tab === k ? ' on' : ''}" data-tab="${k}" role="tab" aria-selected="${tab === k}">${l}${u ? ` <span class="inbox-tab-n">${u > 99 ? '99+' : u}</span>` : ''}</button>`;
+    }).join('')}</div>`;
   const badge = () => {
     const n = (items || []).filter(x => !x.read_at).length, b = btn.querySelector('.inbox-n');
     b.textContent = n > 9 ? '9+' : String(n); b.hidden = !n;
@@ -615,13 +622,14 @@ async function initInbox(){
         </div>`;
       return;
     }
-    panel.innerHTML = `<div class="inbox-head"><b>Notifications</b>${items.some(x => !x.read_at) ? '<button type="button" class="inbox-readall">Mark all read</button>' : ''}</div>` +
-      (items.length ? items.map(n => `<div class="inbox-row k-${kindOf(n)}"><button type="button" class="inbox-item${n.read_at ? '' : ' unread'}" data-id="${escapeHtml(n.id)}">
+    const list = shown();
+    panel.innerHTML = `<div class="inbox-head"><b>Notifications</b>${list.some(x => !x.read_at) ? '<button type="button" class="inbox-readall">Mark all read</button>' : ''}</div>` + tabsHtml() +
+      (list.length ? list.map(n => `<div class="inbox-row k-${kindOf(n)}"><button type="button" class="inbox-item${n.read_at ? '' : ' unread'}" data-id="${escapeHtml(n.id)}">
           ${avatar(n)}
           <span class="inbox-text"><span class="inbox-who"><b>${escapeHtml(n.sender_name)}</b>${adminBadge(n)}${stamp(n.created_at)}</span>
             <span class="inbox-subject">${escapeHtml(n.subject)}</span>
             <span class="inbox-snip">${escapeHtml(n.body.replace(/\s+/g, ' ').slice(0, 90))}${n.body.length > 90 ? '…' : ''}</span></span>
-        </button><button type="button" class="inbox-x" data-del="${escapeHtml(n.id)}" aria-label="Delete notification">&times;</button></div>`).join('') : '<p class="inbox-empty">Nothing here yet.</p>');
+        </button><button type="button" class="inbox-x" data-del="${escapeHtml(n.id)}" aria-label="Delete notification">&times;</button></div>`).join('') : `<p class="inbox-empty">${isStaff && tab === 'admin' ? 'No admin notifications.' : 'Nothing here yet.'}</p>`);
   };
   /* Both on first open, not on page load: is_staff() is one more round trip and
      the badge it decides is only ever visible inside the panel. */
@@ -629,6 +637,8 @@ async function initInbox(){
     const staffAsk = typeof checkStaff === 'function' ? checkStaff().catch(() => false) : Promise.resolve(false);
     const loaded = await Promise.all([fetchNotifications(), staffAsk]);
     items = loaded[0]; isStaff = !!loaded[1];
+    /* open on Admin when only the staff queue has something new */
+    if(isStaff && !unreadIn('profile') && unreadIn('admin')) tab = 'admin';
     badge(); draw();
   };
   const show = on => { panel.hidden = !on; btn.setAttribute('aria-expanded', on ? 'true' : 'false'); if(!on) open = null; };
@@ -650,9 +660,12 @@ async function initInbox(){
       draw(); return;
     }
     if(e.target.closest('.inbox-back')){ open = null; draw(); return; }
+    const t = e.target.closest('.inbox-tab');
+    if(t){ tab = t.dataset.tab; draw(); return; }
     if(e.target.closest('.inbox-readall')){
-      for(const n of items) if(!n.read_at) n.read_at = new Date().toISOString();
-      badge(); draw(); markAllNotificationsRead();
+      const aud = isStaff ? tab : 'profile';
+      for(const n of shown()) if(!n.read_at) n.read_at = new Date().toISOString();
+      badge(); draw(); markAllNotificationsRead(aud);
     }
   });
   document.addEventListener('click', e => { if(!panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) show(false); });

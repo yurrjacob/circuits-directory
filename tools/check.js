@@ -1176,12 +1176,16 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
          its own notice. The company's copy of an upgrade request reads
          "Upgrade request received:", which is why the pattern anchors on the
          colon and must not be loosened to a bare "Upgrade request". */
-  assert.ok(/const STAFF_QUEUE = \/\^\(New listing request:\|Upgrade request:\|New job post:\|Recruit waiting for approval:\|New profile confirmed:\|New club page:\|New club keyword request:\)\//.test(appSrc2),
-    'the staff-queue subjects changed; check them against the notify_ triggers before editing');
-  assert.ok(/isStaff && STAFF_QUEUE\.test\(n\.subject \|\| ''\)/.test(appSrc2),
-    'the Admin badge no longer needs a staff reader, so a company could be told its own notice is admin work');
-  assert.ok(!/STAFF_QUEUE[\s\S]{0,200}kindOf\(n\) === 'note'/.test(appSrc2),
-    'the Admin badge is keyed on the grey icon again; grey is a fallback, not a marker of staff work');
+  /* since 2026-11-27 the database marks the staff queue: notifications.audience
+     is 'admin' (notify_staff, tools/staff-alerts.sql), and admin accounts get
+     Profile and Admin tabs in the bell. The badge still needs a staff reader. */
+  assert.ok(/const adminBadge = n => \(isStaff && n\.audience === 'admin'\)/.test(appSrc2),
+    'the Admin badge is no longer keyed on notifications.audience with a staff reader');
+  assert.ok(/\[\['profile', 'Profile'\], \['admin', 'Admin'\]\]/.test(appSrc2) && /const shown = \(\) => \(items \|\| \[\]\)\.filter\(x => \(x\.audience \|\| 'profile'\) === \(isStaff \? tab : 'profile'\)\)/.test(appSrc2),
+    'admin accounts no longer get Profile and Admin tabs, or a non-admin could see admin notices');
+  { const stj = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8'), sql = fs.readFileSync(path.join(ROOT, 'tools', 'staff-alerts.sql'), 'utf8');
+    assert.ok(/\.eq\('audience', aud\)/.test(stj) && /if\(audience\) q = q\.eq\('audience', audience\)/.test(stj), 'the bell does not load each audience on its own, or Mark all read marks both tabs');
+    assert.ok(/insert into notifications \(user_id, sender_name, sender_avatar, subject, body, link, audience\)[\s\S]{0,200}'admin'/.test(sql), 'notify_staff no longer files staff alerts under Admin'); }
   assert.ok(/\.inbox-admin\{background:var\(--ink\)/.test(cssSrc2),
     'the Admin badge no longer uses the dark pill the dashboard Admin tab uses');
   assert.ok(!/nav-join\{display:none\}|\/portal#listings/.test(navSrc2), 'nav.js still hides or reroutes Get Listed when signed in');

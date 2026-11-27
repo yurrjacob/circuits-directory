@@ -463,6 +463,10 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 /* The staff queue, marked with the dark pill the Admin tab already uses on the
    dashboard, so the two read as the same thing (Jacob, 2026-09-03). It sits
    next to the sender and pushes the timestamp to the right on its own. */
+.inbox-tabs{display:flex;gap:6px;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--card)}
+.inbox-tab{flex:1;font:inherit;font-size:.85rem;font-weight:600;padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--muted);cursor:pointer}
+.inbox-tab.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.inbox-tab-n{display:inline-block;min-width:18px;margin-left:4px;padding:0 5px;border-radius:999px;background:var(--green);color:#0f0f0f;font-size:.72rem;line-height:18px}
 .inbox-admin{background:var(--ink);color:#fff;border-radius:999px;padding:2px 9px;font-size:.66rem;
   font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;margin-right:auto}
 /* The badge is a <span>, and both ".inbox-who span" and ".inbox-from span"

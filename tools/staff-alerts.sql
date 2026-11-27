@@ -460,3 +460,34 @@ begin
   return out;
 end $$;
 revoke execute on function public.admin_stats(int) from public, anon;
+
+-- 2026-11-27, applied as notification_audience. Admin accounts see their
+-- notifications split into Profile (their own account) and Admin (the staff
+-- queue). Every staff alert goes through notify_staff, which now marks its
+-- rows audience = 'admin'; everything else stays 'profile'. Existing staff
+-- alerts were back-filled from their subjects (368 rows on 2026-11-27).
+-- The table-level SELECT grant covers the new column, so no column grant is
+-- needed for the bell to read it.
+alter table public.notifications add column if not exists audience text not null default 'profile';
+alter table public.notifications drop constraint if exists notifications_audience_chk;
+alter table public.notifications add constraint notifications_audience_chk check (audience in ('profile', 'admin'));
+create index if not exists notifications_user_audience_idx on public.notifications (user_id, audience, created_at desc);
+
+create or replace function public.notify_staff(p_subject text, p_body text, p_link text default '/portal'::text)
+ returns integer
+ language sql
+ security definer
+ set search_path to 'public', 'auth'
+as $function$
+  with i as (
+    insert into notifications (user_id, sender_name, sender_avatar, subject, body, link, audience)
+    select u.id, 'Circuits.com', 'https://circuits.com/assets/favicon.png', p_subject, p_body, p_link, 'admin'
+      from staff s join auth.users u on lower(u.email) = lower(s.email)
+    returning 1)
+  select count(*)::int from i;
+$function$;
+
+update public.notifications n set audience = 'admin'
+  from auth.users u join public.staff st on lower(st.email) = lower(u.email)
+ where u.id = n.user_id and n.audience <> 'admin'
+   and n.subject ~ '^(New listing request:|Upgrade request:|New job post:|Recruit waiting for approval:|New profile confirmed:|New club page:|New project page:|New club keyword request:|New club (member|officer) to approve:|New project team member to approve:)';
