@@ -238,8 +238,8 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   /* the club page (Jacob, 2026-10-28) */
   {
     const pf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
-    assert.ok(/if\(isClub\) html \+= projectsShowcaseHtml\(projects, co\) \+ officersHtml\(co\) \+ promoHubHtml\(co\);/.test(pf), 'the club page order is not About, Project Showcase, Officers & Members, Promo Hub');
-    assert.ok(/section\('Officers & Members'/.test(pf) && /<details class="pf-members-dd"/.test(pf) && /<a class="web-link" href="\$\{handleLink\(m\.handle\)\}">/.test(pf) && !/function membersHtml/.test(pf), 'members are not a linked dropdown inside Officers & Members');
+    assert.ok(/if\(isClub\) html \+= projectsShowcaseHtml\(projects, co\) \+ officersHtml\(co\) \+ promoHubHtml\(co\);/.test(pf), 'the project page order is not About, Project Showcase, Team Members, Promo Hub');
+    assert.ok(/section\('Team Members'/.test(pf) && /<details class="pf-members-dd" open>/.test(pf) && /<a class="web-link" href="\$\{handleLink\(m\.handle\)\}">/.test(pf) && !/function membersHtml/.test(pf) && !/founder-role[^\n]*Officer/.test(pf), 'the project page does not list Team Members as linked names, or officer cards are back');
     assert.ok(/<span class="pf-club-links-k">Links<\/span>/.test(pf) && /\[site, other\]\.filter\(Boolean\)/.test(pf) && !/btn btn-outline" href="\$\{escapeHtml\(site\)\}"[^>]*>Website</.test(pf), 'the club Website is still a button, or the two Links slots are gone');
     assert.ok(/function livePeople\(list\)[\s\S]{0,200}!t\.status \|\| t\.status === 'Approved'/.test(pf), 'people waiting for approval show on the club page');
   }
@@ -299,14 +299,14 @@ assert.ok(!fs.existsSync(path.join(ROOT, 'directory')),
   {
     const ph = fs.readFileSync(path.join(ROOT, 'portal.html'), 'utf8'), pj = fs.readFileSync(path.join(ROOT, 'portal.js'), 'utf8'), aj = fs.readFileSync(path.join(ROOT, 'admin.js'), 'utf8');
     const st = fs.readFileSync(path.join(ROOT, 'store.js'), 'utf8'), wc = fs.readFileSync(path.join(ROOT, 'welcome.html'), 'utf8'), pf = fs.readFileSync(path.join(ROOT, 'profile.js'), 'utf8');
-    assert.ok(/<th>\$\{L\} Name<\/th><th>\$\{L\} Email Address<\/th><th>\$\{L\} Profile URL<\/th>\$\{officer \? '<th>Officer Title<\/th>' : ''\}<th>Confirmed<\/th>/.test(pj), 'the Members and Officers boxes lost Name, Email Address, Profile URL or Confirmed');
+    assert.ok(/<th>\$\{L\} Name<\/th><th>\$\{L\} Email Address<\/th><th>\$\{L\} Profile URL<\/th><th>Confirmed<\/th>/.test(pj) && /const L = 'Team Member';/.test(pj), 'the Team Members box lost Name, Email Address, Profile URL or Confirmed');
     /* emails are private: never in the public team or members lists */
-    assert.ok(/fields\.team = officers\.map\(\(\{ email, \.\.\.p \}\) => p\);/.test(pj) && /fields\.members = members\.map\(\(\{ email, \.\.\.p \}\) => p\);/.test(pj) && /saveClubEmails\(PT\.slug, PT\.peopleEmails\)/.test(pj), 'member or officer emails would be written onto the public club page');
+    assert.ok(!/fields\.team =/.test(pj) && /fields\.members = members\.map\(\(\{ email, \.\.\.p \}\) => p\);/.test(pj) && /saveClubEmails\(PT\.slug, PT\.peopleEmails\)/.test(pj), 'team member emails would be written onto the public project page, or the removed officer list is written again');
     assert.ok(/from\('club_emails'\)/.test(st) && !/club_emails'\)\.select\('\*'\)/.test(st), 'club emails are not read from club_emails, or with select(*)');
-    assert.ok(/id="wc-pill-t"/.test(wc) && /'Officer Confirmed' : 'Team Membership Confirmed'/.test(wc) && /'Welcome ' \+ info\.name/.test(wc) && /class="wc-club-go wc-club-link" href=[^>]*>View Project Page</.test(wc), 'the invite landing is not Team Membership Confirmed, Welcome <project>, View Project Page');
+    assert.ok(/id="wc-pill-t"/.test(wc) && /textContent = 'Team Membership Confirmed';/.test(wc) && !/Officer/.test(wc.replace(/<!--[\s\S]*?-->|\/\*[\s\S]*?\*\//g, '')) && /'Welcome ' \+ info\.name/.test(wc) && /class="wc-club-go wc-club-link" href=[^>]*>View Project Page</.test(wc), 'the invite landing is not Team Membership Confirmed, Welcome <project>, View Project Page');
     assert.ok(/if\(t\)\{ sub\.hidden = true; await acceptPendingInvite\(user, t, info\); return; \}/.test(wc) && /body\.wc-invite \.wc-lede,body\.wc-invite \.wc-wrap-cards\{display:none\}/.test(fs.readFileSync(path.join(ROOT, 'styles.css'), 'utf8')), 'the invite landing still shows the address line, the free line or the start cards');
     assert.ok(/id="cp-pending-body"/.test(ph) && /id="cp-body"/.test(ph) && (ph.match(/<th>Organization<\/th><th>Name<\/th><th>Role<\/th><th>Email<\/th><th>Profile URL<\/th><th>Confirmed<\/th><th>Badge<\/th><th>Actions<\/th>/g) || []).length === 2, 'Project Admin Team Members is not waiting and live boxes with a Badge column');
-    assert.ok(/function personBadgeDefault\(r\)\{ return r\.list === 'team' \? \(r\.p\.role \|\| 'Officer'\) : \(r\.c\.name \|\| 'Member'\); \}/.test(aj), 'a badge no longer defaults to the officer title or the club name');
+    assert.ok(/function personBadgeDefault\(r\)\{ return r\.c\.name \|\| 'Team Member'; \}/.test(aj), 'a team member badge no longer falls back to the project name');
     assert.ok(/const live = p => p && \(!p\.status \|\| p\.status === 'Approved'\);/.test(st), 'a person waiting for approval would carry a badge');
     assert.ok(/r\.badge \|\| r\.role \|\| 'Officer'/.test(pf), 'the officer badge ignores the badge staff set');
   }
@@ -977,7 +977,7 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     assert.ok(/<meta name="robots" content="noindex, nofollow">/.test(rs) && /window\.print\(\)/.test(rs) && /@media print/.test(rd('styles.css')),
       'resume.html must be noindex, print through the browser and carry a print stylesheet');
     assert.ok(/myProfile\(\)/.test(rs) && !/resume_path/.test(rs), 'the resume page must take contact details from my_profile only, never from a public read');
-    for (const id of ['f-club', 'f-college', 'pt-college-logo', 'f-join', 'f-promo-members', 'f-promo-sponsors', 'f-promo-employers', 'f-officers',
+    for (const id of ['f-club', 'f-college', 'pt-college-logo', 'f-join', 'f-promo-members', 'f-promo-sponsors', 'f-promo-employers',
                       'pj-title', 'pj-pics', 'pj-docs', 'pj-videos', 'pj-other', 'f-pjteam', 'pj-save', 'pt-project-list'])
       assert.ok(ph.includes(`id="${id}"`), `the dashboard lost ${id}`);
     assert.ok(/id="me-skills"/.test(pj) && /id="me-show-clubs"/.test(pj) && /skills,\s*\n?\s*show_clubs:/.test(pj), 'Post a Resume lost the skills field or the privacy switch');
@@ -1073,9 +1073,10 @@ for (const id of ['c-name', 'c-company', 'c-email', 'c-message']) {
     assert.ok(/body\.club-mode \.pt-tab\[data-tab="profile"\],body\.club-mode \.pt-tab\[data-tab="upgrades"\],\s*body\.club-mode \.pt-tab\[data-tab="hiring"\],body\.club-mode \.pt-tab\[data-tab="seeking"\]\{display:none\}/.test(css), 'club mode still shows Profile Details, Upgrades, Hire Talent or Search Work');
     assert.ok(/tabLabel\('club', club \? 'Project Details' : 'Projects'\);/.test(portalSrc2) && /tabLabel\('listings', club \? 'Project Keywords' : 'Your Listings'\);/.test(portalSrc2), 'project mode does not rename Project Details and Project Keywords');
     /* officers are back on invite links, in their own box (Jacob, 2026-10-28) */
-    assert.ok(/\['officer', 'Officers', [^\]]*'pt-officer-invites'\], \['member', 'Members', [^\]]*'pt-club-invites'\]/.test(portalSrc2), 'the Officer and Member invite links are not both drawn');
+    /* Team Members only (2026-11-27): one invite link, no officer box or link anywhere */
+    assert.ok(/\['member', 'Team Members', [^\]]*'pt-club-invites'\]\]/.test(portalSrc2) && !/pt-officer-invites|f-officers/.test(portalHtml2 + portalSrc2), 'an officer box or officer invite link is back on the dashboard');
     const tm = portalHtml2.indexOf('id="tab-members"'), tb = portalHtml2.indexOf('id="tab-club"');
-    assert.ok(['f-officers', 'pt-officer-invites', 'f-members', 'pt-club-invites'].every(id => { const i = portalHtml2.indexOf(`id="${id}"`); return i > tm && i < tb; }), 'Officers, Officer Invite Link, Team Members and Team Members Invite Link are not all on the Team Members tab');
+    assert.ok(['f-members', 'pt-club-invites'].every(id => { const i = portalHtml2.indexOf(`id="${id}"`); return i > tm && i < tb; }), 'Team Members and the Team Members Invite Link are not on the Team Members tab');
     assert.ok(/<label for="nc-name">Project Name <span class="req">\*<\/span><\/label>/.test(portalHtml2) && /<label for="nc-college">Organization or University Name <span class="req">\*<\/span><\/label>/.test(portalHtml2) && /Your Project&rsquo;s Circuits\.com URL <span class="req">\*<\/span>/.test(portalHtml2), 'the create-project fields are not marked required');
     assert.ok(/if\(!isClubPage\)\{\s*const mine = /.test(portalSrc2), 'saving a club page writes the club onto the owner\'s own profile');
     assert.ok(/document\.querySelectorAll\('\.pt-save, \.pt-save-club'\)\.forEach\(b => b\.addEventListener\('click', saveProfile\)\);/.test(portalHtml2), 'Save club and Save members are not wired to the save');

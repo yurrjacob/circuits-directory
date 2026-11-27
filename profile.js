@@ -194,9 +194,9 @@ function clubHeroHtml(co){
         const officers = livePeople(co.team).length;
         const chips = [
           n ? `<a class="pf-chip pf-chip-link" href="#showcase">${iconHtml('Projects')}${n} project${n === 1 ? '' : 's'}</a>` : '',
-          officers ? `<a class="pf-chip pf-chip-link" href="#officers">${iconHtml('Employees')}${officers} officer${officers === 1 ? '' : 's'}</a>` : '',
+          '',   // officers are gone (2026-11-27)
           (() => { const m = livePeople(co.members).length;
-            return m ? `<a class="pf-chip pf-chip-link" href="#officers">${iconHtml('Contact')}${m} member${m === 1 ? '' : 's'}</a>` : ''; })(),
+            return m ? `<a class="pf-chip pf-chip-link" href="#officers">${iconHtml('Contact')}${m} team member${m === 1 ? '' : 's'}</a>` : ''; })(),
           FOUR_DIGITS.test((co.founded || '').trim()) ? `<span class="pf-chip">${iconHtml('Founded')}Est. ${escapeHtml(co.founded.trim())}</span>` : '',
           fitsLine(co.address, 60) ? `<span class="pf-chip">${iconHtml('Address')}${escapeHtml(co.address)}</span>` : ''].filter(Boolean);
         return chips.length ? `<div class="pf-meta">${chips.join('')}</div>` : '';
@@ -319,21 +319,15 @@ function openProjectCard(p, co){
 function livePeople(list){
   return (Array.isArray(list) ? list : []).filter(t => t && ((t.name || '').trim() || (t.handle || '').trim()) && (!t.status || t.status === 'Approved'));
 }
-/* Officers & Members (Jacob, 2026-10-28): the officers' cards, then every
-   member in a dropdown, each linked to their own profile */
+/* Team Members (2026-11-27; it was Officers & Members): every approved team
+   member, each linked to their own profile. Officers are gone. */
 function officersHtml(co){
-  const team = livePeople(co.team), members = livePeople(co.members);
-  if(!team.length && !members.length) return '';
-  const memberList = members.length ? `<details class="pf-members-dd"${team.length ? '' : ' open'}><summary>Members &middot; ${members.length}</summary>
+  const members = livePeople(co.members);
+  if(!members.length) return '';
+  return section('Team Members', `<details class="pf-members-dd" open><summary>Team Members &middot; ${members.length}</summary>
       <ul class="pf-members-list">${members.map(m => `<li>${(m.handle || '').trim()
         ? `<a class="web-link" href="${handleLink(m.handle)}">${escapeHtml((m.name || m.handle).trim())}</a>`
-        : escapeHtml((m.name || '').trim())}</li>`).join('')}</ul></details>` : '';
-  return section('Officers & Members', `${team.length ? `<div class="pf-team">${team.map(t => `
-      <div class="founder-card">
-        <div class="founder-avatar">${escapeHtml(((t.name || t.handle || '?').trim()).slice(0, 1).toUpperCase())}</div>
-        <div><div class="founder-name">${(t.handle || '').trim() ? `<a href="${handleLink(t.handle)}">${escapeHtml((t.name || t.handle).trim())}</a>` : escapeHtml((t.name || '').trim())}</div>
-        <div class="founder-role">${escapeHtml(t.role || 'Officer')}</div></div>
-      </div>`).join('')}</div>` : ''}${memberList}`, ' id="officers"');
+        : escapeHtml((m.name || '').trim())}</li>`).join('')}</ul></details>`, ' id="officers"');
 }
 /* the student's side: skills they typed, badges they earned, projects they are on */
 function badgeIcon(kind){
