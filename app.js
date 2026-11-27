@@ -15,11 +15,11 @@ function gotoSearch(term){
    stay below so a tab can come back with its button alone. The one-line hint
    above the box was removed for every tab the same day. */
 const HOME_PLACEHOLDER = {
-  directory: 'Search products, services, companies, part numbers, or keywords...',
-  parts:     'Search parts by part number, product or keyword...',
+  directory: 'Search products, services, companies or keywords...',
+  parts:     'Search part numbers, components, suppliers or keywords...',
   recruits:  'Search new recruits by job title, or keywords...',
   jobs:      'Search open jobs by title or keyword...',
-  clubs:     'Search student clubs by name, university or keyword...'
+  clubs:     'Search projects, design builds, hardware integration, or keywords...'
 };
 /* the Popular line each tab shows; Parts borrows the Directory's */
 const HOME_POPULAR = { parts: 'directory' };
