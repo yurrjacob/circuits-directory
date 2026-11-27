@@ -144,9 +144,9 @@ async function fetchApprovedByKeyword(keyword){
   if(error){ console.error('fetchApprovedByKeyword', error); throw error; }
   const rows = (data || []).map(a => Object.assign(a, { exact: exact.get(a.id) === true }));
   rows.sort((a, b) => (b.exact - a.exact));   // stable: keeps oldest-first inside each group
-  const seen = new Set(), out = [];
-  for(const a of rows){ if(seen.has(a.company)) continue; seen.add(a.company); out.push(a); }
-  return out;
+  /* every matching keyword is its own row, as on the Global Directory
+     (Jacob, 2026-11-27); a company with six PCB keywords shows six times */
+  return rows;
 }
 
 /* An approved company or project whose name is exactly what was typed: any
