@@ -526,7 +526,7 @@ async function initInbox(){
     if(!storedSession()) return;
     const add = (src, integrity) => new Promise((ok, no) => { const t = document.createElement('script'); t.src = src; if(integrity) t.integrity = integrity; t.onload = ok; t.onerror = no; document.head.appendChild(t); });
     /* the same vendored file, and the same hash, every page carries (audit item 3, 2026-09-21) */
-    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=d00e40f548'); }catch(e){ return; }
+    try{ await add('/vendor/supabase-js-2.116.0.js', 'sha384-iLddHTLokph6Omwoyid4XKxHaWa6w41BnoEj0q5oOrzmYPpHIKt1wyjReA7s//pP'); await add('/store.js?v=03c3808e26'); }catch(e){ return; }
   }
   if(typeof sb === 'undefined' || !sb || typeof currentUser !== 'function') return;
   let user = null;
@@ -1013,9 +1013,10 @@ async function initResults(forcedTerm){
             ? `<a href="${escapeHtml(profileUrl(c.company_handle))}">${escapeHtml(c.company)}</a>`
             : escapeHtml(c.company)}
           ${badgeHtml(c.badge)}
-          ${safeUrl(c.website) ? `<a class="doc-link web-link" href="${escapeHtml(safeUrl(c.website))}" target="_blank" rel="noopener nofollow">Website</a>` : ''}
         </div>
       </td>
+      <td class="cell-web" data-label="Website">${safeUrl(c.website) ? `<a class="doc-link web-link" href="${escapeHtml(safeUrl(c.website))}" target="_blank" rel="noopener nofollow">Website</a>` : ''}</td>
+      <td class="cell-kw" data-label="Keyword">${c.keyword ? `<a href="/results?q=${encodeURIComponent(c.keyword)}">${escapeHtml(c.keyword)}</a>` : ''}</td>
       <td class="cell-muted" data-label="Contact">${escapeHtml(c.contact||'')}</td>
       <td class="cell-muted" data-label="Phone">${c.phone ? `<a href="tel:${escapeHtml(c.phone)}">${escapeHtml(c.phone)}</a>` : ''}</td>
       <td class="cell-muted" data-label="Email">${c.email ? `<a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a>` : ''}</td>
@@ -1029,7 +1030,7 @@ async function initResults(forcedTerm){
         <table class="listings-table">
           <thead><tr>
             <th class="rank">#</th>
-            <th>Company</th><th>Contact</th><th>Phone</th><th>Email</th>
+            <th>Company</th><th>Website</th><th>Keyword</th><th>Contact</th><th>Phone</th><th>Email</th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>

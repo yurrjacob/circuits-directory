@@ -244,6 +244,10 @@ table.listings-table{width:100%;border-collapse:collapse;font-size:.98rem}
 .cell-muted{color:var(--muted)}
 .cell-muted a{color:var(--muted);text-decoration:none}
 .cell-muted a:hover{color:var(--green-dark)}
+.cell-kw a{color:var(--green-dark);font-weight:600;text-decoration:none;text-transform:capitalize}
+.cell-kw a:hover{text-decoration:underline}
+.cell-web{white-space:nowrap;text-align:left}
+.cell-web .doc-link{margin:0}
 /* Where a claimant's email came from, next to the address itself. Deliberately
    quiet: it is evidence for a person to weigh, not a verdict. */
 .claim-signal{display:inline-block;margin-top:4px;padding:1px 7px;border-radius:999px;
