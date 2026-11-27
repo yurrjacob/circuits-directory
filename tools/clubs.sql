@@ -552,3 +552,23 @@ end $$;
 --    where slug = 'jacob' and kind = 'club';
 --   alter table public.companies enable trigger companies_talent_guard;
 --   delete from public.projects where company_slug = 'jacob';
+
+-- 2026-11-27, TO APPLY WITH THE MERGE of the Club-to-Project rename (it
+-- names admin tabs that only exist after it). The staff alert for a new
+-- club page reads as a project, per the 2026-11-23 change list.
+create or replace function public.notify_new_club()
+ returns trigger
+ language plpgsql
+ security definer
+ set search_path to 'public'
+as $function$
+declare who text;
+begin
+  if new.kind <> 'club' then return new; end if;
+  select coalesce(nullif(p.display_name, ''), p.handle) into who from profiles p where p.user_id = auth.uid();
+  perform notify_staff('New project page: ' || new.name,
+    new.name || coalesce(' at ' || nullif(new.college_name, ''), '') || ' was created' || coalesce(' by ' || who, '') ||
+    ' at circuits.com/' || coalesce(new.handle, new.slug) || '. Approve it under Admin, Project Admin, Projects to put it on Global Projects.',
+    '/portal#admin');
+  return new;
+end $function$;
